@@ -1,0 +1,72 @@
+{
+  "name": "_ab_todo",
+  "type": "appBlock",
+  "dependencies": {
+    "addTodo": {
+      "directory": "./functions/_ab_todo_addTodo",
+      "meta": {
+        "type": "function",
+        "source": "",
+        "language": "nodejs",
+        "start": "node index.js",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    },
+    "listTodos": {
+      "directory": "./functions/_ab_todo_listTodos",
+      "meta": {
+        "type": "function",
+        "source": "",
+        "language": "nodejs",
+        "start": "node index.js",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    },
+    "removeTodo": {
+      "directory": "./functions/_ab_todo_removeTodo",
+      "meta": {
+        "type": "function",
+        "source": "",
+        "language": "nodejs",
+        "start": "node index.js",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    },
+    "todoInput": {
+      "directory": "./view/elements/_ab_todo_todoInput",
+      "meta": {
+        "type": "ui",
+        "source": "",
+        "language": "js",
+        "start": "npx webpack-dev-server",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    },
+    "todoItem": {
+      "directory": "./view/elements/_ab_todo_todoItem",
+      "meta": {
+        "type": "ui",
+        "source": "",
+        "language": "js",
+        "start": "npx webpack-dev-server",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    },
+    "todoContainer": {
+      "directory": "./view/container/_ab_todo_todoContainer",
+      "meta": {
+        "type": "todoContainer",
+        "source": "",
+        "language": "js",
+        "start": "npx webpack-dev-server",
+        "build": "npm run build",
+        "postPull": "npm i"
+      }
+    }
+  }
+}

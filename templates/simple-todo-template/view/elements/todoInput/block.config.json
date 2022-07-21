@@ -1,0 +1,12 @@
+{
+  "type": "ui-elements",
+  "source": {
+    "https": "",
+    "ssh": ""
+  },
+  "language": "js",
+  "start": "npx webpack-dev-server",
+  "build": "npm run build",
+  "postPull": "npm i",
+  "name": "todoInput"
+}
