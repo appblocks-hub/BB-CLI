@@ -43,8 +43,8 @@ const setupEnv = (config) => {
   return new Promise(async (resolve) => {
     // env file generation if env exist in config
     if (config.env) {
-      for (const [folder, envData] of Object.entries(config.env)) {
-        await upsertEnv(`${path.resolve()}/.env.${folder}`, envData)
+      for (const [blockType, envData] of Object.entries(config.env)) {
+        await upsertEnv(`${path.resolve()}/.env.${blockType}`, envData)
       }
     }
     resolve()
@@ -55,10 +55,10 @@ const updateEnv = (type, envData) => {
   return new Promise(async (resolve) => {
     if (!type || !envData) return
 
-    let fileName = type
-    if (['ui-container', 'ui-elements'].includes(type)) fileName = 'view'
+    let blockType = type
+    if (['ui-container', 'ui-elements'].includes(type)) blockType = 'view'
 
-    const envPath = `${path.resolve()}/.env.${fileName}`
+    const envPath = `${path.resolve()}/.env.${blockType}`
     await upsertEnv(envPath, envData)
     resolve()
   })

@@ -1,9 +1,12 @@
 const { default: axios } = require('axios')
+const Spinnies = require('spinnies')
 const { readInput } = require('../utils/questionPrompts')
 const { appRegistryAssignTags } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
-const { spinnies } = require('../loader')
+// const { spinnies } = require('../loader')
 const { appConfig } = require('../utils/appconfigStore')
+
+const spinnies = new Spinnies()
 
 const addTags = async (options) => {
   await appConfig.init()
