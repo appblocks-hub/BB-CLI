@@ -1,14 +1,24 @@
 /* eslint-disable arrow-body-style */
 /* eslint-disable no-async-promise-executor */
+
+/**
+ * Copyright (c) Yahilo. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 const { readFileSync, existsSync, mkdirSync } = require('fs')
 const { execSync } = require('child_process')
 const chalk = require('chalk')
 const path = require('path')
 const { default: axios } = require('axios')
+const Spinnies = require('spinnies')
 const { appRegistryCreateDeployPresignedUrl } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { blockTypeInverter } = require('./blockTypeInverter')
-const { spinnies } = require('../loader')
+
+const spinnies = new Spinnies()
 
 const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
 const EXCLUDE_IN_ZIP = ['node_modules', '.git'].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')

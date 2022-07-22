@@ -81,7 +81,7 @@ async function getTokensFromAuthorizationCode(code) {
 }
 async function loginWithoutLocalhost() {
   const callbackUrl = getCallbackUrl()
-  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'dev-app-6303')
+  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'dev-app-4921')
 
   // logger.info();
   // logger.info("Visit this URL on any device to log in:");
@@ -198,7 +198,7 @@ async function loginWithAppBlock(localhost, userHint) {
  */
 async function loginWithLocalhostAppBlock(port) {
   const callbackUrl = getCallbackUrl(port)
-  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'dev-app-6303')
+  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'dev-app-4921')
   // console.log(port, authUrl, callbackUrl)
   // const successTemplate = "../templates/loginSuccess.html";
   const tokens = await loginWithLocalhost(

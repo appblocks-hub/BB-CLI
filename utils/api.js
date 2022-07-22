@@ -8,11 +8,11 @@
 const api = {}
 
 // api.appBlockOrigin = `http://shield.appblock.io`
-api.appBlockOrigin = `https://dev.shield.yahilo.com`
+api.appBlockOrigin = `https://shield.yahilo.com`
 api.appBlockLogin = `${api.appBlockOrigin}/login`
 api.appBlockAccessToken = `${api.appBlockOrigin}/auth/device/get-token`
 
-api.appBlockRegistryOrigin = `https://dev.api.blocks-registry.yahilo.com`
+api.appBlockRegistryOrigin = `https://api.blocks-registry.yahilo.com`
 api.appBlockCheckBlockNameAvailability = `${api.appBlockRegistryOrigin}/api/registry/v0.1/check-block-name-availabilty`
 api.appBlockRegister = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/register-block`
 api.appBlockEditBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/edit-block`
@@ -33,7 +33,7 @@ api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1
 api.saveDependencies = `${api.appBlockRegistryOrigin}/api/registry/v0.1/upsert-dependencies`
 api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-source-code-signed-url`
 
-api.appBlockAppRegistryOrigin = `https://dev.api.app-registry.yahilo.com`
+api.appBlockAppRegistryOrigin = `https://api.app-registry.yahilo.com`
 api.appRegistryCreateApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-app`
 api.appRegistryUploadBlockStatus = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/upload-bloxes`
 api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-app-env-exist`

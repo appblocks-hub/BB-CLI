@@ -2,7 +2,7 @@
   "name": "_ab_todo",
   "type": "appBlock",
   "env": {
-    "functions": {
+    "function": {
       "DB_FILE_PATH": "../db.json"
     },
     "view": {

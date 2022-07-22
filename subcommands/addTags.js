@@ -1,9 +1,18 @@
+/**
+ * Copyright (c) Yahilo. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 const { default: axios } = require('axios')
+const Spinnies = require('spinnies')
 const { readInput } = require('../utils/questionPrompts')
 const { appRegistryAssignTags } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
-const { spinnies } = require('../loader')
 const { appConfig } = require('../utils/appconfigStore')
+
+const spinnies = new Spinnies()
 
 const addTags = async (options) => {
   await appConfig.init()
