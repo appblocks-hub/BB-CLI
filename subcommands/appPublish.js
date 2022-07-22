@@ -1,17 +1,26 @@
 /* eslint-disable no-continue */
 
+/**
+ * Copyright (c) Yahilo. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 const { rm } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
+const Spinnies = require('spinnies')
 const { createZip, uploadToServer } = require('../utils/uploadUtil')
 const { getYahConfig } = require('../utils/config-manager')
 const { appRegistryUploadBlockStatus, appRegistryCheckAppEnvExist } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 const deployConfig = require('../utils/deployConfig-manager')
-const { spinnies } = require('../loader')
 const { getPublishedVersion } = require('./publish')
 const { appConfig } = require('../utils/appconfigStore')
+
+const spinnies = new Spinnies()
 
 const logFail = (msg) => console.log(chalk.red(msg))
 
