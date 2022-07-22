@@ -14,7 +14,6 @@ const { readFileSync, rm } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
-const Spinnies = require('spinnies')
 const { getBlockDetails } = require('./registryUtils')
 const {
   appRegistryCopyObject,
@@ -27,9 +26,8 @@ const {
   appRegistryCheckAppEnvExist,
 } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
+const { spinnies } = require('../loader')
 const deployblockConfigManager = require('./deployConfig-manager')
-
-const spinnies = new Spinnies()
 
 const getBlockConfig = () => {
   // if no appblock config file found, throw

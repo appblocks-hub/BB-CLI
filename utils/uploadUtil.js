@@ -13,12 +13,10 @@ const { execSync } = require('child_process')
 const chalk = require('chalk')
 const path = require('path')
 const { default: axios } = require('axios')
-const Spinnies = require('spinnies')
 const { appRegistryCreateDeployPresignedUrl } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { blockTypeInverter } = require('./blockTypeInverter')
-
-const spinnies = new Spinnies()
+const { spinnies } = require('../loader')
 
 const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
 const EXCLUDE_IN_ZIP = ['node_modules', '.git'].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')
