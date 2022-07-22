@@ -292,7 +292,7 @@ const checkAppEnvExist = (appData, deployId) => {
         }
       )
 
-      const resData = data.data
+      const resData = data
 
       if (!resData.app_exist || !resData.env_exist) {
         spinnies.fail('dep', { text: ` ${!resData.app_exist ? 'App' : 'Environment'} does not exist` })
