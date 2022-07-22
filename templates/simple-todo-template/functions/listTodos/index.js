@@ -21,7 +21,7 @@ const listTodos = (req, res) => {
       })
     }
 
-    const DB_FILE = path.resolve(process.env.DB_FILE_PATH)
+    const DB_FILE = path.resolve('../db.json')
     createFileSync(DB_FILE)
     const data = fs.readFileSync(DB_FILE, { encoding: 'utf8', flag: 'r' })
     const resData = JSON.parse(data || '[]')

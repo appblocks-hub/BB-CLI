@@ -21,7 +21,7 @@ const addTodo = async (req, res) => {
       })
     }
 
-    const DB_FILE = path.resolve(process.env.DB_FILE_PATH)
+    const DB_FILE = path.resolve('../db.json')
     const inmemDB = getDB(DB_FILE)
     const newId = new Date().getTime()
     const newItem = await getBody(req)
