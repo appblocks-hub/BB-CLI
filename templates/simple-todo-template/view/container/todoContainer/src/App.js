@@ -1,6 +1,7 @@
 import React, { lazy } from 'react'
 import { Suspense } from 'react'
 import env from 'env'
+import Header from './components/Header'
 const TodoInput = lazy(() => import('./components/TodoInput'))
 const TodoItem = lazy(() => import('./components/TodoItem'))
 
@@ -19,11 +20,14 @@ function App() {
   }, [refetch])
   return (
     <Suspense fallback={<p>loading..</p>}>
-      <h1>Container</h1>
-      <TodoInput refetch={setRefetch} />
-      {todos.map((item) => (
-        <TodoItem refetch={setRefetch} item={item.item} id={item.id} key={item.id} />
-      ))}
+      <Header />
+      <div className="w-1/2 mx-auto p-8 mt-8 border-dashed border-2 border-sky-500">
+        <h1>Container</h1>
+        <TodoInput refetch={setRefetch} />
+        {todos.map((item) => (
+          <TodoItem refetch={setRefetch} item={item.item} id={item.id} key={item.id} />
+        ))}
+      </div>
     </Suspense>
   )
 }

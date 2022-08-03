@@ -48,6 +48,12 @@ export default {
           fullySpecified: false,
         },
       },
+      {
+        test: /\.(jpg|png|svg)$/,
+        use: {
+          loader: "url-loader",
+        },
+      },
     ],
   },
   plugins: [

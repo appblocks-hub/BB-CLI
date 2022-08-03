@@ -22,12 +22,22 @@ export const todoInput = ({ refetch }) => {
   }
   return (
     <>
-      <div className="todo-item">
+      <div className="flex center gap-x-4 my-5 mt-8 p-2 border-dashed border-2 border-gray-500">
+        <input
+          type="text"
+          value={todo}
+          placeholder="Add Todo"
+          disabled={submitting}
+          onChange={(e) => setTodo(e.target.value)}
+          className="shadow border rounded w-full py-1 px-3 text-gray-700 focus:outline-none focus:shadow-outline text-xl"
+        />
         <div>
-          <input type="text" value={todo} disabled={submitting} onChange={(e) => setTodo(e.target.value)} />
-        </div>
-        <div>
-          <button disabled={submitting} onClick={handleAdd}>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={handleAdd}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline whitespace-nowrap"
+          >
             Add
           </button>
         </div>

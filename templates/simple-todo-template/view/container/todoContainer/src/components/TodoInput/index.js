@@ -1,2 +1,2 @@
-import { TodoInput } from './TodoInput'
+import TodoInput from './TodoInput'
 export default TodoInput
