@@ -55,6 +55,7 @@ const {
 const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
+const { CreateError } = require('../utils/errors/createError')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -272,7 +273,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     console.log('Something went wrong while creating!')
     // logger.info('ERROR')
     // logger.error(err)
-    throw new Error('create failed')
+    throw new CreateError('create failed')
   }
 }
 
