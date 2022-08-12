@@ -6,32 +6,25 @@
  */
 
 const path = require('path')
-const axios = require('axios')
 const { readFileSync, writeFileSync } = require('fs')
 const chalk = require('chalk')
-const Spinnies = require('spinnies')
 
 const createBlock = require('../utils/createBlock')
 
-const { appBlockGetBlockDetails } = require('../utils/api')
 const { wantToCreateNewVersion } = require('../utils/questionPrompts')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
-const { getShieldHeader } = require('../utils/getHeaders')
 const { appConfig } = require('../utils/appconfigStore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const { configstore } = require('../configstore')
 const { GitManager } = require('../utils/gitmanager')
 const { runBash } = require('./bash')
 const { checkPnpm } = require('../utils/pnpmUtils')
+const pullAppblock = require('../utils/pullAppblock')
+const { spinnies } = require('../loader')
+const { getBlockDetails } = require('../utils/registryUtils')
+const { createDirForType } = require('../utils/fileAndFolderHelpers')
 
 const pull = async (componentName, { cwd = '.' }) => {
-  // Pull must happen only inside an appBlock
-  appConfig.init(cwd)
-
-  const spinnies = new Spinnies()
-
-  const headers = getShieldHeader()
-
   /**
    * @type {blockMetaData}
    */
@@ -40,31 +33,35 @@ const pull = async (componentName, { cwd = '.' }) => {
   spinnies.add('blockExistsCheck', { text: `Searching for ${componentName}` })
 
   try {
-    // TODO
-    // Now if block is not present 204 with empty data is send
-    // This part needs refactoring
-    const resp = await axios.post(
-      appBlockGetBlockDetails,
-      {
-        block_name: componentName,
-      },
-      { headers }
-    )
-
+    const resp = await getBlockDetails(componentName)
     if (resp.status === 204) {
       spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
-      // console.log(chalk.redBright(`${componentName} doesn't exists in block repository`))
       process.exit(1)
     }
-
     const { data } = resp
     if (data.err) {
       throw new Error('Something went wrong from our side\n', data.msg).message
     }
+    /**
+     * @type {blockMetaData}
+     */
     metaData = data.data
 
+    appConfig.init(cwd, null, 'pull')
+
     if (metaData.BlockType === 1) {
-      throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is an appBlock`).message
+      if (!appConfig.isOutOfContext) {
+        throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is an appBlock`).message
+      } else {
+        spinnies.succeed('blockExistsCheck', { text: `${componentName} is available` })
+        spinnies.remove('blockExistsCheck')
+        const res = await pullAppblock(componentName)
+        if (res) {
+          process.exit(0)
+        } else {
+          process.exit(1)
+        }
+      }
     }
   } catch (err) {
     // console.log('Something went wrong while getting block details..')
@@ -76,7 +73,6 @@ const pull = async (componentName, { cwd = '.' }) => {
 
   spinnies.succeed('blockExistsCheck', { text: `${componentName} is available` })
   spinnies.remove('blockExistsCheck')
-  // console.log(metaData, 'details')
 
   // if not errored continue
 
@@ -86,10 +82,7 @@ const pull = async (componentName, { cwd = '.' }) => {
   let pulledBlockPath = ''
 
   try {
-    // await ensureUserLogins()
-    // const { prefix } = appConfig
     const createCustomVersion = await wantToCreateNewVersion(metaData.BlockName)
-    // console.log(createCustomVersion)
     if (createCustomVersion) {
       const availableName = await checkBlockNameAvailability(metaData.BlockName, true)
       const { clonePath, cloneDirName } = await createBlock(
@@ -114,14 +107,9 @@ const pull = async (componentName, { cwd = '.' }) => {
       if (existingBlock) {
         throw new Error(`${componentName} already exists at ${existingBlock.directory}`).message
       }
-      const { clonePath } = await createBlock(
-        metaData.BlockName,
-        metaData.BlockName,
-        metaData.BlockType,
-        metaData.GitUrl,
-        true,
-        cwd
-      )
+
+      const clonePath = createDirForType(metaData.BlockType, cwd)
+
       const localDirName = `${metaData.BlockName}`
 
       const prefersSsh = configstore.get('prefersSsh')

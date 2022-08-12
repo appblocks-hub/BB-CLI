@@ -431,7 +431,7 @@ const sync = async () => {
 
     await offerAndDeleteStaleDirectories(staleDirectories)
   }
-  console.log(blockDirectories, '===========')
+
   const localBlocks = blockDirectories.reduce((acc, cur) => {
     const b = JSON.parse(fs.readFileSync(path.resolve(cur, 'block.config.json')))
     return acc.concat(b)

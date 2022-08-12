@@ -170,8 +170,8 @@ class AppblockConfigManager {
       // console.log(this.liveDetails)
       // console.log('\n')
     } catch (err) {
-      if (this.subcmd === 'create') {
-        throw err
+      if (err.name === 'OUTOFCONTEXT') {
+        this.isOutOfContext = true
       } else {
         console.log(err.message)
         process.exit(1)
@@ -186,7 +186,13 @@ class AppblockConfigManager {
       // console.log('Config read ')
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
+        if (this.subcmd === 'create' || this.subcmd === 'pull') {
+          const eOutofContext = new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
+          eOutofContext.name = 'OUTOFCONTEXT'
+          throw eOutofContext
+        } else {
+          throw new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
+        }
       }
     }
   }
