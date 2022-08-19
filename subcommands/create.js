@@ -104,7 +104,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         name: 'seperateBlockCreate',
       })
       if (!goAhead) {
-        process.exit(1)
+        return
       }
       standAloneBlock = true
     }

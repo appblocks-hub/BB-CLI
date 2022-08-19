@@ -7,4 +7,12 @@
 
 /* eslint-disable */
 
-module.exports = jest.fn(() => Promise.resolve())
+module.exports = jest.fn().mockImplementation(() => ({
+  blockSource: {
+    ssh: '',
+    https: '',
+  },
+  cloneDirName: 'a-name',
+  clonePath: 'a/b/c',
+  blockFinalName: 'a-name',
+}))
