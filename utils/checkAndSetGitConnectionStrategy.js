@@ -31,11 +31,13 @@ async function checkAndSetGitConnectionPreference() {
       }
       console.log(chalk.blueBright(`Please sign into ${sshName}'s account for a seemless developer experience`))
       console.log(`Use ${chalk.blueBright('block connect github -f')} to restart github login`)
+      configstore.set('prefersSsh', '')
       throw new Error('Key of different user')
     } catch (err) {
       console.log('Something went wrong')
       console.log(err.message)
-      return false
+      configstore.delete('prefersSsh')
+      process.exit(1)
     }
   }
   try {
@@ -46,7 +48,9 @@ async function checkAndSetGitConnectionPreference() {
   } catch (err) {
     console.log('Something went wrong while dealing with git PAT')
     console.log(err.message)
-    return false
+    configstore.delete('prefersSsh')
+    configstore.delete('gitPersonalAccessToken')
+    process.exit(1)
   }
   return true
 }

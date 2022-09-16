@@ -14,6 +14,7 @@ const { configstore } = require('../configstore')
 const GitPaginator = require('./paginateGitRest')
 const CustomListV2 = require('./cutomListV2')
 const customSelect = require('./multiSelect')
+const { isValidBlockName } = require('./blocknameValidator')
 
 inquirer.registerPrompt('customList', customList)
 inquirer.registerPrompt('CustomListV2', CustomListV2)
@@ -36,8 +37,7 @@ function getBlockName() {
     name: 'blockName',
     message: 'Enter name of block',
     validate: function test(ans) {
-      const regex = /^[a-zA-Z-_0-9]+$/
-      if (regex.test(ans)) {
+      if (isValidBlockName(ans)) {
         return true
       }
       return 'Block name should only contain alphabets, _ , -'

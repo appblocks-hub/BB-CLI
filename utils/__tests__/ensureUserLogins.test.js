@@ -1,8 +1,10 @@
 /* eslint-disable */
 
 const axios = require('axios')
+const { spinnies } = require('../../loader')
 const { githubGetDeviceCode, githubClientID } = require('../api')
 const { checkAndSetAuth } = require('../checkAndSetAuth')
+const checkAuth = require('../checkAuth')
 const { ensureUserLogins } = require('../ensureUserLogins')
 const handleGithubAuth = require('../handleGithubAuth')
 
@@ -16,7 +18,14 @@ const resp = { data: URIENCODEDSTRING }
 
 jest.mock('../handleGithubAuth')
 jest.mock('../checkAndSetAuth')
+jest.mock('../checkAuth.js')
 jest.mock('axios')
+jest.mock('../../loader')
+
+const logSpy = jest.spyOn(global.console, 'log').mockImplementation(() => {})
+afterEach(() => {
+  logSpy.mockClear()
+})
 
 beforeAll(() => {
   axios.post.mockResolvedValue(resp)
@@ -24,6 +33,7 @@ beforeAll(() => {
 
 afterAll(() => {
   jest.clearAllMocks()
+  logSpy.mockRestore()
 })
 
 test('Should check auth states', async () => {
@@ -33,6 +43,7 @@ test('Should check auth states', async () => {
 
 describe('If no github account found', () => {
   beforeAll(() => {
+    checkAuth.mockResolvedValue({ redoShieldAuth: false })
     checkAndSetAuth.mockResolvedValue({ redoAuth: true })
   })
   test('Should start github login', async () => {

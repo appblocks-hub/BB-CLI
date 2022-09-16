@@ -8,11 +8,8 @@
  */
 
 const inquirer = require('inquirer')
-// const chalk = require('chalk')
 const inquirerFileTree = require('inquirer-file-tree-selection-prompt')
 const { Command, Option } = require('commander')
-// const Spinnies = require('spinnies')
-// const chalk = require('chalk')
 
 // UTILS
 const customList = require('../utils/customList')
@@ -33,6 +30,8 @@ const stop = require('../subcommands/stop')
 const create = require('../subcommands/create')
 const sync = require('../subcommands/sync')
 const pull = require('../subcommands/pull')
+const login = require('../subcommands/login')
+const connect = require('../subcommands/connect')
 const push_config = require('../subcommands/push_config')
 const exec = require('../subcommands/exec')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
@@ -42,13 +41,15 @@ const { preActionChecks } = require('../utils/preActionRunner')
 const publish = require('../subcommands/publish')
 const createApp = require('../subcommands/createApp')
 const appPublish = require('../subcommands/appPublish')
+const mark = require('../subcommands/mark')
+const logout = require('../subcommands/logout')
+const disconnect = require('../subcommands/disconnect')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
 process.global = { cwd: process.cwd() }
 
 async function init() {
-  // const spinnies = new Spinnies()
   const program = new Command().hook('preAction', async (_, actionCommand) => {
     const subcommand = actionCommand.parent.args[0]
     await preActionChecks(subcommand)
@@ -58,15 +59,19 @@ async function init() {
   // TODO -- get version properly
   program.version(packageJson.version)
 
-  program.command('connect', 'to connect to service', {
-    executableFile: '../subcommands/connect',
-  })
-  // program.command('logout', 'to logout of appblock', {
-  //   executableFile: '../subcommands/logout',
-  // })
-  program.command('login', 'to login to appblock server', {
-    executableFile: '../subcommands/login',
-  })
+  program.command('disconnect').argument('<service>', 'service to disconnect (github)').action(disconnect)
+  program
+    .command('connect')
+    .argument('<service>', 'Name of service to connect')
+    .option('-f, --force', 'force connect will remove existing tokens and restart login')
+    .action(connect)
+
+  program.command('logout').description('to logout of shield').action(logout)
+
+  program
+    .command('login')
+    .option(' --no-localhost', 'copy and paste a code instead of starting a local server for authentication')
+    .action(login)
 
   program
     .command('create')
@@ -125,6 +130,7 @@ async function init() {
   program.command('pull').argument('<component>', 'name of component').action(pull)
 
   program.command('push-config').action(push_config)
+
   program
     .command('push')
     .argument('[block name]', 'Name of block to push')
@@ -139,9 +145,12 @@ async function init() {
     .option('-in,--inside <blocks...>', 'inside which block?')
     .action(exec)
 
-  program.command('mark', 'to create dependencies', {
-    executableFile: '../subcommands/mark',
-  })
+  program
+    .command('mark')
+    .option('-d,--dependency <blocks...>', 'Create dependency')
+    .option('-c,--composability <blocks...>', 'Create composability')
+    .description('to create dependencies')
+    .action(mark)
 
   program
     .command('add-tags')

@@ -7,36 +7,40 @@
 
 /* eslint-disable */
 
-const get = jest.fn((k) => {
-  return store[k]
-})
-
 const set = jest.fn()
 
 const mockDelete = jest.fn((k) => delete store[k])
 
 const store = {
+  githubUserName: 'arjun',
   githubUserId: 'arjun',
   githubUserToken: '12345',
 }
 const config = {
-  get,
+  get: jest.fn((k) => {
+    return store[k]
+  }),
   set,
   size: 0,
   set updateSize(config) {
     this.size = config
   },
   delete: jest.fn((k) => delete store[k]),
-  addGitUser: (name, token) => {
-    store['githubUserId'] = name
-    store['githubUserToken'] = token
+  addGitUser: (name, id, token) => {
+    store.githubUserName = name
+    store.githubUserId = id
+    store.githubUserToken = token
     config.updateSize = Object.keys(store).length
   },
   removeGitUser: () => {
+    delete store.githubUserName
     delete store.githubUserId
     delete store.githubUserToken
     config.updateSize = Object.keys(store).length
   },
+  store: () => {
+    return store
+  },
 }
 
-module.exports = { configstore: config, get }
+module.exports = { configstore: config }

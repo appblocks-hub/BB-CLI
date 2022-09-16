@@ -21,8 +21,14 @@ const { runBash } = require('./bash')
 const { checkPnpm } = require('../utils/pnpmUtils')
 const pullAppblock = require('../utils/pullAppblock')
 const { spinnies } = require('../loader')
-const { getBlockDetails } = require('../utils/registryUtils')
+const {
+  getBlockDetails,
+  getBlockMetaData,
+  getAllBlockVersions,
+  addANewBlockVariant,
+} = require('../utils/registryUtils')
 const { createDirForType } = require('../utils/fileAndFolderHelpers')
+const { feedback } = require('../utils/cli-feedback')
 
 const pull = async (componentName, { cwd = '.' }) => {
   /**
@@ -34,17 +40,16 @@ const pull = async (componentName, { cwd = '.' }) => {
 
   try {
     const resp = await getBlockDetails(componentName)
+
     if (resp.status === 204) {
       spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
-      process.exit(1)
+      return
     }
     const { data } = resp
     if (data.err) {
-      throw new Error('Something went wrong from our side\n', data.msg).message
+      throw new Error(data.msg).message
     }
-    /**
-     * @type {blockMetaData}
-     */
+
     metaData = data.data
 
     appConfig.init(cwd, null, 'pull')
@@ -65,10 +70,10 @@ const pull = async (componentName, { cwd = '.' }) => {
     }
   } catch (err) {
     // console.log('Something went wrong while getting block details..')
-    spinnies.fail('blockExistsCheck', { text: `${err}` })
-    console.log('\n')
-    console.log(err)
-    process.exit(1)
+    spinnies.fail('blockExistsCheck', { text: `Something went wrong from our side` })
+    feedback({ type: 'info', message: `${err}` })
+    // process.exit(1)
+    return
   }
 
   spinnies.succeed('blockExistsCheck', { text: `${componentName} is available` })
@@ -85,7 +90,7 @@ const pull = async (componentName, { cwd = '.' }) => {
     const createCustomVersion = await wantToCreateNewVersion(metaData.BlockName)
     if (createCustomVersion) {
       const availableName = await checkBlockNameAvailability(metaData.BlockName, true)
-      const { clonePath, cloneDirName } = await createBlock(
+      const { clonePath, cloneDirName, blockFinalName } = await createBlock(
         availableName,
         availableName,
         metaData.BlockType,
@@ -101,6 +106,45 @@ const pull = async (componentName, { cwd = '.' }) => {
         directory: path.relative(cwd, path.resolve(clonePath, cloneDirName)),
         meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
       })
+      // Inform registry about the new variant
+      // TODO: change too many network calls
+
+      // get the latest version of parent
+      const c = await getBlockMetaData(metaData.ID)
+      if (c.data.err) {
+        throw new Error(c.data.msg).message
+      }
+      const PV = c.data.data.version
+      const parent_id = metaData.ID
+
+      // get the version id of the latest verion of parent
+      const dx = await getAllBlockVersions(metaData.ID)
+      if (dx.data.err) {
+        throw new Error(dx.data.msg).message
+      }
+      const fil = dx.data.data.filter((v) => v.version_number === PV)
+      const version_id = fil[0].id
+
+      // get the id of new variant
+      const d = await getBlockDetails(blockFinalName)
+      if (d.status === 204) {
+        spinnies.fail('blockExistsCheck', { text: `${blockFinalName} doesn't exists in block repository` })
+        return
+      }
+      if (d.data.err) {
+        throw new Error(d.data.msg).message
+      }
+      const block_id = d.data.data.ID
+
+      // request registry for new variant creation
+      const rt = await addANewBlockVariant({ block_id, version_id, parent_id })
+      if (rt.data.err === false) {
+        feedback({ type: 'success', message: rt.data.msg })
+      } else {
+        feedback({ type: 'error', message: 'Variant creation failed' })
+        feedback({ type: 'error', message: rt.data.msg })
+      }
+
       pulledBlockPath = path.resolve(clonePath, cloneDirName)
     } else {
       const existingBlock = appConfig.getBlock(componentName)

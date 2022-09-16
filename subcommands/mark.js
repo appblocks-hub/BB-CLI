@@ -7,112 +7,107 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { Command } = require('commander')
 const { readFileSync } = require('fs')
 const chalk = require('chalk')
 const axios = require('axios')
 const { getBlockDetails } = require('../utils/registryUtils')
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { appBlockAddBlockMapping } = require('../utils/api')
-const { spinner } = require('../loader')
 const { getShieldHeader } = require('../utils/getHeaders')
+const { spinnies } = require('../loader')
+const { feedback } = require('../utils/cli-feedback')
 
-const program = new Command()
+const mark = async (options) => {
+  const { dependency, composability } = options
 
-program
-  .option('-d,--dependency <blocks...>', 'Create dependency')
-  .option('-c,--composability <blocks...>', 'Create composability')
-
-const mark = async (args) => {
-  program.parse(args)
-  const { dependency, composability } = program.opts()
-  // console.log(dependency, composability)
-
-  spinner.start('Starting..')
   let blockOne
   let blockTwo
   let relationType
 
+  if (dependency && composability) {
+    feedback({ type: 'error', message: 'Not possible to mark as dependent and composible' })
+    return
+  }
+
   if (dependency) {
     if (dependency.length > 2) {
-      console.log(chalk.italic.dim('Only the first two blocks will be used.'))
+      feedback({ type: 'info', message: 'Only the first two blocks will be used.' })
     }
 
     relationType = 1
     ;[blockOne, blockTwo] = dependency
   } else if (composability) {
     if (composability.length > 2) {
-      console.log(chalk.italic.dim('Only the first two blocks will be used.'))
+      feedback({ type: 'info', message: 'Only the first two blocks will be used.' })
     }
 
     relationType = 2
     ;[blockOne, blockTwo] = composability
   } else {
-    console.log('\nNo option provided')
-    console.log(`Use ${chalk.italic.dim('--dependency')} or ${chalk.italic.dim('--composability')} `)
-    console.log(`\nUse ${chalk.italic.dim('block mark --help')} to learn to use mark command`)
-
-    process.exit(0)
+    feedback({ type: 'warn', message: 'No options provided' })
+    feedback({
+      type: 'info',
+      message: `Use ${chalk.italic.dim('--dependency')} or ${chalk.italic.dim('--composability')}`,
+    })
+    feedback({ type: 'info', message: `Use ${chalk.italic.dim('block mark --help')} to learn to use mark command` })
+    return
   }
 
-  // console.log(blockOne, blockTwo, relationType)
   let appConfig
 
-  spinner.start('Checking auths..')
-  await ensureUserLogins()
   try {
     appConfig = JSON.parse(readFileSync('appblock.config.json'))
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.log(chalk.red(`appblock.config.json missing`))
-      process.exit(1)
+      feedback({ type: 'error', message: 'appblock.config.json missing' })
+      return
     }
-    console.log('Something went wrong\n')
-    console.log(err)
-    process.exit(1)
+    feedback({ type: 'error', message: 'Something went wrong when reading appblock.config.json' })
+    feedback({ type: 'info', message: err.message })
+    return
   }
   const appblock = appConfig.name
   const { dependencies } = appConfig
+
   if (dependencies) {
     if (!dependencies[blockOne]) {
-      console.log(`Can't find ${blockOne} in ${appblock}'s depenedencies..`)
-      process.exit(1)
+      feedback({ type: 'error', message: `Can't find ${blockOne} in ${appblock}'s depenedencies..` })
+      return
     }
     if (!dependencies[blockTwo]) {
-      console.log(`Can't find ${blockTwo} in ${appblock}'s depenedencies..`)
-      process.exit(1)
+      feedback({ type: 'error', message: `Can't find ${blockTwo} in ${appblock}'s depenedencies..` })
+      return
     }
   }
 
   const blockNames = [blockOne, blockTwo, appblock]
   const blockMetaDatas = {}
 
+  spinnies.add('mark', { text: 'Starting..' })
+  spinnies.update('mark', { text: 'Getting block details' })
+
   await Promise.all(blockNames.map((v) => getBlockDetails(v)))
     .then((values) => {
       values.forEach((v, i) => {
         if (v.status === 204) {
-          console.log(`\n ${chalk.whiteBright(blockNames(i))} doesn't exist in block repository!`)
+          feedback({ type: 'error', message: `${blockNames(i)} doesn't exist in block repository!` })
           process.exit(1)
         } else {
           if (v.data.err) {
-            console.log(v.data.msg)
+            feedback({ type: 'error', message: v.data.msg })
             process.exit(1)
           }
           blockMetaDatas[blockNames[i]] = v.data.data
         }
       })
-
-      // console.log(blockMetaDatas)
     })
-    .catch((err) => console.log(err))
-  // console.log('blockone type', blockMetaDatas[blockOne].BlockType)
-  // console.log('blocktwo type', blockMetaDatas[blockTwo].BlockType)
+    .catch((err) => {
+      feedback({ type: 'error', message: err.message })
+      process.exit(1)
+    })
 
   let isAPI = false
   if ([4, 6].includes(blockMetaDatas[blockOne].BlockType) || [4, 6].includes(blockMetaDatas[blockTwo].BlockType)) {
-    // console.log('one in fn')
     if ([2, 3].includes(blockMetaDatas[blockOne].BlockType) || [2, 3].includes(blockMetaDatas[blockTwo].BlockType)) {
-      // console.log('one in ui as well')
       isAPI = true
     }
   }
@@ -125,22 +120,20 @@ const mark = async (args) => {
     relation_type: relationType,
   }
 
-  // console.log(data)
-  const headers = getShieldHeader()
-  spinner.start('Connecting to registry')
+  spinnies.update('mark', { text: 'Connecting to registry' })
   try {
-    const resp = await axios.post(appBlockAddBlockMapping, { ...data }, { headers })
+    const resp = await axios.post(appBlockAddBlockMapping, { ...data }, { headers: getShieldHeader() })
     if (resp.data.err) {
-      console.log(`\n Somthing went wrong at our end\n`)
-      console.log(resp.data.msg)
+      spinnies.fail('mark', { text: 'Something went wrong at our end' })
+      feedback({ type: 'error', message: resp.data.err })
+      feedback({ type: 'info', message: resp.data.msg })
     } else {
-      spinner.succeed('done')
-      console.log(chalk.green('Successfully mapped..'))
+      spinnies.succeed('mark', { text: 'Successfully mapped..' })
     }
   } catch (err) {
-    console.log('Something went south while creating block mapping')
-    console.log(err.message)
+    spinnies.fail('mark', { text: 'Something went south while creating block mapping' })
+    feedback({ type: 'info', message: err.message })
   }
 }
-// To avoid calling push twice on tests
-if (process.env.NODE_ENV !== 'test') mark(process.argv)
+
+module.exports = mark

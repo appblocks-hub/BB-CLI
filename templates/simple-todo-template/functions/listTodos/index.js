@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { createFileSync, sendResponse } from './utils.js'
-import { env } from 'yah-node-sdk'
+import { env } from '@appblocks/node-sdk'
 
 // Init environment
 env.init()

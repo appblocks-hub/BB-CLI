@@ -16,9 +16,8 @@ const { Subscriber } = require('rxjs')
 /* eslint-enable no-unused-vars */
 
 const { appBlockCheckBlockNameAvailability } = require('./api')
+const { isValidBlockName } = require('./blocknameValidator')
 const { getShieldHeader } = require('./getHeaders')
-
-const headers = getShieldHeader()
 
 /**
  * @type {Subscriber}
@@ -26,11 +25,10 @@ const headers = getShieldHeader()
 let Emitter
 
 const validateFn = function test(ans1) {
-  const regex = /^[a-zA-Z-_0-9]+$/
-  if (regex.test(ans1)) {
+  if (isValidBlockName(ans1)) {
     return true
   }
-  return 'Block name should only contain alphabets, _ , -'
+  return 'Block name should only contain alphabets,numbers, _ & -'
 }
 
 const stream = new Observable((obs) => {
@@ -51,7 +49,7 @@ async function check(name) {
       {
         block_name: name,
       },
-      { headers }
+      { headers: getShieldHeader() }
     )
     // console.log(res.data, 'in check')
     return !res.data.err

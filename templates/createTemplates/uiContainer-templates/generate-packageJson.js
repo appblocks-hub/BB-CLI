@@ -17,7 +17,7 @@ const generateUiContainerPackageJson = (name) => `
       "webpack": "5.52.0",
       "webpack-cli": "4.10.0",
       "webpack-dev-server": "4.1.0",
-      "yah-node-sdk": "^0.1.0"
+      "@appblocks/node-sdk": "^0.1.0"
     },
     "scripts": {
       "start": "webpack-dev-server",
@@ -29,7 +29,7 @@ const generateUiContainerPackageJson = (name) => `
       "react": "^17.0.2",
       "react-dom": "^17.0.2",
       "react-redux": "^7.2.5",
-      "yah-js-sdk": "^0.1.4"
+      "@appblocks/js-sdk": "^0.1.4"
     },
     "keywords": [],
     "author": "",

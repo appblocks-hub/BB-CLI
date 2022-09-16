@@ -8,7 +8,6 @@
 const inquirer = require('inquirer')
 const axios = require('axios')
 const chalk = require('chalk')
-const Spinnies = require('spinnies')
 // const { execSync, exec } = require('child_process')
 // const { getTemplate } = require('./questionPrompts')
 const { cloneTemplateRepository, createRepository } = require('./Mutations')
@@ -19,6 +18,7 @@ const checkBlockNameAvailability = require('./checkBlockNameAvailability')
 const { getGitHeader } = require('./getHeaders')
 const { configstore } = require('../configstore')
 const { GitManager } = require('./gitmanager')
+const { spinnies } = require('../loader')
 
 /**
  *
@@ -31,8 +31,6 @@ const { GitManager } = require('./gitmanager')
  */
 // eslint-disable-next-line consistent-return
 async function createRepo(username, ownerId, ownerType, orgName, prefix, blockShortName, _fromPull, clonePath) {
-  const spinnies = new Spinnies()
-
   /**
    * @type { Null|String} The user selected template repo
    */

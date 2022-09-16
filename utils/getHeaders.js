@@ -11,6 +11,7 @@ const getShieldHeader = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${configstore.get('appBlockUserToken')}`,
 })
+
 const getGitHeader = () => ({
   'Content-Type': 'application/json',
   Authorization: `bearer ${configstore.get('githubUserToken')}`,

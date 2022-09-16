@@ -58,3 +58,5 @@
  * @property {blockSource} source
  * @property {dependencies} dependencies
  */
+
+module.exports = {}

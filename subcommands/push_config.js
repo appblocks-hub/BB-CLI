@@ -7,7 +7,7 @@
 
 const { default: axios } = require('axios')
 const chalk = require('chalk')
-const Spinnies = require('spinnies')
+const { spinnies } = require('../loader')
 const { appBlockUpdateAppConfig } = require('../utils/api')
 const { appConfig } = require('../utils/appconfigStore')
 const { getShieldHeader } = require('../utils/getHeaders')
@@ -15,9 +15,6 @@ const { getBlockDetails } = require('../utils/registryUtils')
 
 const push_config = async () => {
   await appConfig.init()
-
-  const spinnies = new Spinnies()
-
   const name = appConfig.getName()
 
   spinnies.add('pushConfig', { text: `Getting details of ${name}` })
@@ -52,10 +49,9 @@ const push_config = async () => {
     block_id: ID,
     app_config: appConfig.getAppConfig(),
   }
-  const headers = getShieldHeader()
   spinnies.update('pushConfig', { text: 'Pushing..' })
   try {
-    await axios.post(appBlockUpdateAppConfig, { ...data }, { headers })
+    await axios.post(appBlockUpdateAppConfig, { ...data }, { headers: getShieldHeader() })
     spinnies.succeed('pushConfig', { text: 'Appconfig pushed!' })
   } catch (err) {
     spinnies.fail('pushConfig', { text: 'Failed!' })

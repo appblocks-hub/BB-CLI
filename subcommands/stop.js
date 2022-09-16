@@ -70,7 +70,3 @@ async function stopBlock(name) {
 }
 
 module.exports = stop
-// To avoid calling Init twice on tests
-// if (process.env.NODE_ENV !== 'test') Init(process.argv)
-
-// module.exports = Init

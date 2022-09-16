@@ -6,7 +6,7 @@
  */
 
 const { configstore } = require('../configstore')
-const { getYahiloSignedInUser } = require('./getSignedInUser')
+const { getShieldSignedInUser } = require('./getSignedInUser')
 
 /**
  * @typedef returnObject
@@ -23,7 +23,7 @@ async function checkAuth() {
   const token = configstore.get('appBlockUserToken', '')
   if (token) {
     try {
-      const user = await getYahiloSignedInUser(token)
+      const user = await getShieldSignedInUser(token)
       if (user.user === configstore.get('appBlockUserName', '')) {
         return noredo
       }

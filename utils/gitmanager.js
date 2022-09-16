@@ -170,6 +170,10 @@ class GitManager {
     return this._run('status', [])
   }
 
+  setUpstreamAndPush(upstreamBranch) {
+    return this._run('push -u', [this.remote], upstreamBranch || 'main')
+  }
+
   setLocalUsername(name) {
     return this._run('config', ['--local', 'user.name', name])
   }

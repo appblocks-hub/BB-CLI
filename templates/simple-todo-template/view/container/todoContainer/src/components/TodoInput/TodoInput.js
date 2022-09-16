@@ -1,5 +1,5 @@
 import React from 'react'
-import { useFederatedComponent } from 'yah-js-sdk'
+import { useFederatedComponent } from '@appblocks/js-sdk'
 
 const TodoInput = (props) => {
   const system = {

@@ -4,7 +4,7 @@ import webpack from 'webpack'
 
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 
-import { env } from 'yah-node-sdk'
+import { env } from '@appblocks/node-sdk'
 env.init()
 
 const __dirname = path.resolve()

@@ -8,9 +8,9 @@
 /* eslint-disable */
 
 const getGithubSignedInUser = jest.fn().mockResolvedValue({ user: { userId: 'r', userName: 'arjun' }, err: null })
-const getYahiloSignedInUser = jest.fn()
+const getShieldSignedInUser = jest.fn()
 
 module.exports = {
   getGithubSignedInUser,
-  getYahiloSignedInUser,
+  getShieldSignedInUser,
 }

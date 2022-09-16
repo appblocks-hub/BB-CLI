@@ -10,7 +10,7 @@ const fs = require('fs')
 
 const configFile = '/appblock.config.json'
 
-async function getYahConfig(rootDir) {
+async function getBBConfig(rootDir) {
   const root = rootDir || '.'
   const appBlockData = JSON.parse(await fsPromise.readFile(root + configFile, 'utf8'))
   return appBlockData
@@ -18,7 +18,7 @@ async function getYahConfig(rootDir) {
 
 async function addBlock(name, blockData) {
   const root = '.'
-  const appConfig = await getYahConfig()
+  const appConfig = await getBBConfig()
   if (!appConfig.dependencies) {
     appConfig.dependencies = {}
   }
@@ -31,13 +31,13 @@ async function addBlock(name, blockData) {
   })
 }
 
-async function upsertYahConfig(name, blockData) {
+async function upsertBBConfig(name, blockData) {
   const root = '.'
-  const appConfig = await getYahConfig()
+  const appConfig = await getBBConfig()
   appConfig[name] = blockData
   fs.writeFileSync(root + configFile, JSON.stringify(appConfig), {
     encoding: 'utf8',
   })
 }
 
-module.exports = { getYahConfig, addBlock, upsertYahConfig }
+module.exports = { getBBConfig, addBlock, upsertBBConfig }

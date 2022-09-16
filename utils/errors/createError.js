@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { YahError } = require('./baseError')
+const { BBError } = require('./baseError')
 
-class CreateError extends YahError {
+class CreateError extends BBError {
   constructor(message) {
     super(`${message}`)
   }

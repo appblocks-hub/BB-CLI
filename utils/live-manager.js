@@ -73,7 +73,7 @@
 // }
 // async function writeLiveData() {
 //   console.log('writing livedata from config....')
-//   const config = await configManager.getYahConfig('.')
+//   const config = await configManager.getBBConfig('.')
 //   if (config) {
 //     console.log('found appblock config....')
 //     const dependencies = config.dependencies || {}

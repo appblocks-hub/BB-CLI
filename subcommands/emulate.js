@@ -5,16 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// #!/usr/bin/env node
 const { runBash, runBashLongRunning } = require('./bash')
 const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-manager')
 
 global.rootDir = process.cwd()
-// program.argument('<project-directory>', 'name of project')
-// INFO - adding a directory argument would want the program
-// to change directory midway before starting to create folder
-// structure..
-// program.argument('[name]', 'name ofa block')
 
 const emulateNode = async (port) => {
   try {
@@ -37,9 +31,4 @@ const emulateNode = async (port) => {
   }
 }
 
-// emulateNode()
-// To avoid calling Init twice on tests
-// if (process.env.NODE_ENV !== 'test') Init(process.argv)
-
-// module.exports = Init
 module.exports = emulateNode

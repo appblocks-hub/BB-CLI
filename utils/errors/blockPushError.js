@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { YahError } = require('./baseError')
+const { BBError } = require('./baseError')
 
-class BlockPushError extends YahError {
+class BlockPushError extends BBError {
   constructor(path, block, message, resetHead) {
     super(`${message} in ${path}`)
     this.blockPath = path

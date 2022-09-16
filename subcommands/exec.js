@@ -20,7 +20,7 @@ function pexec(cmd, options, name) {
     })
   })
 }
-const yahexec = async (command, options) => {
+const bbexec = async (command, options) => {
   // const supportedCommands = ['git', 'ls', 'l']
   // const supportedArguments = { git: ['clone', 'pull', 'branch', 'push', 'fetch', 'status'], ls: ['-a'], l: ['-a'] }
   // const [cmd, args] = command.split(' ')
@@ -76,4 +76,4 @@ const yahexec = async (command, options) => {
   })
 }
 
-module.exports = yahexec
+module.exports = bbexec

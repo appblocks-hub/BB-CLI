@@ -67,7 +67,7 @@ async function getGithubSignedInUser(TOKEN) {
   }
 }
 
-async function getYahiloSignedInUser(TOKEN) {
+async function getShieldSignedInUser(TOKEN) {
   const user = { token: TOKEN }
   const url = `${appBlockOrigin}/device/get-email`
   const headers = {
@@ -94,4 +94,4 @@ async function getYahiloSignedInUser(TOKEN) {
 
   return user
 }
-module.exports = { getGithubSignedInUser, getYahiloSignedInUser }
+module.exports = { getGithubSignedInUser, getShieldSignedInUser }

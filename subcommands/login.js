@@ -7,41 +7,29 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const chalk = require('chalk')
-const { Command } = require('commander')
 const { loginWithAppBlock } = require('../auth')
 const { configstore } = require('../configstore')
-const { getYahiloSignedInUser } = require('../utils/getSignedInUser')
+const { feedback } = require('../utils/cli-feedback')
+const { getShieldSignedInUser } = require('../utils/getSignedInUser')
 
-const program = new Command()
-
-program.option(' --no-localhost', 'copy and paste a code instead of starting a local server for authentication')
-
-const login = async (args) => {
-  program.parse(args)
-  // const args = program.args;
-
+const login = async (options) => {
   // Check if already logged in to shield
   const presentTOKEN = configstore.get('appBlockUserToken', '')
 
   if (presentTOKEN) {
-    const user = await getYahiloSignedInUser(presentTOKEN)
+    const user = await getShieldSignedInUser(presentTOKEN)
     if (user.user === configstore.get('appBlockUserName', '')) {
       console.log(`Already signed in as ${user.user}`)
       return
     }
   }
-  const { localhost } = program.opts()
+  const { localhost } = options
   const { data } = await loginWithAppBlock(localhost)
   configstore.set('appBlockUserToken', data.access_token)
-  const user = await getYahiloSignedInUser(data.access_token)
+  const user = await getShieldSignedInUser(data.access_token)
   configstore.set('appBlockUserName', user.user)
 
-  console.log(chalk.green(`Successfully logged in as ${user.user}`))
-  // console.log(user)
+  feedback({ type: 'success', message: `Successfully logged in as ${user.user}` })
 }
 
-// To avoid calling create twice on tests
-if (process.env.NODE_ENV !== 'test') login(process.argv)
-
-// module.exports = login
+module.exports = login

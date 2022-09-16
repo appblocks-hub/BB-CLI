@@ -5,34 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const chalk = require('chalk')
 const path = require('path')
 const { createFileSync } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, tryGitInit } = require('./gitCheckUtils')
 const { confirmationPrompt } = require('./questionPrompts')
-const { getBlockDetails, getAppConfigFromRegistry } = require('./registryUtils')
+const { getBlockDetails, getConfigFromRegistry } = require('./registryUtils')
 
-async function getConfigFromRegistry(id) {
-  //   console.log(id)
-  try {
-    const res = await getAppConfigFromRegistry(id)
-    if (res.status === 204) {
-      console.log(`No appconfig found in registry.`)
-      return null
-    }
-    if (res.data.err) {
-      console.log(chalk.dim(res.data.msg))
-      console.log(chalk.red('Failed to fetch config file..'))
-      console.log('Please try again after some time')
-      return null
-    }
-    return res.data.data.app_config
-  } catch (err) {
-    console.log(chalk.dim(err.message))
-    console.log('Something went wrong, Please try again later')
-    return null
-  }
-}
 const pullAppblock = async (name) => {
   const ID = await getBlockDetails(name)
     .then((res) => {

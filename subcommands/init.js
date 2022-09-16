@@ -31,12 +31,17 @@ const create = require('./create')
 const { configstore } = require('../configstore')
 const { GitManager } = require('../utils/gitmanager')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
+const { isValidBlockName } = require('../utils/blocknameValidator')
+const { feedback } = require('../utils/cli-feedback')
 
 const Init = async (appblockName) => {
   const templatesPath = path.join(__dirname, '..', 'templates', 'simple-todo-template')
   // const packagesPath = path.join(__dirname, '..', 'packages')
-  const componentName = appblockName || (await getBlockName())
-
+  let componentName = appblockName
+  if (!isValidBlockName(componentName)) {
+    feedback({ type: 'warn', message: `${componentName} is not a valid name` })
+    componentName = await getBlockName()
+  }
   // if dir is clean, create a config file with name for configstore to
   // initialize..
 
@@ -113,7 +118,7 @@ const Init = async (appblockName) => {
   await Git.newBranch('main')
   await Git.stageAll()
   await Git.commit('initial app commit')
-  await Git.push('main')
+  await Git.setUpstreamAndPush('main')
 
   appConfig.init(path.resolve(blockFinalName))
 
@@ -289,58 +294,49 @@ const Init = async (appblockName) => {
               if (Components[v] !== v) {
                 // console.log(`\n!!! Name Change Detected`)
                 // console.log(`${v} is changed to ${Components[v]}`)
-                const re = new RegExp(v, 'gi')
+                const oldName = v
+                const newName = Components[v]
+                /**
+                 * @type {Object} Regx to match all old component name
+                 */
+                const regx1 = new RegExp(oldName, 'gi')
+                /**
+                 * @type {Object} Regex to match function name
+                 */
+                const regx2 = new RegExp(`(?<=const\\s)${newName}(?=\\s=)`, 'gi')
+                /**
+                 * @type {Object} Regx to match default export function name
+                 */
+                const regx3 = new RegExp(`(?<=export\\sdefault\\s)${newName}`, 'gi')
 
-                // Renaming in components folder
+                // Rename the component folder eg. todoInput -> todoInputOne
+                /**
+                 *  /src/components
+                 * @type {String} path to components folder
+                 */
+                const p1 = path.resolve(p, localDirName, 'src', 'components')
+                renameSync(path.join(p1, capitalizeFirstLetter(v)), path.join(p1, capitalizeFirstLetter(newName)))
+
+                // Renaming the componet File eg. todoInputOne/todoInput.js -> todoInputOne/todoInputOne.js
+                /**
+                 * /src/components/*
+                 * @type {string} path to folders inside components folder
+                 */
+                const p12 = path.join(p1, capitalizeFirstLetter(newName))
                 renameSync(
-                  path.resolve(p, localDirName, 'src', 'components', capitalizeFirstLetter(`${v}`)),
-                  path.resolve(p, localDirName, 'src', 'components', capitalizeFirstLetter(`${Components[v]}`))
+                  path.join(p12, capitalizeFirstLetter(`${oldName}.js`)),
+                  path.join(p12, capitalizeFirstLetter(`${newName}.js`))
                 )
 
-                // Renaming the componet File
-                renameSync(
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    capitalizeFirstLetter(`${v}.js`)
-                  ),
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    capitalizeFirstLetter(`${Components[v]}.js`)
-                  )
-                )
-
-                console.log(`Replacing ${v} inside componets to ${Components[v]}`)
-                const componetJsFile = readFileSync(
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    capitalizeFirstLetter(`${Components[v]}.js`)
-                  ),
-                  { encoding: 'utf8' }
-                )
+                console.log(`Replacing ${oldName} inside componets to ${newName}`)
+                const p12a = path.join(p12, capitalizeFirstLetter(`${newName}.js`))
+                const componetJsFile = readFileSync(p12a, { encoding: 'utf8' })
                 writeFileSync(
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    capitalizeFirstLetter(`${Components[v]}.js`)
-                  ),
+                  p12a,
                   componetJsFile
-                    .replace(re, Components[v])
-                    .replace(`${Components[v]}`, capitalizeFirstLetter(Components[v])),
+                    .replace(regx1, newName)
+                    .replace(regx2, capitalizeFirstLetter(newName))
+                    .replace(regx3, capitalizeFirstLetter(newName)),
                   // The env is created as BLOCK_ENV_URL_todoInput -> BLOCK_ENV_URL_ANew if new name is aNew,
                   // That has to change to aNew, because env is generated as BLOCK_ENV_URL_aNew
                   // Replace all first and then change the first occurence, as it should the export name
@@ -349,27 +345,10 @@ const Init = async (appblockName) => {
 
                 // Replace inside the index file in component
                 // Eg: index.js inside components/TodoInput/
-                const indexInsideComponet = readFileSync(
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    `index.js`
-                  ),
-                  { encoding: 'utf8' }
-                )
+                const indexInsideComponet = readFileSync(path.join(p12, 'index.js'), { encoding: 'utf8' })
                 writeFileSync(
-                  path.resolve(
-                    p,
-                    localDirName,
-                    'src',
-                    'components',
-                    capitalizeFirstLetter(`${Components[v]}`),
-                    `index.js`
-                  ),
-                  indexInsideComponet.replace(re, capitalizeFirstLetter(Components[v])),
+                  path.join(p12, 'index.js'),
+                  indexInsideComponet.replace(regx1, capitalizeFirstLetter(newName)),
                   { encoding: 'utf8' }
                 )
 
@@ -377,7 +356,7 @@ const Init = async (appblockName) => {
                 const cppjs = readFileSync(path.resolve(p, localDirName, 'src', 'App.js'), { encoding: 'utf8' })
                 writeFileSync(
                   path.resolve(p, localDirName, 'src', 'App.js'),
-                  cppjs.replace(re, capitalizeFirstLetter(Components[v])),
+                  cppjs.replace(regx1, capitalizeFirstLetter(newName)),
                   { encoding: 'utf8' }
                 )
               }
@@ -423,8 +402,5 @@ const Init = async (appblockName) => {
     process.kill()
   })
 }
-
-// To avoid calling Init twice on tests
-// if (process.env.NODE_ENV !== 'test') Init(process.argv)
 
 module.exports = Init

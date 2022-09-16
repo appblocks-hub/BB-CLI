@@ -5,11 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-class YahError extends Error {
+class BBError extends Error {
   constructor(message) {
     super(message)
     this.name = this.constructor.name
   }
 }
 
-module.exports = { YahError }
+module.exports = { BBError }

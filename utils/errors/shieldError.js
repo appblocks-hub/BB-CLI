@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { YahError } = require('./baseError')
+const { BBError } = require('./baseError')
 
-class ShieldError extends YahError {}
+class ShieldError extends BBError {}
 
 module.exports = { ShieldError }

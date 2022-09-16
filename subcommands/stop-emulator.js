@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Copyright (c) Appblocks. and its affiliates.
  *
@@ -19,8 +17,5 @@ console.log('-----------------------------------------------------------')
 console.log('-------------------------------------------Calling stop emulator...----------------')
 console.log('-----------------------------------------------------------')
 callStopEmulator()
-// To avoid calling Init twice on tests
-// if (process.env.NODE_ENV !== 'test') Init(process.argv)
 
-// module.exports = Init
 module.exports = stopEmulator

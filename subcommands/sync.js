@@ -7,11 +7,11 @@
 
 const chalk = require('chalk')
 const fs = require('fs')
-const { readdir, readFile, rename, rm } = require('fs/promises')
+const { readdir, readFile, rm } = require('fs/promises')
 const path = require('path')
 const { blockTypes } = require('../utils/blockTypes')
-const { getBlockDirsIn } = require('../utils/fileAndFolderHelpers')
-const { getBlockDetails, getAppConfigFromRegistry } = require('../utils/registryUtils')
+const { getBlockDirsIn, moveFiles } = require('../utils/fileAndFolderHelpers')
+const { getBlockDetails, getConfigFromRegistry } = require('../utils/registryUtils')
 const { confirmationPrompt, getBlockName, readInput } = require('../utils/questionPrompts')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
@@ -22,6 +22,8 @@ const { diffShower, manualMerge } = require('../utils/syncUtils')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const createBlock = require('../utils/createBlock')
 const { offerAndCreateBlock } = require('../utils/sync-utils')
+const { appblockConfigSchema } = require('../utils/schema')
+const { feedback } = require('../utils/cli-feedback')
 
 /*
  *
@@ -34,29 +36,12 @@ const { offerAndCreateBlock } = require('../utils/sync-utils')
  *  6. Validate block.config.json with YUP, so it has all expected fields
  */
 
-const moveFolders = async (list) => {
-  // list is [] with {oldPath:'',newPath:'',name:''}
-  const report = []
-  for (let i = 0; i < list.length; i += 1) {
-    const d = list[i]
-    try {
-      await rename(d.oldPath, d.newPath)
-      report.push({ status: 'success', ...d })
-      // await unlink(d.oldPath)
-    } catch (err) {
-      report.push({ status: 'failed', msg: err.message, ...d })
-    }
-  }
-  console.log(report)
-}
-
 /**
  *
  * @param {[nrbt]} list
  * @returns
  */
 const offerAndRegisterBlocks = async (list) => {
-  console.log(JSON.stringify(list))
   if (list.length === 0) return []
   const ans = await confirmationPrompt({
     name: 'registerDirs',
@@ -74,9 +59,7 @@ const offerAndRegisterBlocks = async (list) => {
         message: `Should I register ${block.name}${list[i].sourcemismatch ? chalk.dim(`(source mismatch)`) : ``}`,
       })
       if (regIndBlock) {
-        if (isValidBlockName(block.name)) {
-          console.log(`${block.name} is a valid name`)
-        } else {
+        if (!isValidBlockName(block.name)) {
           block.name = await getBlockName()
           // console.log(block.name)
         }
@@ -175,9 +158,16 @@ const offerAndMoveBlocks = async (list) => {
     )
 
   console.log(summary)
-  await moveFolders(
-    summary.map((v) => ({ oldPath: v.currentLocation, newPath: path.resolve(v.expectedLocation), name: v.name }))
+  const t = await moveFiles(
+    true,
+    summary.map((v) => {
+      // make the directories beforehand to prevent moveFiles Fn from running
+      // into issues.
+      fs.mkdirSync(path.resolve(v.expectedLocation), { recursive: true })
+      return { oldPath: v.currentLocation, newPath: path.resolve(v.expectedLocation), name: v.name }
+    })
   )
+  console.log(t)
 }
 
 function cb(acc, v) {
@@ -186,11 +176,16 @@ function cb(acc, v) {
   return this.findIndex((p) => p === v) === -1 ? acc.concat(v) : acc
 }
 
+/**
+ * Gets a name from user and checks against the registry and returns block details or
+ * if user types 'exit' returns null
+ * @returns {import('../utils/jsDoc/types').blockMetaData?}
+ */
 async function getAndCheckAppName() {
-  let blockDetails = ''
+  let blockDetails
   await readInput({
     name: 'cablxnm',
-    message: 'Enter the appname',
+    message: `Enter the appname ${chalk.dim('(enter "exit" to quit)')}`,
     validate: async function test(ans) {
       if (!ans) return 'Should not be empty'
       if (ans === 'exit') return true
@@ -214,28 +209,8 @@ async function getAndCheckAppName() {
       return r
     },
   })
-  return blockDetails || 'exit'
+  return blockDetails || null
 }
-
-async function getConfigFromRegistry(id) {
-  try {
-    const res = await getAppConfigFromRegistry(id)
-    if (res.data.err) {
-      console.log(chalk.dim(res.data.msg))
-      console.log(chalk.red('Failed to fetch config file..'))
-      console.log('Please try again after some time')
-      // process.exit(1)
-      return null
-    }
-    return res.data.data.app_config
-  } catch (err) {
-    console.log(chalk.dim(err.message))
-    console.log('Something went wrong, Please try again later')
-    // process.exit(1)
-    return null
-  }
-}
-
 const sync = async () => {
   // INFO -- only surface level scanning, not recursively finding directories
   // If there are appblocks as a dependency,
@@ -258,52 +233,77 @@ const sync = async () => {
   let insideAppblock = false
   let appConfigFromRegistry = {}
   let appConfiginLocal = {}
+  const validationData = { isErrored: false, summary: [], detailedReport: [] }
 
   try {
     appConfiginLocal = await readFile('appblock.config.json', { encoding: 'utf8' }).then((d) => JSON.parse(d))
-    console.log('Inside Appblock directory..')
-    insideAppblock = true
+    feedback({ type: 'info', message: 'Found appblock.config.json' })
+    try {
+      appblockConfigSchema.validateSync(appConfiginLocal, { abortEarly: false })
+    } catch (err) {
+      validationData.summary = err.errors
+      validationData.isErrored = true
+      err.inner.forEach((e) =>
+        validationData.detailedReport.push({
+          path: e.path,
+          type: e.type,
+          value: e.value,
+          params: e.params,
+          inner: e.inner,
+          errors: e.errors,
+        })
+      )
+    }
+    if (appConfiginLocal.name && appConfiginLocal.type === 'appBlock') {
+      insideAppblock = true
+      const appid = await getBlockDetails(appConfiginLocal.name)
+        .then((res) => {
+          if (res.status === 204) {
+            appblockIsRegistered = false
+            return null
+          }
+          if (res.data.err) {
+            appblockIsRegistered = false
+            return null
+          }
+          // Make sure it is registered as appBlock, else unregistered
+          if (res.data.data.BlockType !== 1) {
+            return null
+          }
 
-    // console.log(appConfiginLocal.name, '\n 000')
-    // TODO -- validate appblock config shape here
-    const appid = await getBlockDetails(appConfiginLocal.name)
-      .then((res) => {
-        if (res.status === 204) {
-          appblockIsRegistered = false
-          return null
-        }
-        if (res.data.err) {
-          appblockIsRegistered = false
-          return null
-        }
-        // Make sure it is registered as appBlock, else unregistered
-        if (res.data.data.BlockType !== 1) {
-          return null
+          appblockIsRegistered = true
+          appblockDetails = { ...res.data.data } // will change to actual config later
+          return res.data.data.ID
+        })
+        .catch((err) => {
+          console.log(err)
+          feedback({ type: 'warn', message: 'Cannot moved forward with operation' })
+          process.exit(1)
+        })
+      if (appblockIsRegistered) {
+        feedback({ type: 'info', message: `${appConfiginLocal.name} is registered as an AppBlock.\n` })
+
+        const config = await getConfigFromRegistry(appid)
+        if (!config) {
+          /**
+           * Here it is okay to move forward without a config as we have a local valid config
+           * to work with. As opposed to case where user is providing the appBlock name, where
+           * it is necessary to get a config to move forward with the operation.
+           */
+          feedback({
+            type: 'info',
+            message: `Couldn't find a config associated with your app..Try pushing config first`,
+          })
         }
 
         appblockIsRegistered = true
-        appblockDetails = { ...res.data.data } // will change to actual config later
-        return res.data.data.ID
-      })
-      .catch((err) => {
-        console.log(err)
-      })
-    if (appblockIsRegistered) {
-      console.log(`\n${appConfiginLocal.name} is registered as an AppBlock.\n`)
-
-      const config = await getConfigFromRegistry(appid)
-      // console.log('---pulled config---')
-      // console.log(config)
-      if (!config) {
-        console.log(`Couldn't find a config associated with your app..Try pushing config first`)
-        // process.exit(1)
+        appConfigFromRegistry = config
+      } else {
+        feedback({ type: 'info', message: `${appConfiginLocal.name}` })
+        console.log(`\n${appConfiginLocal.name} is not registered.\n`)
       }
-
-      appblockIsRegistered = true
-      // eslint-disable-next-line no-unused-vars
-      appConfigFromRegistry = config
     } else {
-      console.log(`\n${appConfiginLocal.name} is not registered.\n`)
+      feedback({ type: 'error', message: `${validationData.summary.join('\n')}` })
     }
   } catch (err) {
     if (err.code === 'ENOENT') {
@@ -312,20 +312,28 @@ const sync = async () => {
         message: 'Are you trying to rebuild an already registered app',
       })
       if (ar) {
-        const findAppBlockWithName = await getAndCheckAppName()
-        if (findAppBlockWithName !== 'exit') {
-          // console.log(findAppBlockWithName)
-          appblockDetails = findAppBlockWithName
-          const config = await getConfigFromRegistry(findAppBlockWithName.ID)
-          if (!config) process.exit(1)
+        /** @type {import('../utils/jsDoc/types').blockMetaData?} */
+        let findAppBlockWithName = await getAndCheckAppName()
+
+        // Loop until user enters "exit" or gives a block name that is registered
+        // as appBlock and has a valid config in registry
+        for (; findAppBlockWithName !== null; ) {
+          appblockDetails = { ...findAppBlockWithName }
           appblockIsRegistered = true
-          // eslint-disable-next-line no-unused-vars
-          appConfigFromRegistry = config
+          feedback({ type: 'info', message: `${findAppBlockWithName.BlockName} is registered` })
+          const config = await getConfigFromRegistry(findAppBlockWithName.ID)
+          if (config) {
+            appConfigFromRegistry = config
+            feedback({ type: 'info', message: `${findAppBlockWithName.BlockName} has a config in registry` })
+            break
+          }
+          findAppBlockWithName = await getAndCheckAppName()
         }
       }
     } else {
       console.log('Something went wrong!')
       console.log(err)
+      process.exit(1)
     }
   }
 
@@ -335,32 +343,51 @@ const sync = async () => {
   const viewEl = './view/elements'
   const viewCo = './view/container'
   const fns = './functions'
+  const sFns = './functions/shared-fn'
 
   const vi = fs.existsSync(view)
   const vE = fs.existsSync(viewEl)
   const vC = fs.existsSync(viewCo)
   const f = fs.existsSync(fns)
+  const sF = fs.existsSync(sFns)
 
+  /**
+   * @callback PathGenerator
+   * @param  {Array<String>} args
+   * @returns {String} A path string
+   */
+  /**
+   *
+   * @callback PartialGenerator
+   * @param {String} p root of path
+   * @returns {PathGenerator}
+   */
+
+  /**
+   * @type {PathGenerator}
+   */
   const pr = (...args) => path.resolve(args[0], args[1])
+
+  /**
+   *  @type {PartialGenerator}
+   */
   const fm = (p) => pr.bind(null, p)
 
   if (!vi || !vE || !vC || !f) {
-    console.log('I expect blocks to be inside:')
-    console.log(chalk.italic('./view'))
-    console.log(chalk.italic(' - ./view/elements'))
-    console.log(chalk.italic(' - ./view/container'))
-    console.log(chalk.italic('./functions'))
     if (!vi) {
-      console.log(chalk.red('./view missing'))
+      feedback({ type: 'warn', message: './view missing' })
     }
     if (!vC) {
-      console.log(chalk.red('./view/container missing'))
+      feedback({ type: 'warn', message: './view/container missing' })
     }
     if (!vE) {
-      console.log(chalk.red('./view/elements missing'))
+      feedback({ type: 'warn', message: './view/elements missing' })
     }
     if (!f) {
-      console.log(chalk.red('./functions missing'))
+      feedback({ type: 'warn', message: './functions missing./functions missing' })
+    }
+    if (!sF) {
+      feedback({ type: 'warn', message: './functions/shared-fn missing' })
     }
   }
   /**
@@ -384,6 +411,7 @@ const sync = async () => {
   if (vi && vE) pa.push(readdir(viewEl).then((l) => l.map(fm(viewEl))))
   if (vi && vC) pa.push(readdir(viewCo).then((l) => l.map(fm(viewCo))))
   if (f) pa.push(readdir(fns).then((l) => l.map(fm(fns))))
+  if (f && sF) pa.push(readdir(sFns).then((l) => l.map(fm(sFns))))
   /**
    * List of all directories that could be blocks in paths -
    *  functions/* , view/container/* , and view/elements/*
@@ -475,7 +503,7 @@ const sync = async () => {
    * @typedef dinob
    * @type {Object}
    * @property {blockMetaData} detailsInRegistry
-   * @property {Object} localBlockConfig
+   * @property {import('../utils/jsDoc/types').appblockConfigShape} localBlockConfig
    */
 
   /**
@@ -522,8 +550,6 @@ const sync = async () => {
   console.log('New dependencies')
   console.log(deps)
 
-  // console.log('------')
-  // console.log(appConfigFromRegistry)
   // await handleAppblockSync();
   // syncing logic starts here
   // 4 cases - (no config,config) && not (registered,not registered)
@@ -555,7 +581,7 @@ const sync = async () => {
       // if matches -> display msg and exit
       // else display diffs and write new config
       // if user has access, push the new config or Display msg to push
-      console.log(`${chalk.bgYellow('INFO')} Config found in Registry for ${appblockDetails.BlockName}`)
+      feedback({ type: 'info', message: `Config in found Registry for ${appblockDetails.BlockName}` })
       const diffed_configinlocal_with_newlybuilt = diffObjects(
         {
           ...appConfiginLocal,
@@ -568,7 +594,6 @@ const sync = async () => {
       // if (c1) {
       // }
 
-      console.log(`${chalk.bgYellow('INFO')} Config found Registry for ${appblockDetails.BlockName}`)
       const co1 = await manualMerge(diffed_configinlocal_with_newlybuilt)
       const diffed_FromRegistry_with_Merge_of_newlyBuilt_and_LocalConfig = diffObjects(appConfigFromRegistry, co1)
       // TODO : accept incoming changes -> if there is a removal of block, delete the local dir for that block also
@@ -576,14 +601,14 @@ const sync = async () => {
       //        Make an effort to pull the dependecy
       diffShower(diffed_FromRegistry_with_Merge_of_newlyBuilt_and_LocalConfig)
       /**
-       * @type {appblockConfigShape}
+       * @type {import('../utils/jsDoc/types').appblockConfigShape}
        */
       const co2 = await manualMerge(diffed_configinlocal_with_newlybuilt)
 
       fs.writeFileSync('appblock.config.json', JSON.stringify(co2, null, 2))
 
-      console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
-      console.log('DONE')
+      feedback({ type: 'warn', message: 'appblock.config.json is pushed' })
+      feedback({ type: 'success', message: 'DONE' })
     }
   } else if (insideAppblock && !appblockIsRegistered) {
     // INFO : Has a local config file, but no config in registtry.
