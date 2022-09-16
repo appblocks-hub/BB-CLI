@@ -21,7 +21,7 @@ const removeTodo = async (req, res) => {
       })
     }
 
-    const DB_FILE = path.resolve(process.env.DB_FILE_PATH)
+    const DB_FILE = path.resolve('../db.json')
     const inmemDB = getDB(DB_FILE)
     const { id } = await getBody(req)
     console.log('Request to remove item -', id)

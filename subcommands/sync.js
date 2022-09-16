@@ -21,6 +21,7 @@ const { diffObjects } = require('../utils/diff')
 const { diffShower, manualMerge } = require('../utils/syncUtils')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const createBlock = require('../utils/createBlock')
+const { offerAndCreateBlock } = require('../utils/sync-utils')
 
 /*
  *
@@ -418,9 +419,19 @@ const sync = async () => {
       data: staleDirectories,
     })
     console.log(report)
+    const res = await offerAndCreateBlock(staleDirectories)
+    res.forEach((v, i) => {
+      // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
+      // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
+      if (v.registered) {
+        blockDirectories.push(v.directory)
+        if (v.oldPath === staleDirectories[i]) staleDirectories.splice(i, 1)
+      }
+    })
+
     await offerAndDeleteStaleDirectories(staleDirectories)
   }
-  // console.log(blockDirectories, '===========')
+
   const localBlocks = blockDirectories.reduce((acc, cur) => {
     const b = JSON.parse(fs.readFileSync(path.resolve(cur, 'block.config.json')))
     return acc.concat(b)

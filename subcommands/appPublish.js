@@ -11,16 +11,14 @@ const { rm } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
-const Spinnies = require('spinnies')
 const { createZip, uploadToServer } = require('../utils/uploadUtil')
 const { getYahConfig } = require('../utils/config-manager')
 const { appRegistryUploadBlockStatus, appRegistryCheckAppEnvExist } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 const deployConfig = require('../utils/deployConfig-manager')
+const { spinnies } = require('../loader')
 const { getPublishedVersion } = require('./publish')
 const { appConfig } = require('../utils/appconfigStore')
-
-const spinnies = new Spinnies()
 
 const logFail = (msg) => console.log(chalk.red(msg))
 

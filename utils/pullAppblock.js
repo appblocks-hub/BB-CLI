@@ -7,7 +7,6 @@
 
 const chalk = require('chalk')
 const path = require('path')
-const pull = require('../subcommands/pull')
 const { createFileSync } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, tryGitInit } = require('./gitCheckUtils')
 const { confirmationPrompt } = require('./questionPrompts')
@@ -19,20 +18,18 @@ async function getConfigFromRegistry(id) {
     const res = await getAppConfigFromRegistry(id)
     if (res.status === 204) {
       console.log(`No appconfig found in registry.`)
-      process.exit(1)
+      return null
     }
     if (res.data.err) {
       console.log(chalk.dim(res.data.msg))
       console.log(chalk.red('Failed to fetch config file..'))
       console.log('Please try again after some time')
-      // process.exit(1)
       return null
     }
     return res.data.data.app_config
   } catch (err) {
     console.log(chalk.dim(err.message))
     console.log('Something went wrong, Please try again later')
-    // process.exit(1)
     return null
   }
 }
@@ -40,28 +37,32 @@ const pullAppblock = async (name) => {
   const ID = await getBlockDetails(name)
     .then((res) => {
       if (res.status === 204) {
-        console.log(`${name} not found in registry.`)
-        process.exit(1)
+        throw new Error(`${name} not found in registry.`)
       }
       if (res.data.err) {
-        console.log(`Error getting details..`)
-        process.exit(1)
+        throw new Error(`Error getting details of ${name}`)
       }
       // Make sure it is registered as appBlock, else unregistered
       if (res.data.data.BlockType !== 1) {
-        console.log(`${name} is not registered as appblock`)
-        process.exit(1)
+        throw new Error(`${name} is not registered as appblock`)
       }
       // eslint-disable-next-line no-param-reassign
       return res.data.data.ID
     })
-    .catch(() => {
-      console.log('Something went terribly wrong...')
-      process.exit(1)
+    .catch((err) => {
+      console.log(err.message)
+      return null
     })
 
+  if (!ID) {
+    return false
+  }
+
   const config = await getConfigFromRegistry(ID)
-  if (!config) process.exit(1)
+
+  if (!config) {
+    return false
+  }
 
   //   const { blockFinalName, blockSource } = await createBlock(availableName, availableName, 1, '', false, '.')
 
@@ -106,6 +107,7 @@ const pullAppblock = async (name) => {
       }
     }
   }
+
   for (let i = 0; i < Object.keys(reduced).length; i += 1) {
     const element = Object.keys(reduced)[i]
     const d = reduced[element]
@@ -125,11 +127,15 @@ const pullAppblock = async (name) => {
             message: `Do you want to pull ${blockMeta.name} `,
           })
           if (z) {
+            // eslint-disable-next-line global-require
+            const pull = require('../subcommands/pull')
             await pull(blockMeta.name, { cwd: DIRPATH })
           }
         }
       }
     }
   }
+
+  return true
 }
 module.exports = pullAppblock

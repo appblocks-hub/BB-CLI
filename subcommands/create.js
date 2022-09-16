@@ -55,6 +55,7 @@ const {
 const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
+const { CreateError } = require('../utils/errors/createError')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -95,16 +96,15 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     // logger.info(
     //   `${componentName} checked against registry and ${availableName} is finalized`
     // )
-    try {
-      await appConfig.init(null, null, 'create')
-    } catch (err) {
-      console.log(err.message)
+
+    await appConfig.init(null, null, 'create')
+    if (appConfig.isOutOfContext) {
       const goAhead = await confirmationPrompt({
         message: 'You are trying to create a block outside appblock context',
         name: 'seperateBlockCreate',
       })
       if (!goAhead) {
-        process.exit(1)
+        return
       }
       standAloneBlock = true
     }
@@ -272,7 +272,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     console.log('Something went wrong while creating!')
     // logger.info('ERROR')
     // logger.error(err)
-    throw new Error('create failed')
+    throw new CreateError('create failed')
   }
 }
 

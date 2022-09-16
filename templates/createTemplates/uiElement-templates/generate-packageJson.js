@@ -7,6 +7,7 @@ const generateUiElementPackageJson = (name) => `{
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server"
+    "build": "webpack --mode production"
   },
   "keywords": [],
   "type": "module",
@@ -20,6 +21,7 @@ const generateUiElementPackageJson = (name) => `{
     "dotenv": "^16.0.0",
     "html-webpack-plugin": "^5.3.1",
     "style-loader": "^3.2.1",
+    "url-loader": "^4.1.1",
     "webpack": "^5.52.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.1.0",

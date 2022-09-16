@@ -36,7 +36,6 @@ const pull = require('../subcommands/pull')
 const push_config = require('../subcommands/push_config')
 const exec = require('../subcommands/exec')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const pullAppblock = require('../utils/pullAppblock')
 const addTags = require('../subcommands/addTags')
 const addCategories = require('../subcommands/addCategories')
 const { preActionChecks } = require('../utils/preActionRunner')
@@ -47,9 +46,6 @@ const appPublish = require('../subcommands/appPublish')
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
 process.global = { cwd: process.cwd() }
-// let pathToENV = path.resolve('./.env')
-// let pathToJSON = path.resolve('./appblock.config.json')
-// let APPCONFIG
 
 async function init() {
   // const spinnies = new Spinnies()
@@ -127,8 +123,6 @@ async function init() {
   // })
 
   program.command('pull').argument('<component>', 'name of component').action(pull)
-
-  program.command('pull_appblock').argument('<component>', 'name of component').action(pullAppblock)
 
   program.command('push-config').action(push_config)
   program

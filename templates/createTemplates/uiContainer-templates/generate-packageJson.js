@@ -13,6 +13,7 @@ const generateUiContainerPackageJson = (name) => `
       "dotenv": "^16.0.0",
       "html-webpack-plugin": "5.3.2",
       "serve": "12.0.0",
+      "url-loader": "^4.1.1",
       "webpack": "5.52.0",
       "webpack-cli": "4.10.0",
       "webpack-dev-server": "4.1.0",

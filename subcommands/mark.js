@@ -11,13 +11,12 @@ const { Command } = require('commander')
 const { readFileSync } = require('fs')
 const chalk = require('chalk')
 const axios = require('axios')
-const Spinnies = require('spinnies')
 const { getBlockDetails } = require('../utils/registryUtils')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { appBlockAddBlockMapping } = require('../utils/api')
+const { spinner } = require('../loader')
 const { getShieldHeader } = require('../utils/getHeaders')
 
-const spinnies = new Spinnies()
 const program = new Command()
 
 program
@@ -29,7 +28,7 @@ const mark = async (args) => {
   const { dependency, composability } = program.opts()
   // console.log(dependency, composability)
 
-  spinnies.add('mark', { text: 'Starting..' })
+  spinner.start('Starting..')
   let blockOne
   let blockTwo
   let relationType
@@ -59,7 +58,7 @@ const mark = async (args) => {
   // console.log(blockOne, blockTwo, relationType)
   let appConfig
 
-  spinnies.update('mark', { text: 'Checking auths..' })
+  spinner.start('Checking auths..')
   await ensureUserLogins()
   try {
     appConfig = JSON.parse(readFileSync('appblock.config.json'))
@@ -128,14 +127,14 @@ const mark = async (args) => {
 
   // console.log(data)
   const headers = getShieldHeader()
-  spinnies.update('mark', { text: 'Connecting to registry' })
+  spinner.start('Connecting to registry')
   try {
     const resp = await axios.post(appBlockAddBlockMapping, { ...data }, { headers })
     if (resp.data.err) {
       console.log(`\n Somthing went wrong at our end\n`)
       console.log(resp.data.msg)
     } else {
-      spinnies.succeed('mark', { text: 'done' })
+      spinner.succeed('done')
       console.log(chalk.green('Successfully mapped..'))
     }
   } catch (err) {

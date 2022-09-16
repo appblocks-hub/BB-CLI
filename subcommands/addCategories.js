@@ -6,14 +6,12 @@
  */
 
 const { default: axios } = require('axios')
-const Spinnies = require('spinnies')
 const { appRegistryAssignCategories } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 const { readInput } = require('../utils/questionPrompts')
+const { spinnies } = require('../loader')
 const { appConfig } = require('../utils/appconfigStore')
 const { getCategories } = require('../utils/categoriesUtil')
-
-const spinnies = new Spinnies()
 
 const addCategories = async (options) => {
   try {

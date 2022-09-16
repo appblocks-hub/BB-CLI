@@ -142,7 +142,7 @@ const publish = async (blockname) => {
 
     const dependencies = [packageJson.dependencies, packageJson.devDependencies]
     dependencies.forEach(async (dep, i) => {
-      if (Object.keys(dep)?.length > 0) {
+      if (dep && Object.keys(dep)?.length > 0) {
         await axios.post(
           saveDependencies,
           {

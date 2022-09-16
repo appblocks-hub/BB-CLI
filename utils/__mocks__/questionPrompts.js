@@ -11,10 +11,14 @@ const getPrefix = jest.fn()
 const getBlockName = jest.fn().mockResolvedValue('TODO')
 const getBlockType = jest.fn()
 const WipeAllConfirmation = jest.fn().mockResolvedValue({ wipeAll: true })
+const confirmationPrompt = jest.fn()
+const readInput = jest.fn()
 
 module.exports = {
+  readInput,
   getPrefix,
   getBlockName,
   getBlockType,
   WipeAllConfirmation,
+  confirmationPrompt,
 }

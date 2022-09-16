@@ -8,7 +8,6 @@
 /* eslint-disable camelcase */
 // const { transports } = require('winston')
 const { default: axios } = require('axios')
-const Spinnies = require('spinnies')
 const { readInput } = require('../utils/questionPrompts')
 // const { logger } = require('../utils/logger')
 const { appRegistryCreateApp, appRegistryCheckDomainName } = require('../utils/api')
@@ -16,9 +15,9 @@ const { getShieldHeader } = require('../utils/getHeaders')
 const { getBlockConfig, getBlockId } = require('../utils/deployUtil')
 
 const deployConfig = require('../utils/deployConfig-manager')
+const { spinnies } = require('../loader')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
-const spinnies = new Spinnies()
 
 const createApp = async () => {
   deployConfig.init()
