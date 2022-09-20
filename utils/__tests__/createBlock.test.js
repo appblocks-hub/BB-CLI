@@ -3,12 +3,13 @@
 const { configstore } = require('../../configstore')
 const { blockTypeInverter } = require('../blockTypeInverter')
 const createBlock = require('../createBlock')
-const { getPrefix } = require('../questionPrompts')
+const createComponent = require('../createComponent')
 const registerBlock = require('../registerBlock')
 
 jest.mock('../../configstore')
 jest.mock('../questionPrompts')
 jest.mock('../registerBlock')
+jest.mock('../createComponent')
 
 afterEach(() => {
   jest.clearAllMocks()
@@ -18,51 +19,34 @@ const [p1, p2, ...rest] = process.argv
 const samplecreateBlockArgs = ['TODO', 'uicontainer']
 const testData = [
   {
-    args: ['TODO', 'appBlock'],
+    args: ['TODO', 'todo', 1, false, false, '', false, 'appBlock'],
     expect: blockTypeInverter('appBlock'),
   },
   {
-    args: ['TODO', 'ui-container'],
+    args: ['TODO', 'todo', 2, false, false, '', false, 'ui-container'],
     expect: blockTypeInverter('ui-container'),
   },
   {
-    args: ['TODO', 'ui-elements'],
+    args: ['TODO', 'todo', 3, false, false, '', false, 'ui-elements'],
     expect: blockTypeInverter('ui-elements'),
   },
+  // {
+  //   args: ['TODO', 'todo', 5, false, false, '', false, 'data'],
+  //   expect: blockTypeInverter('data'),
+  // },
   {
-    args: ['TODO', 'data'],
-    expect: blockTypeInverter('data'),
+    args: ['TODO', 'todo', 6, false, false, '', false, 'shared-fn'],
+    expect: blockTypeInverter('shared-fn'),
   },
   {
-    args: ['TODO', 'shared-fn'],
-    expect: blockTypeInverter('shared-fn'),
+    args: ['TODO', 'todo', 4, false, false, '', false, 'function'],
+    expect: blockTypeInverter('function'),
   },
 ]
 
-describe('For a ', () => {
-  testData.forEach((obj) =>
-    test('Should call registerBlock with ' + obj.expect, async () => {
-      await createBlock.apply(null, obj.args)
-      expect(registerBlock.mock.calls[0][0]).toBe(obj.expect)
-    })
-  )
-})
-
-test('Should check for stored prefix first', async () => {
-  await createBlock.apply(null, samplecreateBlockArgs)
-  expect(configstore.get).toHaveBeenNthCalledWith(1, 'blockPrefix', '')
-})
-test('Should get and set prefix if not present already', async () => {
-  const userGivenPrefix = 'aPrefix'
-  configstore.get.mockResolvedValue('')
-  getPrefix.mockResolvedValue(userGivenPrefix)
-  await createBlock.apply(null, samplecreateBlockArgs)
-  expect(getPrefix).toHaveBeenCalledTimes(1)
-  expect(configstore.set).toHaveBeenCalledWith('blockPrefix', userGivenPrefix)
-})
-
-test('Should not try to get prefix', async () => {
-  configstore.get.mockResolvedValue('test')
-  await createBlock.apply(null, samplecreateBlockArgs)
-  expect(getPrefix).not.toHaveBeenCalled()
-})
+testData.forEach((obj) =>
+  test('Should call registerBlock with ' + obj.expect, async () => {
+    await createBlock.apply(null, obj.args)
+    expect(registerBlock.mock.calls[0][0]).toBe(obj.expect)
+  })
+)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -36,7 +36,7 @@ const registerBlock = require('./registerBlock')
  * @param {String} createFromExistinURL If a source is provided, a new repo is created from the source IMP:always should be ssh url
  * @param {Boolean} callingFromPullNoCreateNewRefactorMelater To stop halfway and return cloned directory path
  * @param {String} cwd To pass to directory creation function
- * @param {String} isAStandAloneBlock If user is trying to create a block outside appblock context
+ * @param {Boolean?} isAStandAloneBlock If user is trying to create a block outside appblock context
  * @returns {returnObject}
  */
 async function createBlock(

@@ -1,11 +1,10 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
-const Spinnies = require('spinnies')
 const { createReadStream, watchFile } = require('fs')
 const { Stream } = require('stream')
 const readline = require('readline')
@@ -18,6 +17,7 @@ const emulateNode = require('./emulate')
 const { setupEnv } = require('../utils/env')
 const { appConfig } = require('../utils/appconfigStore')
 const { checkPnpm } = require('../utils/pnpmUtils')
+const { spinnies } = require('../loader')
 
 global.rootDir = process.cwd()
 
@@ -81,7 +81,7 @@ const watchCompilation = (logPath, errPath) =>
       rl.on('close', onClose)
     })
   })
-const spinnies = new Spinnies()
+
 const start = async (blockname, { usePnpm }) => {
   global.usePnpm = false
   if (!usePnpm) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -67,7 +67,7 @@ async function getGithubSignedInUser(TOKEN) {
   }
 }
 
-async function getYahiloSignedInUser(TOKEN) {
+async function getShieldSignedInUser(TOKEN) {
   const user = { token: TOKEN }
   const url = `${appBlockOrigin}/device/get-email`
   const headers = {
@@ -94,4 +94,4 @@ async function getYahiloSignedInUser(TOKEN) {
 
   return user
 }
-module.exports = { getGithubSignedInUser, getYahiloSignedInUser }
+module.exports = { getGithubSignedInUser, getShieldSignedInUser }

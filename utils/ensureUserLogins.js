@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -7,19 +7,18 @@
 
 /* eslint-disable no-unused-expressions */
 const axios = require('axios')
-const Spinnies = require('spinnies')
 const { checkAndSetAuth } = require('./checkAndSetAuth')
 const { githubGetDeviceCode, githubClientID } = require('./api')
 const handleGithubAuth = require('./handleGithubAuth')
 const checkAuth = require('./checkAuth')
 const { loginWithAppBlock } = require('../auth')
-const { getYahiloSignedInUser } = require('./getSignedInUser')
+const { getShieldSignedInUser } = require('./getSignedInUser')
 const { configstore } = require('../configstore')
+const { spinnies } = require('../loader')
 
 async function ensureUserLogins() {
-  // await login()
-  const spinnies = new Spinnies()
   spinnies.add('logins', { text: 'Checking Git auths' })
+
   const { redoAuth } = await checkAndSetAuth()
   if (redoAuth) {
     spinnies.update('logins', {
@@ -48,7 +47,7 @@ async function ensureUserLogins() {
     })
     const { data } = await loginWithAppBlock(true)
     configstore.set('appBlockUserToken', data.access_token)
-    const user = await getYahiloSignedInUser(data.access_token)
+    const user = await getShieldSignedInUser(data.access_token)
     configstore.set('appBlockUserName', user.user)
   }
 

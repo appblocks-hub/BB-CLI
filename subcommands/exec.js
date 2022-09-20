@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -20,7 +20,7 @@ function pexec(cmd, options, name) {
     })
   })
 }
-const yahexec = async (command, options) => {
+const bbexec = async (command, options) => {
   // const supportedCommands = ['git', 'ls', 'l']
   // const supportedArguments = { git: ['clone', 'pull', 'branch', 'push', 'fetch', 'status'], ls: ['-a'], l: ['-a'] }
   // const [cmd, args] = command.split(' ')
@@ -76,4 +76,4 @@ const yahexec = async (command, options) => {
   })
 }
 
-module.exports = yahexec
+module.exports = bbexec

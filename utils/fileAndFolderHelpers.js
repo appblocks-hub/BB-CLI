@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,9 +8,11 @@
 // eslint-disable-next-line no-unused-vars
 const { default: axios } = require('axios')
 const fs = require('fs')
+const { rename, readdir } = require('fs/promises')
 const path = require('path')
 const { noop } = require('rxjs')
 const { appBlockGetPresignedUrlForReadMe } = require('./api')
+const { feedback } = require('./cli-feedback')
 const { BlockPushError } = require('./errors/blockPushError')
 const { getShieldHeader } = require('./getHeaders')
 
@@ -127,6 +129,7 @@ function createFileSync(filePath, data) {
 }
 
 function getBlockDirsIn(array) {
+  // TODO: read the config - validate - check with registry
   const res = array.reduce((acc, v) => {
     try {
       const stat = fs.statSync(v)
@@ -238,8 +241,9 @@ async function uploadReadMe(filePath) {
 
 /**
  * Return a path string where to put block of type in
- * @param {(1 | 2 | 3 | 4)} type Block type
- * @returns dir path to pull block to
+ * @param {(1 | 2 | 3 | 4 | 5 | 6)} type Block type
+ * @param {String} cwd
+ * @returns {String} dir path to pull block to
  */
 function createDirForType(type, cwd) {
   let dirPath = '.'
@@ -249,31 +253,26 @@ function createDirForType(type, cwd) {
     case 2:
       // ensureDirSync can create only one level if not present
       // so call for each level to make sure
-      // TODO -- make ensureDirSync recursive (n level)
       ensureDirSync(path.resolve(cwd, 'view'))
       ensureDirSync(path.resolve(cwd, 'view', 'container'))
-      // console.log('testpath', path.resolve(cwd, 'view', 'container'))
       dirPath = path.resolve(cwd, 'view', 'container')
       break
     case 3:
       ensureDirSync(path.resolve(cwd, 'view'))
       ensureDirSync(path.resolve(cwd, 'view', 'elements'))
-      // console.log('testpath', path.resolve(cwd, 'view', 'elements'))
       dirPath = path.resolve(cwd, 'view', 'elements')
       break
     case 4:
       ensureDirSync(path.resolve(cwd, 'functions'))
-      // console.log('testoath', path.resolve(cwd, 'functions'))
       dirPath = path.resolve(cwd, 'functions')
       break
     case 5:
       // console.log('you have entered unknown territory')
-      process.exit(1)
+      // process.exit(1)
       break
     case 6:
       ensureDirSync(path.resolve(cwd, 'functions'))
       ensureDirSync(path.resolve(cwd, 'functions', 'shared-fns'))
-      // console.log('testpath', path.resolve(cwd, 'functions', 'shared-fns'))
       dirPath = path.resolve(cwd, 'functions', 'shared-fns')
       break
     default:
@@ -290,8 +289,8 @@ function createDirForType(type, cwd) {
  */
 function isDirEmpty(dirname, ...acceptedItems) {
   return fs.promises.readdir(dirname).then((files) => {
-    console.log(acceptedItems)
-    console.log(files)
+    // console.log(acceptedItems)
+    // console.log(files)
     if (files.length === 0) {
       return true
     }
@@ -300,6 +299,60 @@ function isDirEmpty(dirname, ...acceptedItems) {
     }
     return true
   })
+}
+
+/**
+ * To prepare a file list with values needed for moving
+ * @param {String} dirPath
+ * @param {String} destinationPath
+ * @param {Array<String>} ignoreList
+ * @returns {Array<Record<'oldPath'|'newPath'|'name',String>}
+ */
+async function prepareFileListForMoving(dirPath, destinationPath, ignoreList) {
+  const files = await readdir(dirPath)
+  return files.reduce((acc, curr) => {
+    if (!ignoreList.includes(curr))
+      return acc.concat({
+        name: curr,
+        oldPath: path.resolve(dirPath, curr),
+        newPath: path.resolve(destinationPath, curr),
+      })
+    return acc
+  }, [])
+}
+
+/**
+ * Moves files.
+ * @param {Boolean} muted To mute logs
+ * @param {Array<Record<'oldPath'|'newPath'|'name',String>} fileList
+ * @return {Array<Record<'status'|'msg'|'newPath'|'oldPath'|'name',String>}
+ */
+async function moveFiles(muted, fileList) {
+  const report = []
+  for (let j = 0; j < fileList.length; j += 1) {
+    const { oldPath, newPath } = fileList[j]
+    if (fs.statSync(oldPath).isDirectory()) {
+      try {
+        ensureDirSync(newPath)
+        const files = await prepareFileListForMoving(oldPath, newPath, [])
+        const res = await moveFiles(false, files)
+        report.push(...res)
+      } catch (err) {
+        // eslint-disable-next-line no-unused-expressions
+        !muted && feedback({ type: 'error', message: `Error in moving ${oldPath} to ${newPath}` })
+        report.push({ status: 'failed', msg: err.message, oldPath, newPath, name: fileList[j] })
+      }
+    } else {
+      try {
+        await rename(oldPath, newPath)
+      } catch (err) {
+        // eslint-disable-next-line no-unused-expressions
+        !muted && console.log(`Error in moving ${oldPath} to ${newPath}`)
+        report.push({ status: 'failed', msg: err.message, oldPath, newPath, name: fileList[j] })
+      }
+    }
+  }
+  return report
 }
 
 module.exports = {
@@ -314,4 +367,6 @@ module.exports = {
   uploadReadMe,
   createDirForType,
   isDirEmpty,
+  moveFiles,
+  prepareFileListForMoving,
 }

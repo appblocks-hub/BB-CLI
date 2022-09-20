@@ -25,8 +25,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-redux": "^7.2.5",
-    "yah-js-sdk": "^0.1.4",
-    "yah-node-sdk": "^0.1.0"
+    "@appblocks/js-sdk": "^0.1.4",
+    "@appblocks/node-sdk": "^0.1.0"
   },
   "keywords": [],
   "author": "",

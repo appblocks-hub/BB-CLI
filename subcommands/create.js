@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -56,6 +56,8 @@ const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const { CreateError } = require('../utils/errors/createError')
+const { isValidBlockName } = require('../utils/blocknameValidator')
+const { feedback } = require('../utils/cli-feedback')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -71,17 +73,17 @@ const { CreateError } = require('../utils/errors/createError')
  * @param {import('commander').Command} _ This is the Command object, if calling from anywhere else, pass empty object
  * @param {Boolean} returnBeforeCreatingTemplates
  * @param {import('fs').PathLike} cwd
+ * @param {Boolean} skipConfigInit to Skip fn from trying to read config
  * @returns
  */
-const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd) => {
+const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
   let standAloneBlock = false
   let componentName = userPassedName
-  const regex = /^[a-zA-Z-_0-9]+$/
   let { type } = options
   // logger.info(`Create called with ${componentName} and ${type || 'no type'}`)
   try {
-    if (!regex.test(componentName)) {
-      console.log('only alphabets and - and _ allowed for block name!')
+    if (!isValidBlockName(componentName)) {
+      feedback({ type: 'warn', message: `${componentName} is not a valid name` })
       componentName = await getBlockName()
     }
     // logger.info(`changed name to ${componentName}`)
@@ -96,19 +98,26 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     // logger.info(
     //   `${componentName} checked against registry and ${availableName} is finalized`
     // )
-
-    await appConfig.init(null, null, 'create')
-    if (appConfig.isOutOfContext) {
-      const goAhead = await confirmationPrompt({
-        message: 'You are trying to create a block outside appblock context',
-        name: 'seperateBlockCreate',
-      })
-      if (!goAhead) {
-        return
+    /**
+     * To prevent create from trying to init with config,
+     * This is useful when calling create from sync etc..where
+     * reading a local config is not necessary as it is not guaranteed
+     * to be present.Which will force create to move to outofContext flow
+     * which is not necessary for sync.
+     */
+    if (!skipConfigInit) {
+      await appConfig.init(null, null, 'create')
+      if (appConfig.isOutOfContext) {
+        const goAhead = await confirmationPrompt({
+          message: 'You are trying to create a block outside appblock context',
+          name: 'seperateBlockCreate',
+        })
+        if (!goAhead) {
+          return
+        }
+        standAloneBlock = true
       }
-      standAloneBlock = true
     }
-
     // Check if github user name or id is not set (we need both, if either is not set inform)
     const u = configstore.get('githubUserId', '')
     const t = configstore.get('githubUserToken', '')
@@ -256,7 +265,8 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       await Git.newBranch('main')
       await Git.stageAll()
       await Git.commit('initial commit')
-      await Git.push('main')
+      // await Git.push('main')
+      await Git.setUpstreamAndPush('main')
       // execSync(
       //   `cd ${entry} &&
       //    git checkout -b main &&

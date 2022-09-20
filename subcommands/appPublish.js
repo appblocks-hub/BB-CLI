@@ -1,7 +1,7 @@
 /* eslint-disable no-continue */
 
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -12,7 +12,7 @@ const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
 const { createZip, uploadToServer } = require('../utils/uploadUtil')
-const { getYahConfig } = require('../utils/config-manager')
+const { getBBConfig } = require('../utils/config-manager')
 const { appRegistryUploadBlockStatus, appRegistryCheckAppEnvExist } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 const deployConfig = require('../utils/deployConfig-manager')
@@ -26,7 +26,7 @@ const appPublish = async () => {
   deployConfig.init()
   appConfig.init()
 
-  const { dependencies } = await getYahConfig()
+  const { dependencies } = await getBBConfig()
   const appData = deployConfig.deployAppConfig
   const appId = appData.app_id
 

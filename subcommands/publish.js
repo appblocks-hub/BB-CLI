@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,8 +10,8 @@ const { execSync } = require('child_process')
 const { readFileSync, mkdirSync } = require('fs')
 const path = require('path')
 const semver = require('semver')
-const Spinnies = require('spinnies')
 const { configstore } = require('../configstore')
+const { spinnies } = require('../loader')
 const { appBlockAddVersion, createSourceCodeSignedUrl, saveDependencies } = require('../utils/api')
 const { appConfig } = require('../utils/appconfigStore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
@@ -37,7 +37,6 @@ const createZip = async ({ directory, version }) => {
 
 const publish = async (blockname) => {
   appConfig.init()
-  const spinnies = new Spinnies()
 
   if (!appConfig.has(blockname)) {
     console.log('Block not found!')
@@ -92,8 +91,6 @@ const publish = async (blockname) => {
 
     const blockid = await appConfig.getBlockId(blockname)
 
-    const headers = getShieldHeader()
-
     // Update source code to appblock cloud
 
     const zipFile = await createZip({ directory: blockDetails.directory, version })
@@ -107,7 +104,7 @@ const publish = async (blockname) => {
         block_version: version,
       },
       {
-        headers,
+        headers: getShieldHeader(),
       }
     )
     const zipFileData = readFileSync(zipFile)
@@ -126,7 +123,7 @@ const publish = async (blockname) => {
         release_notes: message,
         source_code_key: preSignedData.data.key,
       },
-      { headers }
+      { headers: getShieldHeader() }
     )
 
     const { data } = resp
@@ -151,7 +148,7 @@ const publish = async (blockname) => {
             dependencies: dep,
             dependencies_type: i, // using index since dependencies is 0 and devDependencies is 1
           },
-          { headers }
+          { headers: getShieldHeader() }
         )
       }
     })

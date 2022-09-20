@@ -1,27 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
-const { Command } = require('commander')
 const { configstore } = require('../configstore')
 const getGithubDeviceCode = require('../utils/getGithubDeviceCode')
 const { getGithubSignedInUser } = require('../utils/getSignedInUser')
 const handleGithubAuth = require('../utils/handleGithubAuth')
 
-const program = new Command()
-
-program.argument('<service>', 'Name of service to connect')
-program.option('-f, --force', 'force connect will remove existing tokens and restart login')
-
-const connect = async (args) => {
-  program.parse(args)
-  const { force } = program.opts()
-  const [service] = program.args
+const connect = async (service, options) => {
+  const { force } = options
 
   switch (service) {
     case 'github':
@@ -47,8 +39,5 @@ const connect = async (args) => {
       break
   }
 }
-
-// To avoid calling create twice on tests
-if (process.env.NODE_ENV !== 'test') connect(process.argv)
 
 module.exports = connect

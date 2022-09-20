@@ -1,13 +1,13 @@
 /**
- * Copyright (c) Yahilo. and its affiliates.
+ * Copyright (c) Appblocks. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
-const { YahError } = require('./baseError')
+const { BBError } = require('./baseError')
 
-class GitError extends YahError {
+class GitError extends BBError {
   constructor(path, message, resetHead, operation, options) {
     super(message)
     this.operation = operation
