@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs')
+const path = require('path')
 
 /**
  *
@@ -28,8 +29,13 @@ const fs = require('fs')
 module.exports = function isValidAppBlockProject(dir) {
   try {
     const files = fs.readdirSync(dir)
-    if (files.includes('appblock.config.json')) {
-      return true
+    if (files.includes('block.config.json')) {
+      /**
+       * @type {import('./jsDoc/types').appblockConfigShape}
+       */
+      const d = JSON.parse(fs.readFileSync(path.join(dir, 'block.config.json')))
+      if (d.type === 'appBlock') return true
+      return false
     }
     return false
   } catch (e) {

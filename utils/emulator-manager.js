@@ -14,52 +14,72 @@ const fsPromise = require('fs/promises')
 
 const { runBash } = require('../subcommands/bash')
 
-async function copyEmulatorCode(PORT) {
-  const emulatorCode = `
+async function copyEmulatorCode(PORTS, appConfig) {
+  const blocks = appConfig.dependencies
+  const blocksData = Object.values(blocks).reduce((acc, bl) => {
+    acc[bl.meta.name] = { type: bl.meta.type, dir: bl.directory }
+    return acc
+  }, {})
 
-import express from 'express';
-import http from 'http';
-import cors from 'cors';
-import { readFile } from 'fs/promises';
-
-const app = express();
-app.use(cors());
-
-app.all("/*", async function (req, res) {
-  try {
-    const app_config = JSON.parse(await readFile('../appblock.config.json', "utf8"));
-    const blocks = app_config.dependencies
-
-    const url = req.params[0];
-    const [requested_func] = url.split("/");
-
-    if (url.includes("health")) {
-      //check for health param and inject if needed
-      req.params["health"] = "health";
+  const emulatorData = {}
+  for (const [i, bt] of ['function', 'job'].entries()) {
+    if (Object.values(blocksData).find((b) => bt === b.type)) {
+      emulatorData[bt] = PORTS[i] || PORTS[PORTS.length - 1] + 1
     }
-
-    console.log("url", url);
-    console.log("requested_func", requested_func);
-
-    if (blocks[requested_func]) {
-      const dir = blocks[requested_func].directory
-      const func_route = "../" + dir + "/" + "index.js"
-      const handler = await import(func_route)
-      console.log("handler = ",handler)
-      await handler.default(req, res)
-    }
-    else {
-      res.send("requested function not registered in app.").status(404)
-    }
-  } catch(err) {
-    console.error("Emulator error ", err)
-    res.send("Something went wrong. Please check function log").status(500)
   }
-});
 
-const server = http.createServer(app);
-server.listen(${PORT});
-console.log("Functions emulator started on port ${PORT}");
+  const emulatorDataEntries = Object.entries(emulatorData)
+
+  const emulatorCode = `
+  import express from "express";
+  import http from "http";
+  import cors from "cors";
+  import { readFile } from "fs/promises";
+  
+  const appHandler = (type) => async (req, res) => {
+    try {
+      const blocks = ${JSON.stringify(blocksData)}
+  
+      const url = req.params[0];
+      const [requested_func] = url.split("/");
+  
+      if (url.includes("health")) {
+        //check for health param and inject if needed
+        req.params["health"] = "health";
+      }
+  
+      console.log("url", url);
+      console.log("requested_func", requested_func);
+  
+      const blockData = blocks[requested_func];
+  
+      if (blockData) {
+        if (blockData.type !== type) {
+          res.send("Only " + type + " apis are allowed").status(403);
+          return;
+        }
+        const func_route = "../" + blockData.dir + "/index.js";
+        const handler = await import(func_route);
+        console.log("handler = ", handler);
+        await handler.default(req, res);
+      } else {
+        res.send("requested function not registered in app.").status(404);
+      }
+    } catch (err) {
+      console.error("Emulator error ", err);
+      res.send("Something went wrong. Please check function log").status(500);
+    }
+  };
+
+  
+  for (const [bt, port] of ${JSON.stringify(emulatorDataEntries)}) {
+      const app = express();
+      app.use(cors());
+      app.all("/*", appHandler(bt));
+      const server = http.createServer(app);
+      server.listen(port);
+      console.log(bt + " emulator started on port " + port);
+  }
 `
   const packageJson = `
 {
@@ -170,16 +190,19 @@ fi
   fs.writeFileSync('./._ab_em/package.json', packageJson)
   await runBash(gitignoreAddEm)
 
-  return PORT
+  return emulatorData
 }
+
 async function getEmulatorProcessData(rootDir) {
   const root = rootDir || '.'
   const emulatorProcessData = JSON.parse(await fsPromise.readFile(`${root}/._ab_em/.emconfig.json`, 'utf8'))
   return emulatorProcessData
 }
+
 function addEmulatorProcessData(processData) {
   fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
 }
+
 async function stopEmulator() {
   const processData = await getEmulatorProcessData()
   if (processData && processData.pid) {
@@ -188,6 +211,7 @@ async function stopEmulator() {
   await runBash('rm -rf ./._ab_em')
   console.log('emulator stopped successfully!')
 }
+
 module.exports = {
   copyEmulatorCode,
   addEmulatorProcessData,

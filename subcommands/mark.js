@@ -55,13 +55,13 @@ const mark = async (options) => {
   let appConfig
 
   try {
-    appConfig = JSON.parse(readFileSync('appblock.config.json'))
+    appConfig = JSON.parse(readFileSync('block.config.json'))
   } catch (err) {
     if (err.code === 'ENOENT') {
-      feedback({ type: 'error', message: 'appblock.config.json missing' })
+      feedback({ type: 'error', message: 'block.config.json missing' })
       return
     }
-    feedback({ type: 'error', message: 'Something went wrong when reading appblock.config.json' })
+    feedback({ type: 'error', message: 'Something went wrong when reading block.config.json' })
     feedback({ type: 'info', message: err.message })
     return
   }

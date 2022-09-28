@@ -65,7 +65,14 @@ async function getConnectionStrategyPreference() {
   return p
 }
 async function getAndSetGitPat() {
-  const token = await readInput({ message: 'Drop PAT here..', name: 'gitPat' })
+  const token = await readInput({
+    message: 'Drop PAT here..',
+    name: 'gitPat',
+    validate: (ans) => {
+      if (ans) return true
+      return 'Please enter a string here'
+    },
+  })
   await configstore.set('gitPersonalAccessToken', `${token.trim()}`)
 }
 /**

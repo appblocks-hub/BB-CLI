@@ -18,8 +18,7 @@ const addCategories = async (options) => {
     await appConfig.init()
 
     const { all } = options
-    const { dependencies } = appConfig.getAppConfig()
-    const { name: appBlockName, categories: appBlockCategories } = appConfig.getAppConfig()
+    const { dependencies, name: appBlockName, categories: appBlockCategories } = appConfig.getAppConfig()
 
     const appBlockId = await appConfig.getBlockId(appBlockName)
 

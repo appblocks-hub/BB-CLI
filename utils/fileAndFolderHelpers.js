@@ -52,7 +52,7 @@ function isDirCleanOLD(dir) {
   // const dir = process.cwd()
   try {
     const files = fs.readdirSync(dir)
-    if (files.includes('appblock.config.json')) {
+    if (files.includes('block.config.json')) {
       return dir
     }
     return files.reduce(
@@ -125,7 +125,7 @@ function createFileSync(filePath, data) {
     else throw err
   }
 
-  fs.writeFileSync(filePath, JSON.stringify(data))
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
 }
 
 function getBlockDirsIn(array) {

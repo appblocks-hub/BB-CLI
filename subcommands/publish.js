@@ -36,7 +36,7 @@ const createZip = async ({ directory, version }) => {
 }
 
 const publish = async (blockname) => {
-  appConfig.init()
+  await appConfig.init(null, null)
 
   if (!appConfig.has(blockname)) {
     console.log('Block not found!')

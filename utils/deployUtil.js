@@ -33,10 +33,10 @@ const getBlockConfig = () => {
   // if no appblock config file found, throw
 
   try {
-    return JSON.parse(readFileSync('appblock.config.json'))
+    return JSON.parse(readFileSync('block.config.json'))
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.log(chalk.red(`appblock.config.json missing`))
+      console.log(chalk.red(`block.config.json missing`))
       process.exit(1)
     }
     console.log('Something went wrong\n')
@@ -88,10 +88,10 @@ const viewsDeploy = (options) => {
     try {
       const { envData, envName, keys } = await getEnvDatas(appData, deployId, 'view')
 
-      let updateAppData = { ...appData }
-
       // Return if nothing to deploy for view
       if (!keys.length) return resolve(appData)
+
+      let updateAppData = { ...appData }
 
       spinnies.add('dep', { text: `Deploying views to ${envName}` })
 
@@ -312,6 +312,7 @@ const checkAppEnvExist = (appData, deployId) => {
 
 module.exports = {
   viewsDeploy,
+  getEnvDatas,
   createDeployHistory,
   functionsDeploy,
   getBlockConfig,

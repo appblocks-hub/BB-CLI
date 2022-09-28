@@ -59,4 +59,21 @@
  * @property {dependencies} dependencies
  */
 
+/**
+ * @typedef {Object} roleDetails
+ * @property {String} r.name Rome name
+ * @property {String} description Role description
+ * @property {String} id Id
+ * @property {Boolean} is_owner Is owner?
+ */
+/**
+ * @typedef {object} spaceDetails
+ * @property {Boolean} is_default The default space created on user creation (cannot be deleted by user)
+ * @property {String} space_id Id
+ * @property {String} space_name Name
+ * @property {String} logo_url Url
+ * @property {('P' | 'B')} type P-personal & B-Bussiness
+ * @property  {Array<roleDetails>} roles
+ */
+
 module.exports = {}

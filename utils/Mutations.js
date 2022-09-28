@@ -48,7 +48,24 @@ const create = `mutation( $template:Boolean, $description:String, $team:ID,$owne
     }
   }
 }`
+
+const updateTr = ({ data }) => data.updateRepository.repository
+const update = `mutation($description:String, $repositoryId:ID!){
+  updateRepository(input: { description:$description, repositoryId: $ID}) {
+      repository {
+        id
+        resourcePath
+        description
+        visibility
+        url
+        sshUrl
+        name
+      }
+    }
+  }`
+
 module.exports = {
   cloneTemplateRepository: { Q: clone, Tr: cloneTr },
   createRepository: { Q: create, Tr: createTr },
+  updateRepository: { Q: update, Tr: updateTr },
 }

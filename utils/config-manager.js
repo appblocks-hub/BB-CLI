@@ -8,7 +8,7 @@
 const fsPromise = require('fs/promises')
 const fs = require('fs')
 
-const configFile = '/appblock.config.json'
+const configFile = '/block.config.json'
 
 async function getBBConfig(rootDir) {
   const root = rootDir || '.'

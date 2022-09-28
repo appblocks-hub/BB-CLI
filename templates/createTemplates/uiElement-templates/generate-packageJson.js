@@ -6,7 +6,7 @@ const generateUiElementPackageJson = (name) => `{
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
     "build": "webpack --mode production"
   },
   "keywords": [],
@@ -25,12 +25,12 @@ const generateUiElementPackageJson = (name) => `{
     "webpack": "^5.52.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.1.0",
-    "@appblocks/node-sdk": "^0.1.0"
+    "@appblocks/node-sdk": "^0.0.3"
   },
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "@appblocks/js-sdk": "^0.1.4"
+    "@appblocks/js-sdk": "^0.0.2"
   }
 }
 `

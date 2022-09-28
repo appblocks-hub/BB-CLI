@@ -8,8 +8,11 @@
 /* eslint-disable no-async-promise-executor */
 const { readFileSync, writeFile } = require('fs')
 const path = require('path')
+const { readdir, readFile, mkdir } = require('fs/promises')
+const { tmpdir } = require('os')
 const { EventEmitter } = require('events')
 const { getBlockDetails } = require('./registryUtils')
+const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 
 function debounce(func, wait, immediate) {
   let timeout
@@ -56,8 +59,8 @@ class AppblockConfigManager {
     // eslint-disable-next-line no-bitwise
     this.Id = Math.floor(Math.random() * 10 ** 18 + (1 << (Math.random() * 90)))
     this.blockConfigName = 'block.config.json'
-    this.configName = 'appblock.config.json'
-    this.liveConfigName = '.appblock.live.json'
+    this.configName = 'block.config.json'
+    this.liveConfigName = '.block.live.json'
     this.liveDetails = {}
     this.cwd = '.'
     this.events = new EventEmitter()
@@ -71,6 +74,60 @@ class AppblockConfigManager {
     this.config = ''
   }
 
+  async tempSetup() {
+    const tempConfig = {
+      name: path.dirname('.'),
+      source: {},
+      type: 'temp_group',
+      dependencies: {},
+    }
+    // await readFromTempDir()
+
+    // reading and setting in temp dir
+
+    const tempPath = tmpdir()
+
+    this.isTempGroup = true
+    this.tempGroupConfigName = 'temp_block_group_config.json'
+    this.tempGroupLiveConfigName = '.temp_block_group_config.live.json'
+    this.tempGroupConfigPath = path.join(tempPath, path.resolve(), this.tempGroupConfigName)
+    this.tempGroupLiveConfigPath = path.join(tempPath, path.resolve(), this.tempGroupLiveConfigName)
+
+    await mkdir(path.join(tempPath, path.resolve()), { recursive: true })
+
+    let tempGroupConfig = null
+
+    try {
+      const s = await readFile(this.tempGroupConfigPath)
+      tempGroupConfig = JSON.parse(s)
+      this.config = tempGroupConfig
+    } catch (err) {
+      console.log('could not find a temp config')
+    }
+
+    try {
+      if (!tempGroupConfig) {
+        this.config = tempConfig
+        const pr = (...args) => path.resolve(args[0], args[1])
+        const fm = (p) => pr.bind(null, p)
+        const allDirsInRoot = await readdir('.').then((l) => l.map(fm('.')))
+        const bdirs = await getBlockDirsIn(allDirsInRoot)
+        if (bdirs.length === 0) {
+          this.events.emit('write')
+        }
+        for (let i = 0; i < bdirs.length; i += 1) {
+          const d = await readFile(path.join(bdirs[i], 'block.config.json'))
+          this.addBlock({
+            directory: path.relative('.', bdirs[i]),
+            meta: JSON.parse(d),
+          })
+        }
+      }
+    } catch (err) {
+      console.log(err)
+      process.exit()
+    }
+  }
   // ------------------------------ //
   // -----------GETTERS------------ //
   // ------------------------------ //
@@ -153,7 +210,7 @@ class AppblockConfigManager {
     if (this.config) {
       return
     }
-    this.configName = configName || 'appblock.config.json'
+    this.configName = configName || 'block.config.json'
     this.cwd = cwd || '.'
     this.subcmd = subcmd || null
 
@@ -165,17 +222,17 @@ class AppblockConfigManager {
       // console.log(this.config)
       // console.log('\n')
 
+      if (!this.config) {
+        await this.tempSetup()
+      }
+
       await this.readLiveAppblockConfig()
       // console.log('Live Config Read:')
       // console.log(this.liveDetails)
       // console.log('\n')
     } catch (err) {
-      if (err.name === 'OUTOFCONTEXT') {
-        this.isOutOfContext = true
-      } else {
-        console.log(err.message)
-        process.exit(1)
-      }
+      console.log(err.message)
+      process.exit(1)
     }
   }
 
@@ -186,25 +243,31 @@ class AppblockConfigManager {
       // console.log('Config read ')
     } catch (err) {
       if (err.code === 'ENOENT') {
-        if (this.subcmd === 'create' || this.subcmd === 'pull') {
-          const eOutofContext = new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
-          eOutofContext.name = 'OUTOFCONTEXT'
-          throw eOutofContext
-        } else {
-          throw new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
-        }
+        // if (this.subcmd === 'create' || this.subcmd === 'pull') {
+        //   const eOutofContext = new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
+        //   eOutofContext.name = 'OUTOFCONTEXT'
+        //   throw eOutofContext
+        // } else {
+        //   throw new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
+        // }
+        this.isOutOfContext = true
       }
     }
   }
 
   async readLiveAppblockConfig() {
     try {
-      const existingLiveConfig = JSON.parse(readFileSync(path.resolve(this.cwd, this.liveConfigName)))
+      let existingLiveConfig
+      if (this.isTempGroup) {
+        existingLiveConfig = JSON.parse(readFileSync(this.tempGroupLiveConfigPath))
+      } else {
+        existingLiveConfig = JSON.parse(readFileSync(path.resolve(this.cwd, this.liveConfigName)))
+      }
       for (const block of this.dependencies) {
         // TODO -- if there are more blocks in liveconfig json,
         // Log the details and if they are on, kill the processes
         const {
-          meta: { name },
+          meta: { name, type },
         } = block
         if (existingLiveConfig[name]) {
           // console.log(`${name} exists in live as well:`)
@@ -286,14 +349,10 @@ class AppblockConfigManager {
     // eslint-disable-next-line no-undef
     // this.writeController = new AbortController()
     // this.writeLiveSignal = this.writeController.signal
-    writeFile(
-      path.resolve(this.cwd, this.liveConfigName),
-      JSON.stringify(this._createLiveConfig(), null, 2),
-      { encoding: 'utf8' },
-      (err) => {
-        if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
-      }
-    )
+    const p = this.isTempGroup ? this.tempGroupLiveConfigPath : path.resolve(this.cwd, this.liveConfigName)
+    writeFile(p, JSON.stringify(this._createLiveConfig(), null, 2), { encoding: 'utf8' }, (err) => {
+      if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
+    })
   }
 
   /**
@@ -307,36 +366,28 @@ class AppblockConfigManager {
     // eslint-disable-next-line no-undef
     // this.writeController = new AbortController()
     // this.writeSignal = this.writeController.signal
-    writeFile(
-      path.resolve(this.cwd, this.configName),
-      JSON.stringify(this.config, null, 2),
-      { encoding: 'utf8' },
-      (_) => _
-    )
+    const p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
+    writeFile(p, JSON.stringify(this.config, null, 2), { encoding: 'utf8' }, (_) => _)
   }
 
   /**
    * Write emiter for update block in block config and appblock config
    */
   async _updateBlockWrite(blockDir, blockMeta) {
+    const p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
     // Update appblock config
     return new Promise((resolve) => {
-      writeFile(
-        path.resolve(this.cwd, this.configName),
-        JSON.stringify(this.config, null, 2),
-        { encoding: 'utf8' },
-        () => {
-          // Update block config
-          writeFile(
-            path.resolve(blockDir, this.blockConfigName),
-            JSON.stringify(blockMeta, null, 2),
-            { encoding: 'utf8' },
-            () => {
-              resolve(true)
-            }
-          )
-        }
-      )
+      writeFile(p, JSON.stringify(this.config, null, 2), { encoding: 'utf8' }, () => {
+        // Update block config
+        writeFile(
+          path.resolve(blockDir, this.blockConfigName),
+          JSON.stringify(blockMeta, null, 2),
+          { encoding: 'utf8' },
+          () => {
+            resolve(true)
+          }
+        )
+      })
     })
   }
 
