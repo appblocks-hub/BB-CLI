@@ -1,5 +1,5 @@
 {
-  "name": "@appblocks/bb",
+  "name": "@appblocks/bb-cli",
   "version": "1.0.0",
   "description": "CLI tool for Appblocks",
   "main": "./bin/index.js",
