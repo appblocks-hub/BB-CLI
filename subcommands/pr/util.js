@@ -1,7 +1,7 @@
 /* eslint-disable no-async-promise-executor */
 const open = require('open')
 const { default: axios } = require('axios')
-const { mkdirSync, readFileSync, closeSync, openSync, writeFileSync } = require('fs')
+const { mkdirSync, readFileSync, writeFileSync } = require('fs')
 const inquirer = require('inquirer')
 const { tmpdir } = require('os')
 const path = require('path')
@@ -64,13 +64,19 @@ const readPrInputs = async (gitUser) => {
   const promtRes = await inquirer.prompt(question)
   return promtRes
 }
-const createPrTmpFile = () => {
+const createPrTmpFile = async () => {
   const tempPath = tmpdir()
-  const tempFilePath = path.join(tempPath, path.resolve(), 'pr/template.md')
-  const folder = tempFilePath.replace(/[^/]*$/.exec(tempFilePath)[0], '')
-  mkdirSync(folder, { recursive: true })
-  closeSync(openSync(tempFilePath, 'w'))
-  return tempFilePath
+
+  const tempFolderPath = path.join(tempPath, path.resolve(), 'pr')
+  await mkdirSync(tempFolderPath, { recursive: true })
+
+  const tempFilePath = path.join(tempFolderPath, 'template.md')
+  const userTemplate = configstore.get('userPrTemplatePath')
+  const templateData = userTemplate ? readFileSync(userTemplate, { encoding: 'utf8' }).toString() : generatePrTemplate()
+
+  await writeFileSync(tempFilePath, templateData)
+
+  return { tempFilePath, templateData }
 }
 
 /**
@@ -92,13 +98,9 @@ const getRepoDetatils = async (userRepo) => {
 const copyPrTemplate = () =>
   new Promise(async (resolve, reject) => {
     try {
-      const userTemplate = configstore.get('userPrTemplatePath')
-      const tmpPath = createPrTmpFile()
-      const templateData = userTemplate
-        ? readFileSync(userTemplate, { encoding: 'utf8' }).toString()
-        : generatePrTemplate()
-      writeFileSync(tmpPath, templateData)
-      await open(tmpPath, { wait: true })
+      const { tempFilePath, templateData } = await createPrTmpFile()
+
+      await open(tempFilePath, { app: { name: 'code' } })
 
       const isPrUpdated = await readInput({
         name: 'isPrUpdated',
@@ -106,7 +108,7 @@ const copyPrTemplate = () =>
         type: 'confirm',
       })
 
-      const body = readFileSync(tmpPath, { encoding: 'utf8' }).toString()
+      const body = readFileSync(tempFilePath, { encoding: 'utf8' }).toString()
 
       if (body === templateData) {
         const noPrUpdated = await readInput({

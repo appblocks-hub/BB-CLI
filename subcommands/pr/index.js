@@ -16,7 +16,7 @@ const { spinnies } = require('../../loader')
 const pr = async (name) => {
   let prRequest = ''
   try {
-    appConfig.init()
+    await appConfig.init()
 
     const blockDetails = appConfig.getBlock(name)
 
