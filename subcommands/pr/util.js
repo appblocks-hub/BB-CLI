@@ -1,5 +1,14 @@
+/**
+ * Copyright (c) Appblocks. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /* eslint-disable no-async-promise-executor */
-const open = require('open')
+// const open = require('open')
+
+const { spawn } = require('child_process')
 const { default: axios } = require('axios')
 const { mkdirSync, readFileSync, writeFileSync } = require('fs')
 const inquirer = require('inquirer')
@@ -11,6 +20,7 @@ const { getGitHeader } = require('../../utils/getHeaders')
 const { createPr } = require('../../utils/Mutations')
 const generatePrTemplate = require('../../templates/pull-request/genetatePrTemplate')
 const { readInput } = require('../../utils/questionPrompts')
+const { feedback } = require('../../utils/cli-feedback')
 
 /**
  * @returns {Object}
@@ -100,7 +110,15 @@ const copyPrTemplate = () =>
     try {
       const { tempFilePath, templateData } = await createPrTmpFile()
 
-      await open(tempFilePath, { app: { name: 'code' } })
+      // await open(tempFilePath, { app: { name: 'code' } })
+      const openEditor = spawn('subl', [tempFilePath])
+      openEditor.on('error', () => {
+        feedback({
+          type: 'error',
+          message: `Couldn't open vs-code. Please update the template manually in github after PR`,
+        })
+        return resolve(templateData)
+      })
 
       const isPrUpdated = await readInput({
         name: 'isPrUpdated',
@@ -124,7 +142,6 @@ const copyPrTemplate = () =>
       if (isPrUpdated) resolve(body)
       else resolve(copyPrTemplate())
     } catch (error) {
-      console.log('error', error)
       reject(error)
     }
   })
