@@ -39,11 +39,11 @@ const getUserRepoName = (forkGitUrl) =>
  * @param {String} newBlockName
  * @returns {Object | String}
  */
-const forkRepoPost = async (userRepo, newBlockName, organization) => {
+const forkRepoPost = async (userRepo, newBlockName, organization, branchType) => {
   try {
     const postData = {
       name: newBlockName,
-      default_branch_only: true,
+      default_branch_only: branchType,
     }
 
     if (organization != null) {
@@ -72,6 +72,12 @@ const readRepoInputs = async () => {
       message: 'where to fork repo',
       name: 'gitType',
       choices: ['my git', 'org git'],
+    },
+    {
+      type: 'confirm',
+      message: 'Fork default branch only',
+      name: 'defaultBranchOnly',
+      default: true,
     },
     // {
     //   type: 'input',
@@ -177,6 +183,7 @@ const updateBlockConfig = async (options) => {
   }
   blockConfig.name = blockFinalName
   blockConfig.source = { https: url, ssh: sshUrl }
+  blockConfig.isFork = true
   writeFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'), JSON.stringify(blockConfig))
   spinnies.update('fork', { text: `Updated block config` })
   return true
@@ -198,13 +205,15 @@ const forkRepo = (metaData, newBlockName, clonePath) =>
       const userRepo = getUserRepoName(forkGitUrl)
       spinnies.add('fork', { text: `Forking the repository` })
 
+      const { orgName, userName, defaultBranchOnly } = userInputs
+
       const {
         data: { description, visibility, svn_url: url, ssh_url: sshUrl, name },
         blockFinalName,
-      } = await forkRepoPost(userRepo, newBlockName, userInputs.orgName)
+      } = await forkRepoPost(userRepo, newBlockName, orgName, defaultBranchOnly)
 
       if (name !== blockFinalName) {
-        throw new Error(`Fork already exists as ${userInputs.orgName || userInputs.userName}/${name}`)
+        throw new Error(`Fork already exists as ${orgName || userName}/${name}`)
       }
 
       spinnies.update('fork', { text: `Repository forked successfully` })

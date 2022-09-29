@@ -64,8 +64,20 @@ const update = `mutation($description:String, $repositoryId:ID!){
     }
   }`
 
+const createPrTr = ({ data }) => data.createPullRequest.pullRequest
+const createPr = `mutation($baseRefName:String!, $body:String, $draft:Boolean, $headRefName:String!, $maintainerCanModify:Boolean, $repositoryId:ID!, $title:String!){
+  createPullRequest(input: {baseRefName: $baseRefName, body: $body, draft: $draft, headRefName: $headRefName, maintainerCanModify: $maintainerCanModify, repositoryId: $repositoryId, title: $title}) {
+    pullRequest {
+        id
+        title
+        url
+      }
+    }
+  }`
+
 module.exports = {
   cloneTemplateRepository: { Q: clone, Tr: cloneTr },
   createRepository: { Q: create, Tr: createTr },
   updateRepository: { Q: update, Tr: updateTr },
+  createPr: { Q: createPr, Tr: createPrTr },
 }

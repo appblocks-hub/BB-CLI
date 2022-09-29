@@ -6,15 +6,14 @@
  */
 
 const api = {}
-const env = process.env.appblocksEnv ? process.env.appblocksEnv : 'dev'
 // api.appBlockOrigin = `http://shield.appblock.io`
-api.appBlockOrigin = `https://${env}-shield.appblocks.com`
+api.appBlockOrigin = `https://shield.appblocks.com`
 api.appBlockLogin = `${api.appBlockOrigin}/login`
 api.appBlockLogout = `${api.appBlockOrigin}/logout`
 api.appBlockAccessToken = `${api.appBlockOrigin}/auth/device/get-token`
 
 // BLOCKS-REGISTRY
-api.appBlockRegistryOrigin = `https://${env}-api-blocks-registry.appblocks.com`
+api.appBlockRegistryOrigin = `https://api-blocks-registry.appblocks.com`
 api.appBlockCheckBlockNameAvailability = `${api.appBlockRegistryOrigin}/api/registry/v0.1/check-block-name-availabilty/invoke`
 api.appBlockRegister = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/register-block/invoke`
 api.appBlockEditBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/edit-block/invoke`
@@ -38,7 +37,7 @@ api.saveDependencies = `${api.appBlockRegistryOrigin}/api/registry/v0.1/upsert-d
 api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-source-code-signed-url/invoke`
 
 // APP-REGISTRY
-api.appBlockAppRegistryOrigin = `https://${env}-api-app-registry.appblocks.com`
+api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
 api.appRegistryCreateApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-app/invoke`
 api.appRegistryUploadBlockStatus = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/upload-blocks/invoke`
 api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-app-env-exist/invoke`
@@ -46,7 +45,7 @@ api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/
 api.appRegistryCopyObject = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/copy-s3-object/invoke`
 
 // SPACES
-api.appBlockSpacesOrigin = `https://${env}-api-spaces.appblocks.com`
+api.appBlockSpacesOrigin = `https://api-spaces.appblocks.com`
 api.appBlockListSpaces = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/list-spaces/invoke`
 
 const github = {}

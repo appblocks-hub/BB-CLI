@@ -44,6 +44,7 @@ const logout = require('../subcommands/logout')
 const disconnect = require('../subcommands/disconnect')
 const use = require('../subcommands/use')
 const config = require('../subcommands/config')
+const pr = require('../subcommands/pr')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -186,6 +187,8 @@ async function init() {
   program.command('create-app').description('register app for deploy').action(createApp)
 
   program.command('app-publish').description('Publish the app').action(appPublish)
+
+  program.command('pr').argument('<block-name>', 'Name of block to pr').description('pr block').action(pr)
 
   program.parseAsync(process.argv)
 }
