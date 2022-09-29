@@ -1,8 +1,16 @@
+/* eslint-disable no-async-promise-executor */
+const open = require('open')
 const { default: axios } = require('axios')
+const { mkdirSync, readFileSync, closeSync, openSync, writeFileSync } = require('fs')
 const inquirer = require('inquirer')
+const { tmpdir } = require('os')
+const path = require('path')
+const { configstore } = require('../../configstore')
 const { githubRestOrigin, githubGraphQl } = require('../../utils/api')
 const { getGitHeader } = require('../../utils/getHeaders')
 const { createPr } = require('../../utils/Mutations')
+const generatePrTemplate = require('../../templates/pull-request/genetatePrTemplate')
+const { readInput } = require('../../utils/questionPrompts')
 
 /**
  * @returns {Object}
@@ -18,15 +26,15 @@ const readPrInputs = async (gitUser) => {
         return true
       },
     },
-    {
-      type: 'input',
-      message: 'Body for the pull request',
-      name: 'body',
-      validate: (input) => {
-        if (!input || input?.length < 1) return `Body is not valid`
-        return true
-      },
-    },
+    // {
+    //   type: 'input',
+    //   message: 'Body for the pull request',
+    //   name: 'body',
+    //   validate: (input) => {
+    //     if (!input || input?.length < 1) return `Body is not valid`
+    //     return true
+    //   },
+    // },
     {
       type: 'input',
       message: 'The name of the branch you want your changes pulled into [BASE]',
@@ -56,6 +64,14 @@ const readPrInputs = async (gitUser) => {
   const promtRes = await inquirer.prompt(question)
   return promtRes
 }
+const createPrTmpFile = () => {
+  const tempPath = tmpdir()
+  const tempFilePath = path.join(tempPath, path.resolve(), 'pr/template.md')
+  const folder = tempFilePath.replace(/[^/]*$/.exec(tempFilePath)[0], '')
+  mkdirSync(folder, { recursive: true })
+  closeSync(openSync(tempFilePath, 'w'))
+  return tempFilePath
+}
 
 /**
  *
@@ -72,6 +88,46 @@ const getRepoDetatils = async (userRepo) => {
     } else throw new Error(err.response.data.message)
   }
 }
+
+const copyPrTemplate = () =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const userTemplate = configstore.get('userPrTemplatePath')
+      const tmpPath = createPrTmpFile()
+      const templateData = userTemplate
+        ? readFileSync(userTemplate, { encoding: 'utf8' }).toString()
+        : generatePrTemplate()
+      writeFileSync(tmpPath, templateData)
+      await open(tmpPath, { wait: true })
+
+      const isPrUpdated = await readInput({
+        name: 'isPrUpdated',
+        message: 'Is pull request template updated',
+        type: 'confirm',
+      })
+
+      const body = readFileSync(tmpPath, { encoding: 'utf8' }).toString()
+
+      if (body === templateData) {
+        const noPrUpdated = await readInput({
+          name: 'noPrUpdated',
+          message: 'No changes saved to template, Do you want to continue ?',
+          type: 'confirm',
+        })
+
+        if (noPrUpdated) resolve(body)
+        else resolve(copyPrTemplate())
+      }
+
+      if (isPrUpdated) resolve(body)
+      else resolve(copyPrTemplate())
+    } catch (error) {
+      console.log('error', error)
+      reject(error)
+    }
+  })
+
+const getPrBody = async () => copyPrTemplate()
 
 const createPrMutation = async (prInputs) => {
   try {
@@ -95,4 +151,4 @@ const createPrMutation = async (prInputs) => {
   }
 }
 
-module.exports = { readPrInputs, getRepoDetatils, createPrMutation }
+module.exports = { readPrInputs, getRepoDetatils, createPrMutation, copyPrTemplate, getPrBody }

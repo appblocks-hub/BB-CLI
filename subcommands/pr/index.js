@@ -6,7 +6,7 @@
  */
 
 const chalk = require('chalk')
-const { readPrInputs, getRepoDetatils, createPrMutation } = require('./util')
+const { readPrInputs, getRepoDetatils, createPrMutation, getPrBody } = require('./util')
 const { appConfig } = require('../../utils/appconfigStore')
 const { configstore } = require('../../configstore')
 const { spinnies } = require('../../loader')
@@ -20,7 +20,7 @@ const pr = async (name) => {
 
     const blockDetails = appConfig.getBlock(name)
 
-    if (!blockDetails.meta) {
+    if (!blockDetails?.meta) {
       throw new Error(`${name} block does not exist`)
     }
 
@@ -29,16 +29,18 @@ const pr = async (name) => {
     const repoDetails = await getRepoDetatils(`${gitUser}/${name}`)
 
     if (!repoDetails.fork) {
-      throw new Error(`${name} block not forked repo`)
+      throw new Error(`${name} block is not a forked repo`)
     }
 
     const userInputs = await readPrInputs(gitUser)
+
+    const body = await getPrBody()
 
     prRequest = `${userInputs.headRefName} -> ${repoDetails.parent.full_name}:${userInputs.baseRefName}`
 
     spinnies.add('pr', { text: `Creating pull request for ${prRequest}` })
 
-    const createdPr = await createPrMutation({ ...userInputs, repositoryId: repoDetails.parent.node_id })
+    const createdPr = await createPrMutation({ ...userInputs, body, repositoryId: repoDetails.parent.node_id })
 
     spinnies.succeed('pr', { text: `Created pull request url ${createdPr.url}` })
   } catch (e) {

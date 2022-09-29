@@ -44,7 +44,7 @@
     "inquirer-autocomplete-prompt": "1.4.0",
     "inquirer-file-tree-selection-prompt": "1.0.12",
     "octokit": "1.7.1",
-    "open": "8.4.0",
+    "open": "^8.4.0",
     "ora": "5.4.1",
     "parse-link-header": "2.0.0",
     "portfinder": "1.0.28",
