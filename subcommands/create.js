@@ -19,7 +19,6 @@ const {
   // getBlockShortName,
   getBlockName,
   getGitConfigNameEmail,
-  confirmationPrompt,
   readInput,
   sourceUrlOptions,
 } = require('../utils/questionPrompts')
@@ -108,13 +107,13 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     if (!skipConfigInit) {
       await appConfig.init(null, null, 'create')
       if (appConfig.isOutOfContext) {
-        const goAhead = await confirmationPrompt({
-          message: 'You are trying to create a block outside appblock context',
-          name: 'seperateBlockCreate',
-        })
-        if (!goAhead) {
-          return
-        }
+        // const goAhead = await confirmationPrompt({
+        //   message: 'You are trying to create a block outside appblock context',
+        //   name: 'seperateBlockCreate',
+        // })
+        // if (!goAhead) {
+        //   return
+        // }
         standAloneBlock = true
       }
     }
@@ -185,11 +184,18 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         ...blockSource,
       },
       language: 'nodejs',
-      start: 'npx webpack-dev-server',
-      build: 'npx webpack',
+      start: 'node index.js',
+      build: '',
       postPull: 'npm i',
       standAloneBlock,
     }
+
+    if (type === 2 || type === 3) {
+      // blockDetails.language = 'js'
+      blockDetails.start = 'npx webpack-dev-server'
+      blockDetails.build = 'npx webpack'
+    }
+
     // execSync(`cd ${cloneDirName}`)
     createFileSync(path.resolve(clonePath, cloneDirName, `block.config.json`), blockDetails)
 
@@ -206,12 +212,12 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
     if (returnBeforeCreatingTemplates) return { clonePath, cloneDirName, blockDetails }
 
-    if (!standAloneBlock) {
-      appConfig.addBlock({
-        directory: path.relative('.', path.resolve(clonePath, cloneDirName)),
-        meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
-      })
-    }
+    // if (!standAloneBlock) {
+    appConfig.addBlock({
+      directory: path.relative('.', path.resolve(clonePath, cloneDirName)),
+      meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
+    })
+    // }
 
     // This is a temp setup
     // This is to avoid pushing empty repo, which will cause issues on

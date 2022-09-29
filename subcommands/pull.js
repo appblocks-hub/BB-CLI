@@ -11,7 +11,7 @@ const chalk = require('chalk')
 
 const createBlock = require('../utils/createBlock')
 
-const { wantToCreateNewVersion } = require('../utils/questionPrompts')
+const { wantToCreateNewVersion, readInput } = require('../utils/questionPrompts')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
 const { appConfig } = require('../utils/appconfigStore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
@@ -29,6 +29,7 @@ const {
 } = require('../utils/registryUtils')
 const { createDirForType } = require('../utils/fileAndFolderHelpers')
 const { feedback } = require('../utils/cli-feedback')
+const { forkRepo } = require('./pull/forkUtil')
 
 const pull = async (componentName, { cwd = '.' }) => {
   /**
@@ -60,6 +61,7 @@ const pull = async (componentName, { cwd = '.' }) => {
       } else {
         spinnies.succeed('blockExistsCheck', { text: `${componentName} is available` })
         spinnies.remove('blockExistsCheck')
+
         const res = await pullAppblock(componentName)
         if (res) {
           process.exit(0)
@@ -67,12 +69,49 @@ const pull = async (componentName, { cwd = '.' }) => {
           process.exit(1)
         }
       }
+    } else {
+      // get the version id of the latest verion of parent
+      const dx = await getAllBlockVersions(metaData.ID)
+      if (dx.data.err) {
+        throw new Error(dx.data.msg).message
+      }
+
+      if (dx.status === 204) {
+        throw new Error('No version found for the block to pull').message
+      }
+
+      // get the latest version of parent
+      const c = await getBlockMetaData(metaData.ID)
+      if (c.data.err) {
+        throw new Error(c.data.msg).message
+      }
+      const PV = c.data.data.version
+
+      const fil = dx.data.data?.filter((v) => v.version_number === PV)
+
+      const version_id = fil?.[0].id
+
+      metaData.version_id = version_id
+      metaData.parent_id = metaData.ID
     }
   } catch (err) {
     // console.log('Something went wrong while getting block details..')
-    spinnies.fail('blockExistsCheck', { text: `Something went wrong from our side` })
-    feedback({ type: 'info', message: `${err}` })
+
+    let message = err.message || err
+
+    if (err.response?.status === 401) {
+      message = `Access denied for block ${componentName}`
+    }
+
+    spinnies.fail('blockExistsCheck', { text: `Something went wrong` })
+    feedback({ type: 'info', message })
+    spinnies.remove('blockExistsCheck')
     // process.exit(1)
+    return
+  }
+
+  if (!metaData.version_id) {
+    spinnies.fail('blockExistsCheck', { text: `No version found for the block to pull` })
     return
   }
 
@@ -90,40 +129,65 @@ const pull = async (componentName, { cwd = '.' }) => {
     const createCustomVersion = await wantToCreateNewVersion(metaData.BlockName)
     if (createCustomVersion) {
       const availableName = await checkBlockNameAvailability(metaData.BlockName, true)
-      const { clonePath, cloneDirName, blockFinalName } = await createBlock(
-        availableName,
-        availableName,
-        metaData.BlockType,
-        metaData.GitUrl,
-        false,
-        cwd
-      )
+
+      let newVariantType = 1 // clone
+      if (metaData.BlockType !== 1) {
+        newVariantType = await readInput({
+          type: 'list',
+          name: 'isFork',
+          message: 'Choose variant type',
+          choices: ['Fork', 'Clone'].map((v, i) => ({
+            name: v,
+            value: i,
+          })),
+          // 0-fork 1-clone
+        })
+      }
+
+      let clonePath
+      let cloneDirName
+      let blockFinalName
+
+      // IF FORK
+      if (newVariantType === 0) {
+        try {
+          clonePath = appConfig.isOutOfContext ? cwd : createDirForType(metaData.BlockType, cwd || '.')
+          const { sshUrl, name, blockFinalName: bf } = await forkRepo(metaData, availableName, clonePath)
+
+          metaData.GitUrl = sshUrl
+          cloneDirName = name
+          blockFinalName = bf
+        } catch (error) {
+          console.log(chalk.red(error.message || error))
+          process.exit(1)
+        }
+      } else {
+        const createBlockRes = await createBlock(
+          availableName,
+          availableName,
+          metaData.BlockType,
+          metaData.GitUrl,
+          false,
+          cwd
+        )
+
+        clonePath = createBlockRes.clonePath
+        cloneDirName = createBlockRes.name
+        blockFinalName = createBlockRes.blockFinalName
+      }
 
       // TODO -- store new block details in two branches and run addBlock way dow
       // n, so this code is only once!!
       // Maybe update config from createBlock itself
-      appConfig.addBlock({
-        directory: path.relative(cwd, path.resolve(clonePath, cloneDirName)),
-        meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
-      })
+      if (appConfig.isOutOfContext) {
+        appConfig.addBlock({
+          directory: path.relative(cwd, path.resolve(clonePath, cloneDirName)),
+          meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
+        })
+      }
+
       // Inform registry about the new variant
       // TODO: change too many network calls
-
-      // get the latest version of parent
-      const c = await getBlockMetaData(metaData.ID)
-      if (c.data.err) {
-        throw new Error(c.data.msg).message
-      }
-      const PV = c.data.data.version
-      const parent_id = metaData.ID
-
-      // get the version id of the latest verion of parent
-      const dx = await getAllBlockVersions(metaData.ID)
-      if (dx.data.err) {
-        throw new Error(dx.data.msg).message
-      }
-      const fil = dx.data.data.filter((v) => v.version_number === PV)
-      const version_id = fil[0].id
 
       // get the id of new variant
       const d = await getBlockDetails(blockFinalName)
@@ -137,7 +201,7 @@ const pull = async (componentName, { cwd = '.' }) => {
       const block_id = d.data.data.ID
 
       // request registry for new variant creation
-      const rt = await addANewBlockVariant({ block_id, version_id, parent_id })
+      const rt = await addANewBlockVariant({ block_id, version_id: metaData.version_id, parent_id: metaData.parent_id })
       if (rt.data.err === false) {
         feedback({ type: 'success', message: rt.data.msg })
       } else {
@@ -152,7 +216,7 @@ const pull = async (componentName, { cwd = '.' }) => {
         throw new Error(`${componentName} already exists at ${existingBlock.directory}`).message
       }
 
-      const clonePath = createDirForType(metaData.BlockType, cwd)
+      const clonePath = appConfig.isOutOfContext ? '.' : createDirForType(metaData.BlockType, cwd || '.')
 
       const localDirName = `${metaData.BlockName}`
 
@@ -216,7 +280,7 @@ const pull = async (componentName, { cwd = '.' }) => {
       pulledBlockPath = path.resolve(clonePath, localDirName)
     }
   } catch (err) {
-    console.log('Something went wrong while pulling,please try again.\n')
+    console.log('Something went wrong, please try again.\n')
     console.log(chalk.red(err))
   }
 

@@ -99,7 +99,7 @@ function findFreePort(beg, ...rest) {
   }
 }
 
-async function validateAndAssignPortProxy(p) {
+async function validateAndAssignPortProxy(p, pr) {
   /**
    * Since long running processes use npx and all packages are downloaded and installed,
    * and we are not waiting for app to start listening at the port,
@@ -110,11 +110,24 @@ async function validateAndAssignPortProxy(p) {
   global.assignedPorts = global.assignedPorts || []
   let port
 
-  port = await validateAndAssignPort(p)
-  while (global.assignedPorts.findIndex((v) => v === port) > -1) {
-    port = await validateAndAssignPort(port + 1, port + 1)
+  if (pr > p) {
+    port = []
+    for (let i = p; i < pr + 1; i++) {
+      portValue = await validateAndAssignPort(i)
+      while (global.assignedPorts.findIndex((v) => v === portValue) > -1) {
+        portValue = await validateAndAssignPort(portValue + 1, portValue + 1)
+      }
+      global.assignedPorts.push(portValue)
+      port.push(portValue)
+    }
+  } else {
+    port = await validateAndAssignPort(p)
+    while (global.assignedPorts.findIndex((v) => v === port) > -1) {
+      port = await validateAndAssignPort(port + 1, port + 1)
+    }
+    global.assignedPorts.push(port)
   }
-  global.assignedPorts.push(port)
+
   return port
 }
 
@@ -136,12 +149,13 @@ const getFreePorts = async (appConfig, blockName) => {
   }
 
   // Get port for emulator
-  ports.emulator = await validateAndAssignPortProxy(5000)
+  ports.emulatorPorts = await validateAndAssignPortProxy(5000, 5005)
+  // ports.emulator = await validateAndAssignPortProxy(5000)
 
   // Update the ports to env
   const envPortValues = Object.entries(ports).reduce((acc, [bName, bPort]) => {
-    if (bName === 'emulator') {
-      acc.BLOCK_FUNCTION_URL = `http://localhost:${bPort}`
+    if (bName === 'emulatorPorts') {
+      acc.BLOCK_FUNCTION_URL = `http://localhost:${bPort[0]}`
     } else {
       acc[`BLOCK_ENV_URL_${bName}`] = `http://localhost:${bPort}`
     }

@@ -8,7 +8,7 @@
 const emojiregex = require('emoji-regex')
 
 function isValidBlockName(name) {
-  const regex = /^[a-zA-Z-_0-9]+$/
+  const regex = /^[a-zA-Z_0-9]+$/
   return regex.test(name) && ![...name.matchAll(emojiregex())].length
 }
 

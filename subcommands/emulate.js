@@ -10,9 +10,9 @@ const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-
 
 global.rootDir = process.cwd()
 
-const emulateNode = async (port) => {
+const emulateNode = async (ports, appConfig) => {
   try {
-    await copyEmulatorCode(port)
+    const emulatorData = await copyEmulatorCode(ports, appConfig)
     const i = await runBash('cd ./._ab_em/ && npm i')
     if (i.status === 'failed') {
       throw new Error(i.msg)
@@ -25,7 +25,7 @@ const emulateNode = async (port) => {
     // console.log('pid - ', child.pid)
     addEmulatorProcessData({ pid: child.pid })
 
-    return { status: 'success', msg: '', data: { port, pid: child.pid } }
+    return { status: 'success', msg: '', data: { emulatorData, port: emulatorData, pid: child.pid } }
   } catch (err) {
     return { status: 'failed', msg: err.message, data: { port: null, pid: null } }
   }

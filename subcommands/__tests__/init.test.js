@@ -19,7 +19,7 @@ const [p1, p2, ...rest] = process.argv
 const ARGSWITHOUTTYPE = [p1, p2, 'TODO']
 const ARGSWITHTYPE = [p1, p2, 'TODO', '--type', 'uicontainer']
 const DIRPATH = path.resolve('.')
-const CONFIGPATH = path.join(DIRPATH, 'appblock.config.json')
+const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
 
 jest.mock('../utils/questionPrompts')
 jest.mock('../utils/fileAndFolderHelpers')
@@ -110,10 +110,10 @@ afterEach(() => {
 //       isValidAppBlockProject.mockClear()
 //       isValidAppBlockProject.mockReturnValue(true)
 
-//       fs.writeFileSync('appblock.config.json', JSON.stringify({ name: 'test', type: 'testType' }))
+//       fs.writeFileSync('block.config.json', JSON.stringify({ name: 'test', type: 'testType' }))
 //     })
 //     afterAll(() => {
-//       fs.rmSync('appblock.config.json')
+//       fs.rmSync('block.config.json')
 //     })
 //     test('Should not ask for wiping confirmation', async () => {
 //       await Init(ARGSWITHTYPE)

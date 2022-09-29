@@ -89,7 +89,7 @@ class DeployblockConfigManager {
       this.config = JSON.parse(readFileSync(path.resolve(this.cwd, this.configName)))
     } catch (err) {
       if (err.code === 'ENOENT') {
-        if (!existsSync(path.resolve(this.cwd, 'appblock.config.json'))) {
+        if (!existsSync(path.resolve(this.cwd, 'block.config.json'))) {
           throw new Error(`Please init block or run the command in root folder of your app `)
         }
       }

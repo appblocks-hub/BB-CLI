@@ -85,7 +85,7 @@ const createApp = async () => {
             return `Error checking domain name exist`
           }
         },
-        default: `${appName}-${envName}`.toLocaleLowerCase(),
+        default: `${envName}-${appName}`.toLocaleLowerCase(),
       })
     }
 
@@ -132,7 +132,7 @@ const createApp = async () => {
     spinnies.succeed('ca', { text: 'App created successfully' })
   } catch (err) {
     spinnies.fail('ca', { text: err.message })
-    console.log(err.message || err)
+    throw new Error(err.message || err)
   }
 }
 

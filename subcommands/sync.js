@@ -32,7 +32,7 @@ const { feedback } = require('../utils/cli-feedback')
  *  2. found unregistered blocks, should i register?
  *  3. found blocks with registered name but different source
  *  4. would you like to register the app?(register then..if yes)
- *  5. create appblock.config.json
+ *  5. create block.config.json
  *  6. Validate block.config.json with YUP, so it has all expected fields
  */
 
@@ -236,8 +236,8 @@ const sync = async () => {
   const validationData = { isErrored: false, summary: [], detailedReport: [] }
 
   try {
-    appConfiginLocal = await readFile('appblock.config.json', { encoding: 'utf8' }).then((d) => JSON.parse(d))
-    feedback({ type: 'info', message: 'Found appblock.config.json' })
+    appConfiginLocal = await readFile('block.config.json', { encoding: 'utf8' }).then((d) => JSON.parse(d))
+    feedback({ type: 'info', message: 'Found block.config.json' })
     try {
       appblockConfigSchema.validateSync(appConfiginLocal, { abortEarly: false })
     } catch (err) {
@@ -554,7 +554,7 @@ const sync = async () => {
   // syncing logic starts here
   // 4 cases - (no config,config) && not (registered,not registered)
   if (insideAppblock && appblockIsRegistered) {
-    // INFO : Found an appblock.config.json and also the app is registered
+    // INFO : Found an block.config.json and also the app is registered
     if (!appConfigFromRegistry) {
       // INFO : Local config is present but couldn't find app config in the registry
       console.log(`${chalk.bgYellow('INFO')} Config not found in  Registry for ${appblockDetails.BlockName}`)
@@ -568,7 +568,7 @@ const sync = async () => {
       //   if (c1) {
       //   }
       const co = await manualMerge(diffed_newlyCreatedConfig_with_PresentConfig)
-      fs.writeFileSync('appblock.config.json', JSON.stringify(co, null, 2))
+      fs.writeFileSync('block.config.json', JSON.stringify(co, null, 2))
 
       console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
       console.log('DONE')
@@ -605,9 +605,9 @@ const sync = async () => {
        */
       const co2 = await manualMerge(diffed_configinlocal_with_newlybuilt)
 
-      fs.writeFileSync('appblock.config.json', JSON.stringify(co2, null, 2))
+      fs.writeFileSync('block.config.json', JSON.stringify(co2, null, 2))
 
-      feedback({ type: 'warn', message: 'appblock.config.json is pushed' })
+      feedback({ type: 'warn', message: 'block.config.json is pushed' })
       feedback({ type: 'success', message: 'DONE' })
     }
   } else if (insideAppblock && !appblockIsRegistered) {
@@ -622,7 +622,7 @@ const sync = async () => {
     const diffed_newlyCreatedConfig_with_PresentConfig = diffObjects(possibleNewConfig, appConfiginLocal)
     diffShower(diffed_newlyCreatedConfig_with_PresentConfig)
     const co = await manualMerge(diffed_newlyCreatedConfig_with_PresentConfig)
-    fs.writeFileSync('appblock.config.json', JSON.stringify(co, null, 2))
+    fs.writeFileSync('block.config.json', JSON.stringify(co, null, 2))
 
     console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
     console.log('DONE')
@@ -644,7 +644,7 @@ const sync = async () => {
       diffShower(diffed_newlyCreatedPartialConfig_with_ConfigFromRegistry)
 
       const co = await manualMerge(diffed_newlyCreatedPartialConfig_with_ConfigFromRegistry)
-      fs.writeFileSync('appblock.config.json', JSON.stringify(co, null, 2))
+      fs.writeFileSync('block.config.json', JSON.stringify(co, null, 2))
 
       console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
       console.log('DONE')
@@ -659,7 +659,7 @@ const sync = async () => {
 
       console.log(`${chalk.bgYellow('INFO')} Writing new config`)
       console.log(newAppblockConfig)
-      fs.writeSync('appblock.config.json', JSON.stringify(newAppblockConfig))
+      fs.writeSync('block.config.json', JSON.stringify(newAppblockConfig))
       console.log('New config written')
       console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
       console.log('Please push the new config, If you have access')
@@ -675,7 +675,7 @@ const sync = async () => {
     const { blockFinalName, blockSource } = await createBlock(availableName, availableName, 1, '', false, '.')
 
     fs.writeFileSync(
-      'appblock.config.json',
+      'block.config.json',
       JSON.stringify(
         {
           name: blockFinalName,

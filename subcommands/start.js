@@ -97,7 +97,7 @@ const start = async (blockname, { usePnpm }) => {
   }
 
   await appConfig.init()
-  // Setup env from appblock.config.json data
+  // Setup env from block.config.json data
   const configData = appConfig.appConfig
   await setupEnv(configData)
 
@@ -118,7 +118,7 @@ const start = async (blockname, { usePnpm }) => {
       process.exit(1)
     }
     const port = await getFreePorts(appConfig, blockname)
-    await startBlock(blockname, port)
+    await startBlock(blockname, port[0])
   }
 }
 
@@ -133,10 +133,10 @@ async function startAllBlock() {
   spinnies.add('emulator', { text: 'Staring emulator' })
   switch (emulateLang) {
     case 'nodejs':
-      emData = await emulateNode(PORTS.emulator)
+      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
       break
     default:
-      emData = await emulateNode(PORTS.emulator)
+      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
       break
   }
   if (emData.status === 'success') {
@@ -150,7 +150,7 @@ async function startAllBlock() {
         name: fnBlock.meta.name,
         pid: emData.data.pid || null,
         isOn: true,
-        port: emData.data.port || null,
+        port: emData.data.port[fnBlock.meta.type] || emData.data.port || null,
         log: {
           out: `./logs/out/functions.log`,
           err: `./logs/err/functions.log`,
@@ -159,7 +159,15 @@ async function startAllBlock() {
     }
     await Promise.allSettled(pary)
     // console.log(rep)
-    spinnies.succeed('emulator', { text: `emulator started at ${emData.data.port}` })
+    if (emData.data.emulatorData) {
+      const dt = Object.entries(emData.data.emulatorData).reduce(
+        (acc, [type, port]) => `${acc} ${type} emulator started at ${port}\n`,
+        '\n'
+      )
+      spinnies.succeed('emulator', { text: dt })
+    } else {
+      spinnies.succeed('emulator', { text: `emulator started at ${emData.data.port}` })
+    }
   } else {
     spinnies.fail('emulator', { text: `emulator failed to start ${chalk.gray(`(${emData.msg})`)}` })
   }

@@ -47,7 +47,7 @@ const pullAppblock = async (name) => {
   const [dir] = [config.name]
   const DIRPATH = path.resolve(dir)
 
-  const CONFIGPATH = path.join(DIRPATH, 'appblock.config.json')
+  const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
   createFileSync(CONFIGPATH, {
     name: config.name,
     type: 'appBlock',

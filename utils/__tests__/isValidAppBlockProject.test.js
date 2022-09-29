@@ -3,7 +3,7 @@
 const fs = require('fs')
 const isValidAppBlockProject = require('../isValidAppBlockProject')
 
-const VALIDFILES = ['appblock.config.json']
+const VALIDFILES = ['block.config.json']
 
 jest.mock('fs')
 
@@ -17,11 +17,11 @@ test('Should call readDirSync with value passed to main fn', () => {
   expect(fs.readdirSync).toHaveBeenCalledWith('dir')
 })
 
-test('Should check for appblock.config.json', () => {
+test('Should check for block.config.json', () => {
   const spy = jest.spyOn(global.Array.prototype, 'includes')
   fs.readdirSync.mockReturnValue(VALIDFILES)
   isValidAppBlockProject('dir')
-  expect(spy).toHaveBeenCalledWith('appblock.config.json')
+  expect(spy).toHaveBeenCalledWith('block.config.json')
   spy.mockRestore()
 })
 

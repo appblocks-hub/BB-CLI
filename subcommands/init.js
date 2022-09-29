@@ -96,7 +96,7 @@ const Init = async (appblockName) => {
     }
   }
 
-  const CONFIGPATH = path.join(DIRPATH, 'appblock.config.json')
+  const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
   createFileSync(CONFIGPATH, {
     name: blockFinalName,
     type: 'appBlock',

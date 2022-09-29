@@ -24,21 +24,18 @@ const { getShieldHeader } = require('./getHeaders')
 async function registerBlock(block_type, block_name, block_short_name, is_public, github_url, block_desc) {
   spinnies.add('register', { text: `Registering ${block_name}` })
 
+  const postData = {
+    block_type,
+    block_name,
+    block_short_name,
+    is_public,
+    block_desc,
+    github_url,
+  }
   try {
-    const res = await axios.post(
-      appBlockRegister,
-      {
-        block_type,
-        block_name,
-        block_short_name,
-        is_public,
-        block_desc,
-        github_url,
-      },
-      {
-        headers: getShieldHeader(),
-      }
-    )
+    const res = await axios.post(appBlockRegister, postData, {
+      headers: getShieldHeader(),
+    })
 
     spinnies.succeed('register', { text: `${block_name} registered successfully` })
     spinnies.remove('register')

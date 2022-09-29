@@ -22,7 +22,6 @@ const Init = require('../subcommands/init')
 
 const log = require('../subcommands/log')
 const start = require('../subcommands/start')
-// const { checkLogDirs } = require('../utils/preActionMethods/preAction-start')
 const ls = require('../subcommands/ls')
 const flush = require('../subcommands/flush')
 const push = require('../subcommands/push')
@@ -34,7 +33,6 @@ const login = require('../subcommands/login')
 const connect = require('../subcommands/connect')
 const push_config = require('../subcommands/push_config')
 const exec = require('../subcommands/exec')
-const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 const addTags = require('../subcommands/addTags')
 const addCategories = require('../subcommands/addCategories')
 const { preActionChecks } = require('../utils/preActionRunner')
@@ -44,22 +42,43 @@ const appPublish = require('../subcommands/appPublish')
 const mark = require('../subcommands/mark')
 const logout = require('../subcommands/logout')
 const disconnect = require('../subcommands/disconnect')
+const use = require('../subcommands/use')
+const config = require('../subcommands/config')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
 process.global = { cwd: process.cwd() }
 
+// eslint-disable-next-line no-unused-vars
+function configSetOptionParse(value, _) {
+  const a = value.split(',')
+  const p = {}
+  a.forEach((v) => {
+    const [k, val] = v.split('=')
+    p[k] = val
+  })
+  return p
+}
 async function init() {
   const program = new Command().hook('preAction', async (_, actionCommand) => {
     const subcommand = actionCommand.parent.args[0]
     await preActionChecks(subcommand)
-    await checkAndSetGitConnectionPreference()
   })
 
   // TODO -- get version properly
   program.version(packageJson.version)
 
+  program
+    .command('config')
+    .option('-l,--list', 'To list all values')
+    .option('-d,--delete <key>', 'To delete a value')
+    .option('-s,--set <key> <value>', 'To set value', configSetOptionParse)
+    .action(config)
+
+  program.command('use').argument('[space_name]', 'Name of space to use').action(use)
+
   program.command('disconnect').argument('<service>', 'service to disconnect (github)').action(disconnect)
+
   program
     .command('connect')
     .argument('<service>', 'Name of service to connect')
@@ -165,6 +184,7 @@ async function init() {
     .action(addCategories)
 
   program.command('create-app').description('register app for deploy').action(createApp)
+
   program.command('app-publish').description('Publish the app').action(appPublish)
 
   program.parseAsync(process.argv)

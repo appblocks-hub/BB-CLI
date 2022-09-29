@@ -9,6 +9,7 @@ const { configstore } = require('../configstore')
 
 const getShieldHeader = () => ({
   'Content-Type': 'application/json',
+  space_id: configstore.get('currentSpaceId', ''),
   Authorization: `Bearer ${configstore.get('appBlockUserToken')}`,
 })
 

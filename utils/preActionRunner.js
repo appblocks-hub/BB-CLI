@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const checkAndSetGitConnectionPreference = require('./checkAndSetGitConnectionStrategy')
+const checkAndSetUserSpacePreference = require('./checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('./ensureUserLogins')
 const { isInGitRepository, isGitInstalled } = require('./gitCheckUtils')
 const { checkLogDirs } = require('./preActionMethods/preAction-start')
@@ -27,6 +29,8 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'ls':
@@ -37,6 +41,8 @@ const preActionChecks = async (subcommand) => {
 
     case 'mark':
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'push':
@@ -45,6 +51,8 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'pull':
@@ -53,14 +61,20 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'push-config':
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'add-tags':
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'flush':
@@ -72,6 +86,8 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'create':
@@ -80,6 +96,8 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'log':
@@ -95,6 +113,8 @@ const preActionChecks = async (subcommand) => {
         process.exit(1)
       }
       await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
       break
 
     case 'connect':
@@ -105,6 +125,9 @@ const preActionChecks = async (subcommand) => {
       break
 
     case 'login':
+      break
+
+    case 'config':
       break
 
     default:
