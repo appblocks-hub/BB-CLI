@@ -14,6 +14,12 @@ const fsPromise = require('fs/promises')
 
 const { runBash } = require('../subcommands/bash')
 
+/**
+ *
+ * @param {Array<Number} PORTS
+ * @param {Record<'dependencies',import('./jsDoc/types').dependencies>} appConfig
+ * @returns
+ */
 async function copyEmulatorCode(PORTS, appConfig) {
   const blocks = appConfig.dependencies
   const blocksData = Object.values(blocks).reduce((acc, bl) => {

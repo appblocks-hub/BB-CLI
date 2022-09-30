@@ -10,9 +10,22 @@ const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-
 
 global.rootDir = process.cwd()
 
-const emulateNode = async (ports, appConfig) => {
+/**
+ * @typedef {Object} emData
+ * @property {('success' | 'failed')} msg
+ * @property {String} status
+ * @property {Object}
+ */
+
+/**
+ *
+ * @param {Array<Number>} ports
+ * @param {Record<'dependencies',import('../utils/jsDoc/types').dependencies>} dependencies
+ * @returns {emData}
+ */
+const emulateNode = async (ports, dependencies) => {
   try {
-    const emulatorData = await copyEmulatorCode(ports, appConfig)
+    const emulatorData = await copyEmulatorCode(ports, dependencies)
     const i = await runBash('cd ./._ab_em/ && npm i')
     if (i.status === 'failed') {
       throw new Error(i.msg)
@@ -27,7 +40,7 @@ const emulateNode = async (ports, appConfig) => {
 
     return { status: 'success', msg: '', data: { emulatorData, port: emulatorData, pid: child.pid } }
   } catch (err) {
-    return { status: 'failed', msg: err.message, data: { port: null, pid: null } }
+    return { status: 'failed', msg: err.message, data: { emulatorData: null, port: null, pid: null } }
   }
 }
 

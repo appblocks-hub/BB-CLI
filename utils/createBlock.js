@@ -156,7 +156,7 @@ async function createBlock(
           console.log(chalk.dim('Pulled block has no config file, adding a new one'))
           blockConfig = {
             type: blockTypeInverter(blockTypeNo),
-            language: 'nodejs',
+            language: 'js',
             start: 'npx webpack-dev-server',
             build: 'npx webpack',
             postPull: 'npm i',

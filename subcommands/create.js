@@ -191,7 +191,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     }
 
     if (type === 2 || type === 3) {
-      // blockDetails.language = 'js'
+      blockDetails.language = 'js'
       blockDetails.start = 'npx webpack-dev-server'
       blockDetails.build = 'npx webpack'
     }

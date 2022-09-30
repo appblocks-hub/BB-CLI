@@ -174,7 +174,7 @@ const updateBlockConfig = async (options) => {
     if (err.code === 'ENOENT') {
       blockConfig = {
         type,
-        language: 'nodejs',
+        language: isViewType ? 'js' : 'nodejs',
         start: isViewType ? 'npx webpack-dev-server' : 'node index.js',
         build: isViewType ? 'npx webpack' : '',
         postPull: 'npm i',

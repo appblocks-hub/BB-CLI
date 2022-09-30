@@ -41,7 +41,7 @@
  */
 
 /**
- * @typedef {Object.<...Object.<String,dependencyShape>>} dependencies
+ * @typedef {Record<String,dependencyShape>} dependencies
  */
 
 /**
