@@ -267,7 +267,7 @@ class AppblockConfigManager {
         // TODO -- if there are more blocks in liveconfig json,
         // Log the details and if they are on, kill the processes
         const {
-          meta: { name, type },
+          meta: { name },
         } = block
         if (existingLiveConfig[name]) {
           // console.log(`${name} exists in live as well:`)
