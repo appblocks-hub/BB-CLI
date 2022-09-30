@@ -118,7 +118,7 @@ const start = async (blockname, { usePnpm }) => {
       process.exit(1)
     }
     const port = await getFreePorts(appConfig, blockname)
-    await startBlock(blockname, port[0])
+    await startBlock(blockname, port)
   }
 }
 
@@ -219,6 +219,12 @@ async function startAllBlock() {
   //   console.log(`Visit url http://localhost:${containerBlock.port} to view the app`)
   // }
 }
+/**
+ *
+ * @param {String} name
+ * @param {Number} port One port number
+ * @returns
+ */
 async function startBlock(name, port) {
   spinnies.add(name, { text: `Starting ${name}` })
   if (!appConfig.has(name)) {
@@ -245,6 +251,7 @@ async function startBlock(name, port) {
       console.log('Do not support the configured language!')
       process.exit()
   }
+
   if (block.status === 'success') {
     appConfig.startedBlock = block.data
     spinnies.succeed(name, { text: `${name} started at ${block.data.port}` })
@@ -262,42 +269,45 @@ async function startBlock(name, port) {
   spinnies.fail(name, { text: `${name} failed to start ${chalk.gray(`${block.msg}`)}` })
   return block
 }
+
+/**
+ * @typedef {Object} dataInStartReturn
+ * @property {String} name
+ * @property {Number} pid
+ * @property {Number} port
+ * @property {Boolean} isOn
+ */
+/**
+ * @typedef {Object} startReturn
+ * @property {String} status
+ * @property {String} msg
+ * @property {dataInStartReturn} data
+ * @property {Object} compilationReport
+ */
+/**
+ *
+ * @param {} block
+ * @param {*} name
+ * @param {*} port
+ * @return {startReturn}
+ */
 async function startNodeProgram(block, name, port) {
-  try {
-    const directory = getAbsPath(block.directory)
-    spinnies.update(name, { text: `Installing dependencies in ${name}` })
-    // await runBash(block.meta.postPull, directory)
-    const i = await runBash(global.usePnpm ? 'pnpm install' : block.meta.postPull, path.resolve(block.directory))
-    if (i.status === 'failed') {
-      throw new Error(i.msg)
-    }
-    spinnies.update(name, { text: `Dependencies installed in ${name}` })
-    spinnies.update(name, { text: `Assigning port for ${name}` })
-    // const port = await validateAndAssignPort(block.port)
-    spinnies.update(name, { text: `Assigned port ${chalk.whiteBright(port)} for ${name}` })
-
-    spinnies.update(name, { text: `Starting ${name} with ${chalk.whiteBright(block.meta.start)}` })
-    const startCommand = `${block.meta.start} --port=${port}`
-    const childProcess = runBashLongRunning(startCommand, block.log, directory)
-    spinnies.update(name, { text: `Compiling ${name} ` })
-    const updatedBlock = { name, pid: childProcess.pid, port, isOn: true }
-    const compilationReport = await watchCompilation(block.log.out, block.log.err)
-    spinnies.update(name, { text: `${name} Compiled with ${compilationReport.errors.length}  ` })
-
-    const status = compilationReport.errors.length > 0 ? 'compiledwitherror' : 'success'
-
-    return { status, msg: '', data: updatedBlock, compilationReport }
-  } catch (err) {
-    // console.error(err)
-    // console.log(`${name} start failed!`)
-    return {
-      status: 'failed',
-      msg: err.message.split('\n')[0],
-      data: { name, pid: null, port: null, isOn: false },
-      compilationReport: {},
-    }
+  const emData = await emulateNode([port], { dependencies: { [name]: block } })
+  const { status, msg, data } = emData
+  return {
+    status,
+    msg,
+    data: { name, pid: data.pid, port: data.port[block.meta.type], isOn: status === 'success' },
+    compilationReport: {},
   }
 }
+/**
+ *
+ * @param {*} block
+ * @param {*} name
+ * @param {*} port
+ * @returns {startReturn}
+ */
 async function startJsProgram(block, name, port) {
   try {
     const directory = getAbsPath(block.directory)

@@ -10,7 +10,7 @@ const create = jest.fn().mockImplementation((c) => {
         https: 'https://github.com/username/testHome2',
         ssh: 'git@github.com:username/testHome2.git',
       },
-      language: 'nodejs',
+      language: 'js',
       start: 'npx webpack-dev-server',
       build: 'npx webpack',
       postPull: 'npm i',

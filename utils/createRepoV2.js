@@ -26,7 +26,7 @@ async function createRepo(muted, ownerId, blockShortName) {
       type: 'list',
       name: 'visibility',
       message: 'visibility of repo',
-      choices: ['PRIVATE', 'PUBLIC'],
+      choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: true }],
     },
   ]
 

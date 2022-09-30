@@ -33,7 +33,7 @@ const { forkRepo } = require('./pull/forkUtil')
 
 const pull = async (componentName, { cwd = '.' }) => {
   /**
-   * @type {blockMetaData}
+   * @type {import('../utils/jsDoc/types').blockMetaData}
    */
   let metaData
 
@@ -250,7 +250,7 @@ const pull = async (componentName, { cwd = '.' }) => {
           console.log(chalk.dim('Pulled block has no config file, adding a new one'))
           blockConfig = {
             type: metaData.BlockType,
-            language: 'nodejs',
+            language: metaData.BlockType < 4 ? 'js' : 'nodejs',
             start: 'npx webpack-dev-server',
             build: 'npx webpack',
             postPull: 'npm i',
