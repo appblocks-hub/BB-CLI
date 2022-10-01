@@ -167,12 +167,12 @@ const pull = async (componentName, { cwd = '.' }) => {
           availableName,
           metaData.BlockType,
           metaData.GitUrl,
-          false,
+          appConfig.isOutOfContext,
           cwd
         )
 
         clonePath = createBlockRes.clonePath
-        cloneDirName = createBlockRes.name
+        cloneDirName = createBlockRes.cloneDirName
         blockFinalName = createBlockRes.blockFinalName
       }
 

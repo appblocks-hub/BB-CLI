@@ -233,12 +233,13 @@ const forkRepo = (metaData, newBlockName, clonePath) =>
       })
 
       spinnies.update('fork', { text: `Registering block` })
-      await registerBlock(BlockType, name, name, visibility === 'PUBLIC', sshUrl, description)
+      await registerBlock(BlockType, name, name, true, sshUrl, description)
       spinnies.update('fork', { text: `Registered block` })
 
       spinnies.succeed('fork', { text: `Successfully forked` })
       resolve({ description, visibility, url, sshUrl, name, blockFinalName })
     } catch (err) {
+      spinnies.add('fork')
       spinnies.fail('fork', { text: `Failed to fork` })
       reject(err)
     }
