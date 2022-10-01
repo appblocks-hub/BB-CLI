@@ -12,13 +12,16 @@ const path = require('path')
 const semver = require('semver')
 const { configstore } = require('../configstore')
 const { spinnies } = require('../loader')
-const { appBlockAddVersion, createSourceCodeSignedUrl, saveDependencies } = require('../utils/api')
+const { appBlockAddVersion, createSourceCodeSignedUrl } = require('../utils/api')
 const { appConfig } = require('../utils/appconfigStore')
 const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const { getShieldHeader } = require('../utils/getHeaders')
 const { isClean, getLatestVersion, addTag } = require('../utils/gitCheckUtils')
 const { GitManager } = require('../utils/gitmanager')
 const { readInput } = require('../utils/questionPrompts')
+const { getAllBlockVersions } = require('../utils/registryUtils')
+const { addDependencies, getDependencies } = require('./publish/dependencyUtil')
+const { addRuntimes, getUpdatedRuntimesData } = require('./runtime/util')
 
 const createZip = async ({ directory, version }) => {
   const dir = `${directory}`
@@ -46,17 +49,26 @@ const publish = async (blockname) => {
     console.log('Block is live, please stop before operation')
     process.exit(1)
   }
+
   // TODO - Check if there are any .sync files in the block and warn
   const blockDetails = appConfig.getBlock(blockname)
 
   try {
+    const latestVersion = getLatestVersion(blockDetails.directory)
+    if (latestVersion) console.log(`Last published version is ${latestVersion}`)
+
     if (!isClean(blockDetails.directory)) {
       console.log('Git directory is not clean, Please push before publish')
       process.exit(1)
     }
 
-    const latestVersion = getLatestVersion(blockDetails.directory)
-    if (latestVersion) console.log(`Last published version is ${latestVersion}`)
+    let latestVersionId
+
+    const blockId = await appConfig.getBlockId(blockname)
+    if (latestVersion) {
+      const { data } = await getAllBlockVersions(blockId)
+      latestVersionId = data.data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0].id
+    }
 
     const version = await readInput({
       name: 'version',
@@ -70,13 +82,30 @@ const publish = async (blockname) => {
         }
         return 'Invalid versioning'
       },
-      default: latestVersion ? semver.inc(latestVersion) : '0.0.1',
+      default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
     })
 
     const message = await readInput({
       name: 'tagMessage',
       message: 'Enter a message to add to tag.(defaults to empty)',
     })
+
+    // ========= runtime ========================
+    const { addRuntimesList } = await getUpdatedRuntimesData({ blockDetails, blockId, blockVersionId: latestVersionId })
+
+    // ========= dependencies ========================
+    // Check if the dependencies exit to link with block
+    const { dependencies, depExist } = await getDependencies({ blockDetails })
+    if (!depExist) {
+      const noDep = await readInput({
+        type: 'confirm',
+        name: 'noDep',
+        message: 'No package dependecies found to link with block. Do you want to continue ?',
+        default: true,
+      })
+
+      if (!noDep) process.exit(1)
+    }
 
     spinnies.add('p1', { text: `Publishing new version ${version}` })
 
@@ -89,8 +118,6 @@ const publish = async (blockname) => {
     // await pushTags(blockDetails.directory)
     await Git.pushTags()
 
-    const blockid = await appConfig.getBlockId(blockname)
-
     // Update source code to appblock cloud
 
     const zipFile = await createZip({ directory: blockDetails.directory, version })
@@ -99,7 +126,7 @@ const publish = async (blockname) => {
       createSourceCodeSignedUrl,
       {
         block_type: blockDetails.meta.type,
-        block_id: blockid,
+        block_id: blockId,
         block_name: blockDetails.meta.name,
         block_version: version,
       },
@@ -117,7 +144,7 @@ const publish = async (blockname) => {
     const resp = await axios.post(
       appBlockAddVersion,
       {
-        block_id: blockid,
+        block_id: blockId,
         version_no: semver.parse(version).version,
         is_release: true,
         release_notes: message,
@@ -131,30 +158,17 @@ const publish = async (blockname) => {
       throw new Error('Something went wrong from our side\n', data.msg).message
     }
 
-    spinnies.update('p1', { text: `Saving dependencies` })
+    // Link runtime to block
+    spinnies.update('p1', { text: `Attaching runtime to block` })
+    await addRuntimes({ addRuntimesList, blockId, blockVersionId: data.data.id })
 
-    // update dependencies => NOTE: currently node
-    const packageJson = JSON.parse(readFileSync(path.resolve(blockDetails.directory, 'package.json')))
-    const versionId = data.data.id
+    // Link Dependecies to block
+    if (depExist) {
+      spinnies.update('p1', { text: `Attaching dependencies to block` })
+      await addDependencies({ dependencies, blockId, blockVersionId: data.data.id })
+    }
 
-    const dependencies = [packageJson.dependencies, packageJson.devDependencies]
-    dependencies.forEach(async (dep, i) => {
-      if (dep && Object.keys(dep)?.length > 0) {
-        await axios.post(
-          saveDependencies,
-          {
-            block_id: blockid,
-            block_version_id: versionId,
-            dependencies: dep,
-            dependencies_type: i, // using index since dependencies is 0 and devDependencies is 1
-          },
-          { headers: getShieldHeader() }
-        )
-      }
-    })
-
-    // const res = data.data
-    spinnies.succeed('p1', { text: 'Success' })
+    spinnies.succeed('p1', { text: 'Block published successfully' })
   } catch (error) {
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })

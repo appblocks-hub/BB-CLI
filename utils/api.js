@@ -33,8 +33,11 @@ api.appRegistryAssignTags = `${api.appBlockRegistryOrigin}/api/registry/v0.1/ass
 api.appRegistryAssignCategories = `${api.appBlockRegistryOrigin}/api/registry/v0.1/assign-block-category/invoke`
 api.appRegistryGetCategories = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/list-categories/invoke`
 api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-source-code-signed-url/invoke`
-api.saveDependencies = `${api.appBlockRegistryOrigin}/api/registry/v0.1/upsert-dependencies/invoke`
+api.addDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-dependencies/invoke`
 api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-source-code-signed-url/invoke`
+api.addRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-runtimes/invoke`
+api.getRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/get-runtimes/invoke`
+api.deleteRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/delete-runtimes/invoke`
 
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
