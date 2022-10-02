@@ -6,7 +6,7 @@
  */
 
 /* eslint-disable no-async-promise-executor */
-const { readFileSync, writeFile } = require('fs')
+const { readFileSync, writeFile, existsSync } = require('fs')
 const path = require('path')
 const { readdir, readFile, mkdir } = require('fs/promises')
 const { tmpdir } = require('os')
@@ -122,6 +122,8 @@ class AppblockConfigManager {
             meta: JSON.parse(d),
           })
         }
+      } else {
+        await this.refreshConfig()
       }
     } catch (err) {
       console.log(err)
@@ -206,6 +208,17 @@ class AppblockConfigManager {
     this.events.emit('liveChanged')
   }
 
+  async refreshConfig() {
+    const picker = (b) => ({ name: b.meta.name, directory: b.directory })
+    for (const { name, directory } of this.getDependencies(false, null, picker)) {
+      if (!existsSync(path.join(directory, 'block.config.json'))) {
+        // check if atleast package json and config json exists and the directory exists
+        // assume all errors are ENOENT, no permission error occurs-hope
+        this.removeBlock(name)
+      }
+    }
+  }
+
   async init(cwd, configName, subcmd) {
     if (this.config) {
       return
@@ -217,7 +230,7 @@ class AppblockConfigManager {
     // console.log(path.resolve(this.cwd, this.configName))
 
     try {
-      this.readAppblockConfig()
+      await this.readAppblockConfig()
       // console.log('Config Read:')
       // console.log(this.config)
       // console.log('\n')
@@ -236,10 +249,11 @@ class AppblockConfigManager {
     }
   }
 
-  readAppblockConfig() {
+  async readAppblockConfig() {
     try {
       // console.log(`Trying to read config file from ${path.resolve(this.cwd)}`)
       this.config = JSON.parse(readFileSync(path.resolve(this.cwd, this.configName)))
+      await this.refreshConfig()
       // console.log('Config read ')
     } catch (err) {
       if (err.code === 'ENOENT') {
@@ -407,6 +421,14 @@ class AppblockConfigManager {
     // TODO -- use a validation function to validate blockObj
     this.config.dependencies = { ...this.config.dependencies } // to initialize object if it is undefined
     this.config.dependencies[blockConfig.meta.name] = { ...blockConfig }
+    this.events.emit('write')
+  }
+
+  removeBlock(name) {
+    if (!this.has(name)) {
+      return
+    }
+    delete this.config.dependencies[name]
     this.events.emit('write')
   }
 
