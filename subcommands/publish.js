@@ -73,7 +73,7 @@ const publish = async (blockname) => {
     const blockId = await appConfig.getBlockId(blockname)
     if (latestVersion) {
       const { data } = await getAllBlockVersions(blockId)
-      latestVersionId = data.data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0].id
+      latestVersionId = data.data?.[0].id
     }
 
     const version = await readInput({
@@ -176,6 +176,7 @@ const publish = async (blockname) => {
 
     spinnies.succeed('p1', { text: 'Block published successfully' })
   } catch (error) {
+    console.log(error)
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })
     process.exit(1)
