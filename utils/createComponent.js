@@ -111,7 +111,7 @@ function createComponent(blockShortName, createFromExistinURL, clonePath) {
                 !!createFromExistinURL,
                 clonePath || '.'
               )
-              console.log('red', ret)
+              // console.log('red', ret)
 
               result = ret
               Emitter.complete(ret)

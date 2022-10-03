@@ -11,6 +11,10 @@ const { appConfig } = require('../utils/appconfigStore')
 
 const log = async (blockname) => {
   await appConfig.init()
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // eslint-disable-next-line no-param-reassign
+    blockname = appConfig.allBlockNames.next().value
+  }
   if (!appConfig.has(blockname)) {
     console.log('Block Doesnt exists')
     return

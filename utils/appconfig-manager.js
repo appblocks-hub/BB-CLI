@@ -14,6 +14,7 @@ const { EventEmitter } = require('events')
 const { getBlockDetails } = require('./registryUtils')
 const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 
+// eslint-disable-next-line no-unused-vars
 function debounce(func, wait, immediate) {
   let timeout
 
@@ -65,9 +66,15 @@ class AppblockConfigManager {
     this.cwd = '.'
     this.events = new EventEmitter()
     // this.events.on('write', () => this._write())
-    this.events.on('write', debounce(this._write, 800).bind(this))
+    this.events.on('write', () => {
+      this._write()
+      // debounce(this._write, 800).bind(this)
+    })
     // this.events.on('liveChanged', () => this._writeLive())
-    this.events.on('liveChanged', debounce(this._writeLive, 800).bind(this))
+    this.events.on('liveChanged', () => {
+      // debounce(this._writeLive, 800).bind(this)
+      this._writeLive()
+    })
 
     // this.events.on('updateBlockWrite', debounce(this._updateBlockWrite, 800).bind(this))
 
@@ -76,7 +83,7 @@ class AppblockConfigManager {
 
   async tempSetup() {
     const tempConfig = {
-      name: path.dirname('.'),
+      name: path.dirname(path.resolve()),
       source: {},
       type: 'temp_group',
       dependencies: {},
@@ -110,15 +117,27 @@ class AppblockConfigManager {
         this.config = tempConfig
         const pr = (...args) => path.resolve(args[0], args[1])
         const fm = (p) => pr.bind(null, p)
-        const allDirsInRoot = await readdir('.').then((l) => l.map(fm('.')))
-        const bdirs = await getBlockDirsIn(allDirsInRoot)
+        let bdirs
+        if (this.isOutOfContext) {
+          // if we are out of any block context, scan and create group config in /tmp
+          // If we are running push from inside the block we want to push
+          // set the directory list to contain only current directory
+          const allDirsInRoot = await readdir('.').then((l) => l.map(fm('.')))
+          bdirs = await getBlockDirsIn(allDirsInRoot)
+        } else {
+          // if we are in a context, since tempGroup is called only if enclosing
+          // block is not appBlock, we can be sure the user is calling from inside a
+          // block and the action needs to be done on it.
+          // Eg: bb push from inside a block directory */blockname
+          bdirs = [path.resolve()]
+        }
         if (bdirs.length === 0) {
           this.events.emit('write')
         }
         for (let i = 0; i < bdirs.length; i += 1) {
           const d = await readFile(path.join(bdirs[i], 'block.config.json'))
           this.addBlock({
-            directory: path.relative('.', bdirs[i]),
+            directory: path.relative('.', bdirs[i]) || '.',
             meta: JSON.parse(d),
           })
         }
@@ -235,8 +254,15 @@ class AppblockConfigManager {
       // console.log(this.config)
       // console.log('\n')
 
+      // if the config is not of appblock, create a tempconfig anyway
+
       if (!this.config) {
         await this.tempSetup()
+      } else if (this.config.type !== 'appBlock') {
+        this.isInAppblockContext = false
+        await this.tempSetup()
+      } else {
+        this.isInAppblockContext = true
       }
 
       await this.readLiveAppblockConfig()
@@ -254,6 +280,7 @@ class AppblockConfigManager {
       // console.log(`Trying to read config file from ${path.resolve(this.cwd)}`)
       this.config = JSON.parse(readFileSync(path.resolve(this.cwd, this.configName)))
       await this.refreshConfig()
+      this.isInBlockContext = true
       // console.log('Config read ')
     } catch (err) {
       if (err.code === 'ENOENT') {
@@ -271,12 +298,12 @@ class AppblockConfigManager {
 
   async readLiveAppblockConfig() {
     try {
-      let existingLiveConfig
-      if (this.isTempGroup) {
-        existingLiveConfig = JSON.parse(readFileSync(this.tempGroupLiveConfigPath))
-      } else {
-        existingLiveConfig = JSON.parse(readFileSync(path.resolve(this.cwd, this.liveConfigName)))
-      }
+      // let existingLiveConfig;
+      // if (this.isTempGroup) {
+      const existingLiveConfig = JSON.parse(readFileSync(this.tempGroupLiveConfigPath))
+      // } else {
+      // existingLiveConfig = JSON.parse(readFileSync(path.resolve(this.cwd, this.liveConfigName)))
+      // }
       for (const block of this.dependencies) {
         // TODO -- if there are more blocks in liveconfig json,
         // Log the details and if they are on, kill the processes
@@ -363,7 +390,8 @@ class AppblockConfigManager {
     // eslint-disable-next-line no-undef
     // this.writeController = new AbortController()
     // this.writeLiveSignal = this.writeController.signal
-    const p = this.isTempGroup ? this.tempGroupLiveConfigPath : path.resolve(this.cwd, this.liveConfigName)
+    // const p = this.isTempGroup ? this.tempGroupLiveConfigPath : path.resolve(this.cwd, this.liveConfigName)
+    const p = this.tempGroupLiveConfigPath
     writeFile(p, JSON.stringify(this._createLiveConfig(), null, 2), { encoding: 'utf8' }, (err) => {
       if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
     })

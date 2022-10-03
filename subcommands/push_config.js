@@ -10,11 +10,16 @@ const chalk = require('chalk')
 const { spinnies } = require('../loader')
 const { appBlockUpdateAppConfig } = require('../utils/api')
 const { appConfig } = require('../utils/appconfigStore')
+const { feedback } = require('../utils/cli-feedback')
 const { getShieldHeader } = require('../utils/getHeaders')
 const { getBlockDetails } = require('../utils/registryUtils')
 
 const push_config = async () => {
   await appConfig.init()
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    feedback({ type: 'error', message: 'Not an appblock' })
+    process.exit(1)
+  }
   const name = appConfig.getName()
 
   spinnies.add('pushConfig', { text: `Getting details of ${name}` })

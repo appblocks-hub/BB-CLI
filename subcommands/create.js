@@ -115,6 +115,9 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         //   return
         // }
         standAloneBlock = true
+      } else if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+        feedback({ type: 'info', message: 'We are not inside an Appblock' })
+        feedback({ type: 'error', message: 'Cannot create block inside another block' })
       }
     }
     // Check if github user name or id is not set (we need both, if either is not set inform)

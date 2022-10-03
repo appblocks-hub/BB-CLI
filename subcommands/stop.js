@@ -14,6 +14,10 @@ global.rootDir = process.cwd()
 
 const stop = async (name) => {
   await appConfig.init()
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // eslint-disable-next-line no-param-reassign
+    name = appConfig.allBlockNames.next().value
+  }
   if (!name) {
     stopAllBlock()
   } else if (appConfig.has(name)) {

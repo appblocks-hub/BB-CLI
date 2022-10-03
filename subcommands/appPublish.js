@@ -24,7 +24,7 @@ const logFail = (msg) => console.log(chalk.red(msg))
 
 const appPublish = async () => {
   deployConfig.init()
-  appConfig.init()
+  await appConfig.init()
 
   const { dependencies } = await getBBConfig()
   const appData = deployConfig.deployAppConfig

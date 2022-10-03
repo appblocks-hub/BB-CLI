@@ -243,6 +243,9 @@ const sync = async () => {
   try {
     appConfiginLocal = await readFile('block.config.json', { encoding: 'utf8' }).then((d) => JSON.parse(d))
     feedback({ type: 'info', message: 'Found block.config.json' })
+    if (appConfiginLocal.type !== 'appBlock') {
+      throw new Error(`We are inside a ${appConfiginLocal.type} type block`)
+    }
     try {
       appblockConfigSchema.validateSync(appConfiginLocal, { abortEarly: false })
     } catch (err) {
@@ -336,7 +339,7 @@ const sync = async () => {
         }
       }
     } else {
-      console.log('Something went wrong!')
+      feedback({ type: 'error', message: err.message })
       console.log(err)
       process.exit(1)
     }

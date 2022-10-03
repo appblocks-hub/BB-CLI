@@ -98,6 +98,10 @@ const start = async (blockname, { usePnpm }) => {
 
   await appConfig.init()
   // Setup env from block.config.json data
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // eslint-disable-next-line no-param-reassign
+    blockname = appConfig.allBlockNames.next().value
+  }
   const configData = appConfig.appConfig
   await setupEnv(configData)
 

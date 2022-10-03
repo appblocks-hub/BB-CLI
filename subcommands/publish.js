@@ -41,10 +41,16 @@ const createZip = async ({ directory, version }) => {
 const publish = async (blockname) => {
   await appConfig.init(null, null)
 
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // eslint-disable-next-line no-param-reassign
+    blockname = appConfig.allBlockNames.next().value
+  }
+
   if (!appConfig.has(blockname)) {
     console.log('Block not found!')
     process.exit(1)
   }
+
   if (appConfig.isLive(blockname)) {
     console.log('Block is live, please stop before operation')
     process.exit(1)
