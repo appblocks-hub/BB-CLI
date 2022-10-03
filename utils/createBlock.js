@@ -190,7 +190,12 @@ async function createBlock(
     }
   }
 
-  await registerBlock(blockTypeNo, blockFinalName, blockFinalName, visibility === 'PUBLIC', sshUrl, description)
+  try {
+    await registerBlock(blockTypeNo, blockFinalName, blockFinalName, visibility === 'PUBLIC', sshUrl, description)
+  } catch (err) {
+    console.log(err.message)
+    process.exit(1)
+  }
 
   return {
     blockSource: { https: url, ssh: sshUrl },

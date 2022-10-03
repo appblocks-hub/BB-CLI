@@ -44,8 +44,7 @@ async function registerBlock(block_type, block_name, block_short_name, is_public
   } catch (err) {
     spinnies.fail('register', { text: `${block_name} registeration failed` })
     spinnies.remove('register')
-    console.log(err)
-    console.log('Something went wrong! in registerBlock')
+    throw err
   }
 }
 

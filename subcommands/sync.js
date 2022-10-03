@@ -75,16 +75,21 @@ const offerAndRegisterBlocks = async (list) => {
           message: 'Add a description for new block..(optional)',
           default: block.name,
         })
-        await registerBlock(
-          blockTypeInverter(block.type),
-          block.name,
-          block.name,
-          isPublic,
-          block.source.ssh,
-          blockDesc
-        )
-        report[i].newName = block.name
-        report[i].registered = true
+        try {
+          await registerBlock(
+            blockTypeInverter(block.type),
+            block.name,
+            block.name,
+            isPublic,
+            block.source.ssh,
+            blockDesc
+          )
+          report[i].newName = block.name
+          report[i].registered = true
+        } catch (err) {
+          console.log(err.message)
+          report[i].registered = false
+        }
       }
     }
   }
