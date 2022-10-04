@@ -162,7 +162,7 @@ const getFreePorts = async (appConfig, blockName) => {
     return acc
   }, {})
   await updateEnv('view', envPortValues)
-  await updateEnv('functions', { BLOCK_FUNCTION_URL: envPortValues.BLOCK_FUNCTION_URL })
+  await updateEnv('function', { BLOCK_FUNCTION_URL: envPortValues.BLOCK_FUNCTION_URL })
 
   return ports
 }

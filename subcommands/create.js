@@ -31,6 +31,7 @@ const {
   generateIndex,
   generateGitIgnore,
   generatePackageJson,
+  generateFunctionReadme,
 } = require('../templates/createTemplates/function-templates')
 const {
   generateUiContainerIndexHtml,
@@ -41,6 +42,7 @@ const {
   generateUiContainerAppJs,
   generateUiContainerPackageJson,
   generateUiContainerSystemJs,
+  generateUiContainerReadme,
 } = require('../templates/createTemplates/uiContainer-templates')
 const {
   generateUiElementIndexHtml,
@@ -50,6 +52,7 @@ const {
   generateUiElementAppJs,
   generateUiElementPackageJson,
   generateUiElementJs,
+  generateUiElementsReadme,
 } = require('../templates/createTemplates/uiElement-templates')
 const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
@@ -253,6 +256,8 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         writeFileSync(`${entry}/package.json`, packageJsonString)
         const gitIgnoreString = generateGitIgnore()
         writeFileSync(`${entry}/.gitignore`, gitIgnoreString)
+        const readmeString = generateFunctionReadme(componentName)
+        writeFileSync(`${entry}/README.md`, readmeString)
       } else if (type === 2) {
         // ui-container
         createUiContainerFolders(entry, componentName)
@@ -309,6 +314,7 @@ function createUiContainerFolders(componentpath, componentname) {
   const packageJsonString = generateUiContainerPackageJson(componentname)
   const systemJsString = generateUiContainerSystemJs(componentname)
   const gitignore = generateGitIgnore()
+  const readmeString = generateUiContainerReadme(componentname)
 
   mkdirSync(`${componentpath}/public`)
   writeFileSync(`${componentpath}/public/index.html`, indexHtmlString)
@@ -322,7 +328,7 @@ function createUiContainerFolders(componentpath, componentname) {
   writeFileSync(`${componentpath}/src/store.js`, storeJsString)
 
   writeFileSync(`${componentpath}/package.json`, packageJsonString)
-  writeFileSync(`${componentpath}/README.md`, `fill this`)
+  writeFileSync(`${componentpath}/README.md`, readmeString)
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
 }
@@ -338,6 +344,7 @@ function createUiElementFolders(componentpath, componentname) {
   const packageJsonString = generateUiElementPackageJson(componentname)
   const uiElementString = generateUiElementJs(componentname)
   const gitignore = generateGitIgnore()
+  const readmeString = generateUiElementsReadme(componentname)
 
   mkdirSync(`${componentpath}/public`)
   writeFileSync(`${componentpath}/public/index.html`, indexHtmlString)
@@ -352,7 +359,7 @@ function createUiElementFolders(componentpath, componentname) {
   // writeFileSync(`${componentpath}/src/store.js`, '')
 
   writeFileSync(`${componentpath}/package.json`, packageJsonString)
-  writeFileSync(`${componentpath}/README.md`, `fill this`)
+  writeFileSync(`${componentpath}/README.md`, readmeString)
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
 }
