@@ -116,8 +116,6 @@ const addCategories = async (options) => {
 
     const { data } = addCategoriesRes.data
 
-    console.log(data)
-
     await Promise.all[
       selectedBlocks.forEach(async ({ block_name, block_id }) => {
         const updateCategoriesValue = data[block_id]?.split(',')
