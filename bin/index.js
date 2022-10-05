@@ -112,7 +112,7 @@ async function init() {
 
   program
     .command('log')
-    .argument('<block-name>', 'Name of a running block')
+    .argument('[block-name]', 'Name of a running block')
     .description('Streams the logs of a running block')
     .action(log)
 
@@ -122,7 +122,7 @@ async function init() {
 
   program
     .command('publish')
-    .argument('<block-name>', 'Name of block to publish')
+    .argument('[block-name]', 'Name of block to publish')
     .description('Publish block or appblock')
     .action(publish)
 

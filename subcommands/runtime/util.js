@@ -9,6 +9,7 @@ const semver = require('semver')
 const { post } = require('../../utils/axios')
 const { getRuntimesApi, addRuntimesApi, deleteRuntimesApi } = require('../../utils/api')
 const { readInput } = require('../../utils/questionPrompts')
+const { spinnies } = require('../../loader')
 
 const getNodeRuntime = async () => [{ name: 'node', version: process.version }]
 
@@ -49,7 +50,7 @@ const editRuntimeList = async (runtimes = [], promptConfirm = true) => {
     const editVersion = await readInput({
       type: 'confirm',
       name: 'editVersion',
-      message: `Supported runtimes are listed below \n${defaultValue
+      message: `Block supported runtimes are listed below \n${defaultValue
         .split(',')
         .map((dv) => `\n  ${dv}`)}\n\n  Do you want to edit?`,
       default: false,
@@ -91,7 +92,7 @@ const getAttchedRuntimes = async (blockId, blockVersionId) => {
 
   if (error) throw error
 
-  return data.data
+  return data.data || []
 }
 
 const isSameObject = (a, b) => a.name === b.name && a.version === b.version
@@ -103,13 +104,15 @@ const isSameArrayObject = (arr1, arr2) => {
   if (arr1.length < 1 || arr2.length < 1) return false
   return arr1.filter((ar1) => arr2.some((ar2) => isSameObject(ar1, ar2))).length < 1
 }
-const getUpdatedRuntimesData = async ({ blockDetails, blockId, blockVersionId }) => {
+const getUpdatedRuntimesData = async ({ blockDetails, blockId, blockVersionId, blockVersion }) => {
   let existingRuntimes = []
   let runtimes = []
   const systemRuntime = await getSystemRuntime({ blockDetails })
 
   if (blockVersionId) {
+    spinnies.add('ex', { text: `Getting runtime for ${blockVersion}` })
     existingRuntimes = await getAttchedRuntimes(blockId, blockVersionId)
+    spinnies.remove('ex')
   }
 
   runtimes = systemRuntime.concat(existingRuntimes).filter((v, i, a) => a.findIndex((v2) => isSameObject(v2, v)) === i)
@@ -158,6 +161,9 @@ const updateRuntimes = async (options) => {
   const { blockVersionId, blockId, addRuntimesList, deleteRuntimesList } = options
   if (addRuntimesList.length > 0) await addRuntimes({ blockVersionId, blockId, addRuntimesList })
   if (deleteRuntimesList.length > 0) await deleteRuntimes({ blockVersionId, blockId, deleteRuntimesList })
+
+  if (addRuntimesList.length <= 0 && deleteRuntimesList.length <= 0) return false
+  return true
 }
 
 module.exports = { getUpdatedRuntimesData, addRuntimes, updateRuntimes }

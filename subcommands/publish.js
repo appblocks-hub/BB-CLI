@@ -41,10 +41,16 @@ const createZip = async ({ directory, version }) => {
 const publish = async (blockname) => {
   await appConfig.init(null, null)
 
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // eslint-disable-next-line no-param-reassign
+    blockname = appConfig.allBlockNames.next().value
+  }
+
   if (!appConfig.has(blockname)) {
     console.log('Block not found!')
     process.exit(1)
   }
+
   if (appConfig.isLive(blockname)) {
     console.log('Block is live, please stop before operation')
     process.exit(1)
@@ -67,7 +73,7 @@ const publish = async (blockname) => {
     const blockId = await appConfig.getBlockId(blockname)
     if (latestVersion) {
       const { data } = await getAllBlockVersions(blockId)
-      latestVersionId = data.data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0].id
+      latestVersionId = data.data?.[0].id
     }
 
     const version = await readInput({
@@ -170,6 +176,7 @@ const publish = async (blockname) => {
 
     spinnies.succeed('p1', { text: 'Block published successfully' })
   } catch (error) {
+    console.log(error)
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })
     process.exit(1)

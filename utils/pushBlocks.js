@@ -6,6 +6,7 @@
  */
 
 const { BlockPusher } = require('./blockPusher')
+const { feedback } = require('./cli-feedback')
 const { multibar } = require('./multibar')
 
 /**
@@ -52,7 +53,13 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
           console.log(`${failed} blocks failed to push..`)
           console.log('Check pushlogs for error details')
 
-          console.log(pushReport)
+          // console.log(pushReport)
+          for (const key in pushReport) {
+            if (Object.hasOwnProperty.call(pushReport, key)) {
+              const element = pushReport[key]
+              feedback({ type: 'error', message: element })
+            }
+          }
           res('Completed push')
         }, 300)
       })

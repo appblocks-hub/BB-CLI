@@ -3,6 +3,7 @@ const { generateUiContainerBootstrapJs } = require('./generate-bootstrapJs')
 const { generateUiContainerIndexHtml } = require('./generate-indexHtml')
 const { generateUiContainerIndexJs } = require('./generate-indexJs')
 const { generateUiContainerPackageJson } = require('./generate-packageJson')
+const { generateUiContainerReadme } = require('./generate-readme')
 const { generateUiContainerStoreJs } = require('./generate-store')
 const { generateUiContainerSystemJs } = require('./generate-systemJs')
 const { generateUiContainerWebpack } = require('./generate-webpackConfig')
@@ -16,4 +17,5 @@ module.exports = {
   generateUiContainerAppJs,
   generateUiContainerPackageJson,
   generateUiContainerSystemJs,
+  generateUiContainerReadme,
 }

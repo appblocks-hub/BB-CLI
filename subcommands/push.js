@@ -11,14 +11,19 @@ const { pushBlocks } = require('../utils/pushBlocks')
 const { appConfig } = require('../utils/appconfigStore')
 
 const push = async (blockname, options) => {
-  const { force } = options
+  let { force } = options
   let { message } = options
 
   await appConfig.init()
 
+  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+    // There will only be one block in temp config which is the enclosing block
+    force = true
+  }
   if (!force && !blockname) {
     console.log(chalk.red(`\nPlease provide a block name or use -f to push all..`))
-    process.exit(1)
+    // process.exit(1)
+    return
   }
 
   if (!force && !appConfig.has(blockname)) {

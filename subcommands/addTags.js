@@ -17,33 +17,40 @@ const addTags = async (options) => {
 
   const { all } = options
   const { dependencies } = appConfig.getAppConfig()
-  const { name: appBlockName, tags: appBlockTags } = appConfig.getAppConfig()
-
-  const appBlockId = await appConfig.getBlockId(appBlockName)
+  const { name: appBlockName, tags: appBlockTags = [] } = appConfig.getAppConfig()
 
   try {
+    spinnies.add('log', { text: `Getting blocks details` })
     const blocksList = await Promise.all(
-      Object.values(dependencies).map(async (depVal) => {
-        const {
-          meta: { name, tags },
-        } = depVal
+      Object.values(dependencies)
+        .filter(({ meta: { type } }) => appConfig.isInAppblockContext || type !== 'appBlock')
+        .map(async (depVal) => {
+          const {
+            meta: { name, tags },
+          } = depVal
 
-        const blockId = await appConfig.getBlockId(name)
-        return {
-          block_name: name,
-          block_id: blockId,
-          tags: tags || [],
-        }
-      })
+          const blockId = await appConfig.getBlockId(name)
+          return {
+            block_name: name,
+            block_id: blockId,
+            tags: tags || [],
+          }
+        })
     )
+    spinnies.succeed('log', { text: `Blocks details retrieved` })
 
-    blocksList.unshift({
-      block_name: appBlockName,
-      block_id: appBlockId,
-      tags: appBlockTags || [],
-    })
+    let appBlockId
+    if (appConfig.isInAppblockContext) {
+      appBlockId = await appConfig.getBlockId(appBlockName)
+      blocksList.unshift({
+        block_name: appBlockName,
+        block_id: appBlockId,
+        tags: appBlockTags || [],
+      })
+    }
 
     if (!blocksList.length) {
+      spinnies.add('at')
       spinnies.fail('at', { text: 'No blocks found' })
       process.exit(1)
     }
@@ -70,10 +77,17 @@ const addTags = async (options) => {
 
     let isInitial = true
 
+    if (selectedBlocks.length === 1 && !appBlockId) {
+      console.log(selectedBlocks[0].tags)
+      selectedBlocks[0].tags.forEach((tag) => {
+        appBlockTags.push(tag)
+      })
+    }
+
     const tagNames = await readInput({
       name: 'tagNames',
       message: 'Enter the tags ( space seperated )',
-      default: appBlockTags?.join(' '),
+      default: appBlockTags?.length ? appBlockTags.join(' ') : '',
       validate: (input) => {
         // TODO : Remove once better method is found to set initial values for the input (Like inquirer custom class)
         if (isInitial && input === appBlockTags?.join(' ')) {

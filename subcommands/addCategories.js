@@ -20,29 +20,32 @@ const addCategories = async (options) => {
     const { all } = options
     const { dependencies, name: appBlockName, categories: appBlockCategories } = appConfig.getAppConfig()
 
-    const appBlockId = await appConfig.getBlockId(appBlockName)
-
     const blocksList = await Promise.all(
-      Object.values(dependencies).map(async (depVal) => {
-        const {
-          meta: { name, categories },
-        } = depVal
+      Object.values(dependencies)
+        .filter(({ meta: { type } }) => appConfig.isInAppblockContext || type !== 'appBlock')
+        .map(async (depVal) => {
+          const {
+            meta: { name, categories },
+          } = depVal
 
-        const blockId = await appConfig.getBlockId(name)
-        return {
-          block_name: name,
-          block_id: blockId,
-          categories: categories || [],
-        }
-      })
+          const blockId = await appConfig.getBlockId(name)
+          return {
+            block_name: name,
+            block_id: blockId,
+            categories: categories || [],
+          }
+        })
     )
 
-    blocksList.unshift({
-      block_name: appBlockName,
-      block_id: appBlockId,
-      categories: appBlockCategories || [],
-    })
-
+    let appBlockId
+    if (appConfig.isInAppblockContext) {
+      appBlockId = await appConfig.getBlockId(appBlockName)
+      blocksList.unshift({
+        block_name: appBlockName,
+        block_id: appBlockId,
+        categories: appBlockCategories || [],
+      })
+    }
     if (!blocksList.length) {
       spinnies.fail('at', { text: 'No blocks found' })
       process.exit(1)
@@ -70,6 +73,12 @@ const addCategories = async (options) => {
 
     const categoriesList = await getCategories()
 
+    let customDefaultChoices = []
+
+    if (selectedBlocks.length === 1) {
+      customDefaultChoices = selectedBlocks[0].categories
+    }
+
     const categoryIds = await readInput({
       type: 'customSelect',
       name: 'categoryIds',
@@ -83,7 +92,7 @@ const addCategories = async (options) => {
         const cL = await getCategories(value)
         return cL
       },
-      customDefaultChoices: [],
+      customDefaultChoices,
     })
 
     spinnies.add('at', { text: 'Adding categories ' })

@@ -53,8 +53,11 @@ const pull = async (componentName, { cwd = '.' }) => {
 
     metaData = data.data
 
-    appConfig.init(cwd, null, 'pull')
+    await appConfig.init(cwd, null, 'pull')
 
+    if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+      throw new Error('Need to be inside an Appblock to pull other blocks')
+    }
     if (metaData.BlockType === 1) {
       if (!appConfig.isOutOfContext) {
         throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is an appBlock`).message

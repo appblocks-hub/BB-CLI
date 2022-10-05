@@ -22,15 +22,15 @@ const updateRuntimeCommand = async (blockName) => {
   try {
     const blockDetails = appConfig.getBlock(blockName)
     const blockId = await appConfig.getBlockId(blockName)
+    spinnies.add('p1', { text: `Getting blocks versions` })
     const { data } = await getAllBlockVersions(blockId)
-    const blockVersions = data.data
-      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-      .map((d) => ({
-        name: d.version_number,
-        value: d.id,
-      }))
+    const blockVersions = data.data.map((d) => ({
+      name: d.version_number,
+      value: d.id,
+    }))
+    spinnies.remove('p1')
 
-    if (!blockVersions) {
+    if (blockVersions.length < 1) {
       console.log('Please publish the block to add runtime')
       process.exit(1)
       return
@@ -43,15 +43,20 @@ const updateRuntimeCommand = async (blockName) => {
       choices: blockVersions,
     })
 
+    const blockVersion = blockVersions.find((v) => v.value === blockVersionId).name
+
     const { addRuntimesList, deleteRuntimesList } = await getUpdatedRuntimesData({
       blockDetails,
       blockId,
       blockVersionId,
+      blockVersion,
     })
 
-    spinnies.add('p1', { text: `Attaching runtime to block` })
-    await updateRuntimes({ blockVersionId, blockId, addRuntimesList, deleteRuntimesList })
-    spinnies.succeed('p1', { text: `Attaching runtime to block` })
+    spinnies.add('p1', { text: `Updating block runtimes` })
+    const updated = await updateRuntimes({ blockVersionId, blockId, addRuntimesList, deleteRuntimesList })
+    spinnies.succeed('p1', {
+      text: updated ? `Updated block runtimes successfully` : `No changes were made to the block runtimes`,
+    })
   } catch (error) {
     spinnies.add('p1', { text: `Error` })
     spinnies.fail('p1', { text: `Error: ${error.message}` })

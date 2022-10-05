@@ -111,11 +111,13 @@ const copyPrTemplate = () =>
       const { tempFilePath, templateData } = await createPrTmpFile()
 
       // await open(tempFilePath, { app: { name: 'code' } })
-      const openEditor = spawn('subl', [tempFilePath])
+      const openEditor = spawn('code', [tempFilePath])
       openEditor.on('error', () => {
         feedback({
           type: 'error',
-          message: `Couldn't open vs-code. Please update the template manually in github after PR`,
+          message: `Couldn't open vs-code. Please update the template manually in ${
+            configstore.get('gitServiceType') || 'github'
+          }.`,
         })
         return resolve(templateData)
       })
