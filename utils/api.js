@@ -38,7 +38,7 @@ api.createSourceCodeSignedUrl = `${api.appBlockRegistryOrigin}/api/registry/v0.1
 api.addRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-runtimes/invoke`
 api.getRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/get-runtimes/invoke`
 api.deleteRuntimesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/delete-runtimes/invoke`
-
+api.deleteBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.1/delete-block/invoke`
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
 api.appRegistryCreateApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-app/invoke`

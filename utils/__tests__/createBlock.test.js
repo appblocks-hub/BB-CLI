@@ -42,6 +42,10 @@ const testData = [
     args: ['TODO', 'todo', 4, false, false, '', false, 'function'],
     expect: blockTypeInverter('function'),
   },
+  {
+    args: ['TODO', 'todo', 7, false, false, '', false, 'job', { time_zone: 'UTC', schedule: '1 * * * *' }],
+    expect: blockTypeInverter('job'),
+  },
 ]
 
 testData.forEach((obj) =>

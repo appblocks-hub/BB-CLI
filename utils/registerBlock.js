@@ -19,9 +19,18 @@ const { getShieldHeader } = require('./getHeaders')
  * @param {Boolean} is_public Visibility of repo
  * @param {String} github_url Github repo url
  * @param {String} block_desc Description same as github repo description
+ * @param {String} job_config Configuration for job
  */
 // eslint-disable-next-line consistent-return
-async function registerBlock(block_type, block_name, block_short_name, is_public, github_url, block_desc) {
+async function registerBlock(
+  block_type,
+  block_name,
+  block_short_name,
+  is_public,
+  github_url,
+  block_desc,
+  job_config = {}
+) {
   spinnies.add('register', { text: `Registering ${block_name}` })
 
   const postData = {
@@ -32,6 +41,11 @@ async function registerBlock(block_type, block_name, block_short_name, is_public
     block_desc,
     github_url,
   }
+
+  if (block_type === 7) {
+    postData.job_config = job_config
+  }
+
   try {
     const res = await axios.post(appBlockRegister, postData, {
       headers: getShieldHeader(),

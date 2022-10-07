@@ -29,7 +29,7 @@ async function ensureUserLogins() {
 
     const response = await axios.post(githubGetDeviceCode, {
       client_id: githubClientID,
-      scope: 'repo,read:org',
+      scope: 'repo,read:org,delete_repo',
     })
     await handleGithubAuth(decodeURIComponent(response.data))
   }

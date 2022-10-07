@@ -37,6 +37,7 @@ const registerBlock = require('./registerBlock')
  * @param {Boolean} callingFromPullNoCreateNewRefactorMelater To stop halfway and return cloned directory path
  * @param {String} cwd To pass to directory creation function
  * @param {Boolean?} isAStandAloneBlock If user is trying to create a block outside appblock context
+ * @param {Object?} Configuration of job
  * @returns {returnObject}
  */
 async function createBlock(
@@ -46,7 +47,9 @@ async function createBlock(
   createFromExistinURL,
   callingFromPullNoCreateNewRefactorMelater,
   cwd,
-  isAStandAloneBlock = false
+  // eslint-disable-next-line default-param-last
+  isAStandAloneBlock = false,
+  jobConfig
 ) {
   if (arguments.length < 6) throw new Error('NotEnoughArguments in CreateBlock')
 
@@ -191,7 +194,15 @@ async function createBlock(
   }
 
   try {
-    await registerBlock(blockTypeNo, blockFinalName, blockFinalName, visibility === 'PUBLIC', sshUrl, description)
+    await registerBlock(
+      blockTypeNo,
+      blockFinalName,
+      blockFinalName,
+      visibility === 'PUBLIC',
+      sshUrl,
+      description,
+      jobConfig
+    )
   } catch (err) {
     console.log(err.message)
     process.exit(1)

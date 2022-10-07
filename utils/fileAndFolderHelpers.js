@@ -275,6 +275,10 @@ function createDirForType(type, cwd) {
       ensureDirSync(path.resolve(cwd, 'functions', 'shared-fns'))
       dirPath = path.resolve(cwd, 'functions', 'shared-fns')
       break
+    case 7:
+      ensureDirSync(path.resolve(cwd, 'jobs'))
+      dirPath = path.resolve(cwd, 'jobs')
+      break
     default:
       console.log('Unknown type')
       process.exit(1)
