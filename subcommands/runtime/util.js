@@ -104,7 +104,7 @@ const isSameArrayObject = (arr1, arr2) => {
   if (arr1.length < 1 || arr2.length < 1) return false
   return arr1.filter((ar1) => arr2.some((ar2) => isSameObject(ar1, ar2))).length < 1
 }
-const getUpdatedRuntimesData = async ({ blockDetails, blockId, blockVersionId, blockVersion }) => {
+const getUpdatedRuntimesData = async ({ blockDetails, blockId, blockVersionId, blockVersion, isNew = false }) => {
   let existingRuntimes = []
   let runtimes = []
   const systemRuntime = await getSystemRuntime({ blockDetails })
@@ -118,6 +118,10 @@ const getUpdatedRuntimesData = async ({ blockDetails, blockId, blockVersionId, b
   runtimes = systemRuntime.concat(existingRuntimes).filter((v, i, a) => a.findIndex((v2) => isSameObject(v2, v)) === i)
 
   const updatedRuntime = await editRuntimeList(runtimes)
+
+  if (isNew) {
+    return { addRuntimesList: updatedRuntime }
+  }
 
   if (isSameArrayObject(existingRuntimes, updatedRuntime)) {
     return { addRuntimesList: [], deleteRuntimesList: [] }
@@ -166,4 +170,4 @@ const updateRuntimes = async (options) => {
   return true
 }
 
-module.exports = { getUpdatedRuntimesData, addRuntimes, updateRuntimes }
+module.exports = { getUpdatedRuntimesData, addRuntimes, updateRuntimes, getAttchedRuntimes }
