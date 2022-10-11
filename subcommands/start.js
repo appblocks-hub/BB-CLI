@@ -161,6 +161,24 @@ async function startAllBlock() {
         },
       }
     }
+
+    for (const jobBlock of appConfig.jobBlocks) {
+      pary.push(runBash(global.usePnpm ? 'pnpm install' : jobBlock.meta.postPull, path.resolve(jobBlock.directory)))
+      // if (i.status === 'failed') {
+      //   throw new Error(i.msg)
+      // }
+      appConfig.startedBlock = {
+        name: jobBlock.meta.name,
+        pid: emData.data.pid || null,
+        isOn: true,
+        port: emData.data.port[jobBlock.meta.type] || emData.data.port || null,
+        log: {
+          out: `./logs/out/functions.log`,
+          err: `./logs/err/functions.log`,
+        },
+      }
+    }
+
     await Promise.allSettled(pary)
     // console.log(rep)
     if (emData.data.emulatorData) {

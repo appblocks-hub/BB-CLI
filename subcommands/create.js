@@ -60,6 +60,7 @@ const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const { CreateError } = require('../utils/errors/createError')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
+const { getJobConfig, generateJobBlock } = require('../utils/job')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -96,6 +97,10 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       type = blockTypeInverter(type)
       // logger.info(`Converted type from name to number-${type}`)
     }
+
+    let jobConfig = {}
+    if (type === 7) jobConfig = await getJobConfig()
+
     const availableName = await checkBlockNameAvailability(componentName)
     // logger.info(
     //   `${componentName} checked against registry and ${availableName} is finalized`
@@ -153,7 +158,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       }
     } else {
       // const shortName = await getBlockShortName(availableName)
-      const d = await createBlock(availableName, availableName, type, '', false, cwd || '.', standAloneBlock)
+      const d = await createBlock(availableName, availableName, type, '', false, cwd || '.', standAloneBlock, jobConfig)
       blockFinalName = d.blockFinalName
       blockSource = d.blockSource
       cloneDirName = d.cloneDirName
@@ -200,6 +205,9 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       blockDetails.language = 'js'
       blockDetails.start = 'npx webpack-dev-server'
       blockDetails.build = 'npx webpack'
+    } else if (type === 7) {
+      // job block
+      blockDetails.job = jobConfig
     }
 
     // execSync(`cd ${cloneDirName}`)
@@ -264,6 +272,9 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       } else if (type === 3) {
         // ui-element
         createUiElementFolders(entry, componentName)
+      } else if (type === 7) {
+        // job
+        generateJobBlock(entry, componentName)
       }
 
       /**

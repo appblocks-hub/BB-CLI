@@ -78,7 +78,6 @@ const addTags = async (options) => {
     let isInitial = true
 
     if (selectedBlocks.length === 1 && !appBlockId) {
-      console.log(selectedBlocks[0].tags)
       selectedBlocks[0].tags.forEach((tag) => {
         appBlockTags.push(tag)
       })
@@ -87,7 +86,7 @@ const addTags = async (options) => {
     const tagNames = await readInput({
       name: 'tagNames',
       message: 'Enter the tags ( space seperated )',
-      default: appBlockTags?.length ? appBlockTags.join(' ') : '',
+      default: appBlockTags?.length ? appBlockTags.join(' ') : null,
       validate: (input) => {
         // TODO : Remove once better method is found to set initial values for the input (Like inquirer custom class)
         if (isInitial && input === appBlockTags?.join(' ')) {

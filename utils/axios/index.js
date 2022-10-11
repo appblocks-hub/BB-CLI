@@ -19,6 +19,7 @@ const post = (url, body, options) =>
       const res = await axios.post(url, body, { headers })
       resolve({ data: res.data, error: null })
     } catch (error) {
+      console.log('Error data:', error)
       console.log('Error :', error.response?.data?.msg || error.message)
       if (!handleError) reject(error)
       resolve({ data: null, error })

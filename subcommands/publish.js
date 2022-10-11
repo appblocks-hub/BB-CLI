@@ -97,7 +97,13 @@ const publish = async (blockname) => {
     })
 
     // ========= runtime ========================
-    const { addRuntimesList } = await getUpdatedRuntimesData({ blockDetails, blockId, blockVersionId: latestVersionId })
+    const { addRuntimesList } = await getUpdatedRuntimesData({
+      blockDetails,
+      blockId,
+      blockVersionId: latestVersionId,
+      blockVersion: version,
+      isNew: true,
+    })
 
     // ========= dependencies ========================
     // Check if the dependencies exit to link with block
@@ -126,6 +132,8 @@ const publish = async (blockname) => {
 
     // Update source code to appblock cloud
 
+    spinnies.update('p1', { text: `Updating new version ${version} code` })
+
     const zipFile = await createZip({ directory: blockDetails.directory, version })
 
     const preSignedData = await axios.post(
@@ -146,6 +154,8 @@ const publish = async (blockname) => {
         'Content-Type': 'application/zip',
       },
     })
+
+    spinnies.update('p1', { text: `Registring new version ${version}` })
 
     const resp = await axios.post(
       appBlockAddVersion,
@@ -177,8 +187,8 @@ const publish = async (blockname) => {
     spinnies.succeed('p1', { text: 'Block published successfully' })
   } catch (error) {
     console.log(error)
-    spinnies.add('p1', { text: 'Error' })
-    spinnies.fail('p1', { text: error.message })
+    spinnies.add('p1_error', { text: 'Error' })
+    spinnies.fail('p1_error', { text: error.message })
     process.exit(1)
   }
 }

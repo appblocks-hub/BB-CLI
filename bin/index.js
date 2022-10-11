@@ -44,8 +44,12 @@ const logout = require('../subcommands/logout')
 const disconnect = require('../subcommands/disconnect')
 const use = require('../subcommands/use')
 const config = require('../subcommands/config')
+const startJob = require('../subcommands/job/start')
+const stopJob = require('../subcommands/job/stop')
 const pr = require('../subcommands/pr')
 const updateRuntimeCommand = require('../subcommands/runtime/update')
+const deleteCommand = require('../subcommands/delete')
+const listRuntimeCommand = require('../subcommands/runtime/list')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -189,12 +193,33 @@ async function init() {
 
   program.command('app-publish').description('Publish the app').action(appPublish)
 
+  program
+    .command('start-job')
+    .description('Schedule the job')
+    .argument('[name]', 'Name of block to start')
+    .action(startJob)
+
+  program.command('stop-job').description('Stop the job').argument('[name]', 'Name of block to start').action(stopJob)
+
   program.command('pr').argument('<block-name>', 'Name of block to pr').description('pr block').action(pr)
+
   program
     .command('update-runtime')
     .argument('<block-name>', 'Name of block to update runtime')
     .description('update block runtime')
     .action(updateRuntimeCommand)
+
+  program
+    .command('list-runtime')
+    .argument('<block-name>', 'Name of block to list runtime')
+    .description('list block runtime')
+    .action(listRuntimeCommand)
+
+  program
+    .command('delete')
+    .argument('[name]', 'Name of component to delete')
+    .description('Delete block component')
+    .action(deleteCommand)
 
   program.parseAsync(process.argv)
 }

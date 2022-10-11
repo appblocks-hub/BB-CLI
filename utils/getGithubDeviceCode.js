@@ -11,7 +11,7 @@ const { githubGetDeviceCode, githubClientID } = require('./api')
 function getGithubDeviceCode() {
   return axios.post(githubGetDeviceCode, {
     client_id: githubClientID,
-    scope: 'repo,read:org',
+    scope: 'repo,read:org,delete_repo',
   })
 }
 

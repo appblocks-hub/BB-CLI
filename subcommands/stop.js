@@ -40,6 +40,11 @@ const stop = async (name) => {
 }
 
 async function stopAllBlock() {
+  if ([...appConfig.liveJobBlocks].length !== 0) {
+    console.log('\nJob blocks are live! Please stop jobs and try again\n')
+    process.exit(1)
+  }
+
   if ([...appConfig.liveBlocks].length === 0) {
     console.log('\nNo blocks are live!\n')
     process.exit(1)
@@ -58,9 +63,19 @@ async function stopAllBlock() {
   } of appConfig.fnBlocks) {
     appConfig.stopBlock = name
   }
+  // If Killing emulator is successfull, update all job block configs..
+  for (const {
+    meta: { name },
+  } of appConfig.jobBlocks) {
+    appConfig.stopBlock = name
+  }
 }
 async function stopBlock(name) {
   const liveDetails = appConfig.getLiveDetailsof(name)
+  if (liveDetails.isJobOn) {
+    console.log('\nLive Job found for this block! Please stop job and try again\n')
+    process.exit(1)
+  }
   try {
     // process.kill(blockToStart.pid, 'SIGKILL')
     execSync(`pkill -s ${liveDetails.pid}`)

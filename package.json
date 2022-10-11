@@ -43,6 +43,7 @@
     "inquirer": "8.1.5",
     "inquirer-autocomplete-prompt": "1.4.0",
     "inquirer-file-tree-selection-prompt": "1.0.12",
+    "node-cron": "^3.0.2",
     "octokit": "1.7.1",
     "open": "^8.4.0",
     "ora": "5.4.1",

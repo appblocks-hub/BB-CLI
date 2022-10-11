@@ -171,6 +171,11 @@ class AppblockConfigManager {
     return this.getDependencies(true, filter)
   }
 
+  get liveJobBlocks() {
+    const filter = (block) => block.isJobOn
+    return this.getDependencies(true, filter)
+  }
+
   get nonLiveBlocks() {
     const filter = (block) => !block.isOn
     return this.getDependencies(true, filter)
@@ -183,6 +188,11 @@ class AppblockConfigManager {
 
   get fnBlocks() {
     const filter = (block) => ['function'].includes(block.meta.type)
+    return this.getDependencies(false, filter)
+  }
+
+  get jobBlocks() {
+    const filter = (block) => ['job'].includes(block.meta.type)
     return this.getDependencies(false, filter)
   }
 
@@ -216,6 +226,12 @@ class AppblockConfigManager {
     this.events.emit('liveChanged')
   }
 
+  set stopJobBlock(blockname) {
+    const stop = { job_cmd: null, isJobOn: false }
+    this.liveDetails[blockname] = { ...this.liveDetails[blockname], ...stop }
+    this.events.emit('liveChanged')
+  }
+
   set startedBlock({ name, pid, port, log }) {
     const start = {
       pid,
@@ -236,6 +252,12 @@ class AppblockConfigManager {
         this.removeBlock(name)
       }
     }
+  }
+
+  set startedJobBlock({ name, job_cmd }) {
+    const start = { job_cmd, isJobOn: true }
+    this.liveDetails[name] = { ...this.liveDetails[name], ...start }
+    this.events.emit('liveChanged')
   }
 
   async init(cwd, configName, subcmd) {
@@ -308,13 +330,13 @@ class AppblockConfigManager {
         // TODO -- if there are more blocks in liveconfig json,
         // Log the details and if they are on, kill the processes
         const {
-          meta: { name },
+          meta: { name, type },
         } = block
         if (existingLiveConfig[name]) {
           // console.log(`${name} exists in live as well:`)
           // console.log('\n')
-          const { log, isOn, pid, port } = existingLiveConfig[name]
-          this.liveDetails[name] = {
+          const { log, isOn, pid, port, isJobOn, job_cmd } = existingLiveConfig[name]
+          const liveData = {
             log: log || {
               out: `./logs/out/${name}.log`,
               err: `./logs/err/${name}.log`,
@@ -323,6 +345,13 @@ class AppblockConfigManager {
             pid: pid || null,
             port: port || null,
           }
+
+          if (type === 'job') {
+            liveData.isJobOn = isJobOn || false
+            liveData.job_cmd = job_cmd || null
+          }
+
+          this.liveDetails[name] = liveData
         } else {
           // console.log(
           //   `Existing live config doesn't have details of ${block.meta.name}`
@@ -331,7 +360,8 @@ class AppblockConfigManager {
           if (this.isUiBlock(name)) {
             p = await getPortFromWebpack(this.getBlock(name).directory)
           }
-          this.liveDetails[name] = {
+
+          const liveData = {
             log: {
               out: `./logs/out/${name}.log`,
               err: `./logs/err/${name}.log`,
@@ -340,6 +370,12 @@ class AppblockConfigManager {
             pid: null,
             port: p,
           }
+          if (type === 'job') {
+            liveData.isJobOn = false
+            liveData.job_cmd = null
+          }
+
+          this.liveDetails[name] = liveData
         }
       }
     } catch (err) {
@@ -568,7 +604,7 @@ class AppblockConfigManager {
    * @returns {Boolean} True if block exists, else False
    */
   has(block) {
-    return !!this.config.dependencies[block]
+    return !!this.config.dependencies?.[block]
   }
 
   /**
