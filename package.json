@@ -1,6 +1,6 @@
 {
   "name": "@appblocks/bb-cli",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "CLI tool to create, manage and publish Blocks to Blocks Registry.",
   "main": "./bin/index.js",
   "bin": {
