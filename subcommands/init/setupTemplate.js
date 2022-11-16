@@ -16,7 +16,7 @@ const create = require('../create')
 const setupTemplate = async (options) => {
   const { DIRPATH, blockFinalName, Git, prefersSsh } = options
 
-  const templatesPath = path.join(__dirname, '..', 'templates', 'simple-todo-template')
+  const templatesPath = path.join(__dirname, '..', '..', 'templates', 'simple-todo-template')
   const fastForward = await wouldLikeToRegisterTemplateBlocksAsNewBlock()
 
   ;(async function installDependencies(l, config, relativeDir) {
