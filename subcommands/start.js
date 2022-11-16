@@ -5,16 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { createReadStream, watchFile } = require('fs')
+const { createReadStream, watchFile, readFileSync } = require('fs')
 const { Stream } = require('stream')
 const readline = require('readline')
 const path = require('path')
 const chalk = require('chalk')
+const { noop } = require('rxjs')
 const { runBash, runBashLongRunning } = require('./bash')
 const { getFreePorts } = require('./port-check')
 const { getAbsPath } = require('../utils/path-helper')
 const emulateNode = require('./emulate')
-const { setupEnv } = require('../utils/env')
+const { setupEnv, updateEnv } = require('../utils/env')
 const { appConfig } = require('../utils/appconfigStore')
 const { checkPnpm } = require('../utils/pnpmUtils')
 const { spinnies } = require('../loader')
@@ -155,6 +156,17 @@ async function startAllBlock() {
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
+      try {
+        const _e = readFileSync(path.join(fnBlock.directory, '.env')).toString().trim()
+        const _b = _e.split('\n').reduce((acc, curr) => {
+          const [k, v] = curr.split('=')
+          acc[k] = v
+          return acc
+        }, {})
+        await updateEnv('function', _b)
+      } catch (_) {
+        noop()
+      }
       appConfig.startedBlock = {
         name: fnBlock.meta.name,
         pid: emData.data.pid || null,

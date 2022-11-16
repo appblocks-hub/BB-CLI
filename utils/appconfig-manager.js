@@ -86,8 +86,14 @@ class AppblockConfigManager {
     this.config = ''
 
     // tmp
-    this.tempGroupConfigName = 'temp_block_group_config.json'
-    this.tempGroupLiveConfigName = '.temp_block_group_config.live.json'
+    // this.tempGroupConfigName = 'temp_block_group_config.json'
+    // this.tempGroupLiveConfigName = '.temp_block_group_config.live.json'
+  }
+
+  async liveConfigSetup() {
+    const tempPath = tmpdir()
+    this.liveConfigPath = path.join(tempPath, path.resolve(), this.liveConfigName)
+    await mkdir(path.join(tempPath, path.resolve()), { recursive: true })
   }
 
   async tempSetup() {
@@ -234,7 +240,7 @@ class AppblockConfigManager {
       const pbName = lrManager.allDependencies[blockname].packagedBlock
       const rootPath = lrManager.localRegistry[pbName]?.rootPath
       const tempPath = tmpdir()
-      this.tempGroupLiveConfigPath = path.join(tempPath, rootPath, this.tempGroupLiveConfigName)
+      this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigPath)
     }
     this.events.emit('liveChanged')
   }
@@ -246,7 +252,7 @@ class AppblockConfigManager {
       const pbName = lrManager.allDependencies[blockname].packagedBlock
       const rootPath = lrManager.localRegistry[pbName]?.rootPath
       const tempPath = tmpdir()
-      this.tempGroupLiveConfigPath = path.join(tempPath, rootPath, this.tempGroupLiveConfigName)
+      this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigPath)
     }
     this.events.emit('liveChanged')
   }
@@ -312,24 +318,15 @@ class AppblockConfigManager {
 
     try {
       await this.readAppblockConfig()
-      // console.log('Config Read:')
-      // console.log(this.config)
-      // console.log('\n')
-
-      // if the config is not of appblock, create a tempconfig anyway
 
       if (this.config.type !== 'appBlock') {
         this.isInAppblockContext = false
       } else {
         this.isInAppblockContext = true
       }
-
-      await this.tempSetup()
-
+      // await this.tempSetup()
+      await this.liveConfigSetup()
       await this.readLiveAppblockConfig()
-      // console.log('Live Config Read:')
-      // console.log(this.liveDetails)
-      // console.log('\n')
     } catch (err) {
       console.log(err.message)
       process.exit(1)
@@ -353,7 +350,7 @@ class AppblockConfigManager {
         //   throw new Error(`Couldnt find config file in ${path.resolve(this.cwd)}`)
         // }
         this.isOutOfContext = true
-        this.isGlobal = true
+        // this.isGlobal = true
       }
     }
   }
@@ -365,7 +362,7 @@ class AppblockConfigManager {
         const tempPath = tmpdir()
         await Promise.all(
           Object.values(lrManager.localRegistry).map(async (pbData) => {
-            let fileData = readFileSync(path.join(tempPath, pbData.rootPath, this.tempGroupLiveConfigName))
+            let fileData = readFileSync(path.join(tempPath, pbData.rootPath, this.liveConfigName))
             if (fileData?.toString().length <= 0) fileData = '{}'
             const liveData = await JSON.parse(fileData)
             if (liveData) {
@@ -378,7 +375,7 @@ class AppblockConfigManager {
           })
         )
       } else {
-        let fileData = readFileSync(this.tempGroupLiveConfigPath)
+        let fileData = readFileSync(this.liveConfigPath)
         if (fileData?.toString().length <= 0) fileData = '{}'
         existingLiveConfig = JSON.parse(fileData)
       }
@@ -473,8 +470,8 @@ class AppblockConfigManager {
   _createLiveConfig() {
     const liveConfig = {}
 
-    if (this.isGlobal && this.tempGroupLiveConfigPath) {
-      const pbName = this.tempGroupLiveConfigPath?.split('/').at(-2)
+    if (this.isGlobal && this.liveConfigPath) {
+      const pbName = this.liveConfigPath?.split('/').at(-2)
       const { dependencies: deps } = lrManager.getPackageBlock(pbName) || {}
       if (!deps) return {}
       for (const block of Object.values(deps)) {
@@ -504,7 +501,7 @@ class AppblockConfigManager {
     // this.writeLiveSignal = this.writeController.signal
     // const p = this.isTempGroup ? this.tempGroupLiveConfigPath : path.resolve(this.cwd, this.liveConfigName)
 
-    const p = this.tempGroupLiveConfigPath || path.resolve(tmpdir(), this.tempGroupConfigName)
+    const p = this.liveConfigPath || path.resolve(tmpdir(), this.liveConfigName)
     writeFile(p, JSON.stringify(this._createLiveConfig(), null, 2), { encoding: 'utf8' }, (err) => {
       if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
     })
@@ -523,7 +520,8 @@ class AppblockConfigManager {
     // this.writeSignal = this.writeController.signal
 
     let writeData = this.config
-    let p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
+    // let p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
+    let p = path.resolve(this.cwd, this.configName)
 
     if (this.isGlobal && this.currentPackageBlox) {
       const deps = Object.entries(this.config.dependencies).reduce((acc, [dKey, dVal]) => {
@@ -550,7 +548,8 @@ class AppblockConfigManager {
    * Write emiter for update block in block config and appblock config
    */
   async _updateBlockWrite(blockDir, blockMeta) {
-    const p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
+    // const p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
+    const p = path.resolve(this.ced, this.configName)
     // Update appblock config
     return new Promise((resolve) => {
       writeFile(p, JSON.stringify(this.config, null, 2), { encoding: 'utf8' }, () => {
