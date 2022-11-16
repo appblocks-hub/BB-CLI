@@ -11,9 +11,11 @@ const { readInput } = require('../../utils/questionPrompts')
 const { deleteRegestredBlock, deleteGithubRepos, removeConfigAndFolder } = require('./util')
 const { spinnies } = require('../../loader')
 const { feedback } = require('../../utils/cli-feedback')
+const { lrManager } = require('../../utils/locaRegistry/manager')
 
-const deleteCommand = async (name) => {
-  await appConfig.init()
+const deleteCommand = async (name, options) => {
+  const { global: isGlobal } = options
+  await appConfig.init(null, null, 'delete', { isGlobal })
 
   try {
     let deleteBlocks = []
@@ -22,9 +24,10 @@ const deleteCommand = async (name) => {
       const isBlockExist = appConfig.has(name)
       const { name: apName } = appConfig.getAppConfig()
 
-      if (!appConfig.isInAppblockContext && name !== appBlockName && !isBlockExist) {
+      if (!appConfig.isInAppblockContext && name !== apName && !isBlockExist) {
         throw new Error(`${name} block does not exist`)
-      } else if (appConfig.isInAppblockContext && name !== appBlockName) {
+      } else if (appConfig.isInAppblockContext && name === apName) {
+        await lrManager.init()
         appBlockName = apName
         feedback({ type: 'warn', message: `Deleting ${name} will delete all its dependency blocks` })
         const { dependencies = {} } = appConfig.getAppConfig()
@@ -90,6 +93,11 @@ const deleteCommand = async (name) => {
     spinnies.succeed('del_block', { text: `Deleted blocks from registry` })
 
     await removeConfigAndFolder(appConfig, deleteBlocks, appBlockName)
+
+    if (appBlockName) {
+      // Remove packaged block from local registry
+      lrManager.remove = appBlockName
+    }
 
     await deleteGithubRepos(deleteBlocks)
   } catch (error) {

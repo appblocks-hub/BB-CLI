@@ -106,6 +106,11 @@ const start = async (blockname, { usePnpm }) => {
   await setupEnv(configData)
 
   if (!blockname) {
+    if ([...appConfig.allBlockNames].length <= 0) {
+      console.log('\nNo blocks to start!\n')
+      process.exit(1)
+    }
+
     let c = 0
     // eslint-disable-next-line no-unused-vars
     for (const _ of appConfig.nonLiveBlocks) {
@@ -137,10 +142,10 @@ async function startAllBlock() {
   spinnies.add('emulator', { text: 'Staring emulator' })
   switch (emulateLang) {
     case 'nodejs':
-      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
+      emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
       break
     default:
-      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
+      emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
       break
   }
   if (emData.status === 'success') {

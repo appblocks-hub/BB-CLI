@@ -8,7 +8,7 @@
 // eslint-disable-next-line no-unused-vars
 const { default: axios } = require('axios')
 const fs = require('fs')
-const { rename, readdir } = require('fs/promises')
+const { rename, readdir, stat } = require('fs/promises')
 const path = require('path')
 const { noop } = require('rxjs')
 const { appBlockGetPresignedUrlForReadMe } = require('./api')
@@ -132,8 +132,8 @@ function getBlockDirsIn(array) {
   // TODO: read the config - validate - check with registry
   const res = array.reduce((acc, v) => {
     try {
-      const stat = fs.statSync(v)
-      if (stat.isDirectory()) {
+      const Fstat = fs.statSync(v)
+      if (Fstat.isDirectory()) {
         const files = fs.readdirSync(v)
         // console.log('files in ' + v + ' are:\n', files)
         if (files.indexOf('block.config.json') > -1) {
@@ -148,6 +148,7 @@ function getBlockDirsIn(array) {
 
   return res
 }
+
 function findBlockWithNameIn(name, dirs) {
   const res = dirs.reduce((acc, v) => {
     console.log('path name', path.resolve(v, 'block.config.json'))
@@ -245,44 +246,45 @@ async function uploadReadMe(filePath) {
  * @param {String} cwd
  * @returns {String} dir path to pull block to
  */
+// eslint-disable-next-line no-unused-vars
 function createDirForType(type, cwd) {
-  let dirPath = '.'
-  switch (type) {
-    case 1:
-      break
-    case 2:
-      // ensureDirSync can create only one level if not present
-      // so call for each level to make sure
-      ensureDirSync(path.resolve(cwd, 'view'))
-      ensureDirSync(path.resolve(cwd, 'view', 'container'))
-      dirPath = path.resolve(cwd, 'view', 'container')
-      break
-    case 3:
-      ensureDirSync(path.resolve(cwd, 'view'))
-      ensureDirSync(path.resolve(cwd, 'view', 'elements'))
-      dirPath = path.resolve(cwd, 'view', 'elements')
-      break
-    case 4:
-      ensureDirSync(path.resolve(cwd, 'functions'))
-      dirPath = path.resolve(cwd, 'functions')
-      break
-    case 5:
-      // console.log('you have entered unknown territory')
-      // process.exit(1)
-      break
-    case 6:
-      ensureDirSync(path.resolve(cwd, 'functions'))
-      ensureDirSync(path.resolve(cwd, 'functions', 'shared-fns'))
-      dirPath = path.resolve(cwd, 'functions', 'shared-fns')
-      break
-    case 7:
-      ensureDirSync(path.resolve(cwd, 'jobs'))
-      dirPath = path.resolve(cwd, 'jobs')
-      break
-    default:
-      console.log('Unknown type')
-      process.exit(1)
-  }
+  const dirPath = cwd || '.'
+  // switch (type) {
+  //  case 1:
+  //   break
+  //  case 2:
+  //    // ensureDirSync can create only one level if not present
+  //    // so call for each level to make sure
+  //    ensureDirSync(path.resolve(cwd, 'view'))
+  //    ensureDirSync(path.resolve(cwd, 'view', 'container'))
+  //    dirPath = path.resolve(cwd, 'view', 'container')
+  //    break
+  //  case 3:
+  //    ensureDirSync(path.resolve(cwd, 'view'))
+  //    ensureDirSync(path.resolve(cwd, 'view', 'elements'))
+  //    dirPath = path.resolve(cwd, 'view', 'elements')
+  //    break
+  //  case 4:
+  //    ensureDirSync(path.resolve(cwd, 'functions'))
+  //    dirPath = path.resolve(cwd, 'functions')
+  //    break
+  //  case 5:
+  //    // console.log('you have entered unknown territory')
+  //    // process.exit(1)
+  //    break
+  //  case 6:
+  //    ensureDirSync(path.resolve(cwd, 'functions'))
+  //    ensureDirSync(path.resolve(cwd, 'functions', 'shared-fns'))
+  //    dirPath = path.resolve(cwd, 'functions', 'shared-fns')
+  //    break
+  //  case 7:
+  //    ensureDirSync(path.resolve(cwd, 'jobs'))
+  //    dirPath = path.resolve(cwd, 'jobs')
+  //    break
+  //  default:
+  //    console.log('Unknown type')
+  //    process.exit(1)
+  // }
   return dirPath
 }
 /**
@@ -359,6 +361,18 @@ async function moveFiles(muted, fileList) {
   return report
 }
 
+async function scan(root) {
+  const files = await readdir(root)
+  const result = { parent: root, dirs: [], files: [] }
+  for (let i = 0; i < files.length; i += 1) {
+    const fullPath = path.join(root, files[i])
+    const s = await stat(fullPath)
+    if (s.isDirectory()) result.dirs.push(fullPath)
+    else result.files.push(fullPath)
+  }
+  return result
+}
+
 module.exports = {
   ensureDirSync,
   wipeAllFilesIn,
@@ -373,4 +387,5 @@ module.exports = {
   isDirEmpty,
   moveFiles,
   prepareFileListForMoving,
+  scan,
 }

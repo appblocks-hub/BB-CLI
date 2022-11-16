@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Copyright (c) Appblocks. and its affiliates.
  *
@@ -7,10 +8,10 @@
 
 const chalk = require('chalk')
 const fs = require('fs')
-const { readdir, readFile, rm } = require('fs/promises')
+const { readFile, rm } = require('fs/promises')
 const path = require('path')
 const { blockTypes } = require('../utils/blockTypes')
-const { getBlockDirsIn, moveFiles } = require('../utils/fileAndFolderHelpers')
+const { moveFiles, prepareFileListForMoving } = require('../utils/fileAndFolderHelpers')
 const { getBlockDetails, getConfigFromRegistry } = require('../utils/registryUtils')
 const { confirmationPrompt, getBlockName, readInput } = require('../utils/questionPrompts')
 const { isValidBlockName } = require('../utils/blocknameValidator')
@@ -24,16 +25,20 @@ const createBlock = require('../utils/createBlock')
 const { offerAndCreateBlock } = require('../utils/sync-utils')
 const { appblockConfigSchema } = require('../utils/schema')
 const { feedback } = require('../utils/cli-feedback')
+const Finder = require('../utils/find')
+const { lrManager } = require('../utils/locaRegistry/manager')
+const { spinnies } = require('../loader')
 
 /*
+ * Working.
+ * Scans through all directories and sub-directories, finds all dirs with block.config.json
+ * if config has 'name','type','source' with valid 'https' and 'ssh', the name will be run through
+ * registry to check if it is registered. If there is a source mismatch, it is considered a new different block
+ * and will prompt for new block registration in new name( TODO ),
+ * If source is empty or https and ssh are empty, those folders are picked up and prompted for
+ * new block creation.
+ * those not picked up will be considered stale and prompted for deletion
  *
- *  HANDLE ->
- *  1. found blocks without config files, REMOVE - DONE
- *  2. found unregistered blocks, should i register?
- *  3. found blocks with registered name but different source
- *  4. would you like to register the app?(register then..if yes)
- *  5. create block.config.json
- *  6. Validate block.config.json with YUP, so it has all expected fields
  */
 
 /**
@@ -93,14 +98,16 @@ const offerAndRegisterBlocks = async (list) => {
       }
     }
   }
-  console.log('Report:')
-  report.forEach((v) => {
-    if (v.registered) {
-      console.log(chalk.green(`${chalk.greenBright(v.name)} is registered as ${chalk.cyanBright(v.newName)} `))
-    }
-  })
-  console.log()
-  console.log(chalk.whiteBright('Please make the necessary changes in source files'))
+  if (report.length) {
+    console.log('Report:')
+    report.forEach((v) => {
+      if (v.registered) {
+        console.log(chalk.green(`${chalk.greenBright(v.name)} is registered as ${chalk.cyanBright(v.newName)} `))
+      }
+    })
+    console.log()
+    console.log(chalk.whiteBright('Please make the necessary changes in source files'))
+  }
   return report
 }
 
@@ -216,20 +223,11 @@ async function getAndCheckAppName() {
   })
   return blockDetails || null
 }
+
+/**
+ * Scans subdirs recursively.
+ */
 const sync = async () => {
-  // INFO -- only surface level scanning, not recursively finding directories
-  // If there are appblocks as a dependency,
-  // then they might contain blocks and those would be needing a sync as well,
-  // but this only deals with top layer of dependencies,
-  // move to inner appblock directory and run sync to do the above
-
-  // get details of app from user entered name if config missing
-  // check if it is appblock type if show log and continue
-  // if can't find ask till user exists..TODO
-  // if exists get config and continue
-  // finally once the local appblock config is built, compare
-  // config from registry and make changes
-
   let appblockIsRegistered = false
   /**
    * @type {blockMetaData}
@@ -249,6 +247,7 @@ const sync = async () => {
     try {
       appblockConfigSchema.validateSync(appConfiginLocal, { abortEarly: false })
     } catch (err) {
+      // console.log(err)
       validationData.summary = err.errors
       validationData.isErrored = true
       err.inner.forEach((e) =>
@@ -262,6 +261,7 @@ const sync = async () => {
         })
       )
     }
+    feedback({ type: 'error', message: `${validationData.summary.join('\n')}` })
     if (appConfiginLocal.name && appConfiginLocal.type === 'appBlock') {
       insideAppblock = true
       const appid = await getBlockDetails(appConfiginLocal.name)
@@ -347,18 +347,6 @@ const sync = async () => {
 
   const report = []
 
-  const view = './view'
-  const viewEl = './view/elements'
-  const viewCo = './view/container'
-  const fns = './functions'
-  const sFns = './functions/shared-fn'
-
-  const vi = fs.existsSync(view)
-  const vE = fs.existsSync(viewEl)
-  const vC = fs.existsSync(viewCo)
-  const f = fs.existsSync(fns)
-  const sF = fs.existsSync(sFns)
-
   /**
    * @callback PathGenerator
    * @param  {Array<String>} args
@@ -380,98 +368,91 @@ const sync = async () => {
    *  @type {PartialGenerator}
    */
   const fm = (p) => pr.bind(null, p)
-
-  if (!vi || !vE || !vC || !f) {
-    if (!vi) {
-      feedback({ type: 'warn', message: './view missing' })
-    }
-    if (!vC) {
-      feedback({ type: 'warn', message: './view/container missing' })
-    }
-    if (!vE) {
-      feedback({ type: 'warn', message: './view/elements missing' })
-    }
-    if (!f) {
-      feedback({ type: 'warn', message: './functions missing./functions missing' })
-    }
-    if (!sF) {
-      feedback({ type: 'warn', message: './functions/shared-fn missing' })
-    }
-  }
   /**
-   * List of all directories in root that could be blocks
-   * @type {Array<String>}
+   * Configure Finder
    */
-  const allDirsInRoot = await readdir('.').then((l) => l.map(fm('.')))
-
+  const c = new Finder(path.resolve(), ['block.config.json'], 0, ['.git', 'node_modules'], 8)
+  spinnies.add('scanDirs', { text: 'Scanning directories' })
   /**
    * List of all block directories inside the root ( i.e where the sync command is being run )
-   * @type {Array<String>}
+   * @type {}
    */
-  const blockDirectoriesInWrongLocation = getBlockDirsIn(allDirsInRoot)
+  const { dirs: blockDirectories } = await c.walk()
+  // TODO: use the below find command, it is 30x faster. find an alternative in windows and handle
+  // const fgh = execSync(
+  // 'find "$(cd ..; pwd)" -type d -name node_modules -prune -false -o -name .git -prune -false -o -name "block.config.json"'
+  // ).toString()
+  // const pss = fgh.trimEnd().split('\n')
 
-  await offerAndMoveBlocks(blockDirectoriesInWrongLocation)
-
-  // INFO : find dirs inside /functions,/view/elements,/view/container only after
-  //        offering to move block dirs found in root, so no blocks are missed.
-
-  const pa = []
-  if (vi && vE) pa.push(readdir(viewEl).then((l) => l.map(fm(viewEl))))
-  if (vi && vC) pa.push(readdir(viewCo).then((l) => l.map(fm(viewCo))))
-  if (f) pa.push(readdir(fns).then((l) => l.map(fm(fns))))
-  if (f && sF) pa.push(readdir(sFns).then((l) => l.map(fm(sFns))))
-  /**
-   * List of all directories that could be blocks in paths -
-   *  functions/* , view/container/* , and view/elements/*
-   * @type {Array<String>}
-   */
-  const allDirectories = await Promise.all(pa)
-    .then((l) => l.flatMap((v) => v))
-    .catch((err) => {
-      console.log(err)
-      process.exit(1)
-    })
-
-  const blockDirectories = getBlockDirsIn(allDirectories)
-
-  // If blocks count is not same as the number of directories found, then
-  // there are some stale directories..
-
-  // INFO : /function , /view/container , /view/elements are only expected to contain
-  //        block dirs, so all other dirs without block config can be considered stale,
-  //        not the case with root as it can contain valid other dirs..so staleDirsInRoot is wrong.
-  // const staleDirsInRoot = allDirsInRoot.length - blockDirectoriesInWrongLocation.length
-
-  const staleDirsInsideApp = allDirectories.length - blockDirectories.length
-
-  if (staleDirsInsideApp > 0 || staleDirsInsideApp > 0) {
-    // const cb = (b, acc, v) => (b.findIndex((p) => p === v) === -1 ? acc.concat(v) : acc)
-    const staleDirectories = [
-      ...allDirectories.reduce(cb.bind(blockDirectories), []),
-      // ...allDirsInRoot.reduce(cb.bind(blockDirectoriesInWrongLocation), []),
-    ]
-    report.push({
-      message: `Found ${staleDirectories.length} directories without block.config.json`,
-      data: staleDirectories,
-    })
-    console.log(report)
-    const res = await offerAndCreateBlock(staleDirectories)
-    res.forEach((v, i) => {
-      // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
-      // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
-      if (v.registered) {
-        blockDirectories.push(v.directory)
-        if (v.oldPath === staleDirectories[i]) staleDirectories.splice(i, 1)
-      }
-    })
-
-    await offerAndDeleteStaleDirectories(staleDirectories)
+  if (blockDirectories.length) {
+    spinnies.succeed('scanDirs', { text: `Found ${blockDirectories.length} child directories with block.config.json` })
+    console.log('------------------------')
+    console.log(blockDirectories)
+    console.log('------------------------')
+  } else {
+    spinnies.fail('scanDirs', { text: 'Found no child directories' })
   }
 
+  const configReadReport = []
+  const sourceLessBlocks = []
   const localBlocks = blockDirectories.reduce((acc, cur) => {
-    const b = JSON.parse(fs.readFileSync(path.resolve(cur, 'block.config.json')))
-    return acc.concat(b)
+    const cp = path.resolve(cur, 'block.config.json')
+    try {
+      const b = JSON.parse(fs.readFileSync(cp))
+
+      if (!b.name) throw new Error('name missing')
+      if (!b.type) throw new Error('type missing')
+      if (!b.source) throw new Error('source missing')
+      // INFO: Later down source.ssh os checked, it is primary- http is derived from ssh.
+      if (!b.source.ssh) throw new Error('source missing(ssh empty)')
+      // TODO: Make new error types for above
+      // TODO: If source.ssh is present, make sure ssh is prefered..else report
+      //        else if source.http is only present, make sure it is preferred, else report error
+      return acc.concat(b)
+    } catch (err) {
+      if (err.message.includes('source')) {
+        sourceLessBlocks.push(cur)
+      } else {
+        configReadReport.push({ path: cp, msg: err.message })
+      }
+      return acc
+    }
   }, [])
+
+  if (configReadReport.length) {
+    console.log(
+      '\nError in reading configs of following blocks.\n(These will not be considered for further processing.)'
+    )
+    console.log('----------------')
+    configReadReport.forEach((v, idx, a) => {
+      console.log(`Path: ${v.path}`)
+      console.log(`Error: ${v.msg}`)
+      if (idx !== a.length - 1) console.log()
+    })
+    console.log('----------------\n')
+  }
+
+  if (sourceLessBlocks.length) {
+    console.log(`Found ${sourceLessBlocks.length} directories with no source in config`)
+    console.log('------------------------------')
+    console.log(sourceLessBlocks)
+    console.log('------------------------------')
+  }
+
+  const res1 = await offerAndCreateBlock(sourceLessBlocks)
+
+  const newlyCreateddBlocks = []
+  res1.forEach((v, i) => {
+    // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
+    // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
+    if (v.registered) {
+      console.log(v)
+      newlyCreateddBlocks.push(v)
+      if (v.oldPath === sourceLessBlocks[i]) sourceLessBlocks.splice(i, 1)
+    }
+  })
+
+  await offerAndDeleteStaleDirectories(sourceLessBlocks)
 
   const promiseArray = localBlocks.map((v, i) =>
     getBlockDetails(v.name)
@@ -522,16 +503,21 @@ const sync = async () => {
    * @property {dinob} data
    * @property {Boolean} sourcemismatch
    */
+
+  spinnies.add('checkInRegistry', { text: 'Checking with registry' })
   /**
    * @type {[nrbt]}
    */
   const res = await Promise.all(promiseArray)
   // console.log(res)
 
+  spinnies.remove('checkInRegistry')
   const { nonRegisteredBlocks, alreadyRegisteredBlocks } = res.reduce(
     (acc, curr) => {
       if (!curr.registered) acc.nonRegisteredBlocks.push(curr)
-      else if (curr.data.localBlockConfig.source.ssh !== curr.data.detailsInRegistry.GitUrl) {
+      else if (curr.data.localBlockConfig?.source?.ssh !== curr.data.detailsInRegistry.GitUrl) {
+        // INFO: source mismatch is pushed to non registered as it could have been put by user, and not really a block
+        //       registered through cli.
         acc.nonRegisteredBlocks.push({ ...curr, sourcemismatch: true })
       } else {
         acc.alreadyRegisteredBlocks.push({ ...curr })
@@ -546,17 +532,27 @@ const sync = async () => {
     data: nonRegisteredBlocks,
   })
 
-  console.log(report)
+  if (nonRegisteredBlocks.length) {
+    console.log(report[0].message)
+    console.log('--------------------')
+    report[0].data.forEach((v, idx) => {
+      console.log(`${idx}. ${chalk.green(v.directory)}`)
+    })
+    console.log('--------------------')
+  }
+
   const t = await offerAndRegisterBlocks(nonRegisteredBlocks)
 
   const newlyRegisteredBlocks = t.filter((v) => v.registered)
-  const deps = [...alreadyRegisteredBlocks, ...newlyRegisteredBlocks].reduce((acc, curr) => {
+  const deps = [...alreadyRegisteredBlocks, ...newlyRegisteredBlocks, ...newlyCreateddBlocks].reduce((acc, curr) => {
     acc[curr.name] = { ...acc[curr.name], directory: curr.directory, meta: curr.data.localBlockConfig }
     return acc
   }, {})
-  console.log()
-  console.log('New dependencies')
-  console.log(deps)
+
+  if (deps.length > 0) {
+    console.log('New dependencies')
+    console.log(deps)
+  }
 
   // await handleAppblockSync();
   // syncing logic starts here
@@ -619,13 +615,11 @@ const sync = async () => {
       feedback({ type: 'success', message: 'DONE' })
     }
   } else if (insideAppblock && !appblockIsRegistered) {
-    // INFO : Has a local config file, but no config in registtry.
-    //        Compare newly created config with present local config and display diffs,
-    //        write diffs, Register app and push config
-    // register appblock and push new config
-
-    // Same as above case one, but also prompt to register app and push config
-    // TODO::
+    /**
+     * Has a local config file, but no config in registry
+     * Compare newly created config with present local config and display diffs,
+     *
+     */
     const possibleNewConfig = { ...appConfiginLocal, dependencies: { ...deps } }
     const diffed_newlyCreatedConfig_with_PresentConfig = diffObjects(possibleNewConfig, appConfiginLocal)
     diffShower(diffed_newlyCreatedConfig_with_PresentConfig)
@@ -635,15 +629,22 @@ const sync = async () => {
     console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
     console.log('DONE')
   } else if (!insideAppblock && appblockIsRegistered) {
-    // INFO : we don't have local config but we pulled an appblock which could or could not have config.
+    /**
+     * We don't have local config but we pulled an appblock which could or could not have config.
+     *
+     */
     if (appConfigFromRegistry) {
-      // INFO : We don't have a local config, but a new dpendency list we built, and a config from
-      //        Registry, compare both.
+      /*
+       * We don't have a local config, but a new dpendency list we built, and a config from
+       * Registry, compare both.
+       */
       console.log(`${chalk.bgYellow('INFO')} Config found Registry for ${appblockDetails.BlockName}`)
       const possibleNewConfig = { dependencies: { ...deps } }
-      // INFO : always compare incoming with present, so diffShower works properly
-      //        Passing possibleNewConfig first to diffObjects will result in showing incoming new
-      //        addition in red colour opposed to being correctly shown in green colour
+      /*
+       * always compare incoming with present, so diffShower works properly
+       * Passing possibleNewConfig first to diffObjects will result in showing incoming new
+       * addition in red colour opposed to being correctly shown in green colour
+       */
       const diffed_newlyCreatedPartialConfig_with_ConfigFromRegistry = diffObjects(
         appConfigFromRegistry,
         possibleNewConfig
@@ -658,9 +659,10 @@ const sync = async () => {
       console.log('DONE')
     } else {
       console.log(`${chalk.bgYellow('INFO')} No config found in Registry`)
-      // INFO : At this point we have a dependency list we created and details of the registered app,
-      //        So create a new appblock config with those.
-
+      /**
+       * At this point we have a dependency list we created and details of the registered app,
+       * so create a new config with those
+       */
       const { BlockName, GitUrl } = appblockDetails
       const source = { ssh: GitUrl, https: convertGitSshUrlToHttps(GitUrl) }
       const newAppblockConfig = { name: BlockName, type: 'appBlock', source, dependencies: { ...deps } }
@@ -695,11 +697,30 @@ const sync = async () => {
         2
       )
     )
+    /**
+     * This is a hack.
+     * If not inside a packaged block the new one created is cloned to a directory with
+     * the new provided name. And we want current directory to be the one.
+     * so we create a config inside '.' , and copy the '.git' from the newly cloned repo.
+     * Eg. new packaged block name -> bb,
+     * a new bb folder is created.
+     * copy bb/.git/* -> ./.git
+     * delete bb
+     */
+    const _f = await prepareFileListForMoving(path.resolve(blockFinalName), path.resolve(), [])
+    await moveFiles(true, _f)
+    await rm(path.redolve(blockFinalName))
 
     console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
     console.log('DONE')
   } else {
     console.log('OOPS!!')
+  }
+  const { name: pckName } = JSON.parse(fs.readFileSync('block.config.json'))
+  await lrManager.init()
+  lrManager.add = {
+    name: pckName,
+    rootPath: path.resolve('.'),
   }
 }
 

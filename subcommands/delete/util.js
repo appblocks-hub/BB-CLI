@@ -80,7 +80,10 @@ const removeConfigAndFolder = async (appConfig, deleteBlocks, appBlockName) => {
       const blockData = appConfig.getBlock(bName)
 
       let rmPath = path.join(path.resolve(), bName)
-      if (blockData?.directory) {
+      if (blockData?.packagedBlock) {
+        const rootPath = appConfig.lrManager.localRegistry[blockData.packagedBlock]?.rootPath
+        rmPath = path.join(rootPath, blockData.directory)
+      } else if (blockData?.directory) {
         rmPath = path.join(path.resolve(), blockData.directory)
       } else if (appBlockName === bName) {
         rmPath = path.resolve()
@@ -92,6 +95,7 @@ const removeConfigAndFolder = async (appConfig, deleteBlocks, appBlockName) => {
       return true
     })
   ).then((v) => {
+    // console.log(v);
     error = v.some((e) => e.status === 'rejected')
   })
 

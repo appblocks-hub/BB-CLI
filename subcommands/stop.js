@@ -12,14 +12,25 @@ const { appConfig } = require('../utils/appconfigStore')
 
 global.rootDir = process.cwd()
 
-const stop = async (name) => {
-  await appConfig.init()
+const stop = async (name, options) => {
+  const { global: isGlobal } = options
+
+  await appConfig.init(null, null, null, { isGlobal })
+
   if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
     // eslint-disable-next-line no-param-reassign
     name = appConfig.allBlockNames.next().value
   }
   if (!name) {
-    stopAllBlock()
+    if ([...appConfig.allBlockNames].length <= 0) {
+      console.log('\nNo blocks to stop!\n')
+      process.exit(1)
+    }
+
+    let localRegistry
+    if (isGlobal) localRegistry = appConfig.lrManager.localRegistry
+
+    stopAllBlock({ localRegistry })
   } else if (appConfig.has(name)) {
     if (appConfig.isLive(name)) {
       stopBlock(name)
@@ -39,7 +50,7 @@ const stop = async (name) => {
   }
 }
 
-async function stopAllBlock() {
+async function stopAllBlock({ localRegistry }) {
   if ([...appConfig.liveJobBlocks].length !== 0) {
     console.log('\nJob blocks are live! Please stop jobs and try again\n')
     process.exit(1)
@@ -56,7 +67,7 @@ async function stopAllBlock() {
       await stopBlock(name)
     }
   }
-  stopEmulator()
+  stopEmulator({ localRegistry })
   // If Killing emulator is successfull, update all function block configs..
   for (const {
     meta: { name },

@@ -29,7 +29,7 @@
     "chalk": "4.1.2",
     "cli-cursor": "3.1.0",
     "cli-progress": "3.10.0",
-    "cli-table": "0.3.11",
+    "cli-table3": "^0.6.3",
     "clipboard-cli": "3.0.0",
     "commander": "8.2.0",
     "compare-versions": "^4.1.3",

@@ -20,9 +20,9 @@ const { runBash } = require('../subcommands/bash')
  * @param {Record<'dependencies',import('./jsDoc/types').dependencies>} appConfig
  * @returns
  */
-async function copyEmulatorCode(PORTS, appConfig) {
-  const blocks = appConfig.dependencies
-  const blocksData = Object.values(blocks).reduce((acc, bl) => {
+async function copyEmulatorCode(PORTS, dependencies) {
+  // const blocks = appConfig.dependencies
+  const blocksData = Object.values(dependencies).reduce((acc, bl) => {
     acc[bl.meta.name] = { type: bl.meta.type, dir: bl.directory }
     return acc
   }, {})
@@ -209,13 +209,30 @@ function addEmulatorProcessData(processData) {
   fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
 }
 
-async function stopEmulator() {
-  const processData = await getEmulatorProcessData()
-  if (processData && processData.pid) {
-    await runBash(`kill ${processData.pid}`)
+async function stopEmulator({ localRegistry }) {
+  if (localRegistry) {
+    await Promise.all(
+      Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
+        const emDir = `${rootPath}/._ab_em`
+        if (!fs.existsSync(emDir)) return true
+
+        const processData = await getEmulatorProcessData(rootPath)
+        if (processData && processData.pid) {
+          await runBash(`kill ${processData.pid}`)
+        }
+        await runBash(`rm -rf ${emDir}`)
+        console.log(`${k} emulator stopped successfully!`)
+        return true
+      })
+    )
+  } else {
+    const processData = await getEmulatorProcessData()
+    if (processData && processData.pid) {
+      await runBash(`kill ${processData.pid}`)
+    }
+    await runBash('rm -rf ./._ab_em')
+    console.log('emulator stopped successfully!')
   }
-  await runBash('rm -rf ./._ab_em')
-  console.log('emulator stopped successfully!')
 }
 
 module.exports = {

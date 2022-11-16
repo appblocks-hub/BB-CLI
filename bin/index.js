@@ -16,7 +16,7 @@ const customList = require('../utils/customList')
 
 const packageJson = require('../package.json')
 const { blockTypes } = require('../utils/blockTypes')
-const Init = require('../subcommands/init')
+const packageBlockInit = require('../subcommands/init')
 // const { isGitInstalled, isInGitRepository } = require('../utils/gitCheckUtils')
 // const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
@@ -66,6 +66,8 @@ function configSetOptionParse(value, _) {
   return p
 }
 async function init() {
+  // init local registry
+
   const program = new Command().hook('preAction', async (_, actionCommand) => {
     const subcommand = actionCommand.parent.args[0]
     await preActionChecks(subcommand)
@@ -112,7 +114,11 @@ async function init() {
     .description('to create components')
     .action(create)
 
-  program.command('init').argument('<appblock-name>', 'Name of app').description('create an appblock').action(Init)
+  program
+    .command('init')
+    .argument('<appblock-name>', 'Name of app')
+    .description('create an appblock')
+    .action(packageBlockInit)
 
   program
     .command('log')
@@ -122,7 +128,7 @@ async function init() {
 
   program.command('flush').description('To delete log files').action(flush)
 
-  program.command('ls').description('List all running blocks').action(ls)
+  program.command('ls').description('List all running blocks').option('-g, --global', 'execute globally').action(ls)
 
   program
     .command('publish')
@@ -140,6 +146,7 @@ async function init() {
   program
     .command('stop')
     .argument('[name]', 'Name of block to stop')
+    .option('-g, --global', 'execute globally')
     .description('To stop one or all blocks')
     .action(stop)
 
@@ -202,7 +209,6 @@ async function init() {
   program.command('stop-job').description('Stop the job').argument('[name]', 'Name of block to start').action(stopJob)
 
   program.command('pr').argument('<block-name>', 'Name of block to pr').description('pr block').action(pr)
-
   program
     .command('update-runtime')
     .argument('<block-name>', 'Name of block to update runtime')
@@ -218,6 +224,7 @@ async function init() {
   program
     .command('delete')
     .argument('[name]', 'Name of component to delete')
+    .option('-g, --global', 'execute globally')
     .description('Delete block component')
     .action(deleteCommand)
 

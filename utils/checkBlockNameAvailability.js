@@ -69,7 +69,7 @@ async function checkBlockNameAvailability(passedName, bypassInitialCheck) {
   if (!bypassInitialCheck) {
     const a1 = await check(passedName)
     if (a1) return passedName
-    console.log(chalk.red('Name not available!'))
+    console.log(chalk.red(`Name(${passedName}) not available!`))
   }
   // TODO -- change this to async/await
   return new Promise((res, rej) => {
@@ -84,7 +84,7 @@ async function checkBlockNameAvailability(passedName, bypassInitialCheck) {
           availableName = answer
           Emitter.complete()
         } else {
-          console.log(chalk.red('Name not available!'))
+          console.log(chalk.red(`Name(${passedName}) not available!`))
           Emitter.next({
             type: 'input',
             name: 'blockName',
