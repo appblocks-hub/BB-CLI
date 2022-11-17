@@ -8,6 +8,7 @@
 
 const fs = require('fs')
 const fsPromise = require('fs/promises')
+const path = require('path')
 // const { readdirSync, readFileSync, existsSync } = require('fs')
 // const { execSync } = require('child_process')
 // const { compare } = require('compare-versions')
@@ -200,6 +201,7 @@ fi
 }
 
 async function getEmulatorProcessData(rootDir) {
+  // console.log(`Getting emulator data from ${rootDir}`)
   const root = rootDir || '.'
   const emulatorProcessData = JSON.parse(await fsPromise.readFile(`${root}/._ab_em/.emconfig.json`, 'utf8'))
   return emulatorProcessData
@@ -209,30 +211,31 @@ function addEmulatorProcessData(processData) {
   fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
 }
 
-async function stopEmulator({ localRegistry }) {
-  if (localRegistry) {
-    await Promise.all(
-      Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
-        const emDir = `${rootPath}/._ab_em`
-        if (!fs.existsSync(emDir)) return true
+async function stopEmulator(rootPath) {
+  // if (localRegistry) {
+  //   await Promise.all(
+  //     Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
+  //       const emDir = `${rootPath}/._ab_em`
+  //       if (!fs.existsSync(emDir)) return true
 
-        const processData = await getEmulatorProcessData(rootPath)
-        if (processData && processData.pid) {
-          await runBash(`kill ${processData.pid}`)
-        }
-        await runBash(`rm -rf ${emDir}`)
-        console.log(`${k} emulator stopped successfully!`)
-        return true
-      })
-    )
-  } else {
-    const processData = await getEmulatorProcessData()
-    if (processData && processData.pid) {
-      await runBash(`kill ${processData.pid}`)
-    }
-    await runBash('rm -rf ./._ab_em')
-    console.log('emulator stopped successfully!')
+  //       const processData = await getEmulatorProcessData(rootPath)
+  //       if (processData && processData.pid) {
+  //         await runBash(`kill ${processData.pid}`)
+  //       }
+  //       await runBash(`rm -rf ${emDir}`)
+  //       console.log(`${k} emulator stopped successfully!`)
+  //       return true
+  //     })
+  //   )
+  // } else {
+  const processData = await getEmulatorProcessData(rootPath)
+  if (processData && processData.pid) {
+    await runBash(`kill ${processData.pid}`)
   }
+
+  await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
+  console.log('emulator stopped successfully!')
+  // }
 }
 
 module.exports = {
