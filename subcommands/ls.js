@@ -54,34 +54,24 @@ const ls = async (options) => {
     head: head.map((v) => chalk.cyanBright(v)),
   })
 
-  const { packagedBlockConfigs, localRegistryData } = appConfig.lrManager
+  const { localRegistryData } = appConfig.lrManager
 
   if (isGlobal) {
-    for (const pck in packagedBlockConfigs) {
-      if (Object.hasOwnProperty.call(packagedBlockConfigs, pck)) {
-        /**
-         * @type {string} absolute path to package directory
-         */
-        const { rootPath } = localRegistryData[pck]
-        // initialize appconfig with pck directory. This is to use appConfig utility functions
-        await appConfig.init(rootPath, null, null, { isGlobal: false, reConfig: true })
-        /**
-         * @type {_p1}
-         */
-        const { name: pckName, dependencies } = packagedBlockConfigs[pck]
-        let rowSpan = 0
+    for (const pck in localRegistryData) {
+      if (Object.hasOwnProperty.call(localRegistryData, pck)) {
         const tableData = []
-        for (const block in dependencies) {
-          if (Object.hasOwnProperty.call(dependencies, block)) {
-            rowSpan += 1
-            const { meta } = dependencies[block]
-            const g = appConfig.getBlockWithLive(meta.name)
-            tableData.push(rowGenerate(appConfig.isLive(meta.name), g))
-          }
+        let rowSpan = 0
+        const { rootPath } = localRegistryData[pck]
+
+        await appConfig.init(rootPath, null, null, { isGlobal: false, reConfig: true })
+
+        for (const block of appConfig.getDependencies(true)) {
+          rowSpan += 1
+          tableData.push(rowGenerate(block.isOn, block))
         }
 
         // Get the count and insert it to first array
-        const _d = { rowSpan, content: pckName, vAlign: 'center' }
+        const _d = { rowSpan, content: pck, vAlign: 'center' }
         if (tableData.length) {
           tableData[0].unshift(_d)
         }

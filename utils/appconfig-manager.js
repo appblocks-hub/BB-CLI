@@ -667,11 +667,10 @@ class AppblockConfigManager {
   }
 
   /**
-   *
    * @param {Boolean} includeLive To include live details of block in final result
    * @param {Function} filter
    * @param {Function} picker
-   * @returns
+   * @returns {Generator<import('./jsDoc/types').blockDetailsWithLive>}
    */
   *getDependencies(includeLive, filter, picker) {
     if (this.config?.dependencies) {
