@@ -160,7 +160,8 @@ async function startAllBlock() {
         const _e = readFileSync(path.join(fnBlock.directory, '.env')).toString().trim()
         const _b = _e.split('\n').reduce((acc, curr) => {
           const [k, v] = curr.split('=')
-          acc[k] = v
+          const _n = `${fnBlock.meta.name.toLocaleUpperCase()}_${k}`
+          acc[_n] = v
           return acc
         }, {})
         await updateEnv('function', _b)
@@ -184,6 +185,18 @@ async function startAllBlock() {
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
+      try {
+        const _e = readFileSync(path.join(jobBlock.directory, '.env')).toString().trim()
+        const _b = _e.split('\n').reduce((acc, curr) => {
+          const [k, v] = curr.split('=')
+          const _n = `${jobBlock.meta.name.toLocaleUpperCase()}_${k}`
+          acc[_n] = v
+          return acc
+        }, {})
+        await updateEnv('function', _b)
+      } catch (_) {
+        noop()
+      }
       appConfig.startedBlock = {
         name: jobBlock.meta.name,
         pid: emData.data.pid || null,
@@ -215,6 +228,19 @@ async function startAllBlock() {
     promiseArray.push(startBlock(block.meta.name, PORTS[block.meta.name]))
     if (block.meta.type === 'ui-container') {
       // containerBlock = block
+    }
+    try {
+      // TODO: copy this to a function, code repeated above twice
+      const _e = readFileSync(path.join(block.directory, '.env')).toString().trim()
+      const _b = _e.split('\n').reduce((acc, curr) => {
+        const [k, v] = curr.split('=')
+        const _n = `${block.meta.name.toLocaleUpperCase()}_${k}`
+        acc[_n] = v
+        return acc
+      }, {})
+      await updateEnv('view', _b)
+    } catch (_) {
+      noop()
     }
   }
   const reportRaw = await Promise.allSettled(promiseArray)
