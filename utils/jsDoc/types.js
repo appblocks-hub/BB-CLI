@@ -6,6 +6,11 @@
  */
 
 /**
+ * @typedef {Object} appConfigInitOptions
+ * @property {Boolean} reConfig Regenerate config ( default: returns the config in memory)
+ * @property {Boolean} isGlobal Is the command invoked with global flag
+ */
+/**
  * @typedef {Object} blockMetaData
  * @property {String} CreatedAt
  * @property {String} UpdatedAt

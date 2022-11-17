@@ -47,9 +47,10 @@ class LocalRegistryManager {
     this.packagedBlockConfigs = await Object.entries(this.localRegistryData).reduce(async (promAcc, [pb, pbData]) => {
       const acc = await promAcc
       try {
-        // TODO: If dependencies filed is an empty object in the read config, dont add it to acc.
+        // If dependencies filed is an empty object in the read config, dont add it to acc.
         // This is to avoid getting error on bb ls -g.
-        acc[pb] = await JSON.parse(readFileSync(path.join(pbData.rootPath, this.blockConfigFileName)))
+        const _j = await JSON.parse(readFileSync(path.join(pbData.rootPath, this.blockConfigFileName)))
+        if (Object.keys(_j.dependencies).length) acc[pb] = _j
       } catch (err) {
         if (err.code === 'ENOENT') {
           // remove entry
