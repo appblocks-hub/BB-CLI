@@ -1,11 +1,12 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import path from 'path'
 import webpack from 'webpack'
+// import { MFLiveReloadPlugin } from '@module-federation/fmr'
 
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 
 import { env } from '@appblocks/node-sdk'
-env.init()
+env.init([{ dir: 'todoItem', envFileName: '.env.view' }])
 
 const __dirname = path.resolve()
 
@@ -51,6 +52,11 @@ export default {
     new webpack.DefinePlugin({
       process: { env: JSON.stringify(process.env) },
     }),
+    // new MFLiveReloadPlugin({
+    //   port: 4001, // the port your app runs on
+    //   container: "Container", // the name of your app, must be unique
+    //   // standalone: false, // false uses chrome extention
+    // }),
     new ModuleFederationPlugin({
       name: 'todoItem',
       filename: 'remoteEntry.js',
