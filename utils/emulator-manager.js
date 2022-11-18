@@ -65,8 +65,11 @@ async function copyEmulatorCode(PORTS, dependencies) {
           res.send("Only " + type + " apis are allowed").status(403);
           return;
         }
-        const func_route = "../" + blockData.dir + "/index.js";
-        const handler = await import(func_route);
+        const func_route = "../" + blockData.dir + "/index.js"
+        let handler = await import(func_route);
+        if(process.env.NODE_ENV==="development"){
+          handler = await import(func_route+"?update="+Date.now())
+        }
         console.log("handler = ", handler);
         await handler.default(req, res);
       } else {
