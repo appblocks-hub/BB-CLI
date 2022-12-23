@@ -25,7 +25,7 @@ const initializePackageBlock = async (appblockName) => {
   // const packagesPath = path.join(__dirname, '..', 'packages')
   let componentName = appblockName
   if (!isValidBlockName(componentName)) {
-    feedback({ type: 'warn', message: `${componentName} is not a valid name` })
+    feedback({ type: 'warn', message: `${componentName} is not a valid name (Only snake case with numbers is valid)` })
     componentName = await getBlockName()
   }
   // if dir is clean, create a config file with name for configstore to

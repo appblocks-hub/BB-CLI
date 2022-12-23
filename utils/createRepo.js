@@ -30,7 +30,17 @@ const { spinnies } = require('../loader')
  * @param {String} blockShortName Available short name for block
  */
 // eslint-disable-next-line consistent-return
-async function createRepo(username, ownerId, ownerType, orgName, prefix, blockShortName, _fromPull, clonePath) {
+async function createRepo(
+  username,
+  ownerId,
+  ownerType,
+  orgName,
+  prefix,
+  blockShortName,
+  _fromPull,
+  clonePath,
+  privateOnly
+) {
   /**
    * @type { Null|String} The user selected template repo
    */
@@ -54,7 +64,7 @@ async function createRepo(username, ownerId, ownerType, orgName, prefix, blockSh
       type: 'list',
       name: 'visibility',
       message: 'visibility of repo',
-      choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: false }],
+      choices: [privateOnly ? 'PRIVATE' : 'PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: false }],
     },
   ]
 

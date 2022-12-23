@@ -36,7 +36,7 @@ const exec = require('../subcommands/exec')
 const addTags = require('../subcommands/addTags')
 const addCategories = require('../subcommands/addCategories')
 const { preActionChecks } = require('../utils/preActionRunner')
-const publish = require('../subcommands/publish')
+const publish = require('../subcommands/publish/index')
 const createApp = require('../subcommands/createApp')
 const appPublish = require('../subcommands/appPublish')
 const mark = require('../subcommands/mark')
@@ -47,9 +47,10 @@ const config = require('../subcommands/config')
 const startJob = require('../subcommands/job/start')
 const stopJob = require('../subcommands/job/stop')
 const pr = require('../subcommands/pr')
-const updateRuntimeCommand = require('../subcommands/runtime/update')
+const updateLanguageVersionCommand = require('../subcommands/languageVersion/update')
 const deleteCommand = require('../subcommands/delete')
-const listRuntimeCommand = require('../subcommands/runtime/list')
+const listLanguageVersionCommand = require('../subcommands/languageVersion/list')
+const createBlockVersion = require('../subcommands/createBlockVersion/index')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -131,6 +132,12 @@ async function init() {
   program.command('ls').description('List all running blocks').option('-g, --global', 'execute globally').action(ls)
 
   program
+    .command('create-version')
+    .argument('[block-name]', 'Name of block to create-version')
+    .description('Create version for block')
+    .action(createBlockVersion)
+
+  program
     .command('publish')
     .argument('[block-name]', 'Name of block to publish')
     .description('Publish block or appblock')
@@ -152,14 +159,20 @@ async function init() {
 
   program.command('sync').description('To sync all blocks').action(sync)
 
-  // program.command('emulate', 'to start block', {
-  //   executableFile: '../subcommands/emulate',
-  // })
-  // program.command('stop-emulator', 'to start block', {
-  //   executableFile: '../subcommands/stop-emulator',
-  // })
+  program.command('emulate', 'to start block', {
+    executableFile: '../subcommands/emulate',
+  })
+  program.command('stop-emulator', 'to start block', {
+    executableFile: '../subcommands/stop-emulator',
+  })
 
-  program.command('pull').argument('<component>', 'name of component').action(pull)
+  program
+    .command('pull')
+    .argument('<component>', 'Name of component with version. block@0.0.1')
+    .option('--add-variant', 'Add as variant')
+    .option('--no-variant', 'No variant')
+    .option('-t, --type <variantType>', 'Type of variant to create')
+    .action(pull)
 
   program.command('push-config').action(push_config)
 
@@ -210,16 +223,16 @@ async function init() {
 
   program.command('pr').argument('<block-name>', 'Name of block to pr').description('pr block').action(pr)
   program
-    .command('update-runtime')
-    .argument('<block-name>', 'Name of block to update runtime')
-    .description('update block runtime')
-    .action(updateRuntimeCommand)
+    .command('update-language-version')
+    .argument('<block-name>', 'Name of block to update language version')
+    .description('update block language version')
+    .action(updateLanguageVersionCommand)
 
   program
-    .command('list-runtime')
-    .argument('<block-name>', 'Name of block to list runtime')
-    .description('list block runtime')
-    .action(listRuntimeCommand)
+    .command('list-language-version')
+    .argument('<block-name>', 'Name of block to list language version')
+    .description('list block language version')
+    .action(listLanguageVersionCommand)
 
   program
     .command('delete')
