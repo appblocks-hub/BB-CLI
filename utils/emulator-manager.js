@@ -8,6 +8,7 @@
 
 const fs = require('fs')
 const fsPromise = require('fs/promises')
+const path = require('path')
 // const { readdirSync, readFileSync, existsSync } = require('fs')
 // const { execSync } = require('child_process')
 // const { compare } = require('compare-versions')
@@ -20,9 +21,9 @@ const { runBash } = require('../subcommands/bash')
  * @param {Record<'dependencies',import('./jsDoc/types').dependencies>} appConfig
  * @returns
  */
-async function copyEmulatorCode(PORTS, appConfig) {
-  const blocks = appConfig.dependencies
-  const blocksData = Object.values(blocks).reduce((acc, bl) => {
+async function copyEmulatorCode(PORTS, dependencies) {
+  // const blocks = appConfig.dependencies
+  const blocksData = Object.values(dependencies).reduce((acc, bl) => {
     acc[bl.meta.name] = { type: bl.meta.type, dir: bl.directory }
     return acc
   }, {})
@@ -64,8 +65,11 @@ async function copyEmulatorCode(PORTS, appConfig) {
           res.send("Only " + type + " apis are allowed").status(403);
           return;
         }
-        const func_route = "../" + blockData.dir + "/index.js";
-        const handler = await import(func_route);
+        const func_route = "../" + blockData.dir + "/index.js"
+        let handler = await import(func_route);
+        if(process.env.NODE_ENV==="development"){
+          handler = await import(func_route+"?update="+Date.now())
+        }
         console.log("handler = ", handler);
         await handler.default(req, res);
       } else {
@@ -200,6 +204,7 @@ fi
 }
 
 async function getEmulatorProcessData(rootDir) {
+  // console.log(`Getting emulator data from ${rootDir}`)
   const root = rootDir || '.'
   const emulatorProcessData = JSON.parse(await fsPromise.readFile(`${root}/._ab_em/.emconfig.json`, 'utf8'))
   return emulatorProcessData
@@ -209,13 +214,31 @@ function addEmulatorProcessData(processData) {
   fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
 }
 
-async function stopEmulator() {
-  const processData = await getEmulatorProcessData()
+async function stopEmulator(rootPath) {
+  // if (localRegistry) {
+  //   await Promise.all(
+  //     Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
+  //       const emDir = `${rootPath}/._ab_em`
+  //       if (!fs.existsSync(emDir)) return true
+
+  //       const processData = await getEmulatorProcessData(rootPath)
+  //       if (processData && processData.pid) {
+  //         await runBash(`kill ${processData.pid}`)
+  //       }
+  //       await runBash(`rm -rf ${emDir}`)
+  //       console.log(`${k} emulator stopped successfully!`)
+  //       return true
+  //     })
+  //   )
+  // } else {
+  const processData = await getEmulatorProcessData(rootPath)
   if (processData && processData.pid) {
     await runBash(`kill ${processData.pid}`)
   }
-  await runBash('rm -rf ./._ab_em')
+
+  await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
   console.log('emulator stopped successfully!')
+  // }
 }
 
 module.exports = {

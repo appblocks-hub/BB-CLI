@@ -52,7 +52,7 @@ export default {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': JSON.stringify(process.env),
+      process: { env: JSON.stringify(process.env) },
     }),
     new ModuleFederationPlugin({
       name: 'Container',

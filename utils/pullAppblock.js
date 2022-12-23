@@ -6,6 +6,8 @@
  */
 
 const path = require('path')
+const { pullBlock } = require('../subcommands/pull/pullUtils')
+const { appConfig } = require('./appconfigStore')
 const { createFileSync } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, tryGitInit } = require('./gitCheckUtils')
 const { confirmationPrompt } = require('./questionPrompts')
@@ -48,12 +50,15 @@ const pullAppblock = async (name) => {
   const DIRPATH = path.resolve(dir)
 
   const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
-  createFileSync(CONFIGPATH, {
-    name: config.name,
-    type: 'appBlock',
-    source: config.source,
-    blockPrefix: config.blockPrefix,
-  })
+  // createFileSync(CONFIGPATH, {
+  //   name: config.name,
+  //   type: 'appBlock',
+  //   source: config.source,
+  //   blockPrefix: config.blockPrefix,
+  // })
+
+  createFileSync(CONFIGPATH, config)
+  appConfig.init(DIRPATH)
 
   tryGitInit()
   await checkAndSetGitConfigNameEmail(config.name)
@@ -106,8 +111,8 @@ const pullAppblock = async (name) => {
           })
           if (z) {
             // eslint-disable-next-line global-require
-            const pull = require('../subcommands/pull')
-            await pull(blockMeta.name, { cwd: DIRPATH })
+            // const pull = require('../subcommands/pull')
+            await pullBlock()
           }
         }
       }

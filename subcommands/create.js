@@ -7,6 +7,7 @@
 
 /* eslint-disable consistent-return */
 const path = require('path')
+const { chdir } = require('process')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
 // const { execSync } = require('child_process')
 // const { transports } = require('winston')
@@ -21,6 +22,7 @@ const {
   getGitConfigNameEmail,
   readInput,
   sourceUrlOptions,
+  confirmationPrompt,
 } = require('../utils/questionPrompts')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { checkAndSetGitConfigNameEmail } = require('../utils/gitCheckUtils')
@@ -61,6 +63,7 @@ const { CreateError } = require('../utils/errors/createError')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
+const initializePackageBlock = require('./init/initializePackageBlock')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -83,6 +86,42 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
   let standAloneBlock = false
   let componentName = userPassedName
   let { type } = options
+
+  let packageName
+
+  if (!skipConfigInit) {
+    await appConfig.init(null, null, 'create')
+    if (appConfig.isOutOfContext) {
+      const goAhead = await confirmationPrompt({
+        message: `You are trying to create a block outside appblock package context. Want to create new package context ?`,
+        name: 'seperateBlockCreate',
+      })
+
+      if (!goAhead) {
+        feedback({ type: 'error', message: `Block should be created under package context` })
+        return
+      }
+
+      const packageBlockName = await readInput({
+        name: 'appName',
+        message: 'Enter the package name',
+        validate: (input) => {
+          if (!isValidBlockName(input)) return ` ${input} is not valid name`
+          return true
+        },
+      })
+
+      const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName)
+      packageName = bfn
+      chdir(DIRPATH)
+
+      // Init for new
+      await appConfig.init(null, null, 'create', { reConfig: true })
+
+      feedback({ type: 'info', message: `\nContinuing ${componentName} block creation \n` })
+    }
+  }
+
   // logger.info(`Create called with ${componentName} and ${type || 'no type'}`)
   try {
     if (!isValidBlockName(componentName)) {
@@ -115,14 +154,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     if (!skipConfigInit) {
       await appConfig.init(null, null, 'create')
       if (appConfig.isOutOfContext) {
-        // const goAhead = await confirmationPrompt({
-        //   message: 'You are trying to create a block outside appblock context',
-        //   name: 'seperateBlockCreate',
-        // })
-        // if (!goAhead) {
-        //   return
-        // }
-        standAloneBlock = true
+        standAloneBlock = false
       } else if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
         feedback({ type: 'info', message: 'We are not inside an Appblock' })
         feedback({ type: 'error', message: 'Cannot create block inside another block' })
@@ -299,6 +331,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       //    git commit -m "initial commit" &&
       //    git push origin main`
       // )
+      if (packageName) console.log(chalk.dim(`\ncd ${packageName} and start hacking.\n`))
     } catch (err) {
       console.log('err:', err)
     }

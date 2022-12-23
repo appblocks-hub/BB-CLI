@@ -5,16 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { createReadStream, watchFile } = require('fs')
+const { createReadStream, watchFile, readFileSync } = require('fs')
 const { Stream } = require('stream')
 const readline = require('readline')
 const path = require('path')
 const chalk = require('chalk')
+const { noop } = require('rxjs')
 const { runBash, runBashLongRunning } = require('./bash')
 const { getFreePorts } = require('./port-check')
 const { getAbsPath } = require('../utils/path-helper')
 const emulateNode = require('./emulate')
-const { setupEnv } = require('../utils/env')
+const { setupEnv, updateEnv } = require('../utils/env')
 const { appConfig } = require('../utils/appconfigStore')
 const { checkPnpm } = require('../utils/pnpmUtils')
 const { spinnies } = require('../loader')
@@ -106,6 +107,11 @@ const start = async (blockname, { usePnpm }) => {
   await setupEnv(configData)
 
   if (!blockname) {
+    if ([...appConfig.allBlockNames].length <= 0) {
+      console.log('\nNo blocks to start!\n')
+      process.exit(1)
+    }
+
     let c = 0
     // eslint-disable-next-line no-unused-vars
     for (const _ of appConfig.nonLiveBlocks) {
@@ -137,10 +143,10 @@ async function startAllBlock() {
   spinnies.add('emulator', { text: 'Staring emulator' })
   switch (emulateLang) {
     case 'nodejs':
-      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
+      emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
       break
     default:
-      emData = await emulateNode(PORTS.emulatorPorts, appConfig.appConfig)
+      emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
       break
   }
   if (emData.status === 'success') {
@@ -150,6 +156,18 @@ async function startAllBlock() {
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
+      try {
+        const _e = readFileSync(path.join(fnBlock.directory, '.env')).toString().trim()
+        const _b = _e.split('\n').reduce((acc, curr) => {
+          const [k, v] = curr.split('=')
+          const _n = `${fnBlock.meta.name.toLocaleUpperCase()}_${k}`
+          acc[_n] = v
+          return acc
+        }, {})
+        await updateEnv('function', _b)
+      } catch (_) {
+        noop()
+      }
       appConfig.startedBlock = {
         name: fnBlock.meta.name,
         pid: emData.data.pid || null,
@@ -167,6 +185,18 @@ async function startAllBlock() {
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
+      try {
+        const _e = readFileSync(path.join(jobBlock.directory, '.env')).toString().trim()
+        const _b = _e.split('\n').reduce((acc, curr) => {
+          const [k, v] = curr.split('=')
+          const _n = `${jobBlock.meta.name.toLocaleUpperCase()}_${k}`
+          acc[_n] = v
+          return acc
+        }, {})
+        await updateEnv('function', _b)
+      } catch (_) {
+        noop()
+      }
       appConfig.startedBlock = {
         name: jobBlock.meta.name,
         pid: emData.data.pid || null,
@@ -198,6 +228,19 @@ async function startAllBlock() {
     promiseArray.push(startBlock(block.meta.name, PORTS[block.meta.name]))
     if (block.meta.type === 'ui-container') {
       // containerBlock = block
+    }
+    try {
+      // TODO: copy this to a function, code repeated above twice
+      const _e = readFileSync(path.join(block.directory, '.env')).toString().trim()
+      const _b = _e.split('\n').reduce((acc, curr) => {
+        const [k, v] = curr.split('=')
+        const _n = `${block.meta.name.toLocaleUpperCase()}_${k}`
+        acc[_n] = v
+        return acc
+      }, {})
+      await updateEnv('view', _b)
+    } catch (_) {
+      noop()
     }
   }
   const reportRaw = await Promise.allSettled(promiseArray)

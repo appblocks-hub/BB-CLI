@@ -7,7 +7,7 @@
 
 const { readFileSync } = require('fs')
 const path = require('path')
-const { addDependenciesApi } = require('../../utils/api')
+const { linkDependenciesToBlockApi } = require('../../utils/api')
 const { post } = require('../../utils/axios')
 
 /**
@@ -64,7 +64,7 @@ const addDependencies = async (options) => {
   // update dependencies => NOTE: currently node
   const { blockVersionId, blockId, dependencies } = options
 
-  const { error } = await post(addDependenciesApi, {
+  const { error } = await post(linkDependenciesToBlockApi, {
     block_id: blockId,
     block_version_id: blockVersionId,
     dependencies,

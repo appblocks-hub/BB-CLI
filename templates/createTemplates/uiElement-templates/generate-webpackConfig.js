@@ -4,6 +4,7 @@ const generateUiElementWebpack = (name) => `
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import path from 'path'
 import webpack from 'webpack'
+// import { MFLiveReloadPlugin } from "@module-federation/fmr"
 
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 
@@ -59,7 +60,12 @@ export default {
   plugins: [
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env),
-    }),
+    }), 
+    // new MFLiveReloadPlugin({
+    //   port: 4001, // the port your app runs on
+    //   container: "Container", // the name of your app, must be unique
+    //   // standalone: false, // false uses chrome extention
+    // }),
     new ModuleFederationPlugin({
       name: '${name}',
       filename: 'remoteEntry.js',

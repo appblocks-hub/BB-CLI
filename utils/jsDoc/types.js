@@ -6,6 +6,11 @@
  */
 
 /**
+ * @typedef {Object} appConfigInitOptions
+ * @property {Boolean} reConfig Regenerate config ( default: returns the config in memory)
+ * @property {Boolean} isGlobal Is the command invoked with global flag
+ */
+/**
  * @typedef {Object} blockMetaData
  * @property {String} CreatedAt
  * @property {String} UpdatedAt
@@ -41,13 +46,42 @@
  */
 
 /**
- * @typedef {Record<String,dependencyShape>} dependencies
+ * @typedef {Object.<string,dependencyShape>} dependencies
  */
 
 /**
  * @typedef {Object} dependencyShape
  * @property {String} directory Local block directory path
  * @property {dependecyMetaShape} meta Meata details of block
+ */
+
+/**
+ * @typedef {Object} blockDetailsdataFromRegistry
+ * @property {String} CreatedAt
+ * @property {String} UpdatedAt
+ * @property {String|null} DeletedAt
+ * @property {String} ID
+ * @property {Number} BlockType
+ * @property {String} BlockName
+ * @property {String} BlockShortName
+ * @property {String} BlockDesc
+ * @property {Boolean} IsPublic
+ * @property {String} GitUrl
+ * @property {Number} Lang
+ * @property {Number} Status
+ * @property {Boolean} Verified
+ */
+
+/**
+ * @typedef {Object} blockLiveDetails
+ * @property {Boolean} isOn Status of block ( true if started )
+ * @property {Number} port Port number for ui blocks, emulator port for Fns
+ * @property {Number|null} pid Process number if block is live
+ * @property {{out:string,err:string}} log Log paths for err & out
+ */
+
+/**
+ * @typedef {dependencyShape & blockLiveDetails} blockDetailsWithLive
  */
 
 /**
