@@ -28,7 +28,7 @@ const validateFn = function test(ans1) {
   if (isValidBlockName(ans1)) {
     return true
   }
-  return 'Block name should only contain alphabets,numbers, _ & -'
+  return 'Only snake case with numbers is valid'
 }
 
 const stream = new Observable((obs) => {

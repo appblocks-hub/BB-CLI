@@ -12,7 +12,7 @@ const { getOrgId } = require('./questionPrompts')
 const { configstore } = require('../configstore')
 const { appConfig } = require('./appconfigStore')
 
-function createComponent(blockShortName, createFromExistinURL, clonePath) {
+function createComponent(blockShortName, createFromExistinURL, clonePath, privateOnly) {
   /**
    * @type {Subscriber}
    */
@@ -109,7 +109,8 @@ function createComponent(blockShortName, createFromExistinURL, clonePath) {
                 appConfig.prefix || '',
                 blockShortName,
                 !!createFromExistinURL,
-                clonePath || '.'
+                clonePath || '.',
+                privateOnly
               )
               // console.log('red', ret)
 

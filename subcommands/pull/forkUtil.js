@@ -145,12 +145,14 @@ const updateRepo = async (ans) => {
  * @param {Object} options
  */
 const pullForkedRepo = async (options) => {
-  const { clonePath, sshUrl, url, name } = options
+  const { clonePath, sshUrl, url, name, version_number } = options
   spinnies.update('fork', { text: `Pulling forked repo ${name}` })
 
   const repoUrl = configstore.get('prefersSsh') ? sshUrl : url
   const git = new GitManager('.', name, repoUrl, configstore.get('prefersSsh'))
   await git.clone(`${clonePath}/${name}`)
+  await git.fetch('--all --tags')
+  await git.checkoutTag(version_number)
 
   spinnies.update('fork', { text: `Pulled forked repo ${name}` })
 
@@ -199,7 +201,7 @@ const updateBlockConfig = async (options) => {
 const forkRepo = (metaData, newBlockName, clonePath) =>
   new Promise(async (resolve, reject) => {
     try {
-      const { GitUrl: forkGitUrl, BlockType } = metaData
+      const { GitUrl: forkGitUrl, BlockType, version_number } = metaData
 
       const userInputs = await getRepoInputs()
       const userRepo = getUserRepoName(forkGitUrl)
@@ -221,7 +223,7 @@ const forkRepo = (metaData, newBlockName, clonePath) =>
       // TODO : update repo description & visibility
       // const updatedRepoData = updateRepo(userInputs)
 
-      await pullForkedRepo({ clonePath, sshUrl, url, name })
+      await pullForkedRepo({ clonePath, sshUrl, url, name, version_number })
       await updateBlockConfig({
         clonePath,
         cloneDirName: name,

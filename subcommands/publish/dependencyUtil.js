@@ -7,7 +7,7 @@
 
 const { readFileSync } = require('fs')
 const path = require('path')
-const { linkDependenciesToBlockApi } = require('../../utils/api')
+const { addDependenciesApi, listDependenciesApi } = require('../../utils/api')
 const { post } = require('../../utils/axios')
 
 /**
@@ -25,6 +25,7 @@ const getPackageJsonDependencies = async (directory) => {
         name,
         version,
         type: i, // using index since dependencies is 0 and devDependencies is 1
+        url: '',
       })
     })
     return acc
@@ -61,16 +62,42 @@ const getDependencies = async (options) => {
  * @param {*} options
  */
 const addDependencies = async (options) => {
-  // update dependencies => NOTE: currently node
-  const { blockVersionId, blockId, dependencies } = options
+  const { languageVersionId, dependencies } = options
 
-  const { error } = await post(linkDependenciesToBlockApi, {
-    block_id: blockId,
-    block_version_id: blockVersionId,
+  const { error } = await post(addDependenciesApi, {
+    language_version_id: languageVersionId,
     dependencies,
   })
 
-  if (error) throw new Error(error)
+  if (error) throw error
 }
 
-module.exports = { getDependencies, addDependencies }
+/**
+ *
+ * @param {*} options
+ */
+const getDependencyIds = async (options) => {
+  const { languageVersionId, dependencies } = options
+
+  const { data, error } = await post(listDependenciesApi, {
+    language_version_id: languageVersionId,
+    page_limit: 10000,
+  })
+
+  if (error) throw error
+
+  const deps = data.data || []
+
+  const newDeps = []
+  const depIds = []
+
+  dependencies.forEach((dep) => {
+    const depData = deps.find((d) => dep.name === d.name && dep.version === d.version && dep.type === d.type)
+    if (depData?.id) depIds.push(depData.id)
+    else newDeps.push(dep)
+  })
+
+  return { depIds, newDeps }
+}
+
+module.exports = { getDependencies, addDependencies, getDependencyIds }

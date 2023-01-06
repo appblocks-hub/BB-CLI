@@ -8,7 +8,7 @@
 /* eslint-disable */
 const { getBBConfig } = require('../../utils/config-manager')
 const { getBlockId } = require('../../utils/deployUtil')
-const { getPublishedVersion } = require('../publish')
+const { getPublishedVersion } = require('../publish/index')
 const deployConfig = require('../../utils/deployConfig-manager')
 const upload = require('../upload')
 const { getShieldHeader } = require('../../utils/getHeaders')

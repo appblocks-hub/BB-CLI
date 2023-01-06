@@ -16,13 +16,14 @@ const {
 } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 
-const getAllBlockVersions = (block_id) =>
+const getAllBlockVersions = (block_id, otpions = {}) =>
   axios.post(
     appBlockGetAllBlockVersions,
     {
       page_limit: 20,
       offset: 0,
       block_id,
+      ...otpions,
     },
     { headers: getShieldHeader() }
   )

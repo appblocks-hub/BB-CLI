@@ -6,7 +6,7 @@
  */
 
 const path = require('path')
-const { pullBlock } = require('../subcommands/pull/pullUtils')
+const { pullBlock } = require('../subcommands/pull/util')
 const { appConfig } = require('./appconfigStore')
 const { createFileSync } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, tryGitInit } = require('./gitCheckUtils')

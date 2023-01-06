@@ -40,7 +40,7 @@ function getBlockName() {
       if (isValidBlockName(ans)) {
         return true
       }
-      return 'Block name should only contain alphabets, _ , -'
+      return 'Only snake case with numbers is valid'
     },
   }
   return inquirer

@@ -357,7 +357,7 @@ async function startBlock(name, port) {
  * @return {startReturn}
  */
 async function startNodeProgram(block, name, port) {
-  const emData = await emulateNode([port], { dependencies: { [name]: block } })
+  const emData = await emulateNode([port], { dependencies: block })
   const { status, msg, data } = emData
   return {
     status,

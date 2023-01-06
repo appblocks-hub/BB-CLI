@@ -65,6 +65,7 @@ function runBashLongRunning(command, loggers, dir) {
       cwd: dir,
       detached: true,
       stdio: ['ignore', out, err],
+      env: { ...process.env, parentPath: global.rootDir },
     })
     child.unref()
     // console.log('child unreffed....', child.pid)

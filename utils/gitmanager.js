@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { exec } = require('child_process')
 const { configstore } = require('../configstore')
 const { GitError } = require('./errors/gitError')
@@ -48,7 +49,7 @@ class GitManager {
    */
   constructor(cwd, reponame, url, ssh) {
     // console.log(cwd, reponame, url, ssh)
-    this.cwd = cwd
+    this.cwd = path.resolve(cwd)
     this.ssh = ssh || false
     this.source = `${url}.git`
     this.username = configstore.get('githubUserName')
@@ -93,8 +94,12 @@ class GitManager {
     return this._run('checkout', [name])
   }
 
+  checkoutTag(tag, branch = 'main') {
+    return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
+  }
+
   cd(directoryPath) {
-    this.cwd = directoryPath
+    this.cwd = path.resolve(directoryPath)
   }
 
   /* ********************************
@@ -143,11 +148,15 @@ class GitManager {
   }
 
   push(upstreamBranch) {
-    return this._run('push', [this.remote], upstreamBranch || 'main')
+    return this._run('push', [this.remote, upstreamBranch || 'main'])
   }
 
   pushTags() {
-    return this._run('push', [this.remote], '--tags')
+    return this._run('push', [this.remote, '--tags'])
+  }
+
+  addTag(tag, msg) {
+    return this._run('tag', [`-a ${tag}`, `-m "${msg}"`])
   }
 
   /* ********************************
@@ -156,6 +165,10 @@ class GitManager {
 
   removeRemote(remoteName) {
     return this._run('remote', ['rm', remoteName])
+  }
+
+  removeTags(tags) {
+    return this._run('tag', ['-d', tags])
   }
 
   /* ********************************
@@ -171,7 +184,7 @@ class GitManager {
   }
 
   setUpstreamAndPush(upstreamBranch) {
-    return this._run('push -u', [this.remote], upstreamBranch || 'main')
+    return this._run('push -u', [this.remote, upstreamBranch || 'main'])
   }
 
   setLocalUsername(name) {
@@ -190,9 +203,12 @@ class GitManager {
     return this._run('config', ['--global', 'user.email', email])
   }
 
+  revListTag(tag) {
+    return this._run('rev-list', ['--reverse', tag, '| git cherry-pick -n --stdin'])
+  }
+
   async _run(operation, opts) {
     const r = await pexec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
-    // console.log(r)
     if (r.status === 'error') {
       // resetHead should be based on performed operation..dont always pass false
       throw new GitError(this.cwd, r.msg, false, operation, opts)

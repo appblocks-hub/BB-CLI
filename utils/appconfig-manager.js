@@ -129,7 +129,7 @@ class AppblockConfigManager {
       tempGroupConfig = JSON.parse(s)
       this.config = tempGroupConfig
     } catch (err) {
-      console.log('could not find a temp config')
+      // error
     }
 
     try {

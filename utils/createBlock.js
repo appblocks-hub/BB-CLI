@@ -49,7 +49,8 @@ async function createBlock(
   cwd,
   // eslint-disable-next-line default-param-last
   isAStandAloneBlock = false,
-  jobConfig
+  jobConfig,
+  metaData
 ) {
   if (arguments.length < 6) throw new Error('NotEnoughArguments in CreateBlock')
 
@@ -145,7 +146,14 @@ async function createBlock(
       await Git.addRemote('tempRemote', parentRepoUrl)
       await Git.fetch('tempRemote')
       await Git.merge('tempRemote/main', '--allow-unrelated-histories')
-      await Git.removeRemote('tempRemote')
+      if (metaData?.version_number) {
+        // Not compatible with windows since using $() and pipe. Need to find another solution
+        await Git.revListTag(metaData?.version_number)
+        await Git.removeRemote('tempRemote')
+        await Git.removeTags('$(git tag -l)')
+      } else {
+        await Git.removeRemote('tempRemote')
+      }
 
       console.log(chalk.dim('Succesfully copied block code to local..'))
 

@@ -106,7 +106,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         name: 'appName',
         message: 'Enter the package name',
         validate: (input) => {
-          if (!isValidBlockName(input)) return ` ${input} is not valid name`
+          if (!isValidBlockName(input)) return ` ${input} is not valid name (Only snake case with numbers is valid)`
           return true
         },
       })
@@ -125,7 +125,10 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
   // logger.info(`Create called with ${componentName} and ${type || 'no type'}`)
   try {
     if (!isValidBlockName(componentName)) {
-      feedback({ type: 'warn', message: `${componentName} is not a valid name` })
+      feedback({
+        type: 'warn',
+        message: `${componentName} is not a valid name (Only snake case with numbers is valid)`,
+      })
       componentName = await getBlockName()
     }
     // logger.info(`changed name to ${componentName}`)
