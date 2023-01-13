@@ -25,7 +25,7 @@ async function handleGithubAuth(data) {
   console.log('Please go to https://github.com/login/device, and paste the below code.')
   await figletAsync(userCode)
   console.log('\n')
-  clipcopy(userCode)
+  await clipcopy(userCode)
   console.log('\n')
   // const timerThread={killed:true} -- for token expired testing.
   console.log(`Code expires in ${chalk.bold(expiresIn)} seconds `)
