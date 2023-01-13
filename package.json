@@ -6,12 +6,17 @@
   "bin": {
     "bb": "./bin/index.js"
   },
+  "engines": {
+    "npm": ">=8.0.0 <9.0.0",
+    "node": ">=15.0.0 <17.0.0"
+  },
   "scripts": {
     "prepare": "npx husky install",
     "test": "npx jest",
     "lint": "npx eslint *.js bin/ utils/ --fix",
     "format": "npx prettier ./**/*{.js,.json} --write",
-    "pre-commit": "npx lint-staged"
+    "pre-commit": "npx lint-staged",
+    "start-block": ""
   },
   "lint-staged": {
     "*.js": [
@@ -22,6 +27,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-application-auto-scaling": "^3.209.0",
+    "@aws-sdk/client-ec2": "^3.200.0",
+    "@aws-sdk/client-ecr": "^3.198.0",
+    "@aws-sdk/client-ecs": "^3.199.0",
+    "@aws-sdk/client-elastic-load-balancing": "^3.202.0",
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.202.0",
+    "@aws-sdk/client-s3": "^3.211.0",
     "@babel/parser": "^7.17.9",
     "ansi-escapes": "4.3.2",
     "axios": "0.21.4",
@@ -44,6 +56,8 @@
     "inquirer": "8.1.5",
     "inquirer-autocomplete-prompt": "1.4.0",
     "inquirer-file-tree-selection-prompt": "1.0.12",
+    "is-running": "^2.1.0",
+    "mime-types": "^2.1.35",
     "node-cron": "^3.0.2",
     "octokit": "1.7.1",
     "open": "^8.4.0",

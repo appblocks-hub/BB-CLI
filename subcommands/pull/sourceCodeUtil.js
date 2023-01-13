@@ -24,7 +24,7 @@ const downloadSourceCode = async (url, blockFolderPath, blockName) => {
     }
 
     if (!data) {
-      reject(new Error('No block source code found'))
+      reject(new Error('No source code found'))
       return
     }
 
@@ -39,26 +39,27 @@ const downloadSourceCode = async (url, blockFolderPath, blockName) => {
   })
 }
 
-const getSignedSourceCodeUrl = async (metaData, appId, spaceId) => {
+const getSignedSourceCodeUrl = async ({ metaData, appId, spaceId, blockId, variantBlockId }) => {
   const postData = {
-    block_id: metaData.ID,
+    block_id: blockId,
     block_version_id: metaData.version_id,
   }
 
   if (appId) postData.app_id = appId
   if (spaceId) postData.space_id = spaceId
+  if (variantBlockId) postData.variant_block_id = variantBlockId
 
-  const { data, error } = await post(getSourceCodeSignedUrl)
+  const { data, error } = await post(getSourceCodeSignedUrl, postData)
 
-  if (error) throw new Error(error.response?.data?.msg || error.message)
+  if (error) throw error
 
   return data.data?.download_url
 }
 
 const pullSourceCodeFromAppblock = async (options) => {
-  const { blockFolderPath, metaData, appId, spaceId } = options || {}
+  const { blockFolderPath, metaData } = options || {}
 
-  const signedSourceCodeUrl = await getSignedSourceCodeUrl(metaData, appId, spaceId)
+  const signedSourceCodeUrl = await getSignedSourceCodeUrl(options)
   if (!signedSourceCodeUrl) throw new Error('Error getting source code from appblocks')
 
   await downloadSourceCode(signedSourceCodeUrl, blockFolderPath, metaData.BlockName)

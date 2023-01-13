@@ -43,16 +43,25 @@ api.listLanguageVersions = `${api.appBlockRegistryOrigin}/api/registry/public/v0
 api.listDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/list-dependencies/invoke`
 api.addDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-dependencies/invoke`
 api.publishBlockApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/publish-block/invoke`
+api.updateBlockApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/update-block/invoke`
+api.getBlockPersmissionsApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-permissions/invoke`
+api.trackBlockUpdatePull = `${api.appBlockRegistryOrigin}/api/registry/v0.1/track-block-updates-pull/invoke`
+api.listUnpulledBlockBersions = `${api.appBlockRegistryOrigin}/api/registry/v0.1/list-unpulled-block-versions/invoke`
 
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
 api.appRegistryCreateApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-app/invoke`
+api.appRegistryCheckDomainName = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-domain-name/invoke`
+api.appRegistryCreateEnv = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-hosting-environment/invoke`
 api.appRegistryCreateHostDns = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-host/invoke`
+api.appRegistryUpdateLiveUrl = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/update-live-url/invoke`
 api.appRegistryCreateBucket = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-s3-bucket/invoke`
 api.appRegistryCreateVmInstance = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-ec2-instance/invoke`
 api.appRegistryUploadBlockStatus = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/upload-blocks/invoke`
 api.appRegistryAddVmEnvUser = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/add-ec2-env-user/invoke`
 api.appRegistryDeployFunctions = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/deploy-functions/invoke`
+api.appRegistryProvisionApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/provision-app/invoke`
+api.appRegistryDeleteApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/delete-app/invoke`
 api.appRegistryCreateDiployHistory = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-deploy-history/invoke`
 api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-app-env-exist/invoke`
 api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-deploy-signed-url/invoke`
@@ -66,6 +75,7 @@ api.checkBlockAssignedToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/check
 api.assignBlockToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/assign-block-to-app/invoke`
 
 // SPACES UI
+api.appBlockSpacesUIOrigin = `https://spaces.appblocks.com`
 api.publishRedirectApi = `${api.appBlockSpacesUIOrigin}`
 
 const github = {}

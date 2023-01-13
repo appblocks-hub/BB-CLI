@@ -11,7 +11,7 @@ const generatePackageJson = (name) => `{
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "express": "^4.17.3"
+    "express": "^4.17.3"
     }
   }
 `

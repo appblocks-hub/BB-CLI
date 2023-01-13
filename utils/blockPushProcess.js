@@ -23,6 +23,7 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     process.send({ failed: false, message: 'Starting to push..' })
     logger.add(new transports.File({ filename: `./pushlogs/${blockName}.log` }))
 
+    if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
     // setup GitManager
     const prefersSsh = configstore.get('prefersSsh')
     const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
@@ -32,10 +33,13 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
 
     // TODO -- write a wrapper for process.send and reduce code
     const staged = await gitStageAllIn(blockPath)
+    // const staged2 = await Git.stageAll()
+    // console.log(staged)
+    // console.log('----')
+    // console.log(staged2)
     if (staged.length === 0) {
       logger.info('No files to stage')
-      throw new BlockPushError(blockPath, blockName, 'No Files to Stage', false)
-      // process.exit(1)
+      throw new BlockPushError(blockPath, blockName, 'No Files to Stage', false, 2)
     }
     process.send({ failed: false, message: 'Staging complete..' })
     logger.info({ stagedFiles: staged })
@@ -55,7 +59,7 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     if (!readmePath) {
       logger.error('Make sure to add a README.md in your block before pushing..')
       // process.send('No readme found..')
-      throw new BlockPushError(blockPath, blockName, 'No readme found..', true)
+      throw new BlockPushError(blockPath, blockName, 'No readme found..', true, 1)
     }
 
     // ------------------------------------------ //
@@ -64,7 +68,7 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     if (res.status !== 200) {
       logger.error('Something went wrong while uploading readme..refer next entry for error info')
       logger.error(res.error)
-      throw new BlockPushError(blockPath, blockName, res.error, false)
+      throw new BlockPushError(blockPath, blockName, res.error, false, 1)
       // process.exit(1)
     }
     logger.info('Uploaded readme succesfully')
@@ -84,7 +88,6 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     try {
       const resp = await getBlockDetails(blockName)
       if (resp.status === 204) throw new Error(`${blockName} doesn't exists in block repository`).message
-
       const { data } = resp
       if (data.err) {
         // if (data.msg === 'NO RECORD FOUND') {
@@ -100,8 +103,9 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
       throw new BlockPushError(
         blockPath,
         blockName,
-        `${err.message || 'Something went wrong'} while getting details of ${blockName}`,
-        false
+        err || `Something went wrong while getting details of ${blockName}`,
+        false,
+        2
       )
       // process.exit(1)
     }
@@ -122,19 +126,21 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     // console.log(resp)
     // ------------------------------------------ //
 
-    process.exit(0)
+    process.exitCode = 0
   } catch (err) {
     if (err instanceof GitError) {
       // if errorCode=0 dont reset
       // if errorCode=1 reset head
       process.send({ failed: true, message: err.message, errorCode: Number(err.resetHead) })
+      process.exitCode = err.processExitCode
     } else if (err instanceof BlockPushError) {
       logger.info(err.message)
       process.send({ failed: true, message: err.message, errorCode: Number(err.resetHead) })
+      process.exitCode = err.processExitCode
     } else {
       process.send({ failed: true, message: err.message, errorCode: 0 })
+      process.exitCode = 1
     }
-    process.exit(1)
   }
 }
 

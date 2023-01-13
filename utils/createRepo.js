@@ -48,6 +48,7 @@ async function createRepo(
   // if (!fromPull) {
   //   template = await getTemplate()
   // }
+
   const questions = [
     // {
     //   type: 'input',
@@ -64,7 +65,7 @@ async function createRepo(
       type: 'list',
       name: 'visibility',
       message: 'visibility of repo',
-      choices: [privateOnly ? 'PRIVATE' : 'PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: false }],
+      choices: privateOnly ? ['PRIVATE'] : ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: false }],
     },
   ]
 

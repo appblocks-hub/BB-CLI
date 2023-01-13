@@ -18,6 +18,9 @@ const formatFn = (options, params, payload) => {
   if (payload.status === 'success') {
     return chalk.green(`${payload.block} ${bar} ${Math.floor(params.progress * 100)}% | ${payload.status} `)
   }
+  if (payload.status === 'warning') {
+    return chalk.yellow(`${payload.block} ${bar} ${Math.floor(params.progress * 100)}% | ${payload.status} `)
+  }
   return `${payload.block} ${bar} ${Math.floor(params.progress * 100)}% | ${payload.status} `
 }
 

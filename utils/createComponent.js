@@ -85,7 +85,8 @@ function createComponent(blockShortName, createFromExistinURL, clonePath, privat
                 appConfig.prefix || '',
                 blockShortName,
                 !!createFromExistinURL,
-                clonePath || '.'
+                clonePath || '.',
+                privateOnly
               )
               // console.log('rose', ret)
               result = ret

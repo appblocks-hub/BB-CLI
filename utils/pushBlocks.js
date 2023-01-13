@@ -40,7 +40,7 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
             (acc, v) => {
               // console.log(v)
               if (v.status === 'rejected') {
-                pushReport[v.reason.name] = v.reason.data.message
+                pushReport[v.reason.name] = v.reason.data
                 return { ...acc, failed: acc.failed + 1 }
               }
               return { ...acc, success: acc.success + 1 }
@@ -56,8 +56,7 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
           // console.log(pushReport)
           for (const key in pushReport) {
             if (Object.hasOwnProperty.call(pushReport, key)) {
-              const element = pushReport[key]
-              feedback({ type: 'error', message: element })
+              feedback({ type: pushReport[key]?.type, message: pushReport[key]?.message })
             }
           }
           res('Completed push')

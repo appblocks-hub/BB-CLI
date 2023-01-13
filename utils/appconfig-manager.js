@@ -11,6 +11,7 @@ const path = require('path')
 const { readdir, readFile, mkdir } = require('fs/promises')
 const { tmpdir } = require('os')
 const { EventEmitter } = require('events')
+const isRunning = require('is-running')
 const { getBlockDetails } = require('./registryUtils')
 const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 const { lrManager } = require('./locaRegistry/manager')
@@ -409,19 +410,18 @@ class AppblockConfigManager {
           meta: { name, type },
         } = block
         if (existingLiveConfig[name]) {
-          // console.log(`${name} exists in live as well:`)
-          // TODO: check if process exists, else put null..don't just paste the existing value,
-          //        It might be already killed. or user might have already restarted the computer
+          const { log, pid, port, isJobOn, job_cmd } = existingLiveConfig[name]
 
-          // console.log('\n')
-          const { log, isOn, pid, port, isJobOn, job_cmd } = existingLiveConfig[name]
+          const blockRunning = isRunning(pid)
+          // console.log(`${name} with ${pid} is running: ${blockRunning}`)
+
           const liveData = {
             log: log || {
               out: `./logs/out/${name}.log`,
               err: `./logs/err/${name}.log`,
             },
-            isOn: isOn || false,
-            pid: pid || null,
+            isOn: !!blockRunning,
+            pid: blockRunning ? pid : null,
             port: port || null,
           }
 
@@ -431,6 +431,9 @@ class AppblockConfigManager {
           }
 
           this.liveDetails[name] = liveData
+          if (!blockRunning) {
+            this.stopBlock = name
+          }
         } else {
           // console.log(
           //   `Existing live config doesn't have details of ${block.meta.name}`
@@ -513,18 +516,22 @@ class AppblockConfigManager {
   }
 
   _writeLive() {
-    // if (this.writeLiveSignal && !this.writeLiveSignal.aborted) {
-    //   this.writeController.abort()
-    // }
+    if (this.writeLiveSignal && !this.writeLiveSignal.aborted) {
+      this.writeController.abort()
+    }
     // eslint-disable-next-line no-undef
-    // this.writeController = new AbortController()
-    // this.writeLiveSignal = this.writeController.signal
+    this.writeController = new AbortController()
+    this.writeLiveSignal = this.writeController.signal
     // const p = this.isTempGroup ? this.tempGroupLiveConfigPath : path.resolve(this.cwd, this.liveConfigName)
-
     const p = this.liveConfigPath || path.join(tmpdir(), path.resolve(), this.liveConfigName)
-    writeFile(p, JSON.stringify(this._createLiveConfig(), null, 2), { encoding: 'utf8' }, (err) => {
-      if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
-    })
+    writeFile(
+      p,
+      JSON.stringify(this._createLiveConfig(), null, 2),
+      { encoding: 'utf8', signal: this.writeLiveSignal },
+      (err) => {
+        if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
+      }
+    )
   }
 
   /**
@@ -568,7 +575,7 @@ class AppblockConfigManager {
    */
   async _updateBlockWrite(blockDir, blockMeta) {
     // const p = this.isTempGroup ? this.tempGroupConfigPath : path.resolve(this.cwd, this.configName)
-    const p = path.resolve(this.ced, this.configName)
+    const p = path.resolve(this.cwd, this.configName)
     // Update appblock config
     return new Promise((resolve) => {
       writeFile(p, JSON.stringify(this.config, null, 2), { encoding: 'utf8' }, () => {

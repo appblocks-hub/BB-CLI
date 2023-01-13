@@ -14,6 +14,7 @@ class GitError extends BBError {
     this.options = options
     this.gitDirPath = path
     this.resetHead = resetHead
+    this.processExitCode = 1
   }
 }
 
