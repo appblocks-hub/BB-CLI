@@ -9,6 +9,7 @@ const chalk = require('chalk')
 const { execSync } = require('child_process')
 const { stopEmulator } = require('../utils/emulator-manager')
 const { appConfig } = require('../utils/appconfigStore')
+const { sleep } = require('../utils')
 
 global.rootDir = process.cwd()
 
@@ -76,6 +77,7 @@ async function stopAllBlock(rootPath) {
 
   if ([...appConfig.liveBlocks].length === 0) {
     console.log('\nNo blocks are live!\n')
+    await sleep(2000) // to wait for any write opertaion to complete
     process.exit(1)
   }
 

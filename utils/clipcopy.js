@@ -6,6 +6,7 @@
  */
 
 /* eslint-disable no-console */
+const chalk = require('chalk')
 const { execSync } = require('child_process')
 const os = require('os')
 const wslCheck = require('./wslCheck')
@@ -32,8 +33,8 @@ module.exports = async function pbcopy(data) {
           }
         } catch (e) {
           if (e.status === 127) {
-            console.log('xclip not installed')
-            console.log('please install xclip so i can copy code for you')
+            console.log(chalk.italic.gray('Please run the following command, so i can copy code for you!'))
+            console.log(chalk.green('sudo apt install xclip'))
             throw new Error('')
           } else {
             console.log('Error copying code to clipboard')
@@ -45,7 +46,7 @@ module.exports = async function pbcopy(data) {
         break
     }
   } catch (e) {
-    console.log(`Couldn't copy to clipboard`, e.message)
-    console.log(`Please copy ${data} and paste...`)
+    console.log(`\n\nCouldn't copy to clipboard`, e.message)
+    console.log(`Please copy ${chalk.whiteBright.bold(data)} and paste...`)
   }
 }

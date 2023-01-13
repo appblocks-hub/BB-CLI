@@ -19,6 +19,11 @@ const { blockTypes } = require('../utils/blockTypes')
 const packageBlockInit = require('../subcommands/init')
 // const { isGitInstalled, isInGitRepository } = require('../utils/gitCheckUtils')
 // const { ensureUserLogins } = require('../utils/ensureUserLogins')
+const deploy = require('../subcommands/deploy')
+const createEnv = require('../subcommands/createEnv')
+const upload = require('../subcommands/upload')
+const provisionApp = require('../subcommands/provisionApp')
+const deleteApp = require('../subcommands/deleteApp')
 
 const log = require('../subcommands/log')
 const start = require('../subcommands/start')
@@ -51,6 +56,7 @@ const updateLanguageVersionCommand = require('../subcommands/languageVersion/upd
 const deleteCommand = require('../subcommands/delete')
 const listLanguageVersionCommand = require('../subcommands/languageVersion/list')
 const createBlockVersion = require('../subcommands/createBlockVersion/index')
+const getBlockUpdate = require('../subcommands/getBlockUpdate')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -70,8 +76,7 @@ async function init() {
   // init local registry
 
   const program = new Command().hook('preAction', async (_, actionCommand) => {
-    const subcommand = actionCommand.parent.args[0]
-    await preActionChecks(subcommand)
+    await preActionChecks(actionCommand)
   })
 
   // TODO -- get version properly
@@ -112,12 +117,14 @@ async function init() {
         }, [])
       )
     )
+    .option('--no-repo')
     .description('to create components')
     .action(create)
 
   program
     .command('init')
     .argument('<appblock-name>', 'Name of app')
+    .option('--no-repo')
     .description('create an appblock')
     .action(packageBlockInit)
 
@@ -173,6 +180,8 @@ async function init() {
     .option('--no-variant', 'No variant')
     .option('-t, --type <variantType>', 'Type of variant to create')
     .action(pull)
+
+  program.command('get-update').argument('<component>', 'Name of component').action(getBlockUpdate)
 
   program.command('push-config').action(push_config)
 
@@ -240,6 +249,32 @@ async function init() {
     .option('-g, --global', 'execute globally')
     .description('Delete block component')
     .action(deleteCommand)
+  
+  program
+    .command('deploy')
+    .option('-rv, --release-version <release_version>', 'version number')
+    .option('-rn, --release-note <release_note>', 'release note')
+    .option('-env, --environment <environment>', 'environment')
+    .description('deploy app')
+    .action(deploy)
+    
+  program.command('delete-app').description('Delete app').action(deleteApp)
+
+  program
+    .command('provision-app')
+    .argument('<app_id>', 'Id of app to provision')
+    .description('provision app for deploy')
+    .action(provisionApp)
+
+  program.command('create-env').description('create env for deploy').action(createEnv)
+
+  program
+    .command('upload')
+    .argument('[block]', 'name of block or block type')
+    .requiredOption('-env, --environment <environment>', 'environment')
+    .description('upload block for deploy')
+    .action(upload)
+  
 
   program.parseAsync(process.argv)
 }

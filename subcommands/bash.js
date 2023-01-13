@@ -52,28 +52,28 @@ async function runBash(command, dir) {
 }
 
 function runBashLongRunning(command, loggers, dir) {
-  try {
-    // const bashOut = exec(command);
-    // console.log('directory for child is =', dir)
-    // console.log('loggesrs are ', loggers)
-    const out = fs.openSync(getAbsPath(loggers.out), 'w')
-    const err = fs.openSync(getAbsPath(loggers.err), 'w')
-    const commandArr = command.split(' ')
-    const com = commandArr[0]
-    commandArr.shift()
-    const child = cp.spawn(com, commandArr, {
-      cwd: dir,
-      detached: true,
-      stdio: ['ignore', out, err],
-      env: { ...process.env, parentPath: global.rootDir },
-    })
-    child.unref()
-    // console.log('child unreffed....', child.pid)
-    return child
-  } catch (err) {
-    console.error(err)
-    return null
-  }
+  // try {
+  // const bashOut = exec(command);
+  // console.log('directory for child is =', dir)
+  // console.log('loggesrs are ', loggers)
+  const out = fs.openSync(getAbsPath(loggers.out), 'w')
+  const err = fs.openSync(getAbsPath(loggers.err), 'w')
+  const commandArr = command.split(' ')
+  const com = commandArr[0]
+  commandArr.shift()
+  const child = cp.spawn(com, commandArr, {
+    cwd: dir,
+    detached: true,
+    stdio: ['ignore', out, err],
+    env: { ...process.env, parentPath: global.rootDir },
+  })
+  child.unref()
+  // console.log('child unreffed....', child.pid)
+  return child
+  // } catch (err) {
+  //   console.error(err)
+  //   return null
+  // }
 }
 
 module.exports = { runBashLongRunning, runBash, runScript }

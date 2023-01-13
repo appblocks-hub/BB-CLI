@@ -8,6 +8,7 @@
 
 const fs = require('fs')
 const fsPromise = require('fs/promises')
+const isRunning = require('is-running')
 const path = require('path')
 // const { readdirSync, readFileSync, existsSync } = require('fs')
 // const { execSync } = require('child_process')
@@ -231,13 +232,15 @@ async function stopEmulator(rootPath) {
   //     })
   //   )
   // } else {
-  const processData = await getEmulatorProcessData(rootPath)
-  if (processData && processData.pid) {
-    await runBash(`kill ${processData.pid}`)
-  }
+  if (fs.existsSync(path.join(rootPath, '._ab_em'))) {
+    const processData = await getEmulatorProcessData(rootPath)
+    if (processData && processData.pid && isRunning(processData.pid)) {
+      await runBash(`kill ${processData.pid}`)
+    }
 
-  await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
-  console.log('emulator stopped successfully!')
+    await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
+    console.log('emulator stopped successfully!')
+  }
   // }
 }
 

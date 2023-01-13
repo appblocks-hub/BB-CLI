@@ -26,12 +26,12 @@ const generateUiElementPackageJson = (name) => `{
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.1.0",
     "@appblocks/node-sdk": "^0.0.3",
-    "@module-federation/fmr": "^0.0.7",
+    "@module-federation/fmr": "^0.0.7"
   },
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-        "@appblocks/js-sdk": "^0.0.2"
+    "@appblocks/js-sdk": "^0.0.2"
   }
 }
 `

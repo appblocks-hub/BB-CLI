@@ -11,7 +11,10 @@ const { ensureUserLogins } = require('./ensureUserLogins')
 const { isInGitRepository, isGitInstalled } = require('./gitCheckUtils')
 const { checkLogDirs } = require('./preActionMethods/preAction-start')
 
-const preActionChecks = async (subcommand) => {
+const preActionChecks = async (actionCommand) => {
+  const noRepo = !actionCommand._optionValues?.repo
+  const subcommand = actionCommand.parent.args[0]
+
   switch (subcommand) {
     // To add command specific checks
     case 'start':
@@ -95,7 +98,7 @@ const preActionChecks = async (subcommand) => {
         console.log('Git not installed')
         process.exit(1)
       }
-      await ensureUserLogins()
+      await ensureUserLogins(noRepo)
       await checkAndSetGitConnectionPreference()
       await checkAndSetUserSpacePreference()
       break

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-promise-reject-errors */
 /**
  * Copyright (c) Appblocks. and its affiliates.
  *
@@ -21,7 +22,7 @@ class BlockPusher {
       status: 'starting..',
       block: this.blockName,
     })
-    this.report = { name: this.blockName, data: { message: '' } }
+    this.report = { name: this.blockName, data: { message: '', type: '' } }
   }
 
   push(...args) {
@@ -30,15 +31,15 @@ class BlockPusher {
       this.child = fork(path.join(__dirname, 'blockPushProcess.js'), {})
       const payload = { block: this.blockName }
       this.child.on('message', ({ failed, message, errorCode }) => {
+        this.report.data = { message, type: 'success' }
         if (!failed) {
           this.progress.increment(1, { status: message, ...payload })
-        } else {
-          if (errorCode) {
-            // in case push is failed, reset commit so user can re-run push again,
-            // and the repo wont be clean at that time
-            execSync('git reset HEAD~1', { cwd: this.blockPath })
-          }
-          this.report.data = { message }
+          return
+        }
+        if (errorCode) {
+          // in case push is failed, reset commit so user can re-run push again,
+          // and the repo wont be clean at that time
+          execSync('git reset HEAD~1', { cwd: this.blockPath })
         }
       })
       this.child.on('error', () => {
@@ -53,12 +54,20 @@ class BlockPusher {
         if (code === 1) {
           this.progress.update({ status: 'failed', ...payload })
           this.progress.stop()
+          this.report.data.type = 'error'
           rej(this.report)
-        } else {
-          this.progress.update(10, { status: 'success', ...payload })
-          this.progress.stop()
-          res(this.report)
+          return
         }
+        if (code === 2) {
+          this.progress.update(10, { status: 'warning', ...payload })
+          this.progress.stop()
+          this.report.data.type = 'warn'
+          rej(this.report)
+          return
+        }
+        this.progress.update(10, { status: 'success', ...payload })
+        this.progress.stop()
+        res(this.report)
       })
       // send a msg to start
       this.child.send({

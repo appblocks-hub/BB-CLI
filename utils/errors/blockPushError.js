@@ -8,11 +8,12 @@
 const { BBError } = require('./baseError')
 
 class BlockPushError extends BBError {
-  constructor(path, block, message, resetHead) {
+  constructor(path, block, message, resetHead, exitCode) {
     super(`${message} in ${path}`)
     this.blockPath = path
     this.blockName = block
     this.resetHead = resetHead
+    this.processExitCode = exitCode
   }
 }
 

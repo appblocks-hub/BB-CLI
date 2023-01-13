@@ -16,22 +16,24 @@ const { getShieldSignedInUser } = require('./getSignedInUser')
 const { configstore } = require('../configstore')
 const { spinnies } = require('../loader')
 
-async function ensureUserLogins() {
+async function ensureUserLogins(noRepo) {
   spinnies.add('logins', { text: 'Checking Git auths' })
 
-  const { redoAuth } = await checkAndSetAuth()
-  if (redoAuth) {
-    spinnies.update('logins', {
-      text: 'Git not logged in',
-      status: 'stopped',
-      color: 'yellow',
-    })
+  if (!noRepo) {
+    const { redoAuth } = await checkAndSetAuth()
+    if (redoAuth) {
+      spinnies.update('logins', {
+        text: 'Git not logged in',
+        status: 'stopped',
+        color: 'yellow',
+      })
 
-    const response = await axios.post(githubGetDeviceCode, {
-      client_id: githubClientID,
-      scope: 'repo,read:org,delete_repo',
-    })
-    await handleGithubAuth(decodeURIComponent(response.data))
+      const response = await axios.post(githubGetDeviceCode, {
+        client_id: githubClientID,
+        scope: 'repo,read:org,delete_repo',
+      })
+      await handleGithubAuth(decodeURIComponent(response.data))
+    }
   }
   if (!spinnies.hasActiveSpinners()) {
     spinnies.add('logins', { text: 'Git auth done' })

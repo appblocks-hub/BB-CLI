@@ -106,30 +106,31 @@ const start = async (blockname, { usePnpm }) => {
   const configData = appConfig.appConfig
   await setupEnv(configData)
 
-  if (!blockname) {
-    if ([...appConfig.allBlockNames].length <= 0) {
-      console.log('\nNo blocks to start!\n')
-      process.exit(1)
-    }
+  if (blockname && !appConfig.has(blockname)) {
+    console.log('Block not found')
+    return
+  }
 
-    let c = 0
-    // eslint-disable-next-line no-unused-vars
-    for (const _ of appConfig.nonLiveBlocks) {
-      c += 1
-    }
-    if (c === 0) {
-      console.log('\nAll blocks are already live!\n')
-    } else {
-      await startAllBlock()
-    }
-  } else {
-    if (!appConfig.has(blockname)) {
-      console.log('Block not found')
-      process.exit(1)
-    }
+  if (blockname) {
     const port = await getFreePorts(appConfig, blockname)
     await startBlock(blockname, port)
+    return
   }
+
+  // If no block name given
+
+  if ([...appConfig.allBlockNames].length <= 0) {
+    console.log('\nNo blocks to start!\n')
+    // process.exit(1)
+    return
+  }
+
+  if ([...appConfig.nonLiveBlocks].length === 0) {
+    console.log('\nAll blocks are already live!\n')
+    return
+  }
+
+  await startAllBlock()
 }
 
 async function startAllBlock() {

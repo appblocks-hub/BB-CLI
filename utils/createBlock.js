@@ -147,10 +147,14 @@ async function createBlock(
       await Git.fetch('tempRemote')
       await Git.merge('tempRemote/main', '--allow-unrelated-histories')
       if (metaData?.version_number) {
-        // Not compatible with windows since using $() and pipe. Need to find another solution
-        await Git.revListTag(metaData?.version_number)
-        await Git.removeRemote('tempRemote')
-        await Git.removeTags('$(git tag -l)')
+        try {
+          // Not compatible with windows since using $() and pipe. Need to find another solution
+          await Git.revListTag(metaData.version_number)
+          await Git.removeRemote('tempRemote')
+          await Git.removeTags('$(git tag -l)')
+        } catch {
+          await Git.removeRemote('tempRemote')
+        }
       } else {
         await Git.removeRemote('tempRemote')
       }
