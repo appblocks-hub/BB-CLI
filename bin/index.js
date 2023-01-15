@@ -57,6 +57,7 @@ const deleteCommand = require('../subcommands/delete')
 const listLanguageVersionCommand = require('../subcommands/languageVersion/list')
 const createBlockVersion = require('../subcommands/createBlockVersion/index')
 const getBlockUpdate = require('../subcommands/getBlockUpdate')
+const { blockTypeInverter } = require('../utils/blockTypeInverter')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -110,21 +111,23 @@ async function init() {
     .command('create')
     .argument('<component>', 'name of component')
     .addOption(
-      new Option('-t, --type <component-type>', 'type  of comp').choices(
-        blockTypes.reduce((acc, v) => {
-          if (v[0] !== 'appBlock') return acc.concat(v[0])
-          return acc
-        }, [])
-      )
+      new Option('-t, --type <component-type>', 'type  of comp')
+        .choices(
+          blockTypes.reduce((acc, v) => {
+            if (v[0] !== 'appBlock') return acc.concat(v[0])
+            return acc
+          }, [])
+        )
+        .argParser((s) => blockTypeInverter(s))
     )
-    .option('--no-repo')
+    .option('--no-autoRepo')
     .description('to create components')
     .action(create)
 
   program
     .command('init')
     .argument('<appblock-name>', 'Name of app')
-    .option('--no-repo')
+    .option('--no-autoRepo')
     .description('create an appblock')
     .action(packageBlockInit)
 

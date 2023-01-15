@@ -63,7 +63,7 @@ async function check(name) {
  *
  * @param {String} passedName Name to check
  * @param {Boolean} bypassInitialCheck To bypass initial check and ask for a new name
- * @returns {String} An available name
+ * @returns {Promise<String>} An available name
  */
 async function checkBlockNameAvailability(passedName, bypassInitialCheck) {
   if (!bypassInitialCheck) {

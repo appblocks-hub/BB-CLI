@@ -7,7 +7,6 @@
 
 /* eslint-disable consistent-return */
 const path = require('path')
-const { chdir } = require('process')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
 // const { execSync } = require('child_process')
 // const { transports } = require('winston')
@@ -21,7 +20,6 @@ const {
   getBlockName,
   getGitConfigNameEmail,
   readInput,
-  sourceUrlOptions,
   confirmationPrompt,
 } = require('../utils/questionPrompts')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
@@ -58,18 +56,19 @@ const {
 } = require('../templates/createTemplates/uiElement-templates')
 const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
-const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
 const { CreateError } = require('../utils/errors/createError')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
+const getRepoUrl = require('../utils/noRepo')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
 /**
  * @typedef createCommandOptions
- * @property {String} type
+ * @property {string} type
+ * @property {boolean} autoRepo If false, should prompt user for repo url
  */
 
 /**
@@ -83,89 +82,93 @@ const initializePackageBlock = require('./init/initializePackageBlock')
  * @returns
  */
 const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
+  const { autoRepo } = options
+
   let standAloneBlock = false
-  let componentName = userPassedName
+  let blockName = userPassedName
   let { type } = options
 
   let packageName
 
+  /**
+   * To prevent create from trying to init with config,
+   * This is useful when calling create from sync etc..where
+   * reading a local config is not necessary as it is not guaranteed
+   * to be present.Which will force create to move to outofContext flow
+   * which is not necessary for sync.
+   */
   if (!skipConfigInit) {
     await appConfig.init(null, null, 'create')
-    if (appConfig.isOutOfContext) {
-      const goAhead = await confirmationPrompt({
-        message: `You are trying to create a block outside appblock package context. Want to create new package context ?`,
-        name: 'seperateBlockCreate',
-      })
-
-      if (!goAhead) {
-        feedback({ type: 'error', message: `Block should be created under package context` })
-        return
-      }
-
-      const packageBlockName = await readInput({
-        name: 'appName',
-        message: 'Enter the package name',
-        validate: (input) => {
-          if (!isValidBlockName(input)) return ` ${input} is not valid name (Only snake case with numbers is valid)`
-          return true
-        },
-      })
-
-      const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName)
-      packageName = bfn
-      chdir(DIRPATH)
-
-      // Init for new
-      await appConfig.init(null, null, 'create', { reConfig: true })
-
-      feedback({ type: 'info', message: `\nContinuing ${componentName} block creation \n` })
-    }
   }
 
-  // logger.info(`Create called with ${componentName} and ${type || 'no type'}`)
+  /**
+   * The imported appConfig is an instance of configmanager and it will have not have isOutOfContext value..
+   * It is only set during init
+   * This won't cause problem to calls with skipConfigInit=ture
+   */
+  if (appConfig.isOutOfContext) {
+    const goAhead = await confirmationPrompt({
+      message: `You are trying to create a block outside appblock package context. Want to create new package context ?`,
+      name: 'seperateBlockCreate',
+    })
+
+    if (!goAhead) {
+      feedback({ type: 'error', message: `Block should be created under package context` })
+      return
+    }
+
+    /** **************** */
+    const validate = (input) => {
+      if (!isValidBlockName(input)) return ` ${input} is not valid name (Only snake case with numbers is valid)`
+      return true
+    }
+    const packageBlockName = await readInput({
+      name: 'appName',
+      message: 'Enter the package name',
+      validate,
+    })
+    /** **************** */
+
+    const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName)
+    packageName = bfn
+
+    // Init for new
+    await appConfig.init(DIRPATH, null, 'create', { reConfig: true })
+
+    feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
+  }
+
+  // logger.info(`Create called with ${blockName} and ${type || 'no type'}`)
   try {
-    if (!isValidBlockName(componentName)) {
+    if (!isValidBlockName(blockName)) {
       feedback({
         type: 'warn',
-        message: `${componentName} is not a valid name (Only snake case with numbers is valid)`,
+        message: `${blockName} is not a valid name (Only snake case with numbers is valid)`,
       })
-      componentName = await getBlockName()
+      blockName = await getBlockName()
     }
-    // logger.info(`changed name to ${componentName}`)
+    // logger.info(`changed name to ${blockName}`)
     if (!type) {
       type = await getBlockType()
       // logger.info(`Prompted user for a type and got back ${type}`)
-    } else {
-      type = blockTypeInverter(type)
-      // logger.info(`Converted type from name to number-${type}`)
     }
 
     let jobConfig = {}
     if (type === 7) jobConfig = await getJobConfig()
 
-    const availableName = await checkBlockNameAvailability(componentName)
+    const availableName = await checkBlockNameAvailability(blockName)
     // logger.info(
-    //   `${componentName} checked against registry and ${availableName} is finalized`
+    //   `${blockName} checked against registry and ${availableName} is finalized`
     // )
-    /**
-     * To prevent create from trying to init with config,
-     * This is useful when calling create from sync etc..where
-     * reading a local config is not necessary as it is not guaranteed
-     * to be present.Which will force create to move to outofContext flow
-     * which is not necessary for sync.
-     */
-    if (!skipConfigInit) {
-      await appConfig.init(null, null, 'create')
-      if (appConfig.isOutOfContext) {
-        standAloneBlock = false
-      } else if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
-        feedback({ type: 'info', message: 'We are not inside an Appblock' })
-        feedback({ type: 'error', message: 'Cannot create block inside another block' })
-      }
+
+    if (appConfig.isOutOfContext) {
+      standAloneBlock = false
     }
-    // Check if github user name or id is not set (we need both, if either is not set inform)
-    const u = configstore.get('githubUserId', '')
-    const t = configstore.get('githubUserToken', '')
+
+    if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
+      feedback({ type: 'info', message: 'We are not inside an Appblock' })
+      feedback({ type: 'error', message: 'Cannot create block inside another block' })
+    }
 
     // If user is giving a url then no chance of changing this name
     let blockFinalName = availableName
@@ -174,24 +177,22 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     let clonePath
     let userHasProvidedRepoUrl = false
 
-    if (u === '' || t === '') {
-      console.log(`${chalk.bgCyan('INFO')}:Seems like you have not connected to any version manager`)
-      const o = await sourceUrlOptions()
-      // 0 for cancel
-      // 2 for go to connect
-      // 3 for let me provide url
-      if (o === 0) process.exit(1)
-      else if (o === 2) {
-        // INFO connecting to github from here might cause the same token in memory issue
-        console.log('Cant do it now!')
-      } else {
-        const s = await readInput({ message: 'Enter source ssh url here', name: 'sUrl' })
-        blockSource = { ssh: s.trim(), https: convertGitSshUrlToHttps(s.trim()) }
-        userHasProvidedRepoUrl = true
-        clonePath = standAloneBlock ? '.' : createDirForType(type, cwd || '.')
-        cloneDirName = blockFinalName
-      }
-    } else {
+    if (!autoRepo) {
+      blockSource = await getRepoUrl()
+    }
+
+    if (!blockSource.ssh) {
+      process.exitCode = 0
+      return
+    }
+
+    if (!autoRepo && blockSource.ssh) {
+      userHasProvidedRepoUrl = true
+      clonePath = standAloneBlock ? '.' : createDirForType(type, cwd || '.')
+      cloneDirName = blockFinalName
+    }
+
+    if (autoRepo) {
       // const shortName = await getBlockShortName(availableName)
       const d = await createBlock(availableName, availableName, type, '', false, cwd || '.', standAloneBlock, jobConfig)
       blockFinalName = d.blockFinalName
@@ -200,7 +201,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       clonePath = d.clonePath
     }
 
-    // logger.info(`${componentName} created and registered as ${availableName}`)
+    // logger.info(`${blockName} created and registered as ${availableName}`)
 
     // logger.info(`blockSource - ${blockSource}`)
     // logger.info(`cloneDirName - ${cloneDirName}`)
@@ -283,7 +284,6 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
           `If i can't find name and email in global git config,\nI'll use these values on making commits..`
         )
       )
-      // TODO-- store these values in config and dont ask everytime, can be used in pull aswell
       const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
       await checkAndSetGitConfigNameEmail(entry, { gitUserEmail, gitUserName })
       console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
@@ -293,23 +293,23 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
        */
       if (type === 4) {
         // function
-        const indexString = generateIndex(componentName)
+        const indexString = generateIndex(blockName)
         writeFileSync(`${entry}/index.js`, indexString)
-        const packageJsonString = generatePackageJson(componentName)
+        const packageJsonString = generatePackageJson(blockName)
         writeFileSync(`${entry}/package.json`, packageJsonString)
         const gitIgnoreString = generateGitIgnore()
         writeFileSync(`${entry}/.gitignore`, gitIgnoreString)
-        const readmeString = generateFunctionReadme(componentName)
+        const readmeString = generateFunctionReadme(blockName)
         writeFileSync(`${entry}/README.md`, readmeString)
       } else if (type === 2) {
         // ui-container
-        createUiContainerFolders(entry, componentName)
+        createUiContainerFolders(entry, blockName)
       } else if (type === 3) {
         // ui-element
-        createUiElementFolders(entry, componentName)
+        createUiElementFolders(entry, blockName)
       } else if (type === 7) {
         // job
-        generateJobBlock(entry, componentName)
+        generateJobBlock(entry, blockName)
       }
 
       /**
@@ -327,13 +327,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       await Git.commit('initial commit')
       // await Git.push('main')
       await Git.setUpstreamAndPush('main')
-      // execSync(
-      //   `cd ${entry} &&
-      //    git checkout -b main &&
-      //    git add -A &&
-      //    git commit -m "initial commit" &&
-      //    git push origin main`
-      // )
+
       if (packageName) console.log(chalk.dim(`\ncd ${packageName} and start hacking.\n`))
     } catch (err) {
       console.log('err:', err)

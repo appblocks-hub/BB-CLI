@@ -50,6 +50,13 @@ afterAll(() => {
   logSpy.mockRestore()
 })
 
+describe('new cases', () => {
+  test('Should init config if skipConfigInit is false', async () => {
+    await create('aname', { type: 'function', noRepo: false }, {}, false, '.', false)
+    expect(appConfig.init).toHaveBeenCalled()
+  })
+})
+
 describe('Create called with no args', () => {
   beforeEach(() => {})
   beforeAll(() => {
