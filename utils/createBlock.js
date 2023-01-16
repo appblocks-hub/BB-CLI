@@ -38,7 +38,7 @@ const registerBlock = require('./registerBlock')
  * @param {String} cwd To pass to directory creation function
  * @param {Boolean?} isAStandAloneBlock If user is trying to create a block outside appblock context
  * @param {Object?} Configuration of job
- * @returns {returnObject}
+ * @returns {Promise<returnObject>}
  */
 async function createBlock(
   blockName,

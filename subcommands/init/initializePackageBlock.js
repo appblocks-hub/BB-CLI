@@ -9,57 +9,46 @@
 const path = require('path')
 const chalk = require('chalk')
 const { createFileSync, isDirEmpty } = require('../../utils/fileAndFolderHelpers')
-const { getBlockName, sourceUrlOptions, readInput } = require('../../utils/questionPrompts')
+const { getBlockName } = require('../../utils/questionPrompts')
 const createBlock = require('../../utils/createBlock')
 const checkBlockNameAvailability = require('../../utils/checkBlockNameAvailability')
 const { checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
 const { appConfig } = require('../../utils/appconfigStore')
 const { configstore } = require('../../configstore')
 const { GitManager } = require('../../utils/gitmanager')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
 const { isValidBlockName } = require('../../utils/blocknameValidator')
 const { feedback } = require('../../utils/cli-feedback')
 const { lrManager } = require('../../utils/locaRegistry/manager')
+const getRepoUrl = require('../../utils/noRepo')
 
-const initializePackageBlock = async (appblockName) => {
-  // const packagesPath = path.join(__dirname, '..', 'packages')
+const initializePackageBlock = async (appblockName, options) => {
+  const { autoRepo } = options
   let componentName = appblockName
   if (!isValidBlockName(componentName)) {
     feedback({ type: 'warn', message: `${componentName} is not a valid name (Only snake case with numbers is valid)` })
     componentName = await getBlockName()
   }
-  // if dir is clean, create a config file with name for configstore to
-  // initialize..
 
   const availableName = await checkBlockNameAvailability(componentName)
-
-  // Check if github user name or id is not set (we need both, if either is not set inform)
-  const u = configstore.get('githubUserId', '')
-  const t = configstore.get('githubUserToken', '')
 
   // If user is giving a url then no chance of changing this name
   let blockFinalName = availableName
   let blockSource
   let userHasProvidedRepoUrl = false
 
-  if (u === '' || t === '') {
-    console.log(`${chalk.bgCyan('INFO')}:Seems like you have not connected to any version manager`)
-    const o = await sourceUrlOptions()
-    // 0 for cancel
-    // 2 for go to connect
-    // 3 for let me provide url
-    if (o === 0) process.exit(1)
-    else if (o === 2) {
-      // INFO connecting to github from here might cause the same token in memory issue
-      console.log('Cant do it now!')
-    } else {
-      const s = await readInput({ message: 'Enter source ssh url here', name: 'sUrl' })
-      blockSource = { ssh: s.trim(), https: convertGitSshUrlToHttps(s.trim()) }
-      userHasProvidedRepoUrl = true
-    }
-  } else {
-    // const shortName = await getBlockShortName(availableName)
-    // const { blockSource, cloneDirName, clonePath, blockFinalName } =
+  if (!autoRepo) {
+    blockSource = await getRepoUrl()
+  }
+
+  if (!blockSource.ssh) {
+    process.exitCode = 0
+  }
+
+  if (!autoRepo && blockSource.ssh) {
+    userHasProvidedRepoUrl = true
+  }
+
+  if (autoRepo) {
     const d = await createBlock(availableName, availableName, 1, '', false, '.')
     blockFinalName = d.blockFinalName
     blockSource = d.blockSource
@@ -90,15 +79,6 @@ const initializePackageBlock = async (appblockName) => {
   })
 
   await checkAndSetGitConfigNameEmail(blockFinalName)
-
-  // NOTE: blockFinalName doesnt need to have a prefix here..it is an app
-  // execSync(
-  //   `git checkout -b main &&
-  // git add -A &&
-  // git commit -m 'initial commit' &&
-  // git push origin main`,
-  //   { cwd: path.resolve(blockFinalName) }
-  // )
 
   Git.cd(path.resolve(blockFinalName)) // Change to git directory
   await Git.newBranch('main')

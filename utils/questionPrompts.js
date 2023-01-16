@@ -49,6 +49,10 @@ function getBlockName() {
     .catch((err) => console.log(err))
 }
 
+/**
+ *
+ * @returns {Promise<(0 | 1 | 2)>}
+ */
 function sourceUrlOptions() {
   const questions = [
     {
@@ -57,7 +61,6 @@ function sourceUrlOptions() {
       message: 'Would you like to provide a source url',
       choices: [
         { name: 'Yes, let me share', value: 1 },
-        { name: 'No, take me to connect', value: 2 },
         { name: 'cancel', value: 0 },
       ],
     },

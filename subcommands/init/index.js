@@ -12,8 +12,8 @@ const { setWithTemplate } = require('../../utils/questionPrompts')
 const setupTemplate = require('./setupTemplate')
 const initializePackageBlock = require('./initializePackageBlock')
 
-const init = async (appblockName) => {
-  const initializedData = await initializePackageBlock(appblockName)
+const init = async (appblockName, options) => {
+  const initializedData = await initializePackageBlock(appblockName, options)
   const { useTemplate } = await setWithTemplate()
   if (useTemplate) await setupTemplate(initializedData)
 

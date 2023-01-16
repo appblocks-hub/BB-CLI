@@ -291,7 +291,7 @@ function createDirForType(type, cwd) {
  *
  * @param {String} dirname
  * @param  {...any} acceptedItems List of accepted file or folder names
- * @returns {Boolean}
+ * @returns {Promise<Boolean>}
  */
 function isDirEmpty(dirname, ...acceptedItems) {
   return fs.promises.readdir(dirname).then((files) => {
