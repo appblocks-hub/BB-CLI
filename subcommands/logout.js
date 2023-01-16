@@ -6,6 +6,7 @@
  */
 
 const { default: axios } = require('axios')
+const { configstore } = require('../configstore')
 const { spinnies } = require('../loader')
 const { appBlockLogout } = require('../utils/api')
 const { feedback } = require('../utils/cli-feedback')
@@ -30,6 +31,10 @@ const logout = async () => {
     )
     if (success) {
       spinnies.succeed('logout', { text: 'Logged out of shield' })
+      configstore.delete('appBlockUserName')
+      configstore.delete('appBlockUserToken')
+      configstore.delete('currentSpaceId')
+      configstore.delete('currentSpaceName')
       return
     }
     spinnies.fail('logout', { text: 'Error logging out of shield' })
