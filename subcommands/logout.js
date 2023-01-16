@@ -35,6 +35,7 @@ const logout = async () => {
       configstore.delete('appBlockUserToken')
       configstore.delete('currentSpaceId')
       configstore.delete('currentSpaceName')
+      configstore.delete('awsCredConfig')
       return
     }
     spinnies.fail('logout', { text: 'Error logging out of shield' })
