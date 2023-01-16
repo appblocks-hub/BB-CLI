@@ -40,7 +40,7 @@ const initializePackageBlock = async (appblockName, options) => {
     blockSource = await getRepoUrl()
   }
 
-  if (!blockSource.ssh) {
+  if (!autoRepo && !blockSource.ssh) {
     process.exitCode = 0
   }
 
