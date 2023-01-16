@@ -17,6 +17,10 @@ const { getShieldHeader } = require('../utils/getHeaders')
  * @returns
  */
 const logout = async () => {
+  if (!configstore.get('appBlockUserToken', '')) {
+    feedback({ type: 'info', message: 'no user logged in' })
+    return
+  }
   spinnies.add('logout', { text: 'Starting..' })
   try {
     spinnies.update('logout', { text: 'Connecting to shield..' })
