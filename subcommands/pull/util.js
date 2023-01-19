@@ -174,7 +174,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     } = metaData
 
     if (!hasPullBlockAccess && [1, 2, 3].includes(blockVisibility)) {
-      feedback({ type: 'info', message: `Access denied for block ${componentName}` })
+      feedback({ type: 'error', message: `Access denied for block ${componentName}` })
       return
     }
 

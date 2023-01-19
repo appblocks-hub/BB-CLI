@@ -84,11 +84,7 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
     if (metaData.BlockType === 1) {
       logger.info('calling pullAppblock')
       const res = await pullAppblock(componentName)
-      if (res) {
-        process.exit(0)
-      } else {
-        process.exit(1)
-      }
+      process.exit(res ? 0 : 1)
     }
 
     if (metaData.BlockType !== 1 && appConfig.isInAppblockContext) {
@@ -98,9 +94,12 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
         componentVersion,
       })
     }
+
+    process.exit()
   } catch (err) {
     // console.log('Something went wrong while getting block details..')
     spinnies.add('blockExistsCheck')
+    console.log('index.js')
 
     let message = err.message || err
 
@@ -112,7 +111,7 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
     spinnies.fail('blockExistsCheck', { text: `Something went wrong` })
     feedback({ type: 'info', message })
     spinnies.remove('blockExistsCheck')
-    // process.exit(1)
+    process.exit(1)
   }
 }
 
