@@ -69,7 +69,7 @@ const use = async (space_name) => {
       feedback({ type: 'success', message: `${space_name} set` })
     }
   } catch (err) {
-    console.log(err)
+    feedback({ type: 'error', message: err.message })
   }
 }
 

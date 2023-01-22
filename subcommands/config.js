@@ -7,8 +7,10 @@ const config = async (options) => {
   if (del) {
     if (!configstore.has(del)) {
       feedback({ type: 'error', message: `${del} is not a key in config` })
+      return
     }
     configstore.delete(del)
+    return
   }
   if (set) {
     for (const optKey in set) {
@@ -26,6 +28,7 @@ const config = async (options) => {
         }
       }
     }
+    return
   }
   if (list) {
     for (const key in s) {
