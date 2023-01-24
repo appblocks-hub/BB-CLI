@@ -21,7 +21,7 @@ global.rootDir = process.cwd()
  *
  * @param {Array<Number>} ports
  * @param {Record<'dependencies',import('../utils/jsDoc/types').dependencies>} dependencies
- * @returns {emData}
+ * @returns {Promise<emData>}
  */
 const emulateNode = async (ports, dependencies) => {
   try {

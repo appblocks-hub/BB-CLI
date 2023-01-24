@@ -17,6 +17,7 @@ const { Subscriber } = require('rxjs')
 
 const { appBlockCheckBlockNameAvailability } = require('./api')
 const { isValidBlockName } = require('./blocknameValidator')
+const { feedback } = require('./cli-feedback')
 const { getShieldHeader } = require('./getHeaders')
 
 /**
@@ -51,12 +52,11 @@ async function check(name) {
       },
       { headers: getShieldHeader() }
     )
-    // console.log(res.data, 'in check')
     return !res.data.err
   } catch (err) {
-    console.log(err)
-    console.log('Something went wrong in blocknameavailability check')
-    process.exit(1)
+    feedback({ type: 'error', message: 'in blockname availability check' })
+    feedback({ type: 'error', message: err.message })
+    return false
   }
 }
 /**
@@ -80,7 +80,6 @@ async function checkBlockNameAvailability(passedName, bypassInitialCheck) {
         // console.log(ans)
         const a = await check(answer)
         if (a) {
-          // console.log('Name available!')
           availableName = answer
           Emitter.complete()
         } else {

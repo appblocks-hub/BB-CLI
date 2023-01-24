@@ -51,7 +51,7 @@ const handleOutOfContextCreation = async () => {
     },
   })
 
-  const { DIRPATH } = await initializePackageBlock(packageBlockName)
+  const { DIRPATH } = await initializePackageBlock(packageBlockName, { autoRepo: true })
   // chdir(DIRPATH)
   console.log(`cd to ${DIRPATH} and continue`)
   // Init for new
@@ -174,7 +174,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     } = metaData
 
     if (!hasPullBlockAccess && [1, 2, 3].includes(blockVisibility)) {
-      feedback({ type: 'info', message: `Access denied for block ${componentName}` })
+      feedback({ type: 'error', message: `Access denied for block ${componentName}` })
       return
     }
 
@@ -381,10 +381,11 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         const Git = new GitManager(path.resolve(), localDirName, originUrl, prefersSsh)
         await Git.clone(blockFolderPath)
         if (metaData.version_number) {
-          await Git.cd(blockFolderPath)
+          Git.cd(blockFolderPath)
           await Git.fetch('--all --tags')
           // Not compatible with windows since using $() and pipe. Need to find another solution
-          await Git.revListTag(metaData.version_number)
+          // await Git.revListTag(metaData.version_number)
+          Git.checkoutTagWithNoBranch(metaData.version_number)
         }
         spinnies.remove('pab')
         // console.log(chalk.dim('Block cloned successfully '))

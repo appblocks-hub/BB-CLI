@@ -129,9 +129,11 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     })
     /** **************** */
 
-    const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName)
+    const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName, { autoRepo })
     packageName = bfn
 
+    // eslint-disable-next-line no-param-reassign
+    cwd = DIRPATH
     // Init for new
     await appConfig.init(DIRPATH, null, 'create', { reConfig: true })
 
@@ -181,7 +183,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       blockSource = await getRepoUrl()
     }
 
-    if (!blockSource.ssh) {
+    if (!autoRepo && !blockSource.ssh) {
       process.exitCode = 0
       return
     }

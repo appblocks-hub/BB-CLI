@@ -149,7 +149,8 @@ async function createBlock(
       if (metaData?.version_number) {
         try {
           // Not compatible with windows since using $() and pipe. Need to find another solution
-          await Git.revListTag(metaData.version_number)
+          // await Git.revListTag(metaData.version_number)
+          await Git.checkoutTagWithNoBranch(metaData.version_number)
           await Git.removeRemote('tempRemote')
           await Git.removeTags('$(git tag -l)')
         } catch {

@@ -173,7 +173,10 @@ const pullBlockUpdate = async (options) => {
     spinnies.fail('pbu', { text: error.response?.data?.msg || error.message || `Error pulling block update` })
     spinnies.remove('pbu')
 
-    if (existsSync(blockFolderPath)) rm(blockFolderPath, { recursive: true })
+    if (existsSync(blockFolderPath))
+      rm(blockFolderPath, { recursive: true }, () => {
+        process.exit(0)
+      })
   }
 }
 
