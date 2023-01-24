@@ -242,6 +242,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
 
     let createCustomVersion
     if (isPurcahsedVariant && blockVisibility !== 5) {
+      // FOR NOW: No variant allowed for purchased variant
       createCustomVersion = false
     } else if (addVariant === true || (isPurcahsedVariant && blockVisibility === 5)) {
       createCustomVersion = true
@@ -366,7 +367,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
       const localDirName = `${metaData.BlockName}`
       const blockFolderPath = path.resolve(clonePath, localDirName)
 
-      if (hasBlockAccess) {
+      if (hasPullBlockAccess) {
         if (isPurcahsedVariant) {
           const checkData = await checkIsBlockAppAssinged({ metaData })
           if (!checkData.exist) {

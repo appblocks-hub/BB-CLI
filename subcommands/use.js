@@ -5,8 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const chalk = require('chalk')
 const { prompt } = require('inquirer')
 const { configstore } = require('../configstore')
+const { appConfig } = require('../utils/appconfigStore')
 const { feedback } = require('../utils/cli-feedback')
 const { listSpaces } = require('../utils/spacesUtils')
 
@@ -38,11 +40,21 @@ const promptAndSetSpace = async (Data) => {
  * @returns
  */
 const use = async (space_name) => {
+  // check space is linked with block
+  await appConfig.init()
+  if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
+    feedback({ type: 'error', message: 'Switiching spaces is not allowed inside block context' })
+    process.exit(1)
+  }
+
   const currentSpaceName = configstore.get('currentSpaceName')
   if (space_name && currentSpaceName === space_name) {
     feedback({ type: 'info', message: `${space_name} is already set` })
     process.exit(0)
   }
+
+  console.log(chalk.dim(`current space is ${currentSpaceName}`))
+
   try {
     const res = await listSpaces()
     if (res.data.err) {

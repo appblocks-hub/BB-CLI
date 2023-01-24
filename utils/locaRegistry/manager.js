@@ -91,6 +91,37 @@ class LocalRegistryManager {
   }
 
   /**
+   * @param {Object} packagedData  Name, space_id, space_name of packaged block
+   */
+  linkSpaceToPackageBlock(packagedData) {
+    this._checkAndCreateLocalRegistryDir()
+
+    const { name, space_id, space_name } = packagedData
+    const curData = this.localRegistryData[name] || {}
+    this.localRegistryData[name] = { ...curData, space_id, space_name }
+
+    this.events.emit('write')
+  }
+
+  /**
+   * isSpaceLinkedToPackageBlock
+   */
+  isSpaceLinkedToPackageBlock(name, spaceId) {
+    return this.localRegistryData[name]?.space_id === spaceId
+  }
+
+  /**
+   * linkedSpaceOfPackageBlock
+   */
+  linkedSpaceOfPackageBlock(name) {
+    const curData = this.localRegistryData[name]
+    return {
+      space_id: curData.space_id,
+      space_name: curData.space_name,
+    }
+  }
+
+  /**
    * Add new packaged to registry
    * @param {Object} packagedData  Name and RootPath of packaged block
    */
