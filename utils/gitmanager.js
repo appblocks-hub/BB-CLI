@@ -98,6 +98,10 @@ class GitManager {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
 
+  checkoutTagWithNoBranch(tag) {
+    return this._run('checkout', [`${tag}`])
+  }
+
   cd(directoryPath) {
     this.cwd = path.resolve(directoryPath)
   }
