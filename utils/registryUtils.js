@@ -57,13 +57,13 @@ const getBlockMetaData = (block_id) =>
     { headers: getShieldHeader() }
   )
 
-const updateReadme = (blockId, key, visibility) =>
+const updateReadme = (blockId, blockVerionId, key) =>
   axios.post(
     appBlockUpdateReadme,
     {
+      block_version_id: blockVerionId,
       block_id: blockId,
       readme_url: key,
-      visibility,
     },
     { headers: getShieldHeader() }
   )

@@ -62,6 +62,7 @@ const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
 const getRepoUrl = require('../utils/noRepo')
+const { getBlockDetails } = require('../utils/registryUtils')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
@@ -194,9 +195,42 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       cloneDirName = blockFinalName
     }
 
+    const packageBlockName = appConfig.config?.name
+    let package_block_id
+
+    if (packageBlockName) {
+      const {
+        status,
+        data: { err, msg, data: packageBlockDetails },
+      } = await getBlockDetails(packageBlockName)
+
+      if (status === 204) {
+        feedback({ type: 'info', message: `${packageBlockName} doesn't exists in block repository` })
+        return
+      }
+      if (err) throw new Error(msg).message
+
+      package_block_id = packageBlockDetails.ID
+    }
+
+    if (!packageBlockName && type !== 1) {
+      throw new Error('Cannot create block without package block')
+    }
+
     if (autoRepo) {
       // const shortName = await getBlockShortName(availableName)
-      const d = await createBlock(availableName, availableName, type, '', false, cwd || '.', standAloneBlock, jobConfig)
+      const d = await createBlock(
+        availableName,
+        availableName,
+        type,
+        '',
+        false,
+        cwd || '.',
+        standAloneBlock,
+        jobConfig,
+        null,
+        package_block_id
+      )
       blockFinalName = d.blockFinalName
       blockSource = d.blockSource
       cloneDirName = d.cloneDirName

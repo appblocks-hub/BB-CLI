@@ -29,7 +29,9 @@ async function registerBlock(
   is_public,
   github_url,
   block_desc,
-  job_config = {}
+  // eslint-disable-next-line default-param-last
+  job_config = {},
+  package_block_id
 ) {
   spinnies.add('register', { text: `Registering ${block_name}` })
 
@@ -40,6 +42,14 @@ async function registerBlock(
     is_public,
     block_desc,
     github_url,
+  }
+
+  if (package_block_id) {
+    postData.package_block_id = package_block_id
+  }
+
+  if (block_type !== 1 && !package_block_id) {
+    throw new Error('Cannot create block without package block')
   }
 
   if (block_type === 7) {
