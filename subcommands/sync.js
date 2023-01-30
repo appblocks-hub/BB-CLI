@@ -395,7 +395,8 @@ const sync = async () => {
 
   const configReadReport = []
   const sourceLessBlocks = []
-  const localBlocks = blockDirectories.reduce((acc, cur) => {
+  const sourceFullBlocks = []
+  blockDirectories.forEach((cur) => {
     const cp = path.resolve(cur, 'block.config.json')
     try {
       const b = JSON.parse(fs.readFileSync(cp))
@@ -408,16 +409,17 @@ const sync = async () => {
       // TODO: Make new error types for above
       // TODO: If source.ssh is present, make sure ssh is prefered..else report
       //        else if source.http is only present, make sure it is preferred, else report error
-      return acc.concat(b)
+      sourceFullBlocks.push(cur)
+      // return acc.concat(b)
     } catch (err) {
       if (err.message.includes('source')) {
         sourceLessBlocks.push(cur)
       } else {
         configReadReport.push({ path: cp, msg: err.message })
       }
-      return acc
+      // return acc
     }
-  }, [])
+  })
 
   if (configReadReport.length) {
     console.log(
@@ -432,6 +434,15 @@ const sync = async () => {
     console.log('----------------\n')
   }
 
+  if (sourceFullBlocks.length) {
+    console.log(`Following blocks could be re-registered`)
+    console.log('------------------------------')
+    console.log(sourceFullBlocks)
+    console.log('------------------------------')
+  }
+
+  const res0 = await offerAndCreateBlock(sourceFullBlocks)
+
   if (sourceLessBlocks.length) {
     console.log(`Found ${sourceLessBlocks.length} directories with no source in config`)
     console.log('------------------------------')
@@ -442,15 +453,33 @@ const sync = async () => {
   const res1 = await offerAndCreateBlock(sourceLessBlocks)
 
   const newlyCreateddBlocks = []
+  res0.forEach((v, i) => {
+    // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
+    // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
+    if (v.registered) {
+      newlyCreateddBlocks.push(v)
+      if (v.oldPath === sourceFullBlocks[i]) sourceFullBlocks.splice(i, 1)
+    }
+  })
   res1.forEach((v, i) => {
     // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
     // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
     if (v.registered) {
-      console.log(v)
       newlyCreateddBlocks.push(v)
       if (v.oldPath === sourceLessBlocks[i]) sourceLessBlocks.splice(i, 1)
     }
   })
+
+  const localBlocks = sourceFullBlocks.reduce((acc, curr) => {
+    const cp = path.resolve(curr, 'block.config.json')
+    try {
+      const b = JSON.parse(fs.readFileSync(cp))
+      return acc.concat(b)
+    } catch (err) {
+      console.log(err.message)
+      return acc
+    }
+  }, [])
 
   await offerAndDeleteStaleDirectories(sourceLessBlocks)
 
@@ -709,7 +738,7 @@ const sync = async () => {
      */
     const _f = await prepareFileListForMoving(path.resolve(blockFinalName), path.resolve(), [])
     await moveFiles(true, _f)
-    await rm(path.redolve(blockFinalName))
+    await rm(path.resolve(blockFinalName), { recursive: true })
 
     console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
     console.log('DONE')

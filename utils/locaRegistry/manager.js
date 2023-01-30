@@ -129,7 +129,8 @@ class LocalRegistryManager {
     this._checkAndCreateLocalRegistryDir()
 
     const { name, rootPath } = packagedData
-    this.localRegistryData[name] = { rootPath }
+    const curData = this.localRegistryData[name] || {}
+    this.localRegistryData[name] = { ...curData, rootPath }
     this.packagedBlockConfigs[name] = JSON.parse(readFileSync(path.join(rootPath, this.blockConfigFileName)))
 
     this.events.emit('write')

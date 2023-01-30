@@ -315,7 +315,7 @@ function isDirEmpty(dirname, ...acceptedItems) {
  * @param {String} dirPath
  * @param {String} destinationPath
  * @param {Array<String>} ignoreList
- * @returns {Array<Record<'oldPath'|'newPath'|'name',String>}
+ * @returns {Promise<Array<Record<'oldPath'|'newPath'|'name',String>>}
  */
 async function prepareFileListForMoving(dirPath, destinationPath, ignoreList) {
   const files = await readdir(dirPath)
@@ -334,7 +334,7 @@ async function prepareFileListForMoving(dirPath, destinationPath, ignoreList) {
  * Moves files.
  * @param {Boolean} muted To mute logs
  * @param {Array<Record<'oldPath'|'newPath'|'name',String>} fileList
- * @return {Array<Record<'status'|'msg'|'newPath'|'oldPath'|'name',String>}
+ * @return {Promise<Array<Record<'status'|'msg'|'newPath'|'oldPath'|'name',String>>}
  */
 async function moveFiles(muted, fileList) {
   const report = []
