@@ -152,6 +152,37 @@ async function startAllBlock() {
   }
   if (emData.status === 'success') {
     const pary = []
+
+    // install deps in sharedBlocks
+    for (const sharedFnBlock of appConfig.sharedFnBlocks) {
+      pary.push(
+        runBash(global.usePnpm ? 'pnpm install' : sharedFnBlock.meta.postPull, path.resolve(sharedFnBlock.directory))
+      )
+      try {
+        const _e = readFileSync(path.join(sharedFnBlock.directory, '.env')).toString().trim()
+        const _b = _e.split('\n').reduce((acc, curr) => {
+          const [k, v] = curr.split('=')
+          const _n = `${sharedFnBlock.meta.name.toLocaleUpperCase()}_${k}`
+          acc[_n] = v
+          return acc
+        }, {})
+        await updateEnv('function', _b)
+      } catch (_) {
+        noop()
+      }
+      appConfig.startedBlock = {
+        name: sharedFnBlock.meta.name,
+        pid: emData.data.pid || null,
+        isOn: true,
+        port: null,
+        log: {
+          out: `./logs/out/functions.log`,
+          err: `./logs/err/functions.log`,
+        },
+      }
+    }
+
+    // install deps in fnBlocks
     for (const fnBlock of appConfig.fnBlocks) {
       pary.push(runBash(global.usePnpm ? 'pnpm install' : fnBlock.meta.postPull, path.resolve(fnBlock.directory)))
       // if (i.status === 'failed') {
@@ -181,6 +212,7 @@ async function startAllBlock() {
       }
     }
 
+    // install deps in jobBlocks
     for (const jobBlock of appConfig.jobBlocks) {
       pary.push(runBash(global.usePnpm ? 'pnpm install' : jobBlock.meta.postPull, path.resolve(jobBlock.directory)))
       // if (i.status === 'failed') {

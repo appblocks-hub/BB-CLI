@@ -23,19 +23,18 @@ const { appConfig } = require('../utils/appconfigStore')
  */
 const rowGenerate = (isLive, g) => {
   const { red, whiteBright, green } = chalk
-  if (isLive) {
-    const url = ['function', 'job'].includes(g.meta.type) ? `localhost:${g.port}/${g.meta.name}` : `localhost:${g.port}`
-    return [
-      whiteBright(g.meta.name),
-      g.meta.type,
-      g.pid,
-      g.port,
-      { content: url, href: `http://${url}` },
-      g.log.out,
-      green('LIVE'),
-    ]
-  }
-  return [whiteBright(g.meta.name), g.meta.type, 'Null', 'Null', '...', '...', red('OFF')]
+  const { meta } = g
+  const { name, type } = meta
+
+  if (!isLive) return [whiteBright(name), type, 'Null', 'Null', '...', '...', red('OFF')]
+
+  let url = `localhost:${g.port}`
+
+  if (type === 'shared-fn') url = ''
+  if (type === 'function') url = `localhost:${g.port}/${name}`
+  if (type === 'job') url = `localhost:${g.port}/${name}`
+
+  return [whiteBright(name), type, g.pid, g.port, { content: url, href: `http://${url}` }, g.log.out, green('LIVE')]
 }
 
 const ls = async (options) => {
