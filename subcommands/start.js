@@ -141,7 +141,7 @@ async function startAllBlock() {
   // Build env for all blocks
   const PORTS = await getFreePorts(appConfig)
 
-  spinnies.add('emulator', { text: 'Staring emulator' })
+  spinnies.add('emulator', { text: 'Starting emulator' })
   switch (emulateLang) {
     case 'nodejs':
       emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
