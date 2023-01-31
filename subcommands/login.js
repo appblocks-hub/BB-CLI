@@ -17,19 +17,19 @@ const login = async (options) => {
   const presentTOKEN = configstore.get('appBlockUserToken', '')
 
   if (presentTOKEN) {
-    const user = await getShieldSignedInUser(presentTOKEN)
-    if (user.user === configstore.get('appBlockUserName', '')) {
-      console.log(`Already signed in as ${user.user}`)
+    const { user } = await getShieldSignedInUser(presentTOKEN)
+    if (user && user === configstore.get('appBlockUserName', '')) {
+      console.log(`Already signed in as ${user}`)
       return
     }
   }
   const { localhost } = options
   const { data } = await loginWithAppBlock(localhost)
   configstore.set('appBlockUserToken', data.access_token)
-  const user = await getShieldSignedInUser(data.access_token)
-  configstore.set('appBlockUserName', user.user)
+  const { user } = await getShieldSignedInUser(data.access_token)
+  configstore.set('appBlockUserName', user)
 
-  feedback({ type: 'success', message: `Successfully logged in as ${user.user}` })
+  feedback({ type: 'success', message: `Successfully logged in as ${user}` })
 }
 
 module.exports = login

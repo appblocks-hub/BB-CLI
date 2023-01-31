@@ -15,7 +15,7 @@ const { getShieldSignedInUser } = require('./getSignedInUser')
 
 /**
  * Checks if Shield auth is valid or needs re auth
- * @returns {returnObject}
+ * @returns {Promise<returnObject>}
  */
 async function checkAuth() {
   const redo = { redoShieldAuth: true }
@@ -23,11 +23,11 @@ async function checkAuth() {
   const token = configstore.get('appBlockUserToken', '')
   if (token) {
     try {
-      const user = await getShieldSignedInUser(token)
-      if (user.user === configstore.get('appBlockUserName', '')) {
-        return noredo
+      const { user } = await getShieldSignedInUser(token)
+      if (!user) {
+        return redo
       }
-      return redo
+      return noredo
     } catch (err) {
       console.log(`Something is wrong with shield\n${err}`)
       return redo

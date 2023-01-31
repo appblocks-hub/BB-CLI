@@ -7,7 +7,7 @@
 
 // TODO -- could retry 3 times.
 const axios = require('axios')
-const { appBlockOrigin, githubGraphQl } = require('./api')
+const { appBlockVerifyToken, githubGraphQl, clientId } = require('./api')
 
 /**
  * @typedef userObject
@@ -67,17 +67,27 @@ async function getGithubSignedInUser(TOKEN) {
   }
 }
 
+/**
+ * @typedef {object} t1_user
+ * @property {string?} user
+ * @property {string} token
+ */
+/**
+ * Checks for the validity of the provided token, returns token and username
+ * @param {string} TOKEN oAuth token string
+ * @returns {Promise<t1_user>}
+ */
 async function getShieldSignedInUser(TOKEN) {
   const user = { token: TOKEN }
-  const url = `${appBlockOrigin}/device/get-email`
+
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${TOKEN}`,
-    // Accept: 'application/vnd.github.v4+json',
+    'Client-Id': clientId,
   }
   try {
-    // Check if TOKEN still working
-    const response = await axios.get(url, { headers })
+    // Check if TOKEN still valid
+    const response = await axios.post(appBlockVerifyToken, {}, { headers })
     user.user = response.data.email
   } catch (e) {
     user.user = 'default-user'
@@ -85,7 +95,7 @@ async function getShieldSignedInUser(TOKEN) {
     // console.log(e.response.status, e.response.statusText, e.response.data)
     // if status is 401 return with message {user,error}
     // else retry with 1sec delay
-    if (e.response.status === 401) {
+    if (e.response.status >= 400) {
       user.user = null
     }
     // retry here
