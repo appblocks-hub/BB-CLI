@@ -42,12 +42,14 @@ const promptAndSetSpace = async (Data) => {
 const use = async (space_name) => {
   // check space is linked with block
   await appConfig.init()
+  const currentSpaceName = configstore.get('currentSpaceName')
+
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
-    feedback({ type: 'error', message: 'Switiching spaces is not allowed inside block context' })
+    console.log(chalk.dim(`current space is ${currentSpaceName}`))
+    feedback({ type: 'error', message: `Switiching spaces is not allowed inside block context` })
     process.exit(1)
   }
 
-  const currentSpaceName = configstore.get('currentSpaceName')
   if (space_name && currentSpaceName === space_name) {
     feedback({ type: 'info', message: `${space_name} is already set` })
     process.exit(0)

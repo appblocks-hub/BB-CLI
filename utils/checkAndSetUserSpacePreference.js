@@ -23,7 +23,7 @@ async function checkSpaceLinkedToPackageBlock() {
     const spaceId = configstore.get('currentSpaceId')
 
     if (!spaceId || !lrManager.isSpaceLinkedToPackageBlock(name, spaceId)) {
-      const { space_name, space_id } = lrManager.linkedSpaceOfPackageBlock(name)
+      const { space_name, space_id } = await lrManager.linkedSpaceOfPackageBlock(name)
 
       if (!space_name) return false
 
@@ -34,7 +34,7 @@ async function checkSpaceLinkedToPackageBlock() {
       })
 
       if (!switchSpace) {
-        feedback({ type: 'error', message: `Access denied` })
+        feedback({ type: 'error', message: `Access denied for current space` })
         process.exit(0)
       }
 
@@ -45,7 +45,7 @@ async function checkSpaceLinkedToPackageBlock() {
       feedback({ type: 'success', message: `Current Space: ${configstore.get('currentSpaceName')}` })
     }
   }
-  return true
+  return false
 }
 
 async function checkAndSetUserSpacePreference() {
