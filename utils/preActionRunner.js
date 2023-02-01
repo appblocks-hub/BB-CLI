@@ -120,6 +120,17 @@ const preActionChecks = async (actionCommand) => {
       await checkAndSetUserSpacePreference()
       break
 
+    case 'create-version':
+      await ensureUserLogins()
+      await checkAndSetGitConnectionPreference()
+      await checkAndSetUserSpacePreference()
+      break
+
+    case 'publish':
+      await ensureUserLogins()
+      await checkAndSetUserSpacePreference()
+      break
+
     case 'connect':
       if (!isGitInstalled()) {
         console.log('Git not installed')

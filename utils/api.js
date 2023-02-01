@@ -4,6 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+const clientId = 'console-appblocks-1842'
 
 const api = {}
 // api.appBlockOrigin = `http://shield.appblock.io`
@@ -11,6 +12,7 @@ api.appBlockOrigin = `https://shield.appblocks.com`
 api.appBlockLogin = `${api.appBlockOrigin}/login`
 api.appBlockLogout = `${api.appBlockOrigin}/logout`
 api.appBlockAccessToken = `${api.appBlockOrigin}/auth/device/get-token`
+api.appBlockVerifyToken = `${api.appBlockOrigin}/device/verify-token`
 
 // BLOCKS-REGISTRY
 api.appBlockRegistryOrigin = `https://api-blocks-registry.appblocks.com`
@@ -88,4 +90,4 @@ github.githubGetDeviceCode = `${github.githubLogin}/device/code`
 github.githubGetAccessToken = `${github.githubLogin}/oauth/access_token`
 github.githubClientID = '5a77c38abd2e3e84d4e9'
 
-module.exports = { ...api, ...github }
+module.exports = { ...api, ...github, clientId }

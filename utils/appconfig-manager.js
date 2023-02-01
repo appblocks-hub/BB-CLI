@@ -217,6 +217,11 @@ class AppblockConfigManager {
     return this.getDependencies(false, filter)
   }
 
+  get sharedFnBlocks() {
+    const filter = (block) => ['shared-fn'].includes(block.meta.type)
+    return this.getDependencies(false, filter)
+  }
+
   get jobBlocks() {
     const filter = (block) => ['job'].includes(block.meta.type)
     return this.getDependencies(false, filter)

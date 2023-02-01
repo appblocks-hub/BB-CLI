@@ -14,7 +14,7 @@ const chalk = require('chalk')
 portfinder.basePort = 8002
 
 const { respondWithFile, getCallbackUrl, getLoginUrl } = require('./utils/authUtils')
-const { appBlockLogin, appBlockAccessToken } = require('./utils/api')
+const { appBlockLogin, appBlockAccessToken, clientId } = require('./utils/api')
 const { getDeviceCode } = require('./utils/questionPrompts')
 
 module.exports = {
@@ -81,7 +81,7 @@ async function getTokensFromAuthorizationCode(code) {
 }
 async function loginWithoutLocalhost() {
   const callbackUrl = getCallbackUrl()
-  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'console-appblocks-1842')
+  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', clientId)
 
   // logger.info();
   // logger.info("Visit this URL on any device to log in:");
@@ -198,7 +198,7 @@ async function loginWithAppBlock(localhost, userHint) {
  */
 async function loginWithLocalhostAppBlock(port) {
   const callbackUrl = getCallbackUrl(port)
-  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', 'console-appblocks-1842')
+  const authUrl = getLoginUrl(appBlockLogin, callbackUrl, 'userhint', _nonce, 'device_code', clientId)
   // console.log(port, authUrl, callbackUrl)
   // const successTemplate = "../templates/loginSuccess.html";
   const tokens = await loginWithLocalhost(

@@ -8,15 +8,13 @@
 /* eslint-disable consistent-return */
 const path = require('path')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
-// const { execSync } = require('child_process')
-// const { transports } = require('winston')
+const { transports } = require('winston')
 const chalk = require('chalk')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
 const createBlock = require('../utils/createBlock')
 const { createFileSync, createDirForType, isDirEmpty } = require('../utils/fileAndFolderHelpers')
 const {
   getBlockType,
-  // getBlockShortName,
   getBlockName,
   getGitConfigNameEmail,
   readInput,
@@ -24,7 +22,7 @@ const {
 } = require('../utils/questionPrompts')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { checkAndSetGitConfigNameEmail } = require('../utils/gitCheckUtils')
-// const { logger } = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { appConfig } = require('../utils/appconfigStore')
 
 const {
@@ -62,8 +60,9 @@ const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
 const getRepoUrl = require('../utils/noRepo')
+const { getBlockDetails } = require('../utils/registryUtils')
 
-// logger.add(new transports.File({ filename: 'create.log' }))
+logger.add(new transports.File({ filename: 'create.log' }))
 
 /**
  * @typedef createCommandOptions
@@ -132,6 +131,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     const { DIRPATH, blockFinalName: bfn } = await initializePackageBlock(packageBlockName, { autoRepo })
     packageName = bfn
 
+    console.log(`block final name from initializePackageBlock in create : ${bfn}`)
     // eslint-disable-next-line no-param-reassign
     cwd = DIRPATH
     // Init for new
@@ -140,7 +140,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
   }
 
-  // logger.info(`Create called with ${blockName} and ${type || 'no type'}`)
+  logger.info(`Create called with ${blockName} and ${type || 'no type'}`)
   try {
     if (!isValidBlockName(blockName)) {
       feedback({
@@ -149,19 +149,17 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       })
       blockName = await getBlockName()
     }
-    // logger.info(`changed name to ${blockName}`)
+    logger.info(`changed name to ${blockName}`)
     if (!type) {
       type = await getBlockType()
-      // logger.info(`Prompted user for a type and got back ${type}`)
+      logger.info(`Prompted user for a type and got back ${type}`)
     }
 
     let jobConfig = {}
     if (type === 7) jobConfig = await getJobConfig()
 
     const availableName = await checkBlockNameAvailability(blockName)
-    // logger.info(
-    //   `${blockName} checked against registry and ${availableName} is finalized`
-    // )
+    logger.info(`${blockName} checked against registry and ${availableName} is finalized`)
 
     if (appConfig.isOutOfContext) {
       standAloneBlock = false
@@ -194,21 +192,54 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       cloneDirName = blockFinalName
     }
 
+    const packageBlockName = appConfig.config?.name
+    let package_block_id
+
+    if (packageBlockName) {
+      const {
+        status,
+        data: { err, msg, data: packageBlockDetails },
+      } = await getBlockDetails(packageBlockName)
+
+      if (status === 204) {
+        feedback({ type: 'info', message: `${packageBlockName} doesn't exists in block repository` })
+        return
+      }
+      if (err) throw new Error(msg).message
+
+      package_block_id = packageBlockDetails.ID
+    }
+
+    if (!packageBlockName && type !== 1) {
+      throw new Error('Cannot create block without package block')
+    }
+
     if (autoRepo) {
       // const shortName = await getBlockShortName(availableName)
-      const d = await createBlock(availableName, availableName, type, '', false, cwd || '.', standAloneBlock, jobConfig)
+      const d = await createBlock(
+        availableName,
+        availableName,
+        type,
+        '',
+        false,
+        cwd || '.',
+        standAloneBlock,
+        jobConfig,
+        null,
+        package_block_id
+      )
       blockFinalName = d.blockFinalName
       blockSource = d.blockSource
       cloneDirName = d.cloneDirName
       clonePath = d.clonePath
     }
 
-    // logger.info(`${blockName} created and registered as ${availableName}`)
+    logger.info(`${blockName} created and registered as ${availableName}`)
 
-    // logger.info(`blockSource - ${blockSource}`)
-    // logger.info(`cloneDirName - ${cloneDirName}`)
-    // logger.info(`clonePath - ${clonePath}`)
-    // logger.info(`blockFinalName - ${blockFinalName}`)
+    logger.info(`blockSource - ${blockSource}`)
+    logger.info(`cloneDirName - ${cloneDirName}`)
+    logger.info(`clonePath - ${clonePath}`)
+    logger.info(`blockFinalName - ${blockFinalName}`)
     // const [dir] = [blockFinalName]
     // const DIRPATH = path.resolve(dir)
 
@@ -251,14 +282,8 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     // execSync(`cd ${cloneDirName}`)
     createFileSync(path.resolve(clonePath, cloneDirName, `block.config.json`), blockDetails)
 
-    // logger.info(
-    //   `block config created at ${path.resolve(
-    //     clonePath,
-    //     cloneDirName,
-    //     `block.config.json`
-    //   )}`
-    // )
-    // logger.info(blockDetails)
+    logger.info(`block config created at ${path.resolve(clonePath, cloneDirName, `block.config.json`)}`)
+    logger.info(blockDetails)
 
     console.log(chalk.dim('Block config created'))
 
@@ -277,7 +302,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
     const entry = path.resolve(clonePath, cloneDirName)
 
-    // logger.info(`Entry path - ${entry}`)
+    logger.info(`Entry path - ${entry}`)
 
     try {
       console.log('Please enter git username and email')
@@ -295,23 +320,23 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
        */
       if (type === 4) {
         // function
-        const indexString = generateIndex(blockName)
+        const indexString = generateIndex(blockFinalName)
         writeFileSync(`${entry}/index.js`, indexString)
-        const packageJsonString = generatePackageJson(blockName)
+        const packageJsonString = generatePackageJson(blockFinalName)
         writeFileSync(`${entry}/package.json`, packageJsonString)
         const gitIgnoreString = generateGitIgnore()
         writeFileSync(`${entry}/.gitignore`, gitIgnoreString)
-        const readmeString = generateFunctionReadme(blockName)
+        const readmeString = generateFunctionReadme(blockFinalName)
         writeFileSync(`${entry}/README.md`, readmeString)
       } else if (type === 2) {
         // ui-container
-        createUiContainerFolders(entry, blockName)
+        createUiContainerFolders(entry, blockFinalName)
       } else if (type === 3) {
         // ui-element
-        createUiElementFolders(entry, blockName)
+        createUiElementFolders(entry, blockFinalName)
       } else if (type === 7) {
         // job
-        generateJobBlock(entry, blockName)
+        generateJobBlock(entry, blockFinalName)
       }
 
       /**
@@ -337,8 +362,8 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
   } catch (err) {
     console.log(err)
     console.log('Something went wrong while creating!')
-    // logger.info('ERROR')
-    // logger.error(err)
+    logger.info('ERROR')
+    logger.error(err)
     throw new CreateError('create failed')
   }
 }

@@ -11,9 +11,11 @@ const chalk = require('chalk')
 const { setWithTemplate } = require('../../utils/questionPrompts')
 const setupTemplate = require('./setupTemplate')
 const initializePackageBlock = require('./initializePackageBlock')
+const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
 
 const init = async (appblockName, options) => {
   const initializedData = await initializePackageBlock(appblockName, options)
+  await initializeSpaceToPackageBlock(initializedData.blockFinalName)
   const { useTemplate } = await setWithTemplate()
   if (useTemplate) await setupTemplate(initializedData)
 

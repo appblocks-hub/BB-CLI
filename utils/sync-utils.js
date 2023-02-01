@@ -12,6 +12,7 @@ const { rename, rm } = require('fs/promises')
 const path = require('path')
 const { configstore } = require('../configstore')
 const create = require('../subcommands/create')
+const { blockTypeInverter } = require('./blockTypeInverter')
 const { CreateError } = require('./errors/createError')
 const { moveFiles, prepareFileListForMoving, ensureDirSync } = require('./fileAndFolderHelpers')
 const { GitManager } = require('./gitmanager')
@@ -43,7 +44,6 @@ const offerAndCreateBlock = async (list) => {
    */
   if (ans) {
     for (let i = 0; i < list.length; i += 1) {
-      console.log(`${i}-I`)
       const ele = list[i]
       report[i] = { oldPath: ele }
       const hasGitFolder = existsSync(path.resolve(ele, '.git'))
@@ -100,11 +100,11 @@ const offerAndCreateBlock = async (list) => {
         try {
           const { clonePath, cloneDirName, blockDetails } = await create(
             blockName,
-            { type: type || null },
+            { type: blockTypeInverter(type) || null, autoRepo: true },
             null,
             true,
             path.resolve(ele, '../'),
-            true
+            false
           )
 
           const newPath = path.join(clonePath, cloneDirName)
@@ -115,7 +115,7 @@ const offerAndCreateBlock = async (list) => {
             registered: true,
             sourcemismatch: false,
             name: blockName,
-            newName: blockName,
+            newName: blockDetails.name,
             data: {
               detailsInRegistry: blockDetails,
               localBlockConfig: blockDetails,

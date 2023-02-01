@@ -50,7 +50,8 @@ async function createBlock(
   // eslint-disable-next-line default-param-last
   isAStandAloneBlock = false,
   jobConfig,
-  metaData
+  metaData,
+  package_block_id
 ) {
   if (arguments.length < 6) throw new Error('NotEnoughArguments in CreateBlock')
 
@@ -214,7 +215,8 @@ async function createBlock(
       visibility === 'PUBLIC',
       sshUrl,
       description,
-      jobConfig
+      jobConfig,
+      package_block_id
     )
   } catch (err) {
     console.log(err.message)
