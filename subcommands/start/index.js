@@ -5,83 +5,22 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { createReadStream, watchFile, readFileSync } = require('fs')
-const { Stream } = require('stream')
-const readline = require('readline')
+const { readFileSync } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { noop } = require('rxjs')
-const { runBash, runBashLongRunning } = require('./bash')
-const { getFreePorts } = require('./port-check')
-const { getAbsPath } = require('../utils/path-helper')
-const emulateNode = require('./emulate')
-const { setupEnv, updateEnv } = require('../utils/env')
-const { appConfig } = require('../utils/appconfigStore')
-const { checkPnpm } = require('../utils/pnpmUtils')
-const { spinnies } = require('../loader')
+const { getFreePorts } = require('../port-check')
+const { getAbsPath } = require('../../utils/path-helper')
+const emulateNode = require('../emulate')
+const { setupEnv, updateEnv } = require('../../utils/env')
+const { spinnies } = require('../../loader')
+const { checkPnpm } = require('../../utils/pnpmUtils')
+const { appConfig } = require('../../utils/appconfigStore')
+const { runBash, runBashLongRunning } = require('../bash')
+const watchCompilation = require('./watchCompilation')
+const envToObj = require('./envToObj')
 
 global.rootDir = process.cwd()
-
-const watchCompilation = (logPath, errPath) =>
-  new Promise((resolve, reject) => {
-    let ERROR = false
-    const report = { errors: [] }
-    const outStream = new Stream()
-    watchFile(path.resolve(logPath), { persistent: false }, (currStat, prevStat) => {
-      const inStream = createReadStream(path.resolve(logPath), {
-        autoClose: false,
-        encoding: 'utf8',
-        start: prevStat.size,
-        end: currStat.size,
-      })
-      const onLine = (line) => {
-        if (line.includes('ERROR')) {
-          ERROR = true
-        } else if (ERROR) {
-          report.errors.push(line)
-          ERROR = false
-        }
-      }
-      const onError = (err) => {
-        report.errors.push(err.message.split('\n')[0])
-        reject(report)
-      }
-      const onClose = () => {
-        inStream.destroy()
-        resolve(report)
-      }
-      const rl = readline.createInterface(inStream, outStream)
-      rl.on('line', onLine)
-      rl.on('error', onError)
-      rl.on('close', onClose)
-    })
-    watchFile(path.resolve(errPath), { persistent: false }, (currStat, prevStat) => {
-      const inStream = createReadStream(path.resolve(errPath), {
-        autoClose: false,
-        encoding: 'utf8',
-        start: prevStat.size,
-        end: currStat.size,
-      })
-      const onLine = (line) => {
-        if (line.includes('[webpack-cli]')) {
-          report.errors.push(line)
-        }
-      }
-      const onError = (err) => {
-        report.errors.push(err.message.split('\n')[0])
-        reject(report)
-      }
-      const onClose = () => {
-        inStream.destroy()
-        report.message = 'Webpack failed'
-        resolve(report)
-      }
-      const rl = readline.createInterface(inStream, outStream)
-      rl.on('line', onLine)
-      rl.on('error', onError)
-      rl.on('close', onClose)
-    })
-  })
 
 const start = async (blockname, { usePnpm }) => {
   global.usePnpm = false
@@ -154,24 +93,14 @@ async function startAllBlock() {
     const pary = []
 
     // install deps in sharedBlocks
-    for (const sharedFnBlock of appConfig.sharedFnBlocks) {
-      pary.push(
-        runBash(global.usePnpm ? 'pnpm install' : sharedFnBlock.meta.postPull, path.resolve(sharedFnBlock.directory))
-      )
-      try {
-        const _e = readFileSync(path.join(sharedFnBlock.directory, '.env')).toString().trim()
-        const _b = _e.split('\n').reduce((acc, curr) => {
-          const [k, v] = curr.split('=')
-          const _n = `${sharedFnBlock.meta.name.toLocaleUpperCase()}_${k}`
-          acc[_n] = v
-          return acc
-        }, {})
-        await updateEnv('function', _b)
-      } catch (_) {
-        noop()
-      }
+    for (const { meta, directory } of appConfig.sharedFnBlocks) {
+      pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+
+      const _ = await envToObj(path.resolve(directory, '.env'))
+      await updateEnv('function', _)
+
       appConfig.startedBlock = {
-        name: sharedFnBlock.meta.name,
+        name: meta.name,
         pid: emData.data.pid || null,
         isOn: true,
         port: null,
@@ -183,28 +112,19 @@ async function startAllBlock() {
     }
 
     // install deps in fnBlocks
-    for (const fnBlock of appConfig.fnBlocks) {
-      pary.push(runBash(global.usePnpm ? 'pnpm install' : fnBlock.meta.postPull, path.resolve(fnBlock.directory)))
+    for (const { meta, directory } of appConfig.fnBlocks) {
+      pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
-      try {
-        const _e = readFileSync(path.join(fnBlock.directory, '.env')).toString().trim()
-        const _b = _e.split('\n').reduce((acc, curr) => {
-          const [k, v] = curr.split('=')
-          const _n = `${fnBlock.meta.name.toLocaleUpperCase()}_${k}`
-          acc[_n] = v
-          return acc
-        }, {})
-        await updateEnv('function', _b)
-      } catch (_) {
-        noop()
-      }
+      const _ = await envToObj(path.resolve(directory, '.env'))
+      await updateEnv('function', _)
+
       appConfig.startedBlock = {
-        name: fnBlock.meta.name,
+        name: meta.name,
         pid: emData.data.pid || null,
         isOn: true,
-        port: emData.data.port[fnBlock.meta.type] || emData.data.port || null,
+        port: emData.data.port[meta.type] || emData.data.port || null,
         log: {
           out: `./logs/out/functions.log`,
           err: `./logs/err/functions.log`,
@@ -213,28 +133,19 @@ async function startAllBlock() {
     }
 
     // install deps in jobBlocks
-    for (const jobBlock of appConfig.jobBlocks) {
-      pary.push(runBash(global.usePnpm ? 'pnpm install' : jobBlock.meta.postPull, path.resolve(jobBlock.directory)))
+    for (const { meta, directory } of appConfig.jobBlocks) {
+      pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
       // if (i.status === 'failed') {
       //   throw new Error(i.msg)
       // }
-      try {
-        const _e = readFileSync(path.join(jobBlock.directory, '.env')).toString().trim()
-        const _b = _e.split('\n').reduce((acc, curr) => {
-          const [k, v] = curr.split('=')
-          const _n = `${jobBlock.meta.name.toLocaleUpperCase()}_${k}`
-          acc[_n] = v
-          return acc
-        }, {})
-        await updateEnv('function', _b)
-      } catch (_) {
-        noop()
-      }
+      const _ = await envToObj(path.resolve(directory, '.env'))
+      await updateEnv('function', _)
+
       appConfig.startedBlock = {
-        name: jobBlock.meta.name,
+        name: meta.name,
         pid: emData.data.pid || null,
         isOn: true,
-        port: emData.data.port[jobBlock.meta.type] || emData.data.port || null,
+        port: emData.data.port[meta.type] || emData.data.port || null,
         log: {
           out: `./logs/out/functions.log`,
           err: `./logs/err/functions.log`,
