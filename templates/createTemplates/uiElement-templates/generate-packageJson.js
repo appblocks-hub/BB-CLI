@@ -25,7 +25,7 @@ const generateUiElementPackageJson = (name) => `{
     "webpack": "^5.52.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.1.0",
-    "@appblocks/node-sdk": "^0.0.3",
+    "@appblocks/node-sdk": "0.0.4",
     "@module-federation/fmr": "^0.0.7"
   },
   "dependencies": {
