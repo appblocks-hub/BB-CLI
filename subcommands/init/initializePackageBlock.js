@@ -20,6 +20,7 @@ const { isValidBlockName } = require('../../utils/blocknameValidator')
 const { feedback } = require('../../utils/cli-feedback')
 const { lrManager } = require('../../utils/locaRegistry/manager')
 const getRepoUrl = require('../../utils/noRepo')
+const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
 
 const initializePackageBlock = async (appblockName, options) => {
   const { autoRepo } = options
@@ -94,6 +95,8 @@ const initializePackageBlock = async (appblockName, options) => {
     name: blockFinalName,
     rootPath: path.resolve(blockFinalName),
   }
+
+  await initializeSpaceToPackageBlock(blockFinalName)
 
   return { DIRPATH, blockFinalName, Git, prefersSsh }
 }

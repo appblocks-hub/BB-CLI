@@ -27,7 +27,7 @@
   "dependencies": {
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "@appblocks/js-sdk": "^0.0.2",
-    "@appblocks/node-sdk": "^0.0.3"
+    "@appblocks/js-sdk": "0.0.9",
+    "@appblocks/node-sdk": "0.0.4"
   }
 }
