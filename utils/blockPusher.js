@@ -9,6 +9,9 @@
 const chalk = require('chalk')
 const { fork, execSync } = require('child_process')
 const path = require('path')
+const babelParser = require('@babel/parser')
+const { readFileSync } = require('fs')
+const traverse = require('@babel/traverse').default
 
 class BlockPusher {
   constructor(block, bar) {
@@ -16,6 +19,7 @@ class BlockPusher {
     this.blockPath = block.directory
     this.blockName = block.meta.name
     this.blockSource = block.meta.source
+    this.blockType = block.meta.type
     this.progress = bar.create(10, 0, {
       // TODO -- change this to a dynamic bar, so no need to give the length(10) here
       // it could be any number
@@ -25,11 +29,45 @@ class BlockPusher {
     this.report = { name: this.blockName, data: { message: '', type: '' } }
   }
 
+  async checkHandlerExport() {
+    const indexFile = readFileSync(path.join(this.blockPath, 'index.js'), {
+      encoding: 'utf8',
+    })
+    const indexCode = babelParser.parse(indexFile, { sourceType: 'module' })
+
+    let result = true
+    traverse(indexCode, {
+      ExportDefaultDeclaration(ex) {
+        if (ex.node.type === 'ExportDefaultDeclaration') {
+          result = ex.node.declaration.type === 'Identifier' && ex.node.declaration.name === 'handler'
+        }
+      },
+    })
+
+    return result
+  }
+
   push(...args) {
     // console.log('push args', args)
-    return new Promise((res, rej) => {
-      this.child = fork(path.join(__dirname, 'blockPushProcess.js'), {})
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise(async (res, rej) => {
       const payload = { block: this.blockName }
+
+      if (['function'].includes(this.blockType)) {
+        const result = await this.checkHandlerExport()
+        if (!result) {
+          this.report.data = {
+            message: `Failed to push ${chalk.whiteBright(this.blockName)}.\nFunction should export handler as default.`,
+          }
+          this.progress.update({ status: 'failed', ...payload })
+          this.report.data.type = 'error'
+          this.progress.stop()
+          rej(this.report)
+          return
+        }
+      }
+
+      this.child = fork(path.join(__dirname, 'blockPushProcess.js'), {})
       this.child.on('message', ({ failed, message, errorCode }) => {
         this.report.data = { message, type: 'success' }
         if (!failed) {

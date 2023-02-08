@@ -1,6 +1,6 @@
 const generateIndex = (funcName) => `
 
-const ${funcName} = async (req, res) => {
+const handler = async (req, res) => {
 
   // health check
   if (req.params["health"] === "health") {
@@ -9,12 +9,12 @@ const ${funcName} = async (req, res) => {
   }
 
   // Add your code here
-  res.write(JSON.stringify({success: true, msg: \`Hello ${funcName}\`}))
+  res.write(JSON.stringify({success: true, msg: \`Happy Hacking\`}))
   res.end()
   
 }
 
-export default ${funcName}
+export default handler
 `
 
 module.exports = { generateIndex }

@@ -31,7 +31,7 @@ const updateLanguageVersionCommand = async (blockName) => {
     spinnies.remove('p1')
 
     if (blockVersions.length < 1) {
-      console.log('Please publish the block to add languageVersion')
+      console.log('Please publish the block to add language version')
       process.exit(1)
       return
     }
@@ -52,7 +52,7 @@ const updateLanguageVersionCommand = async (blockName) => {
       blockVersion,
     })
 
-    spinnies.add('p1', { text: `Updating block languageVersions` })
+    spinnies.add('p1', { text: `Updating block language versions` })
     const updated = await updateLanguageVersions({
       blockVersionId,
       blockId,
@@ -61,7 +61,7 @@ const updateLanguageVersionCommand = async (blockName) => {
     })
     spinnies.succeed('p1', {
       text: updated
-        ? `Updated block languageVersions successfully`
+        ? `Updated block language versions successfully`
         : `No changes were made to the block languageVersions`,
     })
   } catch (error) {

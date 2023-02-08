@@ -24,7 +24,7 @@ const feedback = (obj) => {
   }
 
   // Split in 75 letters
-  const parts = message.match(/.{1,75}/g) || []
+  const parts = message?.match(/.{1,75}/g) || []
 
   parts.forEach((v) => console.log(`${prefixes[type]} ${white(v)}`))
 }
