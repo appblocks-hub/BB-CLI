@@ -18,6 +18,7 @@ const init = async (appblockName, options) => {
   if (useTemplate) await setupTemplate(initializedData)
 
   console.log(chalk.dim(`\ncd ${initializedData.blockFinalName} and start hacking\n`))
+  console.log(chalk.dim(`run bb sync from ${initializedData.blockFinalName} to register templates as new block`))
 }
 
 module.exports = init

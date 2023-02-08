@@ -144,8 +144,8 @@ const offerAndCreateBlock = async (list) => {
             name: blockDetails.name,
             source: blockDetails.source,
           }
-          console.log('newconfig')
-          console.log(newConfig)
+          // console.log('newconfig')
+          // console.log(newConfig)
           console.log(`Writing new config to ${newPath}`)
           writeFileSync(`${newPath}/block.config.json`, JSON.stringify(newConfig))
           // ////////////////////////////////////////

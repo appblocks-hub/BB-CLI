@@ -5,7 +5,7 @@ const { readFile, writeFile, rename } = require('fs/promises')
 const { readFileSync, writeFileSync, renameSync, readdirSync, statSync } = require('fs')
 
 const { createDirForType, ensureDirSync } = require('../../utils/fileAndFolderHelpers')
-const { wantToCreateNewVersion, wouldLikeToRegisterTemplateBlocksAsNewBlock } = require('../../utils/questionPrompts')
+const { wantToCreateNewVersion } = require('../../utils/questionPrompts')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 const checkBlockNameAvailability = require('../../utils/checkBlockNameAvailability')
 const { checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
@@ -17,7 +17,8 @@ const setupTemplate = async (options) => {
   const { DIRPATH, blockFinalName, Git, prefersSsh } = options
 
   const templatesPath = path.join(__dirname, '..', '..', 'templates', 'simple-todo-template')
-  const fastForward = await wouldLikeToRegisterTemplateBlocksAsNewBlock()
+  // const fastForward = await wouldLikeToRegisterTemplateBlocksAsNewBlock()
+  const fastForward = false
 
   ;(async function installDependencies(l, config, relativeDir) {
     const level = l + 1
@@ -280,7 +281,7 @@ const setupTemplate = async (options) => {
 
   // execSync(`npm i -g ${path.join(packagesPath, 'node-block-sdk')}`)
   // console.log('Use block push after changing')
-  console.log('Finished setting up template.')
+  // console.log('Finished setting up template.')
   // await createBlock(componentName, componentName, 'appBlock', '')
 
   process.on('SIGINT', () => {
