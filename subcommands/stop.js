@@ -6,7 +6,7 @@
  */
 
 const chalk = require('chalk')
-const { execSync } = require('child_process')
+const treeKill = require('tree-kill')
 const { stopEmulator } = require('../utils/emulator-manager')
 const { appConfig } = require('../utils/appconfigStore')
 const { sleep } = require('../utils')
@@ -85,7 +85,7 @@ async function stopAllBlock(rootPath) {
     meta: { name },
   } of appConfig.uiBlocks) {
     if (appConfig.isLive(name)) {
-      await stopBlock(name)
+      stopBlock(name)
     }
   }
 
@@ -104,22 +104,21 @@ async function stopAllBlock(rootPath) {
   }
 }
 
-async function stopBlock(name) {
+function stopBlock(name) {
   const liveDetails = appConfig.getLiveDetailsof(name)
   if (liveDetails.isJobOn) {
     console.log('\nLive Job found for this block! Please stop job and try again\n')
     process.exit(1)
   }
-  try {
-    // process.kill(blockToStart.pid, 'SIGKILL')
-    execSync(`pkill -s ${liveDetails.pid}`)
+  treeKill(liveDetails.pid, (err) => {
+    if (err) {
+      console.log('Error in stopping block process with pid ', liveDetails.pid)
+      console.log(err)
+      return
+    }
     appConfig.stopBlock = name
-  } catch (e) {
-    console.log('Error in stopping block process with pid ', liveDetails.pid)
-    console.log(e)
-  }
-
-  console.log(`${name} stopped successfully!`)
+    console.log(`${name} stopped successfully!`)
+  })
 }
 
 module.exports = stop
