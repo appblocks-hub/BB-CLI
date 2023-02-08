@@ -26,6 +26,10 @@ const preActionChecks = async (actionCommand) => {
     case 'stop':
       break
 
+    case 'use':
+      await ensureUserLogins()
+      break
+
     case 'sync':
       if (!isGitInstalled()) {
         console.log('Git not installed')

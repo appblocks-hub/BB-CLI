@@ -45,9 +45,11 @@ const use = async (space_name) => {
   const currentSpaceName = configstore.get('currentSpaceName')
 
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
-    console.log(chalk.dim(`current space is ${currentSpaceName}`))
-    feedback({ type: 'error', message: `Switiching spaces is not allowed inside block context` })
-    process.exit(1)
+    if (currentSpaceName) {
+      console.log(chalk.dim(`current space is ${currentSpaceName}`))
+      feedback({ type: 'error', message: `Switiching spaces is not allowed inside block context` })
+      process.exit(1)
+    }
   }
 
   if (space_name && currentSpaceName === space_name) {
