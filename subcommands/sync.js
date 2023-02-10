@@ -179,7 +179,7 @@ const offerAndMoveBlocks = async (list) => {
       return { oldPath: v.currentLocation, newPath: path.resolve(v.expectedLocation), name: v.name }
     })
   )
-  console.log(t)
+  // console.log(t)
 }
 
 function cb(acc, v) {
@@ -228,6 +228,7 @@ async function getAndCheckAppName() {
  * Scans subdirs recursively.
  */
 const sync = async () => {
+  console.log('\n')
   let appblockIsRegistered = false
   /**
    * @type {blockMetaData}
@@ -250,7 +251,7 @@ const sync = async () => {
       // console.log(err)
       validationData.summary = err.errors
       validationData.isErrored = true
-      err.inner.forEach((e) =>
+      err?.inner?.forEach((e) =>
         validationData.detailedReport.push({
           path: e.path,
           type: e.type,
@@ -261,7 +262,7 @@ const sync = async () => {
         })
       )
     }
-    feedback({ type: 'error', message: `${validationData.summary.join('\n')}` })
+    // feedback({ type: 'error', message: `${validationData.summary.join('\n')}` })
     if (appConfiginLocal.name && appConfiginLocal.type === 'appBlock') {
       insideAppblock = true
       const appid = await getBlockDetails(appConfiginLocal.name)
@@ -284,8 +285,8 @@ const sync = async () => {
           return res.data.data.ID
         })
         .catch((err) => {
-          console.log(err)
-          feedback({ type: 'warn', message: 'Cannot moved forward with operation' })
+          console.log(err?.message || '')
+          feedback({ type: 'warn', message: 'Cannot move forward with operation' })
           process.exit(1)
         })
       if (appblockIsRegistered) {
@@ -298,10 +299,10 @@ const sync = async () => {
            * to work with. As opposed to case where user is providing the appBlock name, where
            * it is necessary to get a config to move forward with the operation.
            */
-          feedback({
-            type: 'info',
-            message: `Couldn't find a config associated with your app..Try pushing config first`,
-          })
+          // feedback({
+          //   type: 'info',
+          //   message: `Couldn't find a config associated with your app..Try pushing config first`,
+          // })
         }
 
         appblockIsRegistered = true
@@ -335,6 +336,7 @@ const sync = async () => {
             feedback({ type: 'info', message: `${findAppBlockWithName.BlockName} has a config in registry` })
             break
           }
+          feedback({ type: 'info', message: `${findAppBlockWithName.BlockName} has no config in registry` })
           findAppBlockWithName = await getAndCheckAppName()
         }
       }
@@ -372,6 +374,7 @@ const sync = async () => {
    * Configure Finder
    */
   const c = new Finder(path.resolve(), ['block.config.json'], 0, ['.git', 'node_modules'], 8)
+  console.log('\n')
   spinnies.add('scanDirs', { text: 'Scanning directories' })
   /**
    * List of all block directories inside the root ( i.e where the sync command is being run )
@@ -380,15 +383,15 @@ const sync = async () => {
   const { dirs: blockDirectories } = await c.walk()
   // TODO: use the below find command, it is 30x faster. find an alternative in windows and handle
   // const fgh = execSync(
-  // 'find "$(cd ..; pwd)" -type d -name node_modules -prune -false -o -name .git -prune -false -o -name "block.config.json"'
+  //   'find "$(cd ..; pwd)" -type d -name node_modules -prune -false -o -name .git -prune -false -o -name "block.config.json"'
   // ).toString()
   // const pss = fgh.trimEnd().split('\n')
 
   if (blockDirectories.length) {
     spinnies.succeed('scanDirs', { text: `Found ${blockDirectories.length} child directories with block.config.json` })
-    console.log('------------------------')
-    console.log(blockDirectories)
-    console.log('------------------------')
+    // console.log('------------------------')
+    // console.log(blockDirectories)
+    // console.log('------------------------')
   } else {
     spinnies.fail('scanDirs', { text: 'Found no child directories' })
   }
@@ -435,24 +438,34 @@ const sync = async () => {
   }
 
   if (sourceFullBlocks.length) {
-    console.log(`Following blocks could be re-registered`)
+    console.log(`\nFollowing blocks could be re-registered`)
     console.log('------------------------------')
-    console.log(sourceFullBlocks)
+    sourceFullBlocks.forEach((v, i) => {
+      const { name } = JSON.parse(fs.readFileSync(path.join(v, 'block.config.json')))
+      console.log(`${i + 1}:${chalk.whiteBright(name)} (${chalk.dim(v)})`)
+    })
     console.log('------------------------------')
   }
 
   const res0 = await offerAndCreateBlock(sourceFullBlocks)
 
   if (sourceLessBlocks.length) {
-    console.log(`Found ${sourceLessBlocks.length} directories with no source in config`)
+    console.log(`\nFound ${sourceLessBlocks.length} directories that could be registered as a new block`)
     console.log('------------------------------')
-    console.log(sourceLessBlocks)
+    sourceLessBlocks.forEach((v, i) => {
+      const { name } = JSON.parse(fs.readFileSync(path.join(v, 'block.config.json')))
+      console.log(`${i + 1}:${chalk.whiteBright(name)} (${chalk.dim(v)})`)
+    })
     console.log('------------------------------')
   }
 
   const res1 = await offerAndCreateBlock(sourceLessBlocks)
 
+  // console.log('res1', res1)
+  // console.log('res0', res0)
+
   const newlyCreateddBlocks = []
+
   res0.forEach((v, i) => {
     // offerAndCreateBlock return an array with exact same length and order as the passed staleDirectories
     // NOTE: if return of offerAndCreateBlock is altered, might need to use find/findIndex and use that index value
@@ -470,6 +483,9 @@ const sync = async () => {
     }
   })
 
+  // console.log('sourceFullBlocks', sourceFullBlocks)
+  // console.log('sourceLessBlocks', sourceLessBlocks)
+
   const localBlocks = sourceFullBlocks.reduce((acc, curr) => {
     const cp = path.resolve(curr, 'block.config.json')
     try {
@@ -481,7 +497,28 @@ const sync = async () => {
     }
   }, [])
 
-  await offerAndDeleteStaleDirectories(sourceLessBlocks)
+  // console.log('localBlocks', localBlocks)
+
+  /**
+   * TODO: staleDirectories... if user registeres in same name..
+   * it will still be present in stale list and be deleted..find a solution
+   */
+
+  // if (sourceLessBlocks.length) {
+  //   console.log(`\n ${sourceLessBlocks.length} directories are stale at this point`)
+  //   console.log('------------------------------')
+  //   sourceLessBlocks.forEach((v, i) => {
+  //     const { name } = JSON.parse(fs.readFileSync(path.join(v, 'block.config.json')))
+  //     console.log(`${i + 1}:${chalk.whiteBright(name)} (${chalk.dim(v)})`)
+  //   })
+  //   console.log('------------------------------')
+  // }
+
+  // await offerAndDeleteStaleDirectories(sourceLessBlocks)
+
+  /**
+   * TODO ^
+   */
 
   const promiseArray = localBlocks.map((v, i) =>
     getBlockDetails(v.name)
@@ -538,7 +575,7 @@ const sync = async () => {
    * @type {[nrbt]}
    */
   const res = await Promise.all(promiseArray)
-  // console.log(res)
+  // console.log({ res })
 
   spinnies.remove('checkInRegistry')
   const { nonRegisteredBlocks, alreadyRegisteredBlocks } = res.reduce(
@@ -573,11 +610,18 @@ const sync = async () => {
   const t = await offerAndRegisterBlocks(nonRegisteredBlocks)
 
   const newlyRegisteredBlocks = t.filter((v) => v.registered)
+  // console.log({ alreadyRegisteredBlocks })
+  // console.log({ newlyRegisteredBlocks })
+  // console.log({ newlyCreateddBlocks })
   const deps = [...alreadyRegisteredBlocks, ...newlyRegisteredBlocks, ...newlyCreateddBlocks].reduce((acc, curr) => {
-    acc[curr.name] = { ...acc[curr.name], directory: curr.directory, meta: curr.data.localBlockConfig }
+    acc[curr.newName ? curr.newName : curr.name] = {
+      ...acc[curr.name],
+      directory: path.relative('.', curr.directory),
+      meta: curr.data.localBlockConfig,
+    }
     return acc
   }, {})
-
+  // console.log({ deps })
   if (deps.length > 0) {
     console.log('New dependencies')
     console.log(deps)
@@ -590,7 +634,7 @@ const sync = async () => {
     // INFO : Found an block.config.json and also the app is registered
     if (!appConfigFromRegistry) {
       // INFO : Local config is present but couldn't find app config in the registry
-      console.log(`${chalk.bgYellow('INFO')} Config not found in  Registry for ${appblockDetails.BlockName}`)
+      // console.log(`${chalk.bgYellow('INFO')} Config not found in  Registry for ${appblockDetails.BlockName}`)
       // Create a full config mixing newly created dependencies and other details from present local config
       const possibleNewConfig = { ...appConfiginLocal, dependencies: { ...deps } }
       const diffed_newlyCreatedConfig_with_PresentConfig = diffObjects(possibleNewConfig, appConfiginLocal)
@@ -696,10 +740,10 @@ const sync = async () => {
       const source = { ssh: GitUrl, https: convertGitSshUrlToHttps(GitUrl) }
       const newAppblockConfig = { name: BlockName, type: 'appBlock', source, dependencies: { ...deps } }
 
-      console.log(`${chalk.bgYellow('INFO')} Writing new config`)
-      console.log(newAppblockConfig)
+      // console.log(`${chalk.bgYellow('INFO')} Writing new config`)
+      // console.log(newAppblockConfig)
       fs.writeSync('block.config.json', JSON.stringify(newAppblockConfig))
-      console.log('New config written')
+      // console.log('New config written')
       console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
       console.log('Please push the new config, If you have access')
       console.log('DONE')

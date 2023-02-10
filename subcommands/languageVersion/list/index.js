@@ -31,7 +31,7 @@ const listLanguageVersionCommand = async (blockName) => {
     spinnies.remove('p1')
 
     if (!blockVersions || blockVersions?.length < 1) {
-      console.log('Please publish the block to add languageVersion')
+      console.log('Please publish the block to add language versions')
       process.exit(1)
       return
     }
@@ -43,17 +43,17 @@ const listLanguageVersionCommand = async (blockName) => {
       choices: blockVersions,
     })
 
-    spinnies.add('p1', { text: `Gettings blocks languageVersions` })
+    spinnies.add('p1', { text: `Gettings blocks language versions` })
     const blockLanguageVersions = await getAttchedLanguageVersions(blockId, blockVersionId)
 
     if (!blockLanguageVersions || blockLanguageVersions?.length < 1) {
-      spinnies.succeed('p1', { text: `No blocks languageVersions` })
+      spinnies.succeed('p1', { text: `No blocks language versions` })
       process.exit(1)
       return
     }
 
     spinnies.succeed('p1', {
-      text: `Block languageVersions are listed below
+      text: `Block language versions are listed below
              ${blockLanguageVersions.map((languageVersion) => `${languageVersion.name}@${languageVersion.version}`)}`,
     })
   } catch (error) {

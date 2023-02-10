@@ -20,6 +20,7 @@ const {
 } = require('../../utils/api')
 const deployConfigManager = require('../deploy/manager')
 const { isValidBlockName } = require('../../utils/blocknameValidator')
+const { GitManager } = require('../../utils/gitmanager')
 
 const checkIsBlockAppAssinged = async (options) => {
   const { metaData, appData: ap } = options
@@ -53,6 +54,17 @@ const checkIsBlockAppAssinged = async (options) => {
   return data
 }
 
+async function pushPulledCode(blockName, blockFolderPath, source) {
+  const prefersSsh = configstore.get('prefersSsh')
+  const originUrl = prefersSsh ? source.ssh : source.https
+  const Git = new GitManager(blockFolderPath, blockName, originUrl, prefersSsh)
+
+  await Git.newBranch('main')
+  await Git.stageAll()
+  await Git.commit('initial commit')
+  await Git.setUpstreamAndPush()
+}
+
 /**
  *
  * @returns
@@ -80,7 +92,7 @@ async function purchasedPull(options) {
         default: false,
       })
 
-      if (!assignAndContinue) throw new Error('Cancelled').message
+      if (!assignAndContinue) throw new Error('Paid block should be assigned to an app').message
 
       spinnies.add('bp', { text: 'assinging block with app' })
       const { error: assignErr } = await post(assignBlockToApp, {
@@ -195,6 +207,10 @@ async function purchasedPull(options) {
   blockConfig.name = blockFinalName
   blockConfig.source = { https: convertGitSshUrlToHttps(sshUrl), ssh: sshUrl }
   writeFileSync(blockConfigPath, JSON.stringify(blockConfig, null, 2))
+
+  spinnies.add('pab', { text: 'updating repository' })
+  await pushPulledCode(blockFinalName, blockFolderPath, blockConfig.source)
+  spinnies.remove('pab')
 
   return {
     cloneDirName: cdName,

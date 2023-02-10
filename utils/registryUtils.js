@@ -80,7 +80,7 @@ async function getConfigFromRegistry(id) {
   try {
     const res = await getAppConfigFromRegistry(id)
     if (res.status === 204) {
-      console.log(`No appconfig found in registry.`)
+      // console.log(`No appconfig found in registry.`)
       return null
     }
     if (res.data.err) {

@@ -6,7 +6,7 @@
  */
 
 const chalk = require('chalk')
-const { confirmationPrompt } = require('./questionPrompts')
+// const { confirmationPrompt } = require('./questionPrompts')
 
 function hasDiff(object, property) {
   const testProperty = object[property]
@@ -115,7 +115,7 @@ function t(d) {
   })(d, 0)
   console.log('}')
 }
-const showPath = (arr) => (arr.length === 0 ? 'config' : arr.join(' -> '))
+// const showPath = (arr) => (arr.length === 0 ? 'config' : arr.join(' -> '))
 async function manualMerge(diffed, keypathArray = []) {
   // based on option, either merge, or only add or only remove
   const temp = {}
@@ -123,38 +123,39 @@ async function manualMerge(diffed, keypathArray = []) {
     if (Object.hasOwnProperty.call(diffed, key)) {
       const v = diffed[key]
       if (hasDiff(diffed, key)) {
-        const change = await confirmationPrompt({
-          name: 'change',
-          message: `Do you want to change\n${chalk.bgGray(v.right)} to 
-          \n${chalk.bgGreen(JSON.stringify(v.left, null, 2))}\n in ${showPath(keypathArray)}`,
-        })
-        temp[key] = change ? v.left : v.right
+        // const change = await confirmationPrompt({
+        //   name: 'change',
+        //   message: `Do you want to change\n${chalk.bgGray(v.right)} to
+        //   \n${chalk.bgGreen(JSON.stringify(v.left, null, 2))}\n in ${showPath(keypathArray)}`,
+        // })
+        // temp[key] = change ? v.left : v.right
         // console.log('HAS DIFF')
         // console.log(key)
         // console.log(keypathArray.join(' -> '))
         // console.log(v)
-        // temp[key] = v.right
+        temp[key] = v.left
       } else if (needAddition(diffed, key)) {
-        const add = await confirmationPrompt({
-          name: 'add',
-          message: `Do you want to add\n${chalk.bgGreen(`${key}:${JSON.stringify(v.left, null, 2)}`)} in \n${showPath(
-            keypathArray
-          )}`,
-        })
-        if (add) temp[key] = v.left
+        // const add = await confirmationPrompt({
+        //   name: 'add',
+        //   message: `Do you want to add\n${chalk.bgGreen(`${key}:${JSON.stringify(v.left, null, 2)}`)} in \n${showPath(
+        //     keypathArray
+        //   )}`,
+        // })
+        // if (add) temp[key] = v.left
+
         // console.log('NEEDS ADDITION')
         // console.log(keypathArray.join(' -> '))
         // console.log(key)
         // console.log(v)
-        // temp[key] = v.left
+        temp[key] = v.left
       } else if (needRemoval(diffed, key)) {
-        const remove = await confirmationPrompt({
-          name: 'remove',
-          message: `Do you want to remove\n${chalk.bgGreen(
-            `${key}:${JSON.stringify(v.right, null, 2)}`
-          )} from \n${showPath(keypathArray)}`,
-        })
-        if (!remove) temp[key] = v.right
+        // const remove = await confirmationPrompt({
+        //   name: 'remove',
+        //   message: `Do you want to remove\n${chalk.bgGreen(
+        //     `${key}:${JSON.stringify(v.right, null, 2)}`
+        //   )} from \n${showPath(keypathArray)}`,
+        // })
+        // if (!remove) temp[key] = v.right
         // console.log('NEEDS REMOVAL')
         // console.log(keypathArray.join(' -> '))
         // console.log(v)

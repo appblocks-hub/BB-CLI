@@ -8,7 +8,7 @@
 
 const chalk = require('chalk')
 const { existsSync, readFileSync, writeFileSync } = require('fs')
-const { rename, rm } = require('fs/promises')
+const { rm } = require('fs/promises')
 const path = require('path')
 const { configstore } = require('../configstore')
 const create = require('../subcommands/create')
@@ -33,7 +33,8 @@ const offerAndCreateBlock = async (list) => {
 
   const ans = await confirmationPrompt({
     name: 'createBlockFromstale',
-    message: `Should I create blocks from above ${list.length} ${list.length > 1 ? `directories` : `directory`}`,
+    // message: `Should I create blocks from above ${list.length} ${list.length > 1 ? `directories` : `directory`}`,
+    message: `Should I create blocks from above ${list.length > 1 ? `directories` : `directory`}`,
     default: false,
   })
 
@@ -82,15 +83,16 @@ const offerAndCreateBlock = async (list) => {
 
         ensureDirSync(path.normalize('./.temp'))
 
-        if (hasGitFolder) {
-          console.log(`Copying ${ele} to a temp folder`)
-          const f2 = await prepareFileListForMoving(ele, `./.temp`, [])
-          await moveFiles(false, f2)
-          console.log(`files in ${ele} copied`)
-        }
+        // if (hasGitFolder) {
+        // console.log(`Copying ${ele} to a temp folder`)
+        const f21 = await prepareFileListForMoving(ele, `./.temp`, [])
+        await moveFiles(false, f21)
+        // console.log(`files in ${ele} copied`)
+        // }
 
         // rename the original directory
-        await rename(ele, `${ele}_old_`)
+        // await rename(ele, `${ele}_old_`)
+        // await rename(path.join(`${ele}_old_`, 'block.config.json'), path.join(`${ele}_old_`, 'block.old.config.json'))
 
         let blockName = name
         if (!name) {
@@ -104,7 +106,7 @@ const offerAndCreateBlock = async (list) => {
             null,
             true,
             path.resolve(ele, '../'),
-            false
+            true
           )
 
           const newPath = path.join(clonePath, cloneDirName)
@@ -146,7 +148,7 @@ const offerAndCreateBlock = async (list) => {
           }
           // console.log('newconfig')
           // console.log(newConfig)
-          console.log(`Writing new config to ${newPath}`)
+          // console.log(`Writing new config to ${newPath}`)
           writeFileSync(`${newPath}/block.config.json`, JSON.stringify(newConfig))
           // ////////////////////////////////////////
           /**
@@ -220,7 +222,10 @@ const offerAndCreateBlock = async (list) => {
             }
             await Git.setUpstreamAndPush('main')
           } else if (c1) {
+            // console.log('here')
             const files = await prepareFileListForMoving(tempPath, newPath, ignoreList)
+            // console.log(tempPath, newPath)
+            // console.log(files)
             if (files.length) {
               await moveFiles(false, files)
             }

@@ -9,13 +9,15 @@
 const chalk = require('chalk')
 
 const { setWithTemplate } = require('../../utils/questionPrompts')
-const setupTemplate = require('./setupTemplate')
+// const setupTemplate = require('./setupTemplate')
+const setupTemplateV2 = require('./setupTemplateV2')
 const initializePackageBlock = require('./initializePackageBlock')
 
 const init = async (appblockName, options) => {
   const initializedData = await initializePackageBlock(appblockName, options)
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) await setupTemplate(initializedData)
+  // if (useTemplate) await setupTemplate(initializedData)
+  if (useTemplate) await setupTemplateV2(initializedData)
 
   console.log(chalk.dim(`\ncd ${initializedData.blockFinalName} and start hacking\n`))
   console.log(chalk.dim(`run bb sync from ${initializedData.blockFinalName} to register templates as new block`))

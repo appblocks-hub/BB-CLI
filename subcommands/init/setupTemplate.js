@@ -284,10 +284,7 @@ const setupTemplate = async (options) => {
   // console.log('Finished setting up template.')
   // await createBlock(componentName, componentName, 'appBlock', '')
 
-  process.on('SIGINT', () => {
-    // console.log('force close --> cleaning up')
-    process.kill()
-  })
+  process.exitCode = 0
 }
 
 module.exports = setupTemplate
