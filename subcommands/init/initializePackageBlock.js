@@ -35,6 +35,7 @@ const initializePackageBlock = async (appblockName, options) => {
   // If user is giving a url then no chance of changing this name
   let blockFinalName = availableName
   let blockSource
+  let blockId
   let userHasProvidedRepoUrl = false
 
   if (!autoRepo) {
@@ -52,6 +53,7 @@ const initializePackageBlock = async (appblockName, options) => {
   if (autoRepo) {
     const d = await createBlock(availableName, availableName, 1, '', false, '.')
     blockFinalName = d.blockFinalName
+    blockId = d.blockId
     blockSource = d.blockSource
   }
 
@@ -76,6 +78,7 @@ const initializePackageBlock = async (appblockName, options) => {
   createFileSync(CONFIGPATH, {
     name: blockFinalName,
     type: 'appBlock',
+    blockId,
     source: blockSource,
   })
 

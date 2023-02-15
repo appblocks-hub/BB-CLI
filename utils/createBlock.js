@@ -207,8 +207,9 @@ async function createBlock(
     }
   }
 
+  let blockId
   try {
-    await registerBlock(
+    const resData = await registerBlock(
       blockTypeNo,
       blockFinalName,
       blockFinalName,
@@ -218,6 +219,8 @@ async function createBlock(
       jobConfig,
       package_block_id
     )
+
+    blockId = resData.data.ID
   } catch (err) {
     console.log(err.message)
     process.exit(1)
@@ -228,6 +231,7 @@ async function createBlock(
     cloneDirName,
     clonePath,
     blockFinalName,
+    blockId,
   }
 }
 

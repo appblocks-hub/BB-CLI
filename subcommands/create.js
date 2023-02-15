@@ -173,6 +173,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     // If user is giving a url then no chance of changing this name
     let blockFinalName = availableName
     let blockSource
+    let blockId
     let cloneDirName
     let clonePath
     let userHasProvidedRepoUrl = false
@@ -229,6 +230,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         package_block_id
       )
       blockFinalName = d.blockFinalName
+      blockId = d.blockId
       blockSource = d.blockSource
       cloneDirName = d.cloneDirName
       clonePath = d.clonePath
@@ -259,6 +261,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
     const blockDetails = {
       name: blockFinalName,
+      blockId,
       type: blockTypeInverter(type),
       source: {
         ...blockSource,

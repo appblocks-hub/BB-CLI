@@ -29,7 +29,7 @@ async function checkSpaceLinkedToPackageBlock() {
 
       const switchSpace = await confirmationPrompt({
         name: 'switchSpace',
-        message: `${name} package block is linked to space ${space_name}. Do you want to set space to ${space_name}`,
+        message: `${name} package block is under space ${space_name}. Do you want to set space to ${space_name}`,
         default: true,
       })
 

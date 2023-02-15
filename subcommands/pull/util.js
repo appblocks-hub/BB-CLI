@@ -150,7 +150,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     // get the version id of the latest verion of parent
     const c = await getBlockMetaData(metaData.ID)
     if (c.data.err) {
-      throw new Error(c.data.msg).message
+      throw new Error(c.data.msg)
     }
     const compMetaData = c.data.data
 
@@ -189,11 +189,11 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     })
 
     if (bv.data.err) {
-      throw new Error(bv.data.msg).message
+      throw new Error(bv.data.msg)
     }
 
-    if (bv.status === 204 && !hasBlockAccess) {
-      throw new Error('No version found for the block to pull').message
+    if (bv.status === 204 && (!hasBlockAccess || !hasPullBlockAccess)) {
+      throw new Error('No version found for the block to pull')
     }
 
     const blockVersions = bv.data.data
@@ -205,7 +205,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         message: `Block version not specified. Do you want to pull the latest code?`,
       })
 
-      if (!continueWithLatest) throw new Error('Pulling cancelled').message
+      if (!continueWithLatest) throw new Error('Pulling cancelled')
       pullWithoutVersion = true
     }
 
@@ -222,7 +222,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
             message: `Block version not specified. Do you want to pull the latest versions ${latestVersion.version_number}?`,
           })
 
-          if (!continueWithLatest) throw new Error('No version specified').message
+          if (!continueWithLatest) throw new Error('No version specified')
         }
         // get the latest version of parent
         metaData.version_id = latestVersion?.id
@@ -252,7 +252,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     }
 
     if (pullWithoutVersion && createCustomVersion) {
-      throw new Error('Variant can be only be created under block with version').message
+      throw new Error(`Variant can't be created under block without version`)
     }
 
     if (createCustomVersion) {
@@ -314,7 +314,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
               feedback({ type: 'info', message: `${packageBlockName} doesn't exists in block repository` })
               return
             }
-            if (err) throw new Error(msg).message
+            if (err) throw new Error(msg)
 
             package_block_id = packageBlockDetails.ID
           }
@@ -339,6 +339,11 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
           clonePath = createBlockRes.clonePath
           cloneDirName = createBlockRes.cloneDirName
           blockFinalName = createBlockRes.blockFinalName
+
+          const bcPath = path.resolve(clonePath, cloneDirName, 'block.config.json')
+          const bc = JSON.parse(readFileSync(bcPath))
+          bc.blockId = createBlockRes.blockId
+          writeFileSync(bcPath, JSON.stringify(bc, null, 2))
         }
       }
 
@@ -361,7 +366,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         return
       }
       if (d.data.err) {
-        throw new Error(d.data.msg).message
+        throw new Error(d.data.msg)
       }
       const block_id = d.data.data.ID
 
@@ -382,7 +387,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     } else {
       const existingBlock = appConfig.getBlock(componentName)
       if (existingBlock) {
-        throw new Error(`${componentName} already exists at ${existingBlock.directory}`).message
+        throw new Error(`${componentName} already exists at ${existingBlock.directory}`)
       }
 
       const clonePath = appConfig.isOutOfContext ? '.' : createDirForType(metaData.BlockType, cwd || '.')
@@ -445,7 +450,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
   } catch (err) {
     spinnies.remove('pab')
 
-    let message = err.response?.data?.msg || err.message || err
+    let message = err.response?.data?.msg || err.message
 
     if (err.response?.status === 401) {
       message = `Access denied for block ${componentName}`

@@ -29,6 +29,8 @@ const createZip = async ({ directory, version }) => {
   const zipFile = `${ZIP_TEMP_FOLDER}/${version}.zip`
   const zipDir = `${ZIP_TEMP_FOLDER}/${dir.substring(0, dir.lastIndexOf('/'))}`
 
+  // TODO get code of specified version
+
   mkdirSync(zipDir, { recursive: true })
 
   await execSync(`cd ${dir} && zip -r ${zipFile} . ${EXCLUDE_IN_ZIP}`)

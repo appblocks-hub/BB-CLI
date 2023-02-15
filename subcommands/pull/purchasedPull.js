@@ -205,6 +205,7 @@ async function purchasedPull(options) {
     console.log('err blockConfig', err)
   }
   blockConfig.name = blockFinalName
+  blockConfig.blockId = metaData.ID
   blockConfig.source = { https: convertGitSshUrlToHttps(sshUrl), ssh: sshUrl }
   writeFileSync(blockConfigPath, JSON.stringify(blockConfig, null, 2))
 
@@ -216,6 +217,7 @@ async function purchasedPull(options) {
     cloneDirName: cdName,
     clonePath,
     blockFinalName,
+    blockId: metaData.ID,
   }
 }
 
