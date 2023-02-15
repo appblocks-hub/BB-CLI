@@ -183,6 +183,12 @@ class AppblockConfigManager {
     // return this.getAppConfig()
   }
 
+  /**
+   */
+  get packageBlockId() {
+    return this.config.blockId
+  }
+
   get prefix() {
     if (this.config?.blockPrefix) return this.config.blockPrefix
     return ''

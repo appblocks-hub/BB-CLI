@@ -11,29 +11,36 @@ const { appRegistryProvisionApp } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 const deployConfig = require('./deploy/manager')
 const { spinnies } = require('../loader')
+const { appConfig } = require('../utils/appconfigStore')
 
 const provisionApp = async (appId) => {
-  deployConfig.init()
-  const appConfig = await deployConfig.deployAppConfig
+  await appConfig.init()
+  await deployConfig.init()
 
-  if (appConfig?.app_id) {
-    console.log(`${appConfig.app_name} app already exist`)
+  if (deployConfig.deployAppConfig?.app_id) {
+    console.log(`${deployConfig.deployAppConfig.app_name} app already exist`)
     process.exit(1)
   }
 
+  spinnies.add('pa', { text: 'Provisioning app ' })
+
   try {
-    spinnies.add('pa', { text: 'Provisioning app ' })
     const registerAppRes = await axios.post(
       appRegistryProvisionApp,
-      { app_id: appId },
+      {
+        app_id: appId,
+        package_block_id: appConfig.packageBlockId,
+      },
       {
         headers: getShieldHeader(),
       }
     )
-    console.log('data - ', registerAppRes.data)
-    const { data } = registerAppRes.config
 
-    const { app_details, env_details, vm_info_id } = data
+    if (!registerAppRes?.data?.data) {
+      throw new Error(`Error getting app details`)
+    }
+
+    const { app_id, app_name, env_details, vm_info_id } = registerAppRes.data.data
 
     let environments = {}
 
@@ -41,7 +48,7 @@ const provisionApp = async (appId) => {
       environments = env_details.reduce((acc, env) => {
         let backend_url
         let frontend_url
-        env.domain.forEach((d) => {
+        env.domain?.forEach((d) => {
           if (d.type === 0) frontend_url = d.url
           else backend_url = d.url
         })
@@ -61,17 +68,13 @@ const provisionApp = async (appId) => {
       }, {})
     }
 
-    const appData = {
-      ...app_details,
-      environments,
-      vmInstance: !!vm_info_id,
-    }
+    const appData = { app_id, app_name, environments, vmInstance: !!vm_info_id }
     deployConfig.createDeployConfig = appData
 
     spinnies.succeed('pa', { text: 'App provision success' })
   } catch (err) {
-    spinnies.fail('pa', { text: err.message })
-    console.log(err.message || err)
+    const errMsg = err.response?.data?.msg || err.message
+    spinnies.fail('pa', { text: errMsg })
   }
 }
 
