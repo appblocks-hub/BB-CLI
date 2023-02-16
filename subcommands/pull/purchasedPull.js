@@ -108,6 +108,8 @@ async function purchasedPull(options) {
     }
   }
 
+  spinnies.stopAll()
+
   const availableName = await readInput({
     name: 'blockName',
     message: 'Enter the block name',
@@ -119,10 +121,9 @@ async function purchasedPull(options) {
           block_name: ans,
           block_id: metaData.block_id,
         })
-
-        return !res.data.err
+        return res.data.err ? res.data.msg : true
       } catch (err) {
-        return 'Something went wrong in blocknameavailability check'
+        return err.response?.data?.msg || 'Something went wrong in block name availability check'
       }
     },
   })
