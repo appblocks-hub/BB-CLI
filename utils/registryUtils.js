@@ -74,7 +74,7 @@ const getAppConfigFromRegistry = (id) =>
 /**
  *
  * @param {String} id app id
- * @returns {import('./jsDoc/types').blockMetaData}
+ * @returns {Promise<import('./jsDoc/types').blockMetaData?>}
  */
 async function getConfigFromRegistry(id) {
   try {

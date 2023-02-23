@@ -19,9 +19,21 @@ const { GitManager } = require('./gitmanager')
 const { confirmationPrompt, readInput, getGitConfigNameEmail } = require('./questionPrompts')
 
 /**
+ * @typedef {object} report
+ * @property {String} oldPath
+ * @property {boolean} registered
+ * @property {boolean} copied
+ * @property {string} directory
+ * @property {boolean} sourcemismatch
+ * @property {string} name
+ * @property {string} newName
+ * @property {object} data
+ */
+
+/**
  *
  * @param {Array} list A List of absolute paths
- * @returns
+ * @returns {Promise<Array<report>>}
  */
 const offerAndCreateBlock = async (list) => {
   const report = []
@@ -38,11 +50,6 @@ const offerAndCreateBlock = async (list) => {
     default: false,
   })
 
-  /**
-   * @typedef report
-   * @property {String} oldPath
-   * @property
-   */
   if (ans) {
     for (let i = 0; i < list.length; i += 1) {
       const ele = list[i]
