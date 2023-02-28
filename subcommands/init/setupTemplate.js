@@ -282,7 +282,7 @@ const setupTemplate = async (options) => {
   // execSync(`npm i -g ${path.join(packagesPath, 'node-block-sdk')}`)
   // console.log('Use block push after changing')
   // console.log('Finished setting up template.')
-  // await createBlock(componentName, componentName, 'appBlock', '')
+  // await createBlock(componentName, componentName, 'package', '')
 
   process.exitCode = 0
 }

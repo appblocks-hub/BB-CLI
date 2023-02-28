@@ -39,7 +39,7 @@ const deleteCommand = async (name, options) => {
       const { dependencies = {} } = appConfig.getAppConfig()
 
       const blocksList = Object.values(dependencies).reduce((acc, { meta }) => {
-        if (meta.type !== 'appBlock') acc.push(meta.name)
+        if (meta.type !== 'package') acc.push(meta.name)
         return acc
       }, [])
 

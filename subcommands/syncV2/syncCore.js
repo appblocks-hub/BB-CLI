@@ -29,7 +29,7 @@ async function getPackageNameAndPullDetails() {
           if (res.data.err) {
             return `Error getting details..`
           }
-          // Make sure it is registered as appBlock, else unregistered
+          // Make sure it is registered as package, else unregistered
           if (res.data.data.BlockType !== 1) {
             return `${ans} is not registered as appblock`
           }
@@ -56,7 +56,7 @@ async function handleNoPackageConfig() {
     let packageDetails = await getPackageNameAndPullDetails()
 
     // Loop until user enters "exit" or gives a block name that is registered
-    // as appBlock and has a valid config in registry
+    // as package and has a valid config in registry
     for (; packageDetails !== null; ) {
       metaData = { ...packageDetails }
       isRegistered = true
@@ -136,7 +136,7 @@ class SyncCore {
      * Type of context to work in
      * @type {string}
      */
-    this.packageTypeName = 'appBlock'
+    this.packageTypeName = 'package'
 
     /**
      * package block in context is registered as package block

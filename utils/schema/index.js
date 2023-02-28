@@ -30,7 +30,7 @@ const schema = object({
   source: sourceSchema,
   type: string()
     .required()
-    .matches(/appBlock/),
+    .matches(/package/),
   dependencies: lazy((obj) => object(Object.keys(obj).reduce((acc, curr) => ({ ...acc, [curr]: blockSchema }), {}))),
 })
 

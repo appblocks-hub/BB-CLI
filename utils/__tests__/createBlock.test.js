@@ -19,8 +19,8 @@ const [p1, p2, ...rest] = process.argv
 const samplecreateBlockArgs = ['TODO', 'uicontainer']
 const testData = [
   {
-    args: ['TODO', 'todo', 1, false, false, '', false, 'appBlock'],
-    expect: blockTypeInverter('appBlock'),
+    args: ['TODO', 'todo', 1, false, false, '', false, 'package'],
+    expect: blockTypeInverter('package'),
   },
   {
     args: ['TODO', 'todo', 2, false, false, '', false, 'ui-container'],

@@ -87,7 +87,7 @@
 /**
  * @typedef {Object} appblockConfigShape
  * @property {String} name Name of appblock
- * @property {String} type Type of block, should be 'appBlock'
+ * @property {String} type Type of block, should be 'package'
  * @property {String} blockPrefix Prefix for block repos
  * @property {blockSource} source
  * @property {dependencies} dependencies

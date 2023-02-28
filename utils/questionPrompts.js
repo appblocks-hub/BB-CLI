@@ -98,7 +98,7 @@ function getBlockType() {
       name: 'blockType',
       message: 'Select the type of block',
       choices: blockTypes.reduce((acc, v) => {
-        const filterList = ['appBlock', 'data']
+        const filterList = ['package', 'data']
         if (!filterList.includes(v[0])) return acc.concat({ name: v[0], value: v[1] })
         return acc
       }, []),

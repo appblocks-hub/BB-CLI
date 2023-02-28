@@ -78,7 +78,7 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
        * User is trying to pull a package block into a block of another type
        */
       logger.error('Trying to pull appblock to non appblock type')
-      throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is an appBlock`).message
+      throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is a package block`).message
     }
 
     if (metaData.BlockType === 1) {

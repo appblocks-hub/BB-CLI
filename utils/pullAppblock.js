@@ -22,7 +22,7 @@ const pullAppblock = async (name) => {
       if (res.data.err) {
         throw new Error(`Error getting details of ${name}`)
       }
-      // Make sure it is registered as appBlock, else unregistered
+      // Make sure it is registered as package, else unregistered
       if (res.data.data.BlockType !== 1) {
         throw new Error(`${name} is not registered as appblock`)
       }
@@ -52,7 +52,7 @@ const pullAppblock = async (name) => {
   const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
   // createFileSync(CONFIGPATH, {
   //   name: config.name,
-  //   type: 'appBlock',
+  //   type: 'package',
   //   source: config.source,
   //   blockPrefix: config.blockPrefix,
   // })

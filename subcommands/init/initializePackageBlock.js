@@ -77,7 +77,7 @@ const initializePackageBlock = async (appblockName, options) => {
   const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
   createFileSync(CONFIGPATH, {
     name: blockFinalName,
-    type: 'appBlock',
+    type: 'package',
     blockId,
     source: blockSource,
   })

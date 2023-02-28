@@ -147,7 +147,7 @@ class AppblockConfigManager {
           bdirs = await getBlockDirsIn(allDirsInRoot)
         } else {
           // if we are in a context, since tempGroup is called only if enclosing
-          // block is not appBlock, we can be sure the user is calling from inside a
+          // block is not package, we can be sure the user is calling from inside a
           // block and the action needs to be done on it.
           // Eg: bb push from inside a block directory */blockname
           bdirs = [path.resolve()]
@@ -354,7 +354,7 @@ class AppblockConfigManager {
     try {
       await this.readAppblockConfig()
 
-      if (this.config.type !== 'appBlock') {
+      if (this.config.type !== 'package') {
         this.isInAppblockContext = false
       } else {
         this.isInAppblockContext = true

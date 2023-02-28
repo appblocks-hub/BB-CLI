@@ -6,7 +6,7 @@
  */
 
 const blockTypes = [
-  ['appBlock', 1, ''],
+  ['package', 1, ''],
   ['ui-container', 2, 'view/container'],
   ['ui-elements', 3, 'view/elements'],
   ['function', 4, 'functions'],

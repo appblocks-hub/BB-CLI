@@ -23,7 +23,7 @@ const addTags = async (options) => {
     spinnies.add('log', { text: `Getting blocks details` })
     const blocksList = await Promise.all(
       Object.values(dependencies)
-        .filter(({ meta: { type } }) => appConfig.isInAppblockContext || type !== 'appBlock')
+        .filter(({ meta: { type } }) => appConfig.isInAppblockContext || type !== 'package')
         .map(async (depVal) => {
           const {
             meta: { name, tags },

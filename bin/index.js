@@ -114,7 +114,7 @@ async function init() {
       new Option('-t, --type <component-type>', 'type  of comp')
         .choices(
           blockTypes.reduce((acc, v) => {
-            if (v[0] !== 'appBlock') return acc.concat(v[0])
+            if (v[0] !== 'package') return acc.concat(v[0])
             return acc
           }, [])
         )
@@ -252,7 +252,7 @@ async function init() {
     .option('-g, --global', 'execute globally')
     .description('Delete block component')
     .action(deleteCommand)
-  
+
   program
     .command('deploy')
     .option('-rv, --release-version <release_version>', 'version number')
@@ -260,7 +260,7 @@ async function init() {
     .option('-env, --environment <environment>', 'environment')
     .description('deploy app')
     .action(deploy)
-    
+
   program.command('delete-app').description('Delete app').action(deleteApp)
 
   program
@@ -277,7 +277,6 @@ async function init() {
     .requiredOption('-env, --environment <environment>', 'environment')
     .description('upload block for deploy')
     .action(upload)
-  
 
   program.parseAsync(process.argv)
 }

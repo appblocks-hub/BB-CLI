@@ -35,7 +35,7 @@ const push_config = async () => {
         spinnies.fail('pushConfig', { text: `Error getting details from registry.` })
         process.exit(1)
       }
-      // Make sure it is registered as appBlock, else unregistered
+      // Make sure it is registered as package, else unregistered
       if (res.data.data.BlockType !== 1) {
         spinnies.fail('pushConfig', { text: `${name} is not registered as appblock` })
         process.exit(1)
