@@ -6,12 +6,7 @@ import { env } from '@appblocks/node-sdk'
 // Init environment
 env.init()
 
-/**
- * List todo request hanlder
- * @param {*} req
- * @param {*} res
- */
-const listTodos = (req, res) => {
+const handler = ({ req, res }) => {
   try {
     // health check
     if (req.params['health'] === 'health') {
@@ -33,4 +28,4 @@ const listTodos = (req, res) => {
     sendResponse(res, 500, { status: 'failed', errMsg: e.message })
   }
 }
-export default listTodos
+export default handler

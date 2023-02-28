@@ -6,12 +6,7 @@ import { env } from '@appblocks/node-sdk'
 // Init enviroment
 env.init()
 
-/**
- * Add todo request hanlder
- * @param {*} req
- * @param {*} res
- */
-const addTodo = async (req, res) => {
+const handler = async ({ req, res }) => {
   try {
     // health check
     if (req.params['health'] === 'health') {
@@ -38,4 +33,4 @@ const addTodo = async (req, res) => {
   }
 }
 
-export default addTodo
+export default handler
