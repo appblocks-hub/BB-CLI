@@ -24,14 +24,18 @@ const awsStaticWebDeploy = async (options) => {
       const onPremEnvData = envData.on_premise || {}
       const onPremBackendEnv = onPremEnvData.frontend || {}
       const existingS3Data = onPremBackendEnv?.aws_static_web_hosting || []
-      onPremBackendEnv.aws_static_web_hosting = [
-        ...existingS3Data,
-        {
-          name: config.name,
-          bucket,
-          static_host,
-        },
-      ]
+      onPremBackendEnv.aws_static_web_hosting = Array.from(
+        new Set(
+          [
+            ...existingS3Data,
+            {
+              name: config.name,
+              bucket,
+              static_host,
+            },
+          ].map(JSON.stringify)
+        )
+      ).map(JSON.parse)
 
       const newEnvData = {
         ...envData,

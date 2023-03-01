@@ -149,7 +149,9 @@ const awsFargateDeploy = async ({ appData, envData, deployConfigManager, config 
     const onPremEnvData = envData.on_premise || {}
     const onPremBackendEnv = onPremEnvData.backend || {}
     const existingFargateData = onPremBackendEnv?.aws_fargate || []
-    onPremBackendEnv.aws_fargate = [...existingFargateData, ...fargateDeploymentDNS]
+    onPremBackendEnv.aws_fargate = Array.from(
+      new Set([...existingFargateData, ...fargateDeploymentDNS].map(JSON.stringify))
+    ).map(JSON.parse)
 
     const newEnvData = {
       ...envData,
