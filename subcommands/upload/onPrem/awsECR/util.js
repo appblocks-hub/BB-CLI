@@ -21,8 +21,9 @@ WORKDIR .
 
 COPY ._ab_em ./._ab_em/
 COPY package.json .
-${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/\n`)}
+${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
 COPY .env.function .
+COPY block.config.json .
 
 RUN npm i
 # RUN npm ci --only=production
@@ -76,3 +77,6 @@ module.exports = {
   generateRootPackageJsonFile,
   getAWSECRConfig,
 }
+
+
+  
