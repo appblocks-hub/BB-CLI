@@ -89,20 +89,21 @@ const getOnPremConfigDetails = async (options) => {
             .filter((b) => ['ui-container', 'ui-elements'].includes(b.meta.type))
             .map((b) => b.meta.name)
         : Object.values(dependencies)
-            .filter((b) => ['function'].includes(b.meta.type))
+            .filter((b) => ['function', 'shared-fn'].includes(b.meta.type))
             .map((b) => b.meta.name)
 
-    blocks = await readInput({
-      type: 'checkbox',
-      name: 'blocks',
-      message: 'Select the blocks',
-      choices,
-      validate: (input) => {
-        if (!input) return `Invalid input`
-        return true
-      },
-      default: choices,
-    })
+    blocks = choices
+    // blocks = await readInput({
+    //   type: 'checkbox',
+    //   name: 'blocks',
+    //   message: 'Select the blocks',
+    //   choices,
+    //   validate: (input) => {
+    //     if (!input) return `Invalid input`
+    //     return true
+    //   },
+    //   default: choices,
+    // })
   }
 
   if (!upService) {

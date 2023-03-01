@@ -21,7 +21,7 @@ WORKDIR .
 
 COPY ._ab_em ./._ab_em/
 COPY package.json .
-${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/\n`)}
+${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
 COPY .env.function .
 
 RUN npm i
@@ -76,3 +76,6 @@ module.exports = {
   generateRootPackageJsonFile,
   getAWSECRConfig,
 }
+
+
+  
