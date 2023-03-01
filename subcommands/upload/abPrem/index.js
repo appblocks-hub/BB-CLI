@@ -11,7 +11,6 @@ const { rm } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
-const { getBlockId } = require('../../deploy/util')
 const { createZip, uploadToServer } = require('../util')
 const { appRegistryUploadBlockStatus } = require('../../../utils/api')
 const { getShieldHeader } = require('../../../utils/getHeaders')
@@ -22,7 +21,7 @@ const { logFail } = require('../../../utils')
 const { blockTypes } = require('../../../utils/blockTypes')
 const { getBBConfig } = require('../../../utils/config-manager')
 
-const abPremUpload = async ({ blockName, envData, appData, environment }) => {
+const abPremUpload = async ({ blockName, envData, appData, environment, appConfig }) => {
   const preparedForUpload = []
   const uploadStatus = []
   const { dependencies } = await getBBConfig()
@@ -59,7 +58,7 @@ const abPremUpload = async ({ blockName, envData, appData, environment }) => {
         continue
       }
 
-      const blockId = await getBlockId(name)
+      const blockId = await appConfig.getBlockId(name)
 
       if (['ui-container', 'ui-elements'].includes(blockName || type)) {
         const zipFile = await createZip({ directory, blockName: name, type })
@@ -104,7 +103,7 @@ const abPremUpload = async ({ blockName, envData, appData, environment }) => {
 
     spinnies.update('up', { text: `Preparing ${blockName} block to upload` })
 
-    const blockId = await getBlockId(blockName)
+    const blockId = await appConfig.getBlockId(blockName)
     const {
       meta: { type },
       directory,

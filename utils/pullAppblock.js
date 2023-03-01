@@ -11,38 +11,15 @@ const { appConfig } = require('./appconfigStore')
 const { createFileSync } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, tryGitInit } = require('./gitCheckUtils')
 const { confirmationPrompt } = require('./questionPrompts')
-const { getBlockDetails, getConfigFromRegistry } = require('./registryUtils')
+const { getConfigFromRegistry } = require('./registryUtils')
 
 const pullAppblock = async (name) => {
-  const ID = await getBlockDetails(name)
-    .then((res) => {
-      if (res.status === 204) {
-        throw new Error(`${name} not found in registry.`)
-      }
-      if (res.data.err) {
-        throw new Error(`Error getting details of ${name}`)
-      }
-      // Make sure it is registered as package, else unregistered
-      if (res.data.data.BlockType !== 1) {
-        throw new Error(`${name} is not registered as appblock`)
-      }
-      // eslint-disable-next-line no-param-reassign
-      return res.data.data.ID
-    })
-    .catch((err) => {
-      console.log(err.message)
-      return null
-    })
-
-  if (!ID) {
-    return false
-  }
+  await appConfig.init()
+  const ID = appConfig.getBlockId(name)
+  if (!ID) return false
 
   const config = await getConfigFromRegistry(ID)
-
-  if (!config) {
-    return false
-  }
+  if (!config) return false
 
   //   const { blockFinalName, blockSource } = await createBlock(availableName, availableName, 1, '', false, '.')
 
@@ -58,7 +35,7 @@ const pullAppblock = async (name) => {
   // })
 
   createFileSync(CONFIGPATH, config)
-  appConfig.init(DIRPATH)
+  await appConfig.init(DIRPATH)
 
   tryGitInit()
   await checkAndSetGitConfigNameEmail(config.name)

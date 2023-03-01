@@ -6,6 +6,7 @@
  */
 
 const axios = require('axios')
+const { configstore } = require('../configstore')
 const {
   appBlockGetBlockDetails,
   appBlockUpdateReadme,
@@ -39,15 +40,26 @@ const addANewBlockVariant = ({ block_id, parent_id, version_id }) =>
     { headers: getShieldHeader() }
   )
 
-const getBlockDetails = (componentName) =>
-  axios.post(
+// This api will check the block name against default space_id if space_name is not passed
+const getBlockDetails = (componentName) => {
+  let [spaceName, blockName] = componentName.split('/')
+
+  spaceName = spaceName.replace('@', '')
+
+  if (!blockName) {
+    blockName = spaceName
+    spaceName = configstore.get('currentSpaceName')
+  }
+
+  return axios.post(
     appBlockGetBlockDetails,
     {
-      block_name: componentName,
+      block_name: blockName,
+      space_name: spaceName,
     },
     { headers: getShieldHeader() }
   )
-
+}
 const getBlockMetaData = (block_id) =>
   axios.post(
     appBlockGetBlockMetadata,

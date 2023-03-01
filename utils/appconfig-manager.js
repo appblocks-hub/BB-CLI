@@ -654,6 +654,13 @@ class AppblockConfigManager {
   getBlockId(blockName) {
     return new Promise(async (resolve) => {
       try {
+        const blockData = await this.getBlock(blockName)
+
+        if (blockData?.meta?.blockId || blockData?.blockId) {
+          resolve(blockData.meta?.blockId || blockData.blockId)
+          return
+        }
+
         const resp = await getBlockDetails(blockName)
         if (resp.status === 204) throw new Error(`${blockName} doesn't exists in block repository`).message
 

@@ -87,7 +87,7 @@ async function createRepo(
 
   // console.log('DETAILS:')
   // console.log({
-  //   name: PREFIXED_BLOCKNAME,
+  //   name: BLOCKNAME,
   //   owner: ownerId,
   //   templateRepo: template,
   //   template: false,
@@ -105,21 +105,22 @@ async function createRepo(
      * from here calling checkBlockNameAvailability .. to account for that change return the
      * newly selected name (which we will store in blockFinalName) we send it back !!
      */
-    let blockFinalName = ''
+    // NOTE : BlockName and RepoName can be different, so avoiding returning finalBlockName of repo available name, instead returning same blockShortName
 
     const data = await (async function callToGitHub(checkThisName) {
       spinnies.add('createRepo', { text: 'Preparing..' })
-      spinnies.update('createRepo', { text: `checking name availability of ${checkThisName}` })
+      spinnies.update('createRepo', { text: `checking repository name availability of ${checkThisName}` })
       // console.log(chalk.dim(`\nchecking name availability of ${checkThisName}\n`))
-      blockFinalName = checkThisName
-      const PREFIXED_BLOCKNAME = `${checkThisName}`
-      // console.log(PREFIXED_BLOCKNAME)
+      const BLOCKNAME = `${checkThisName}`
+      const spaceName = configstore.get('currentSpaceName')
+
+      // console.log(BLOCKNAME)
       const { data: innerData } = await axios.post(
         githubGraphQl,
         {
           query: template ? cloneTemplateRepository.Q : createRepository.Q,
           variables: {
-            name: PREFIXED_BLOCKNAME,
+            name: BLOCKNAME,
             owner: ownerId,
             templateRepo: template,
             template: false,
@@ -138,9 +139,14 @@ async function createRepo(
         if (innerData.errors.length === 1 && innerData.errors[0].type === 'UNPROCESSABLE') {
           // await checkBlockNameAvailability('', true)
           // Could be repo name already exists error
-          // console.log(chalk.red(`Repo name ${PREFIXED_BLOCKNAME} already exists\n`))
+          // console.log(chalk.red(`Repo name ${BLOCKNAME} already exists\n`))
 
-          spinnies.fail('createRepo', { text: `Repo name ${PREFIXED_BLOCKNAME} already exists` })
+          // add space_name prefix and try again
+          if (!BLOCKNAME.startsWith(`${spaceName}_`)) {
+            return callToGitHub(`${spaceName}_${BLOCKNAME}`)
+          }
+
+          spinnies.fail('createRepo', { text: `Repository ${BLOCKNAME} already exists` })
           spinnies.remove('createRepo')
 
           const newShortName = await checkBlockNameAvailability('', true)
@@ -190,7 +196,7 @@ async function createRepo(
     const repoUrl = configstore.get('prefersSsh') ? sshUrl : url
     const git = new GitManager('.', name, repoUrl, configstore.get('prefersSsh'))
 
-    await git.clone(`${clonePath}/${name}`)
+    await git.clone(`${clonePath}/${blockShortName}`)
     // console.log(`cloning to ${clonePath}/${name} from ${repoUrl}`)
     // console.log(chalk.green('Successfully Cloned!'))
     spinnies.succeed('clone', { text: 'Successfully cloned' })
@@ -198,8 +204,8 @@ async function createRepo(
     // console.log('dafdasfa', data)
     // return cloneTemplateRepository.Tr(data)
     return template
-      ? { blockFinalName, ...cloneTemplateRepository.Tr(data) }
-      : { blockFinalName, ...createRepository.Tr(data) }
+      ? { blockFinalName: blockShortName, ...cloneTemplateRepository.Tr(data) }
+      : { blockFinalName: blockShortName, ...createRepository.Tr(data) }
   } catch (err) {
     // if cloning failed, set sync points and later sysnc
     spinnies.fail('clone', { text: 'Cloning failed' })

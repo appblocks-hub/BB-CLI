@@ -7,31 +7,18 @@
 
 const { spinnies } = require('../../loader')
 const { appConfig } = require('../../utils/appconfigStore')
-const { getBlockDetails } = require('../../utils/registryUtils')
 const { pullBlockUpdate } = require('./util')
 
 const getBlockUpdate = async (componentName, options, { cwd = '.' }) => {
   spinnies.add('blockExistsCheck', { text: 'Getting block details ' })
+  await appConfig.init(cwd, null, 'get-update')
 
   try {
-    const {
-      status,
-      data: { err, msg, data: blockDetails },
-    } = await getBlockDetails(componentName)
-
-    if (status === 204) {
-      spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
-      return
-    }
-    if (err) {
-      throw new Error(msg).message
-    }
-
-    await appConfig.init(cwd, null, 'get-update')
+    const blockDetails = await appConfig.getBlock(componentName)
 
     spinnies.remove('blockExistsCheck')
 
-    if (blockDetails.BlockType === 1) {
+    if (blockDetails.type === 'package') {
       throw new Error('Appblock update is not supported')
     }
 

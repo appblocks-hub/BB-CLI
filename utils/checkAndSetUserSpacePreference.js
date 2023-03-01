@@ -17,15 +17,17 @@ async function checkSpaceLinkedToPackageBlock() {
   // check space is linked with package block
   await appConfig.init()
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
-    const { name } = appConfig.config
+    const { name, blockId } = appConfig.config
     await lrManager.init()
 
     const spaceId = configstore.get('currentSpaceId')
 
     if (!spaceId || !lrManager.isSpaceLinkedToPackageBlock(name, spaceId)) {
-      const { space_name, space_id } = await lrManager.linkedSpaceOfPackageBlock(name)
+      const { space_name, space_id } = await lrManager.linkedSpaceOfPackageBlock(name, blockId)
 
       if (!space_name) return false
+
+      if (space_id === spaceId) return true
 
       const switchSpace = await confirmationPrompt({
         name: 'switchSpace',

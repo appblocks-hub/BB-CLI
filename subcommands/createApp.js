@@ -12,19 +12,20 @@ const { readInput } = require('../utils/questionPrompts')
 // const { logger } = require('../utils/logger')
 const { appRegistryCreateApp } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
-const { getBlockConfig, getBlockId } = require('./deploy/util')
 
 const deployConfig = require('./deploy/manager')
 const { spinnies } = require('../loader')
+const { appConfig } = require('../utils/appconfigStore')
 
 // logger.add(new transports.File({ filename: 'create.log' }))
 
 const createApp = async () => {
+  await appConfig.init()
   deployConfig.init()
-  const appConfig = await deployConfig.deployAppConfig
+  const depAppConfig = await deployConfig.deployAppConfig
 
-  if (appConfig?.app_id) {
-    console.log(`${appConfig.app_name} app already exist`)
+  if (depAppConfig?.app_id) {
+    console.log(`${depAppConfig.app_name} app already exist`)
     process.exit(1)
   }
 
@@ -94,11 +95,10 @@ const createApp = async () => {
 
     spinnies.add('ca', { text: `Creating ${appName} app` })
 
-    const appBlockConfig = getBlockConfig()
-    const appBlockId = await getBlockId(appBlockConfig.name)
+    const packageBlockId = await appConfig.packageBlockId
 
     const createData = {
-      app_block_id: appBlockId,
+      app_block_id: packageBlockId,
       app_name: appName,
       environment_name: envName,
       deployment_mode: deploymentMode,

@@ -12,7 +12,6 @@ const { appBlockUpdateAppConfig } = require('../utils/api')
 const { appConfig } = require('../utils/appconfigStore')
 const { feedback } = require('../utils/cli-feedback')
 const { getShieldHeader } = require('../utils/getHeaders')
-const { getBlockDetails } = require('../utils/registryUtils')
 
 const push_config = async () => {
   await appConfig.init()
@@ -20,38 +19,10 @@ const push_config = async () => {
     feedback({ type: 'error', message: 'Not an appblock' })
     process.exit(1)
   }
-  const name = appConfig.getName()
-
-  spinnies.add('pushConfig', { text: `Getting details of ${name}` })
-
-  // TODO - write a utility function wrapping getBlockDetails, should be able to call getBlockID
-  const ID = await getBlockDetails(name)
-    .then((res) => {
-      if (res.status === 204) {
-        spinnies.fail('pushConfig', { text: `${name} not found in registry.` })
-        process.exit(1)
-      }
-      if (res.data.err) {
-        spinnies.fail('pushConfig', { text: `Error getting details from registry.` })
-        process.exit(1)
-      }
-      // Make sure it is registered as package, else unregistered
-      if (res.data.data.BlockType !== 1) {
-        spinnies.fail('pushConfig', { text: `${name} is not registered as appblock` })
-        process.exit(1)
-      }
-      // eslint-disable-next-line no-param-reassign
-      return res.data.data.ID
-    })
-    .catch((err) => {
-      spinnies.fail('pushConfig', { text: `Something went terribly wrong...` })
-      console.log(err)
-      process.exit(1)
-    })
 
   spinnies.update('pushConfig', { text: 'Preparing config to upload' })
   const data = {
-    block_id: ID,
+    block_id: appConfig.packageBlockId,
     app_config: appConfig.getAppConfig(),
   }
   spinnies.update('pushConfig', { text: 'Pushing..' })

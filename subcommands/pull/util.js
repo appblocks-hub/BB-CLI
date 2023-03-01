@@ -302,22 +302,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
           }
         } else {
           const packageBlockName = appConfig.config?.name
-          let package_block_id
-
-          if (packageBlockName) {
-            const {
-              status,
-              data: { err, msg, data: packageBlockDetails },
-            } = await getBlockDetails(packageBlockName)
-
-            if (status === 204) {
-              feedback({ type: 'info', message: `${packageBlockName} doesn't exists in block repository` })
-              return
-            }
-            if (err) throw new Error(msg)
-
-            package_block_id = packageBlockDetails.ID
-          }
+          const package_block_id = appConfig.packageBlockId
 
           if (!packageBlockName && metaData.BlockType !== 1) {
             throw new Error('Cannot create block without package block')

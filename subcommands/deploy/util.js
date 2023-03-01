@@ -27,7 +27,6 @@ const {
 const { getShieldHeader } = require('../../utils/getHeaders')
 const { spinnies } = require('../../loader')
 const deployblockConfigManager = require('./manager')
-const { getBlockDetails } = require('../../utils/registryUtils')
 
 const getBlockConfig = () => {
   // if no appblock config file found, throw
@@ -41,23 +40,6 @@ const getBlockConfig = () => {
     }
     console.log('Something went wrong\n')
     console.log(err)
-    process.exit(1)
-  }
-}
-
-const getBlockId = async (blockName) => {
-  try {
-    const resp = await getBlockDetails(blockName)
-    if (resp.status === 204) throw new Error(`${blockName} doesn't exists in block repository`).message
-
-    const { data } = resp
-    if (data.err) {
-      throw new Error('Something went wrong from our side\n', data.msg).message
-    }
-
-    return data.data.ID
-  } catch (err) {
-    console.log(`Something went wrong while getting details of block:${blockName} -- ${err} `)
     process.exit(1)
   }
 }
@@ -316,7 +298,6 @@ module.exports = {
   createDeployHistory,
   functionsDeploy,
   getBlockConfig,
-  getBlockId,
   checkAppEnvExist,
 }
 
