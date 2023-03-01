@@ -58,6 +58,7 @@ const listLanguageVersionCommand = require('../subcommands/languageVersion/list'
 const createBlockVersion = require('../subcommands/createBlockVersion/index')
 const getBlockUpdate = require('../subcommands/getBlockUpdate')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
+const desc = require('./bb_command_descriptions')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -88,30 +89,39 @@ async function init() {
     .option('-l,--list', 'To list all values')
     .option('-d,--delete <key>', 'To delete a value')
     .option('-s,--set <key> <value>', 'To set value', configSetOptionParse)
+    .description(desc.config)
     .action(config)
 
-  program.command('use').argument('[space_name]', 'Name of space to use').action(use)
+  program.command('use').argument('[space_name]', 'Name of space to use').description(desc.use).action(use)
 
-  program.command('disconnect').argument('<service>', 'service to disconnect (github)').action(disconnect)
+  program
+    .command('disconnect')
+    .argument('<service>', 'service to disconnect (github)')
+    .description(desc.disconnect)
+    .action(disconnect)
+    .addHelpText('after', `\nExample:\n  bb disconnect github`)
 
   program
     .command('connect')
     .argument('<service>', 'Name of service to connect')
     .option('-f, --force', 'force connect will remove existing tokens and restart login')
+    .description(desc.connect)
     .action(connect)
+    .addHelpText('after', `\nExample:\n  bb connect github`)
 
-  program.command('logout').description('to logout of shield').action(logout)
+  program.command('logout').description('to logout of shield').description(desc.logout).action(logout)
 
   program
     .command('login')
     .option(' --no-localhost', 'copy and paste a code instead of starting a local server for authentication')
+    .description(desc.login)
     .action(login)
 
   program
     .command('create')
     .argument('<component>', 'name of component')
     .addOption(
-      new Option('-t, --type <component-type>', 'type  of comp')
+      new Option('-t, --type <component-type>', 'type of component')
         .choices(
           blockTypes.reduce((acc, v) => {
             if (v[0] !== 'package') return acc.concat(v[0])
@@ -121,60 +131,50 @@ async function init() {
         .argParser((s) => blockTypeInverter(s))
     )
     .option('--no-autoRepo')
-    .description('to create components')
+    .description(desc.create)
     .action(create)
 
   program
     .command('init')
     .argument('<appblock-name>', 'Name of app')
     .option('--no-autoRepo')
-    .description('create an appblock')
+    .description(desc.init)
     .action(packageBlockInit)
+    .addHelpText('after', `\nExample:\n  bb init todo_package_app`)
 
-  program
-    .command('log')
-    .argument('[block-name]', 'Name of a running block')
-    .description('Streams the logs of a running block')
-    .action(log)
+  program.command('log').argument('[block-name]', 'Name of a running block').description(desc.log).action(log)
 
-  program.command('flush').description('To delete log files').action(flush)
+  program.command('flush').description(desc.flush).action(flush)
 
-  program.command('ls').description('List all running blocks').option('-g, --global', 'execute globally').action(ls)
+  program.command('ls').description(desc.ls).option('-g, --global', 'execute globally').action(ls)
 
   program
     .command('create-version')
     .argument('[block-name]', 'Name of block to create-version')
-    .description('Create version for block')
+    .description(desc['create-version'])
     .action(createBlockVersion)
 
   program
     .command('publish')
     .argument('[block-name]', 'Name of block to publish')
-    .description('Publish block or appblock')
+    .description(desc.publish)
     .action(publish)
 
   program
     .command('start')
-    .argument('[name]', 'Name of block to start')
+    .argument('[block name]', 'Name of block to start')
     .option('--use-pnpm', 'use pnpm to install dependencies')
-    .description('To start one or all blocks')
+    .description(desc.start)
     .action(start)
 
   program
     .command('stop')
-    .argument('[name]', 'Name of block to stop')
+    .argument('[block name]', 'Name of block to stop')
     .option('-g, --global', 'execute globally')
-    .description('To stop one or all blocks')
+    .description(desc.stop)
     .action(stop)
 
-  program.command('sync').description('To sync all blocks').action(sync)
-
-  program.command('emulate', 'to start block', {
-    executableFile: '../subcommands/emulate',
-  })
-  program.command('stop-emulator', 'to start block', {
-    executableFile: '../subcommands/stop-emulator',
-  })
+  program.command('sync').description(desc.sync).action(sync)
 
   program
     .command('pull')
@@ -182,75 +182,86 @@ async function init() {
     .option('--add-variant', 'Add as variant')
     .option('--no-variant', 'No variant')
     .option('-t, --type <variantType>', 'Type of variant to create')
+    .description(desc.pull)
     .action(pull)
 
-  program.command('get-update').argument('<component>', 'Name of component').action(getBlockUpdate)
+  program
+    .command('get-block-update')
+    .argument('<component>', 'Name of component')
+    .description(desc['get-block-update'])
+    .action(getBlockUpdate)
 
-  program.command('push-config').action(push_config)
+  program.command('push-config').description(desc['push-config']).action(push_config)
 
   program
     .command('push')
     .argument('[block name]', 'Name of block to push')
     .option('-f, --force', 'commit and push all blocks')
     .option('-m, --message <message>', 'commit message')
-    .description('To commit and push blocks')
+    .description(desc.push)
     .action(push)
 
   program
     .command('exec')
     .argument('<command>', 'command to run in quotes.eg:"ls"')
     .option('-in,--inside <blocks...>', 'inside which block?')
+    .description(desc.exec)
     .action(exec)
 
   program
     .command('mark')
     .option('-d,--dependency <blocks...>', 'Create dependency')
     .option('-c,--composability <blocks...>', 'Create composability')
-    .description('to create dependencies')
+    .description(desc.mark)
     .action(mark)
 
   program
     .command('add-tags')
     .option('-all, --all', 'Add tags to all blocks')
-    .description('block add tags')
+    .description(desc['add-tags'])
     .action(addTags)
 
   program
     .command('add-categories')
     .option('-all, --all', 'Add categories to all blocks')
-    .description('block assign categories to blocks')
+    .description(desc['add-categories'])
     .action(addCategories)
 
-  program.command('create-app').description('register app for deploy').action(createApp)
+  program.command('create-app').description(desc['create-app']).action(createApp)
 
   program.command('app-publish').description('Publish the app').action(appPublish)
 
   program
     .command('start-job')
-    .description('Schedule the job')
-    .argument('[name]', 'Name of block to start')
+    .description(desc['start-job'])
+    .argument('[block name]', 'Name of block to start')
     .action(startJob)
 
-  program.command('stop-job').description('Stop the job').argument('[name]', 'Name of block to start').action(stopJob)
+  program
+    .command('stop-job')
+    .description(desc['stop-job'])
+    .argument('[block name]', 'Name of block to start')
+    .action(stopJob)
 
-  program.command('pr').argument('<block-name>', 'Name of block to pr').description('pr block').action(pr)
+  program.command('pr').argument('<block-name>', 'Name of block to pr').description(desc.pr).action(pr)
+
   program
     .command('update-language-version')
     .argument('<block-name>', 'Name of block to update language version')
-    .description('update block language version')
+    .description(desc['update-language-version'])
     .action(updateLanguageVersionCommand)
 
   program
     .command('list-language-version')
     .argument('<block-name>', 'Name of block to list language version')
-    .description('list block language version')
+    .description(desc['list-language-version'])
     .action(listLanguageVersionCommand)
 
   program
     .command('delete')
-    .argument('[name]', 'Name of component to delete')
+    .argument('[block name]', 'Name of component to delete')
     .option('-g, --global', 'execute globally')
-    .description('Delete block component')
+    .description(desc.delete)
     .action(deleteCommand)
 
   program
@@ -258,24 +269,24 @@ async function init() {
     .option('-rv, --release-version <release_version>', 'version number')
     .option('-rn, --release-note <release_note>', 'release note')
     .option('-env, --environment <environment>', 'environment')
-    .description('deploy app')
+    .description(desc.deploy)
     .action(deploy)
 
-  program.command('delete-app').description('Delete app').action(deleteApp)
+  program.command('delete-app').description(desc['delete-app']).action(deleteApp)
 
   program
     .command('provision-app')
     .argument('<app_id>', 'Id of app to provision')
-    .description('provision app for deploy')
+    .description(desc['provision-app'])
     .action(provisionApp)
 
-  program.command('create-env').description('create env for deploy').action(createEnv)
+  program.command('create-env').description(desc['create-env']).action(createEnv)
 
   program
     .command('upload')
     .argument('[block]', 'name of block or block type')
     .requiredOption('-env, --environment <environment>', 'environment')
-    .description('upload block for deploy')
+    .description(desc.upload)
     .action(upload)
 
   program.parseAsync(process.argv)
