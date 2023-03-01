@@ -55,7 +55,7 @@ const watchCompilation = (logPath, errPath) =>
         end: currStat.size,
       })
       const onLine = (line) => {
-        if (line.includes('[webpack-cli]')) {
+        if (line.includes('[webpack-cli]') || line.includes('Error')) {
           report.errors.push(line)
         }
       }
