@@ -20,7 +20,7 @@ program
     new Option('-t, --type <component-type>', 'type  of comp')
       .choices(
         blockTypes.reduce((acc, v) => {
-          if (v[0] !== 'appBlock') return acc.concat(v[0])
+          if (v[0] !== 'package') return acc.concat(v[0])
           return acc
         }, [])
       )
