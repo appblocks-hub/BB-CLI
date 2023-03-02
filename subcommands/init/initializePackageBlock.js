@@ -95,11 +95,12 @@ const initializePackageBlock = async (appblockName, options) => {
   // Add packaged block into local registry
   await lrManager.init()
   lrManager.add = {
+    blockId,
     name: blockFinalName,
     rootPath: path.resolve(blockFinalName),
   }
 
-  await initializeSpaceToPackageBlock(blockFinalName)
+  await initializeSpaceToPackageBlock(blockFinalName, blockId)
 
   return { DIRPATH, blockFinalName, Git, prefersSsh }
 }

@@ -8,9 +8,10 @@
 const { configstore } = require('../../configstore')
 const { lrManager } = require('../../utils/locaRegistry/manager')
 
-const initializeSpaceToPackageBlock = async (blockFinalName) => {
+const initializeSpaceToPackageBlock = async (blockFinalName, blockId) => {
   await lrManager.init()
   lrManager.linkSpaceToPackageBlock({
+    blockId,
     name: blockFinalName,
     space_id: configstore.get('currentSpaceId'),
     space_name: configstore.get('currentSpaceName'),

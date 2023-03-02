@@ -111,11 +111,11 @@ class LocalRegistryManager {
   linkSpaceToPackageBlock(packagedData) {
     this._checkAndCreateLocalRegistryDir()
 
-    const { name, space_id, space_name } = packagedData
+    const { name, blockId, space_id, space_name } = packagedData
     const curData = this.localRegistryData[space_name] || { space_id, space_name }
     const curPBsData = curData.package_blocks || {}
-    const curBData = curPBsData[name] || {}
-    this.localRegistryData[space_name] = { ...curData, package_blocks: { ...curPBsData, [name]: { ...curBData } } }
+    const curBData = curPBsData[blockId] || { name, rootPath: path.resolve() }
+    this.localRegistryData[space_name] = { ...curData, package_blocks: { ...curPBsData, [blockId]: { ...curBData } } }
 
     this.events.emit('write')
   }
@@ -123,10 +123,10 @@ class LocalRegistryManager {
   /**
    * isSpaceLinkedToPackageBlock
    */
-  isSpaceLinkedToPackageBlock(name, spaceId) {
+  isSpaceLinkedToPackageBlock(blockId, spaceId) {
     return Object.values(this.localRegistryData).some((spbData) => {
       if (spbData.space_id !== spaceId) return false
-      return !!spbData.package_blocks?.[name]
+      return !!spbData.package_blocks?.[blockId]
     })
   }
 
@@ -160,7 +160,7 @@ class LocalRegistryManager {
 
     if (!space_id) throw new Error(`No linked space found for ${name}`)
 
-    const packagedData = { name, space_id, space_name }
+    const packagedData = { name, space_id, space_name, blockId }
     this.linkSpaceToPackageBlock(packagedData)
 
     return packagedData
@@ -171,7 +171,7 @@ class LocalRegistryManager {
    */
   async linkedSpaceOfPackageBlock(name, blockId) {
     const spaceName = configstore.get('currentSpaceName')
-    let curData = this.localRegistryData[spaceName]?.package_blocks?.[name]
+    let curData = this.localRegistryData[spaceName]?.package_blocks?.[blockId]
 
     if (!curData) {
       curData = await this.setSpaceLinkedToPackage(name, blockId)
@@ -195,21 +195,21 @@ class LocalRegistryManager {
     const dSpaceId = configstore.get('currentSpaceId')
     const dSpaceName = configstore.get('currentSpaceName')
 
-    const { name, rootPath, space_id = dSpaceId, space_name = dSpaceName } = packagedData
+    const { name, blockId, rootPath, space_id = dSpaceId, space_name = dSpaceName } = packagedData
 
     const curData = this.localRegistryData[space_name] || { space_id, space_name }
     const curPBsData = curData.package_blocks || {}
-    const curBData = curPBsData[name] || { rootPath }
+    const curBData = curPBsData[blockId] || { rootPath, name }
     this.localRegistryData[space_name] = {
       ...curData,
-      package_blocks: { ...curPBsData, [name]: { ...curBData, rootPath } },
+      package_blocks: { ...curPBsData, [blockId]: { ...curBData, rootPath } },
     }
 
     if (!this.packagedBlockConfigs[space_name]) {
       this.packagedBlockConfigs[space_name] = {}
     }
 
-    this.packagedBlockConfigs[space_name][name] = JSON.parse(
+    this.packagedBlockConfigs[space_name][blockId] = JSON.parse(
       readFileSync(path.join(rootPath, this.blockConfigFileName))
     )
 
@@ -220,10 +220,10 @@ class LocalRegistryManager {
    * Remove packaged to registry
    * @param {String} name  Name of packaged block
    */
-  remove(name, spaceName) {
+  remove(blockId, spaceName) {
     const space_name = spaceName || configstore.get('currentSpaceName')
-    delete this.localRegistryData[space_name].package_blocks?.[name]
-    delete this.packagedBlockConfigs[space_name]?.[name]
+    delete this.localRegistryData[space_name].package_blocks?.[blockId]
+    delete this.packagedBlockConfigs[space_name]?.[blockId]
     this.events.emit('write')
   }
 
@@ -248,11 +248,13 @@ class LocalRegistryManager {
     const allDeps = Object.entries(this.packagedBlockConfigs).reduce((acc, [spaceName, spbData]) => {
       const depDatas = {}
       Object.entries(spbData).forEach((pb, pbData) => {
+        const pbName = pbData.name
         const deps = pbData.dependencies || {}
         Object.values(deps).forEach((dep) => {
-          depDatas[dep.meta.name] = {
+          depDatas[dep.meta.blockId] = {
             ...deps[dep.meta.name],
-            packagedBlock: pb,
+            packagedBlock: pbName,
+            packagedBlockId: pb,
             spaceName,
           }
         })
@@ -268,18 +270,18 @@ class LocalRegistryManager {
    * Get dependecies by name
    * @param {String} name  Name of packaged block
    */
-  getPackageBlock(name, spaceName) {
+  getPackageBlock(blockId, spaceName) {
     const space_name = spaceName || configstore.get('currentSpaceName')
-    return this.packagedBlockConfigs[space_name]?.[name]
+    return this.packagedBlockConfigs[space_name]?.[blockId]
   }
 
   /**
    * Get dependecies by name
    * @param {String} name  Name of packaged block
    */
-  getPackageBlockDependencies(name, spaceName) {
+  getPackageBlockDependencies(blockId, spaceName) {
     const space_name = spaceName || configstore.get('currentSpaceName')
-    return this.packagedBlockConfigs[space_name]?.[name]?.dependencies
+    return this.packagedBlockConfigs[space_name]?.[blockId]?.dependencies
   }
 }
 

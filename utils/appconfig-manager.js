@@ -261,8 +261,9 @@ class AppblockConfigManager {
     }
     this.liveDetails[blockname] = { ...this.liveDetails[blockname], ...stop }
     if (this.isGlobal) {
-      const pbName = lrManager.allDependencies[blockname].packagedBlock
-      const rootPath = lrManager.localRegistry[pbName]?.rootPath
+      const bId = this.getBlockId(this.currentPackageBlox)
+      const pbId = lrManager.allDependencies[bId].packagedBlockId
+      const rootPath = lrManager.localRegistry[pbId]?.rootPath
       const tempPath = tmpdir()
       this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigName)
     }
@@ -273,8 +274,9 @@ class AppblockConfigManager {
     const stop = { job_cmd: null, isJobOn: false }
     this.liveDetails[blockname] = { ...this.liveDetails[blockname], ...stop }
     if (this.isGlobal) {
-      const pbName = lrManager.allDependencies[blockname].packagedBlock
-      const rootPath = lrManager.localRegistry[pbName]?.rootPath
+      const bId = this.getBlockId(this.currentPackageBlox)
+      const pbId = lrManager.allDependencies[bId].packagedBlockId
+      const rootPath = lrManager.localRegistry[pbId]?.rootPath
       const tempPath = tmpdir()
       this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigName)
     }
@@ -317,7 +319,7 @@ class AppblockConfigManager {
    * @param {import('./jsDoc/types').appConfigInitOptions} options
    * @returns {Promise<undefined>}
    */
-  async init(cwd, configName, subcmd, options = { reConfig: false, isGlobal: false }) {
+  async init(cwd, configName, subcmd, options = { reConfig: true, isGlobal: false }) {
     this.configName = configName || 'block.config.json'
     this.cwd = cwd || '.'
     this.subcmd = subcmd || null
@@ -506,7 +508,8 @@ class AppblockConfigManager {
 
     if (this.isGlobal && this.liveConfigPath) {
       const pbName = this.liveConfigPath?.split('/').at(-2)
-      const { dependencies: deps } = lrManager.getPackageBlock(pbName) || {}
+      const id = this.getBlockId(pbName)
+      const { dependencies: deps } = lrManager.getPackageBlock(id) || {}
       if (!deps) return {}
       for (const block of Object.values(deps)) {
         liveConfig[block.meta.name] = {
@@ -572,8 +575,9 @@ class AppblockConfigManager {
         return acc
       }, {})
 
-      const rootPath = lrManager.localRegistry[this.currentPackageBlox]?.rootPath
-      const pbConfig = lrManager.getPackageBlock(this.currentPackageBlox)
+      const id = this.getBlockId(this.currentPackageBlox)
+      const rootPath = lrManager.localRegistry[id]?.rootPath
+      const pbConfig = lrManager.getPackageBlock(id)
       writeData = { ...pbConfig, dependencies: deps }
 
       p = path.resolve(rootPath, this.configName)
@@ -655,9 +659,10 @@ class AppblockConfigManager {
     return new Promise(async (resolve) => {
       try {
         const blockData = await this.getBlock(blockName)
+        const localBlockId = blockData?.meta?.blockId || blockData?.blockId
 
-        if (blockData?.meta?.blockId || blockData?.blockId) {
-          resolve(blockData.meta?.blockId || blockData.blockId)
+        if (localBlockId) {
+          resolve(localBlockId)
           return
         }
 
@@ -669,7 +674,7 @@ class AppblockConfigManager {
           throw new Error('Something went wrong from our side\n', data.msg).message
         }
 
-        resolve(data.data.ID)
+        resolve(data.data.id)
       } catch (err) {
         console.log(`Something went wrong while getting details of block:${blockName} -- ${err} `)
         resolve(null)
