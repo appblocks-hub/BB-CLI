@@ -14,11 +14,11 @@ const { cloneTemplateRepository, createRepository } = require('./Mutations')
 // const { NewLS } = require('./listandselectrepos')
 // const { orgTeams } = require('./Queries')
 const { githubGraphQl } = require('./api')
-const checkBlockNameAvailability = require('./checkBlockNameAvailability')
 const { getGitHeader } = require('./getHeaders')
 const { configstore } = require('../configstore')
 const { GitManager } = require('./gitmanager')
 const { spinnies } = require('../loader')
+const { readInput } = require('./questionPrompts')
 
 /**
  *
@@ -149,8 +149,16 @@ async function createRepo(
           spinnies.fail('createRepo', { text: `Repository ${BLOCKNAME} already exists` })
           spinnies.remove('createRepo')
 
-          const newShortName = await checkBlockNameAvailability('', true)
-          return callToGitHub(newShortName)
+          const newRepo = await readInput({
+            name: 'newRepo',
+            message: 'Enter the repository name',
+            validate: (input) => {
+              if (!input || input?.length < 3) return `Please enter the repository name with atleast 3 characters`
+              return true
+            },
+          })
+
+          return callToGitHub(newRepo)
         }
         spinnies.fail('createRepo', { text: `Something went wrong!` })
         throw new Error(`Something went wrong with query,\n${JSON.stringify(innerData)}`)

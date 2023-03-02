@@ -1,6 +1,7 @@
 const chalk = require('chalk')
-const { readFileSync, writeFileSync } = require('fs')
+const { readFileSync, writeFileSync, cp, existsSync, rm } = require('fs')
 const path = require('path')
+const { tmpdir } = require('os')
 
 const { forkRepo } = require('./forkUtil')
 
@@ -77,9 +78,9 @@ const updateBlockConfig = async (options) => {
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.log(chalk.dim('Pulled block has no config file, adding a new one'))
-      const language = metaData.BlockType < 4 ? 'js' : 'nodejs'
+      const language = metaData.block_type < 4 ? 'js' : 'nodejs'
       blockConfig = {
-        type: metaData.BlockType,
+        type: metaData.block_type,
         language,
         start: language === 'js' ? 'npx webpack-dev-server' : 'node index.js',
         build: language === 'js' ? 'npx webpack' : '',
@@ -97,26 +98,26 @@ const updateBlockConfig = async (options) => {
       const pbmd = parentBlockRes.data.data
 
       blockConfig.parent = {
-        block_name: metaData.purchased_parent_block_id,
-        block_id: pbmd.block_name,
+        block_id: metaData.purchased_parent_block_id,
+        block_name: pbmd.block_name,
         block_version: metaData.block_version,
         block_version_id: metaData.block_version_id,
       }
     } else {
       blockConfig.parent = {
-        block_name: metaData.ID,
-        block_id: metaData.BlockName,
+        block_id: metaData.block_id,
+        block_name: metaData.block_name,
         block_version: metaData.block_version,
         block_version_id: metaData.block_version_id,
       }
     }
   }
 
-  blockConfig.name = metaData.BlockName
+  blockConfig.name = metaData.block_name
   blockConfig.version = metaData.version_number
   blockConfig.source =
     metaData.has_access || metaData.block_visibility === 4
-      ? { https: convertGitSshUrlToHttps(metaData.GitUrl), ssh: metaData.GitUrl }
+      ? { https: convertGitSshUrlToHttps(metaData.git_url), ssh: metaData.git_url }
       : {}
   writeFileSync(blockConfigPath, JSON.stringify(blockConfig, null, 2))
 
@@ -138,31 +139,73 @@ const updateBlockConfig = async (options) => {
  * @param {String} componentName
  * @returns
  */
-async function pullBlock(da, appConfig, cwd, componentName, options) {
+async function pullBlock(da, appConfig, cwdValue, componentName, options) {
   /**
    * To try and run postPull script
    */
   let pulledBlockPath = ''
   let metaData = { ...da }
   const { args, componentVersion } = options
+  const tempPath = tmpdir()
+  const pullByConfigFolderName = metaData.pull_by_config_folder_name
+  const tempPullByConfigFolder = `${tempPath}/appblocks_${pullByConfigFolderName}/`
+
+  let cwd = cwdValue
 
   try {
-    // get the version id of the latest verion of parent
-    const c = await getBlockMetaData(metaData.ID)
-    if (c.data.err) {
-      throw new Error(c.data.msg)
+    if (!metaData.block_id) {
+      // get the version id of the latest verion of parent
+      const c = await getBlockMetaData(metaData.id)
+      if (c.data.err) {
+        throw new Error(c.data.msg)
+      }
+      const compMetaData = c.data.data
+      metaData = { ...compMetaData, ...metaData }
+      metaData.parent_id = compMetaData.purchased_parent_block_id || metaData.block_id
+    } else {
+      metaData.parent_id = metaData.purchased_parent_block_id || metaData.block_id
     }
-    const compMetaData = c.data.data
 
-    metaData.parent_id = compMetaData.purchased_parent_block_id || metaData.ID
-    metaData = { ...compMetaData, ...metaData }
+    if (metaData.pull_by_config) {
+      process.chdir('../')
+      cp(`${pullByConfigFolderName}/`, tempPullByConfigFolder, { recursive: true }, (err) => {
+        if (err) throw err
+        rm(pullByConfigFolderName, { recursive: true, force: true }, () => {})
+      })
+      cwd = '.'
+      await appConfig.init(cwd, null, 'pull', { reConfig: true })
+    }
+
+    const pbSab = appConfig.config?.supportedAppblockVersions
+    if (metaData.appblock_versions && pbSab) {
+      const bSab = metaData.appblock_versions.map(({ version }) => version)
+      const isSupported = bSab.some((version) => pbSab.includes(version))
+
+      if (!isSupported) {
+        console.log(
+          chalk.dim(
+            `${appConfig.config.name} supported versions : ${pbSab}\n${metaData.block_name} supported versions : ${bSab}`
+          )
+        )
+        const goAhead = await confirmationPrompt({
+          name: 'goAhead',
+          message: `Found non-compatible appblock version in pulling block. Do you want to continue ?`,
+          default: false,
+        })
+
+        if (!goAhead) throw new Error('Cancelled pulling non-compatible block')
+      }
+    }
 
     spinnies.add('pab', { text: 'checking block permission ' })
     const { data: pData, error: pErr } = await post(getBlockPersmissionsApi, {
-      block_id: metaData.ID,
+      block_id: metaData.block_id,
     })
+
     spinnies.remove('pab')
     if (pErr) throw pErr
+
+    delete pData.data?.id
 
     metaData = { ...metaData, ...pData.data }
 
@@ -179,10 +222,10 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     }
 
     let statusFilter = hasBlockAccess ? undefined : [4]
-    let versionOf = metaData.ID
+    let versionOf = metaData.block_id
     if (isPurcahsedVariant && blockVisibility === 5) {
       statusFilter = [4] // approved versions
-      versionOf = compMetaData.purchased_parent_block_id
+      versionOf = metaData.purchased_parent_block_id
     }
     const bv = await getAllBlockVersions(versionOf, {
       status: statusFilter,
@@ -205,7 +248,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         message: `Block version not specified. Do you want to pull the latest code?`,
       })
 
-      if (!continueWithLatest) throw new Error('Pulling cancelled')
+      if (!continueWithLatest) throw new Error('Cancelled Pulling block with latest code')
       pullWithoutVersion = true
     }
 
@@ -248,7 +291,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
       createCustomVersion = true
     } else if (variant === false) createCustomVersion = false
     else {
-      createCustomVersion = await wantToCreateNewVersion(metaData.BlockName)
+      createCustomVersion = await wantToCreateNewVersion(metaData.block_name)
     }
 
     if (pullWithoutVersion && createCustomVersion) {
@@ -271,29 +314,32 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         blockFinalName = bFN
         cloneDirName = cDN
       } else if (hasBlockAccess || blockVisibility === 4) {
-        const availableName = await checkBlockNameAvailability(metaData.BlockName, true)
-        let newVariantType = variantType === 'fork' ? 0 : 1
-        if (metaData.BlockType !== 1 && !variantType) {
+        const availableName = await checkBlockNameAvailability(
+          pullByConfigFolderName || metaData.block_name,
+          !pullByConfigFolderName
+        )
+        let newVariantType = variantType === 'fork' ? 1 : 0
+        if (metaData.block_type !== 1 && !variantType) {
           newVariantType = await readInput({
             type: 'list',
             name: 'isFork',
             message: 'Choose variant type',
-            choices: ['Fork', 'Clone'].map((v, i) => ({
+            choices: ['Clone', 'Fork'].map((v, i) => ({
               name: v,
               value: i,
             })),
-            // 0-fork 1-clone
+            // 0-clone,  1-fork
           })
         }
 
         // IF FORK
 
-        if (newVariantType === 0) {
+        if (newVariantType === 1) {
           try {
-            clonePath = appConfig.isOutOfContext ? cwd : createDirForType(metaData.BlockType, cwd || '.')
+            clonePath = appConfig.isOutOfContext ? cwd : createDirForType(metaData.block_type, cwd || '.')
             const { sshUrl, name, blockFinalName: bf } = await forkRepo(metaData, availableName, clonePath)
 
-            metaData.GitUrl = sshUrl
+            metaData.git_url = sshUrl
             cloneDirName = name
             blockFinalName = bf
           } catch (error) {
@@ -304,15 +350,15 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
           const packageBlockName = appConfig.config?.name
           const package_block_id = appConfig.packageBlockId
 
-          if (!packageBlockName && metaData.BlockType !== 1) {
+          if (!packageBlockName && metaData.block_type !== 1) {
             throw new Error('Cannot create block without package block')
           }
 
           const createBlockRes = await createBlock(
             availableName,
             availableName,
-            metaData.BlockType,
-            metaData.GitUrl,
+            metaData.block_type,
+            metaData.git_url,
             appConfig.isOutOfContext,
             cwd,
             false,
@@ -353,7 +399,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
       if (d.data.err) {
         throw new Error(d.data.msg)
       }
-      const block_id = d.data.data.ID
+      const block_id = d.data.data.id
 
       // request registry for new variant creation
       const rt = await addANewBlockVariant({
@@ -367,17 +413,26 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         feedback({ type: 'error', message: 'Variant creation failed' })
         feedback({ type: 'error', message: rt.data.msg })
       }
-      console.log(chalk.green(`${metaData.BlockName} pulled to ${blockFinalName} successfully!`))
+      console.log(chalk.green(`${metaData.block_name} pulled to ${blockFinalName} successfully!`))
       pulledBlockPath = path.resolve(clonePath, cloneDirName)
     } else {
+      if (metaData.pull_by_config) {
+        const goAhead = await confirmationPrompt({
+          name: 'goAhead',
+          message: `Block name and folder name should be same. Do you want to rename ${pullByConfigFolderName} to ${metaData.block_name} ?`,
+        })
+
+        if (!goAhead) throw new Error('Cannot proceed with different name')
+      }
+
       const existingBlock = appConfig.getBlock(componentName)
       if (existingBlock) {
         throw new Error(`${componentName} already exists at ${existingBlock.directory}`)
       }
 
-      const clonePath = appConfig.isOutOfContext ? '.' : createDirForType(metaData.BlockType, cwd || '.')
+      const clonePath = appConfig.isOutOfContext ? '.' : createDirForType(metaData.block_type, cwd || '.')
 
-      const localDirName = `${metaData.BlockName}`
+      const localDirName = `${metaData.block_name}`
       const blockFolderPath = path.resolve(clonePath, localDirName)
 
       if (hasPullBlockAccess) {
@@ -391,7 +446,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
 
         spinnies.add('pab', { text: 'Pulling block ' })
         const prefersSsh = configstore.get('prefersSsh')
-        const originUrl = prefersSsh ? metaData.GitUrl : convertGitSshUrlToHttps(metaData.GitUrl)
+        const originUrl = prefersSsh ? metaData.git_url : convertGitSshUrlToHttps(metaData.git_url)
         const Git = new GitManager(path.resolve(), localDirName, originUrl, prefersSsh)
         await Git.clone(blockFolderPath)
         if (metaData.version_number) {
@@ -406,7 +461,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
       } else if (blockVisibility === 4) {
         console.log(chalk.dim('No access to clone or fork the repository. Pulling code from appblocks'))
         spinnies.add('pab', { text: 'Pulling block source code' })
-        await pullSourceCodeFromAppblock({ blockFolderPath, metaData, blockId: metaData.parent_id })
+        await pullSourceCodeFromAppblock({ blockFolderPath, metaData, blockId: metaData.block_id })
         spinnies.remove('pab')
         // console.log(chalk.dim('Block pulled successfully'))
       } else {
@@ -414,7 +469,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         return
       }
 
-      // execSync(`git clone ${metaData.GitUrl} ${path.resolve(clonePath, localDirName)}`, {
+      // execSync(`git clone ${metaData.git_url} ${path.resolve(clonePath, localDirName)}`, {
       //   stdio: 'ignore',
       // })
 
@@ -428,11 +483,45 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
         meta: JSON.parse(readFileSync(path.resolve(clonePath, localDirName, 'block.config.json'))),
       })
 
-      console.log(chalk.green(`${metaData.BlockName} pulled Successfully!`))
+      console.log(chalk.green(`${metaData.block_name} pulled Successfully!`))
 
       pulledBlockPath = path.resolve(clonePath, localDirName)
     }
+
+    // RUN the post pull script here
+    // execSync(`cd ${pulledBlockPath} `)
+    // TODO: use pnpm
+
+    spinnies.add('npmi', { text: 'Checking for pnpm binary' })
+    let usePnpm = false
+    if (checkPnpm()) {
+      usePnpm = true
+    } else {
+      spinnies.update('npmi', { text: 'pnpm is not installed', status: 'stopped' })
+      console.log(`pnpm is recommended`)
+      console.log(`Visit https://pnpm.io for more info`)
+    }
+    spinnies.add('npmi', { text: `Installing dependencies with ${usePnpm ? `pnpm` : 'npm'}` })
+    const ireport = await runBash(usePnpm ? `pnpm install` : 'npm i', pulledBlockPath)
+    if (ireport.status === 'failed') {
+      console.log({ ireport })
+      spinnies.fail('npmi', { text: ireport.msg })
+    } else {
+      spinnies.succeed('npmi', { text: 'Dependencies installed' })
+    }
+    spinnies.remove('npmi')
+
+    if (metaData.pull_by_config && existsSync(`${tempPath}/appblocks_${pullByConfigFolderName}`)) {
+      rm(`${tempPath}/appblocks_${pullByConfigFolderName}`, { recursive: true, force: true }, () => {})
+    }
   } catch (err) {
+    if (metaData.pull_by_config && existsSync(`${tempPath}/appblocks_${pullByConfigFolderName}`)) {
+      cp(tempPullByConfigFolder, `${pullByConfigFolderName}/`, { recursive: true }, (error) => {
+        if (error) feedback({ type: 'info', error })
+        rm(`${tempPath}/appblocks_${pullByConfigFolderName}`, { recursive: true, force: true }, () => {})
+      })
+    }
+
     spinnies.remove('pab')
 
     let message = err.response?.data?.msg || err.message
@@ -442,34 +531,7 @@ async function pullBlock(da, appConfig, cwd, componentName, options) {
     }
 
     feedback({ type: 'info', message })
-    // console.log('Something went wrong, please try again.\n')
-    // console.log(err)
-    // console.log(chalk.red(err))
-    if (!pulledBlockPath) return
   }
-
-  // RUN the post pull script here
-  // execSync(`cd ${pulledBlockPath} `)
-  // TODO: use pnpm
-
-  spinnies.add('npmi', { text: 'Checking for pnpm binary' })
-  let usePnpm = false
-  if (checkPnpm()) {
-    usePnpm = true
-  } else {
-    spinnies.update('npmi', { text: 'pnpm is not installed', status: 'stopped' })
-    console.log(`pnpm is recommended`)
-    console.log(`Visit https://pnpm.io for more info`)
-  }
-  spinnies.add('npmi', { text: `Installing dependencies with ${usePnpm ? `pnpm` : 'npm'}` })
-  const ireport = await runBash(usePnpm ? `pnpm install` : 'npm i', pulledBlockPath)
-  if (ireport.status === 'failed') {
-    console.log({ ireport })
-    spinnies.fail('npmi', { text: ireport.msg })
-  } else {
-    spinnies.succeed('npmi', { text: 'Dependencies installed' })
-  }
-  spinnies.remove('npmi')
 }
 
 module.exports = { pullBlock, handleOutOfContextCreation }

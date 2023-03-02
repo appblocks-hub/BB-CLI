@@ -7,56 +7,118 @@
 
 const chalk = require('chalk')
 
+const path = require('path')
+const { existsSync, readFileSync } = require('fs')
 const { transports } = require('winston')
 const { appConfig } = require('../../utils/appconfigStore')
 const pullAppblock = require('../../utils/pullAppblock')
 const { spinnies } = require('../../loader')
-const { getBlockDetails } = require('../../utils/registryUtils')
+const { getBlockDetails, getBlockMetaData } = require('../../utils/registryUtils')
 const { feedback } = require('../../utils/cli-feedback')
 const { pullBlock, handleOutOfContextCreation } = require('./util')
 const { logger } = require('../../utils/logger')
+const { confirmationPrompt } = require('../../utils/questionPrompts')
 
-const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
-  const [componentName, componentVersion] = componentNameWithVersion.split('@')
+const pull = async (pullBlockData, options, { cwd = '.' }) => {
+  const cwdValue = pullBlockData ? cwd : '../'
 
-  logger.add(new transports.File({ filename: 'pull.log' }))
-  logger.info(`pull ${componentName} in cwd:${cwd}`)
-  /**
-   * @type {import('../../utils/jsDoc/types').blockDetailsdataFromRegistry}
-   */
-  let metaData
+  await appConfig.init(cwdValue, null, 'pull', { reConfig: true })
 
-  spinnies.add('blockExistsCheck', { text: `Searching for ${componentName}` })
+  let hasBlockId = options.id
+  let pullId = pullBlockData
 
+  let componentName
+  let componentVersion
+  let metaData = {}
+
+  logger.info(`appConfig init okay`)
   try {
+    ;[componentName, componentVersion] = pullBlockData?.startsWith('@')
+      ? pullBlockData?.replace('@', '')?.split('@') || []
+      : pullBlockData?.split('@') || []
+
+    if (!componentName && !hasBlockId) {
+      if (!existsSync(appConfig.blockConfigName)) {
+        throw new Error('Block name or Block config not found')
+      }
+
+      const config = JSON.parse(readFileSync(appConfig.blockConfigName))
+      if (!config.blockId) throw new Error('Block ID not found in block config')
+
+      componentName = config.name
+
+      const goAhead = await confirmationPrompt({
+        message: `You are trying to pull ${componentName} by config ?`,
+        default: false,
+        name: 'goAhead',
+      })
+
+      if (!goAhead) {
+        feedback({ type: 'error', message: `Process cancelled` })
+        throw new Error('Process cancelled')
+      }
+
+      hasBlockId = true
+      pullId = config.blockId
+      metaData.pull_by_config = true
+      metaData.block_config = config
+      metaData.pull_by_config_folder_name = path.basename(path.resolve())
+    }
+
+    logger.add(new transports.File({ filename: 'pull.log' }))
+    logger.info(`pull ${componentName} in cwd:${cwdValue}`)
+    /**
+     * @type {import('../../utils/jsDoc/types').blockDetailsdataFromRegistry}
+     */
+
     /**
      * @type {{status:number,data:{err:string,data:import('../../utils/jsDoc/types').blockDetailsdataFromRegistry,msg:string}}}
      */
-    const {
-      status,
-      data: { err, msg, data: blockDetails },
-    } = await getBlockDetails(componentName)
 
-    if (status === 204) {
-      spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
-      logger.error(`${componentName} not in registry: 204 return`)
-      return
+    spinnies.add('blockExistsCheck', { text: `Searching for ${componentName}` })
+
+    // check if pull by id
+    if (hasBlockId) {
+      const c = await getBlockMetaData(pullId)
+
+      if (c.data.err) {
+        throw new Error(c.data.msg)
+      }
+
+      if (c.status === 204) {
+        spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
+        logger.error(`${componentName} not in registry: 204 return`)
+        return
+      }
+
+      const blockMeta = c.data?.data
+      metaData = { ...metaData, ...blockMeta, id: blockMeta.block_id }
+
+      componentName = metaData.block_name
+      componentVersion = null
+    } else {
+      const {
+        status,
+        data: { err, msg, data: blockDetails },
+      } = await getBlockDetails(componentName)
+
+      if (status === 204) {
+        spinnies.fail('blockExistsCheck', { text: `${componentName} doesn't exists in block repository` })
+        logger.error(`${componentName} not in registry: 204 return`)
+        return
+      }
+      if (err) {
+        logger.error(`Error from regsitry: ${msg}`)
+        throw new Error(msg).message
+      }
+      metaData = { ...metaData, ...blockDetails }
     }
-    if (err) {
-      logger.error(`Error from regsitry: ${msg}`)
-      throw new Error(msg).message
-    }
-
-    metaData = blockDetails
-
-    await appConfig.init(cwd, null, 'pull')
-    logger.info(`appConfig init okay`)
 
     spinnies.succeed('blockExistsCheck', { text: `${componentName} is available` })
     spinnies.remove('blockExistsCheck')
     logger.info(`${componentName} is available`)
 
-    if (appConfig.isOutOfContext && metaData.BlockType !== 1) {
+    if (appConfig.isOutOfContext && metaData.block_type !== 1) {
       /**
        * User is trying to create block not from inside a pacakge block
        */
@@ -69,27 +131,27 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
       /**
        * User is trying to pull a block to a block of type other than pacakage block
        */
-      logger.error('Need to be inside and Appblock to pull other blocks')
-      throw new Error('Need to be inside an Appblock to pull other blocks')
+      logger.error('Need to be inside a package to pull other blocks')
+      throw new Error('Need to be inside a package to pull other blocks')
     }
 
-    if (metaData.BlockType === 1 && !appConfig.isOutOfContext) {
+    if (metaData.block_type === 1 && !appConfig.isOutOfContext) {
       /**
        * User is trying to pull a package block into a block of another type
        */
-      logger.error('Trying to pull appblock to non appblock type')
-      throw new Error(`Cannot pull appBlocks,\n ${chalk.yellow(metaData.BlockName)} is a package block`).message
+      logger.error('Trying to pull package block to non package block type')
+      throw new Error(`Cannot pull package block,\n ${chalk.yellow(metaData.block_name)} is an package block`).message
     }
 
-    if (metaData.BlockType === 1) {
+    if (metaData.block_type === 1) {
       logger.info('calling pullAppblock')
       const res = await pullAppblock(componentName)
       process.exit(res ? 0 : 1)
     }
 
-    if (metaData.BlockType !== 1 && appConfig.isInAppblockContext) {
+    if (metaData.block_type !== 1 && appConfig.isInAppblockContext) {
       logger.info('calling pullBlock')
-      await pullBlock(metaData, appConfig, cwd, componentName, {
+      await pullBlock(metaData, appConfig, cwdValue, componentName, {
         args: options,
         componentVersion,
       })
@@ -99,7 +161,6 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
   } catch (err) {
     // console.log('Something went wrong while getting block details..')
     spinnies.add('blockExistsCheck')
-    console.log('index.js')
 
     let message = err.message || err
 
@@ -108,9 +169,9 @@ const pull = async (componentNameWithVersion, options, { cwd = '.' }) => {
     }
 
     logger.error(`error in catch:${message}`)
-    spinnies.fail('blockExistsCheck', { text: `Something went wrong` })
-    feedback({ type: 'info', message })
-    spinnies.remove('blockExistsCheck')
+    spinnies.fail('blockExistsCheck', { text: message })
+    spinnies.stopAll()
+
     process.exit(1)
   }
 }

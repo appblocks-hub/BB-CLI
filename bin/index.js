@@ -178,10 +178,11 @@ async function init() {
 
   program
     .command('pull')
-    .argument('<component>', 'Name of component with version. block@0.0.1')
+    .argument('[component]', 'Name of component with version. block@0.0.1')
     .option('--add-variant', 'Add as variant')
     .option('--no-variant', 'No variant')
     .option('-t, --type <variantType>', 'Type of variant to create')
+    .option('--id', 'For passing Block ID')
     .description(desc.pull)
     .action(pull)
 

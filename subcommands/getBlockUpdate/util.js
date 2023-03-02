@@ -25,7 +25,7 @@ const pullBlockUpdate = async (options) => {
     const { blockDetails, cwd, appConfig } = options
     // get the version id of the latest verion of parent
     spinnies.add('pbu', { text: 'Getting block meta data ' })
-    const c = await getBlockMetaData(blockDetails.ID)
+    const c = await getBlockMetaData(blockDetails.id)
     spinnies.remove('pbu')
     if (c.data.err) throw new Error(c.data.msg)
 
@@ -33,7 +33,7 @@ const pullBlockUpdate = async (options) => {
 
     spinnies.add('pbu', { text: 'Checking block permission ' })
     const { data: pData, error: pErr } = await post(getBlockPersmissionsApi, {
-      block_id: blockDetails.ID,
+      block_id: blockDetails.id,
     })
     spinnies.remove('pbu')
     if (pErr) throw pErr
@@ -48,11 +48,11 @@ const pullBlockUpdate = async (options) => {
     } = blockMetatData
 
     if (!hasPullBlockAccess && blockVisiblity !== 4) {
-      feedback({ type: 'info', message: `Pull access denied for block ${blockMetatData.BlockName}` })
+      feedback({ type: 'info', message: `Pull access denied for block ${blockMetatData.block_name}` })
       return
     }
 
-    let pullUpdateBlockId = blockMetatData.ID
+    let pullUpdateBlockId = blockMetatData.id
     let appData
     let pullableBlockVersions = []
 
@@ -91,10 +91,10 @@ const pullBlockUpdate = async (options) => {
     } else {
       // free block
       const appBlockConfigData = appConfig.appConfig
-      const blockConfigData = appBlockConfigData.dependencies[blockDetails.BlockName]
+      const blockConfigData = appBlockConfigData.dependencies[blockDetails.block_name]
 
       spinnies.add('pbu', { text: 'Getting block version ' })
-      const versionOf = blockConfigData.parent ? blockConfigData.parent.block_id : blockDetails.ID
+      const versionOf = blockConfigData.parent ? blockConfigData.parent.block_id : blockDetails.id
       const bv = await getAllBlockVersions(versionOf, { status: [4] })
       spinnies.remove('pbu')
 
@@ -136,18 +136,18 @@ const pullBlockUpdate = async (options) => {
 
     const pulledFolderName = isPurcahsedVariant
       ? `${blockMetatData.parentBlockName}@${blockMetatData.version_number}`
-      : `${blockMetatData.BlockName}@${blockMetatData.version_number}`
+      : `${blockMetatData.block_name}@${blockMetatData.version_number}`
     const blockUpdatesFolder = '_block_updates'
 
     blockFolderPath = path.resolve(cwd, blockUpdatesFolder, pulledFolderName)
 
     if (!existsSync(blockFolderPath)) mkdirSync(blockFolderPath, { recursive: true })
 
-    const pullOptions = { blockFolderPath, metaData: blockMetatData, blockId: blockMetatData.ID }
+    const pullOptions = { blockFolderPath, metaData: blockMetatData, blockId: blockMetatData.id }
 
     if (isPurcahsedVariant) {
       pullOptions.blockId = blockMetatData.purchased_parent_block_id
-      pullOptions.variantBlockId = blockMetatData.ID
+      pullOptions.variantBlockId = blockMetatData.id
       pullOptions.appId = appData.app_id
       pullOptions.spaceId = configstore.get('currentSpaceId')
     }
