@@ -36,7 +36,7 @@ class ELB_Handler {
     const { vpcId } = fargateConfig
 
     const command = new CreateTargetGroupCommand({
-      Name: `${containerName}TG`,
+      Name: `${containerName.replaceAll('_', '-')}TG`,
       Protocol: 'HTTP',
       ProtocolVersion: 'HTTP1',
       Port: port,
@@ -66,7 +66,7 @@ class ELB_Handler {
     const { subnetIds, securityGroupIds } = fargateConfig
 
     const command = new CreateLoadBalancerCommand({
-      Name: `${containerName}LB`,
+      Name: `${containerName.replaceAll('_', '-')}LB`,
       Subnets: subnetIds,
       SecurityGroups: securityGroupIds,
       Tags: [
