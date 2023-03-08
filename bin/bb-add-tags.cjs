@@ -9,9 +9,16 @@
 
 const { Command } = require('commander')
 const addTags = require('../subcommands/addTags')
+const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  await ensureUserLogins()
+  await checkAndSetGitConnectionPreference()
+  await checkAndSetUserSpacePreference()
+})
 
-program.option('-all, --all', 'Add tags to all blocks').action(addTags)
+program.option('-A, --all', 'Add tags to all blocks').action(addTags)
 
 program.parse(process.argv)

@@ -9,8 +9,15 @@
 
 const { Command } = require('commander')
 const push_config = require('../subcommands/push_config')
+const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  await ensureUserLogins()
+  await checkAndSetGitConnectionPreference()
+  await checkAndSetUserSpacePreference()
+})
 
 program.action(push_config)
 

@@ -9,8 +9,14 @@
 
 const { Command } = require('commander')
 const connect = require('../subcommands/connect')
+const { isGitInstalled } = require('../utils/gitCheckUtils')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  if (!isGitInstalled()) {
+    console.log('Git not installed')
+    process.exitCode = 1
+  }
+})
 
 program
   .argument('<service>', 'Name of service to connect')

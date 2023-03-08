@@ -8,9 +8,14 @@
  */
 
 const { Command } = require('commander')
-const publish  = require('../subcommands/publish')
+const publish = require('../subcommands/publish')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  await ensureUserLogins()
+  await checkAndSetUserSpacePreference()
+})
 
 program.argument('[block-name]', 'Name of block to publish').action(publish)
 

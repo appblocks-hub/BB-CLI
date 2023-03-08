@@ -7,14 +7,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { Command} = require('commander')
+const { Command } = require('commander')
 const start = require('../subcommands/start')
+const { checkLogDirs } = require('../utils/preActionMethods/preAction-start')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  checkLogDirs()
+})
 
 program
-.argument('[name]', 'Name of block to start')
-.option('--use-pnpm', 'use pnpm to install dependencies')
-.action(start)
+  .argument('[name]', 'Name of block to start')
+  .option('--use-pnpm', 'use pnpm to install dependencies')
+  .action(start)
 
 program.parse(process.argv)

@@ -9,8 +9,11 @@
 
 const { Command } = require('commander')
 const use = require('../subcommands/use')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
-const program = new Command()
+const program = new Command().hook('preAction', async () => {
+  await ensureUserLogins()
+})
 
 program.argument('[space_name]', 'Name of space to use').action(use)
 

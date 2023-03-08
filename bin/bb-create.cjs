@@ -12,7 +12,22 @@ const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { blockTypes } = require('../utils/blockTypes')
 const create = require('../subcommands/create')
 
-const program = new Command()
+const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
+const { isGitInstalled } = require('../utils/gitCheckUtils')
+
+const program = new Command().hook('preAction', async (_, actionCommand) => {
+  const noRepo = !actionCommand._optionValues?.repo
+  if (!isGitInstalled()) {
+    console.log('Git not installed')
+    process.exitCode = 1
+    return
+  }
+  await ensureUserLogins(noRepo)
+  await checkAndSetGitConnectionPreference()
+  await checkAndSetUserSpacePreference()
+})
 
 program
   .argument('<component>', 'name of component')
