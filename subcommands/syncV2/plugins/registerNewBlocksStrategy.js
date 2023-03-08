@@ -13,8 +13,9 @@ class RegisterNewBlocksPlugin {
 
   apply(syncer) {
     syncer.hooks.afterWalk.tapPromise('registerNewBlocksStrategy', async (/** @type {SyncCore} */ core) => {
+      console.log(core.blockDirectoriesFound)
       for (let i = 0; i < core.blockDirectoriesFound.length; i += 1) {
-        const configPath = path.join(core.blockDirectoriesFound[i], core.packageConfigFileName)
+        const configPath = path.join(core.blockDirectoriesFound[i], core.blockConfigFileName)
         try {
           const configObject = await readFile(configPath, { encoding: 'utf8' }).then((_d) => JSON.parse(_d))
 
@@ -34,23 +35,25 @@ class RegisterNewBlocksPlugin {
           console.log('Error:', err)
         }
       }
+
+      if (!this.sourceLessBlocks.length) {
+        return
+      }
       /**
        * If sourceLessBlocks exists
        */
-      if (this.sourceLessBlocks.length) {
-        console.log(`\nFound ${this.sourceLessBlocks.length} directories that could be registered as a new block`)
-        console.log('------------------------------')
-        let i = 0
-        for (const block in this.map) {
-          if (Object.hasOwnProperty.call(this.map, block)) {
-            console.log(`${i + 1}:${chalk.whiteBright(block)} (${chalk.dim(this.map[block])})`)
-            i += 1
-          }
+      console.log(`\nFound ${this.sourceLessBlocks.length} directories that could be registered as a new block`)
+      console.log('------------------------------')
+      let i = 0
+      for (const block in this.map) {
+        if (Object.hasOwnProperty.call(this.map, block)) {
+          console.log(`${i + 1}:${chalk.whiteBright(block)} (${chalk.dim(this.map[block])})`)
+          i += 1
         }
-        console.log('------------------------------')
-        const result = await offerAndCreateBlock(this.sourceLessBlocks)
-        console.log(result)
       }
+      console.log('------------------------------')
+      const result = await offerAndCreateBlock.apply(core, [this.sourceLessBlocks])
+      console.log(result)
     })
   }
 }

@@ -340,6 +340,11 @@ function readInput({ type = 'input', name, message, ...options }) {
     .catch((err) => console.log(err))
 }
 
+/**
+ *
+ * @param {string} data
+ * @returns {Promise<boolean>}
+ */
 function confirmationPrompt(data) {
   return inquirer
     .prompt({

@@ -6,9 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const chalk = require('chalk')
-const { existsSync, readFileSync, writeFileSync } = require('fs')
-const { rm } = require('fs/promises')
+const { execSync } = require('child_process')
+const { existsSync, writeFileSync } = require('fs')
+const { rm, rename, readFile, cp, mkdir } = require('fs/promises')
 const path = require('path')
 const { configstore } = require('../configstore')
 const create = require('../subcommands/create')
@@ -16,7 +16,82 @@ const { blockTypeInverter } = require('./blockTypeInverter')
 const { CreateError } = require('./errors/createError')
 const { moveFiles, prepareFileListForMoving, ensureDirSync } = require('./fileAndFolderHelpers')
 const { GitManager } = require('./gitmanager')
-const { confirmationPrompt, readInput, getGitConfigNameEmail } = require('./questionPrompts')
+const { confirmationPrompt, readInput } = require('./questionPrompts')
+
+/**
+ * Reads and parses the json from the given path
+ * @param {string} s
+ * @returns {object}
+ */
+async function readJsonAsync(s) {
+  if (typeof s !== 'string') return { data: null, err: true }
+  try {
+    const file = await readFile(s)
+    const data = JSON.parse(file)
+    return { data, err: null }
+  } catch (err) {
+    return { data: null, err }
+  }
+}
+
+// const generateArchiveName = (name) => `archived_${name}`
+const archiveBlock = async (blockPath, configFileName) => {
+  const _configfilename = configFileName || 'block.config.json'
+  await rename(blockPath, `${blockPath}_archive_`)
+  await rename(
+    path.join(`${blockPath}_archive_`, _configfilename),
+    path.join(`${blockPath}_archive_`, `old_${_configfilename}`)
+  )
+  const s = execSync('ls').toString()
+  console.log(s)
+}
+const unArchiveBlock = async (blockPath, configFileName) => {
+  const _configfilename = configFileName || 'block.config.json'
+  await rename(`${blockPath}_archive_`, blockPath)
+  await rename(
+    path.join(`${blockPath}_archive_`, `old${_configfilename}`),
+    path.join(`${blockPath}_archive_`, _configfilename)
+  )
+}
+
+/**
+ * @typedef {object} createDataPart
+ * @property {string} clonePath
+ * @property {string} cloneDirName
+ * @property {import('./jsDoc/types').dependecyMetaShape} blockDetails
+ */
+/**
+ *
+ * @param {*} type
+ * @param {*} ele
+ * @param {*} blockName
+ * @returns {Promise<{data?:createDataPart,err:boolean}>}
+ */
+const handleCreate = async (type, ele, blockName) => {
+  try {
+    const _opts = { type: blockTypeInverter(type) || null, autoRepo: true }
+    const _args = [blockName, _opts, null, true, path.dirname(ele), false]
+    const _ = await create(..._args)
+
+    console.debug(`Created block successfully`)
+    return {
+      data: {
+        clonePath: _.clonePath,
+        cloneDirName: _.cloneDirName,
+        blockDetails: _.blockDetails,
+      },
+      err: false,
+    }
+  } catch (err) {
+    if (err instanceof CreateError) {
+      console.debug(`Creation of ${blockName} with data from ${ele} failed`)
+    } else {
+      console.debug(err)
+    }
+
+    return { data: null, err: true }
+  }
+}
 
 /**
  * @typedef {object} report
@@ -31,261 +106,281 @@ const { confirmationPrompt, readInput, getGitConfigNameEmail } = require('./ques
  */
 
 /**
- *
- * @param {Array} list A List of absolute paths
+ * From a list of absolute paths to directories, prompts user
+ * and call create function and set new block folders accordingly
+ * @param {Array<string>} list A List of absolute paths
  * @returns {Promise<Array<report>>}
  */
-const offerAndCreateBlock = async (list) => {
+async function offerAndCreateBlock(list) {
+  /**
+   * @type {report}
+   */
   const report = []
-  if (list.length === 0) return report
 
-  // console.log('\n-------------------------')
-  // console.log(list)
-  // console.log('--------------------------\n')
+  if (list.length === 0) return []
 
   const ans = await confirmationPrompt({
     name: 'createBlockFromstale',
-    // message: `Should I create blocks from above ${list.length} ${list.length > 1 ? `directories` : `directory`}`,
     message: `Should I create blocks from above ${list.length > 1 ? `directories` : `directory`}`,
     default: false,
   })
 
-  if (ans) {
-    for (let i = 0; i < list.length; i += 1) {
-      const ele = list[i]
-      report[i] = { oldPath: ele }
-      const hasGitFolder = existsSync(path.resolve(ele, '.git'))
-
-      let name = ''
-      let type = ''
-      let existingConfig = ''
-
-      try {
-        const config = JSON.parse(readFileSync(path.join(ele, 'block.config.json')))
-        name = config.name
-        type = config.type
-        existingConfig = config
-      } catch (err) {
-        console.log(`Error reading config from ${ele}`)
-        report[i].registered = false
-        report[i].copied = false
-        // eslint-disable-next-line no-continue
-        continue
-      }
-
-      const c = await confirmationPrompt({
-        name: `block-${i}`,
-        message: `Should i register ${ele}`,
-        default: false,
-      })
-
-      if (c) {
-        /**
-         * If user has decided to register the contents of the directory as a block,
-         * copy the contents of the folder to a temp directory,
-         * this is to avoid the case where user register the directory in the same name
-         * as the directory itself, in which case 'create' will run into error,
-         * as git complains during cloning.
-         */
-
-        ensureDirSync(path.normalize('./.temp'))
-
-        // if (hasGitFolder) {
-        // console.log(`Copying ${ele} to a temp folder`)
-        const f21 = await prepareFileListForMoving(ele, `./.temp`, [])
-        await moveFiles(false, f21)
-        // console.log(`files in ${ele} copied`)
-        // }
-
-        // rename the original directory
-        // await rename(ele, `${ele}_old_`)
-        // await rename(path.join(`${ele}_old_`, 'block.config.json'), path.join(`${ele}_old_`, 'block.old.config.json'))
-
-        let blockName = name
-        if (!name) {
-          blockName = await readInput({ name: 'blockName', message: 'Enter a block name' })
-        }
-
-        try {
-          const { clonePath, cloneDirName, blockDetails } = await create(
-            blockName,
-            { type: blockTypeInverter(type) || null, autoRepo: true },
-            null,
-            true,
-            path.resolve(ele, '../'),
-            true
-          )
-
-          const newPath = path.join(clonePath, cloneDirName)
-
-          report[i] = {
-            ...report[i],
-            directory: newPath,
-            registered: true,
-            sourcemismatch: false,
-            name: blockName,
-            newName: blockDetails.name,
-            data: {
-              detailsInRegistry: blockDetails,
-              localBlockConfig: blockDetails,
-            },
-          }
-
-          /**
-           * If user wants git history, they can copy the git folder to new location, but don't replace the git config file
-           */
-          const ignoreList = ['.git', 'block.config.json']
-
-          /**
-           * Moving cases:
-           * one: user registstered in a new name ( localname-fn1, newname-fn1_1),
-           *      now create creates a new folder fn1_1 with a new .git and new block.config.json,
-           *      merge the config file and merge .git in such a way that history is maintained
-           * two: user registered in same name, and local folder has .git ->
-           *        merge block config, move all the files back to the new folder (the folder with same name created by create),
-           *        prompt the user for confirmation on copying git history.
-           *      user registered in same name, and local folder does not have a .git -> move all files back.
-           *
-           */
-
-          const newConfig = {
-            ...existingConfig,
-            name: blockDetails.name,
-            source: blockDetails.source,
-          }
-          // console.log('newconfig')
-          // console.log(newConfig)
-          // console.log(`Writing new config to ${newPath}`)
-          writeFileSync(`${newPath}/block.config.json`, JSON.stringify(newConfig))
-          // ////////////////////////////////////////
-          /**
-           * @type {Boolean}
-           */
-          let c1 = false
-          let c2 = false
-          /**
-           * Check if initial directory name and newly registered name is same
-           * @type {Boolean}
-           */
-          const hasSameName = path.basename(ele) === newConfig.name
-          const tempPath = path.normalize('./.temp')
-
-          /**
-           * If the new directory has same name, copy all files with back from .temp, without prompting
-           */
-          if (hasSameName) {
-            if (existsSync(tempPath)) {
-              const files = await prepareFileListForMoving(tempPath, newPath, ignoreList)
-              if (files.length) {
-                moveFiles(false, files)
-              }
-            }
-          }
-
-          /**
-           *
-           * If the initial directory was the same name as the newly registered one,
-           * there is no need for the prompts, if it had a .git, prompt if history has to be
-           * copied.
-           */
-          if (!hasSameName) {
-            c1 = await confirmationPrompt({
-              message: 'Should I move all files to new location',
-              default: true,
-              name: 'moveBlockCode',
-            })
-          }
-
-          /**
-           * If new block has same name as initial directory, and later had a git directory -> prompt.
-           * If user wants to move all files ( if registered in a new name ), and initial had a
-           *  git directory -> prompt
-           */
-          if ((hasGitFolder && !hasSameName && c1) || (hasGitFolder && hasSameName)) {
-            c2 = await confirmationPrompt({
-              message: 'Should i copy the git history',
-              default: false,
-              name: 'copyGitHistory',
-            })
-          }
-
-          // TODO: make GitManager handle the url set
-          const url = configstore.get('prefersSsh') ? blockDetails.source.ssh : blockDetails.source.https
-          const Git = new GitManager(path.normalize(`${newPath}`), cloneDirName, url, configstore.get('prefersSsh'))
-
-          if (c1 && c2) {
-            const f1 = await prepareFileListForMoving(tempPath, newPath, ignoreList)
-            if (f1.length) {
-              await moveFiles(false, f1)
-            }
-            report[i].copied = true
-            const f2 = await prepareFileListForMoving(
-              path.normalize(`${tempPath}/.git`),
-              path.normalize(`${newPath}/.git`),
-              ['config']
-            )
-            if (f2.length) {
-              await moveFiles(true, f2)
-            }
-            await Git.setUpstreamAndPush('main')
-          } else if (c1) {
-            // console.log('here')
-            const files = await prepareFileListForMoving(tempPath, newPath, ignoreList)
-            // console.log(tempPath, newPath)
-            // console.log(files)
-            if (files.length) {
-              await moveFiles(false, files)
-            }
-            report[i].copied = true
-
-            try {
-              await Git.getGobalUsername()
-            } catch (err) {
-              console.log(chalk.dim('Git username and email not set!'))
-
-              const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
-
-              await Git.setLocalUsername(gitUserName)
-              await Git.setLocalUseremail(gitUserEmail)
-
-              console.log(
-                chalk.dim(`\nGit local config updated with ${chalk.bold(gitUserName)} & ${chalk.bold(gitUserEmail)}\n`)
-              )
-            }
-
-            await Git.newBranch('main')
-            await Git.commit('happy hacking from appblock team!', '--allow-empty')
-            await Git.setUpstreamAndPush('main')
-          } else if (c2) {
-            const target = path.normalize(`${newPath}/.git`)
-            const source = path.normalize(`${tempPath}/.git`)
-            const files = await prepareFileListForMoving(source, target, ['config'])
-            if (files.length) await moveFiles(files)
-            report[i].copied = true
-            await Git.setUpstreamAndPush()
-          } else {
-            console.log(`Please move the necessary files ${ele} to ${newPath}`)
-            console.log(`In ${newPath} checkout to a main git branch and commit, then push`)
-            console.log(`Using "bb push" will run into error as ${newPath} does not have a HEAD set`)
-            report[i].copied = false
-          }
-          await rm('./.temp', { recursive: true })
-        } catch (err) {
-          if (err instanceof CreateError) {
-            console.log(`Creation of ${blockName} with data from ${ele} failed`)
-            report[i].registered = false
-            report[i].copied = false
-          } else {
-            console.log(err)
-            // writeFileSync(path.normalize('./logs/sync.log'), JSON.stringify(err.message))
-            // console.log(`Renaming of ${ele} to ${blockName} failed`)
-            report[i].copied = false
-          }
-        }
-      }
-    }
+  if (!ans) {
+    return []
   }
+
+  for (let i = 0; i < list.length; i += 1) {
+    report[i] = await x(list[i])
+  }
+
   return report
 }
 
+const x = async (ele) => {
+  /**
+   * @type {report}
+   */
+  const report = { oldPath: ele, registered: false, copied: false }
+
+  const dirExists = existsSync(ele)
+  if (!dirExists) return report
+
+  console.debug(`Started processing for ${ele}`)
+
+  const hasGitFolder = existsSync(path.resolve(ele, '.git'))
+
+  const { data: existingConfig, error } = await readJsonAsync(path.join(ele, 'block.config.json'))
+
+  if (error) {
+    console.log(`Error reading config from ${ele}`)
+    return report
+  }
+
+  console.debug(`Read config from ${ele}`)
+
+  const { name, type } = existingConfig
+
+  const registerCurrentBlock = await confirmationPrompt({
+    name: `block-${name}`,
+    message: `Should i register ${ele}`,
+    default: false,
+  })
+  if (!registerCurrentBlock) return report
+
+  /**
+   * If user has decided to register the contents of the directory as a block,
+   * copy the contents of the folder to a temp folder, and later copy all to new location
+   */
+
+  const tempPath = path.normalize('./.temp')
+
+  ensureDirSync(tempPath)
+
+  console.debug(`Created a temp directory`)
+
+  let erroInCopyingBlockToTemp = null
+  let errorRemovingTempDir = null
+
+  await cp(ele, tempPath, { recursive: true }).catch(() => {
+    erroInCopyingBlockToTemp = true
+  })
+
+  if (erroInCopyingBlockToTemp) {
+    console.debug(`Error copying to temp`)
+    await rm(tempPath, { recursive: true, retryDelay: 200, force: true }).catch(() => {
+      errorRemovingTempDir = true
+    })
+  }
+
+  if (errorRemovingTempDir) {
+    console.debug(`Error removing .temp`)
+    return report
+  }
+
+  if (erroInCopyingBlockToTemp) {
+    return report
+  }
+
+  // rename the original directory
+  await archiveBlock(ele)
+
+  console.debug(`Archived ${ele}`)
+
+  let blockName = name
+  if (!name) {
+    blockName = await readInput({ name: 'blockName', message: 'Enter a block name' })
+  }
+
+  console.debug(`User wants to name the block - ${blockName}`)
+
+  const interactive = false
+
+  const { data: cd, err: cdErr } = await handleCreate(type, ele, blockName)
+  if (cdErr) {
+    console.debug(`Error in creating ${blockName}.`)
+    report.registered = false
+    report.copied = false
+    await unArchiveBlock(ele)
+    await rm(tempPath, { recursive: true })
+    console.debug(`temp folder removed`)
+    return report
+  }
+
+  const { blockDetails, clonePath, cloneDirName } = cd
+
+  console.debug({ clonePath })
+  console.debug({ cloneDirName })
+  console.debug({ blockDetails })
+
+  const newPath = path.join(clonePath, cloneDirName)
+
+  console.debug({ newPath })
+
+  report.directory = newPath
+  report.registered = true
+  report.sourcemismatch = false
+  report.name = blockName
+  report.newName = blockDetails.name
+  report.data = {
+    detailsInRegistry: blockDetails,
+    localBlockConfig: blockDetails,
+  }
+
+  /**
+   * If user wants git history, they can copy the git folder to new location, but don't replace the git config file
+   */
+  const ignoreList = ['.git', 'block.config.json']
+
+  // TODO: make GitManager handle the url set
+  const url = configstore.get('prefersSsh') ? blockDetails.source.ssh : blockDetails.source.https
+  const Git = new GitManager(path.normalize(`${newPath}`), cloneDirName, url, configstore.get('prefersSsh'))
+
+  /**
+   * Cases new :
+   *            User has unregistered block with foldername,blockname as ABC, registers it as ABC -
+   *            (because name is availabe in that space ), git has no conflicts etc..
+   *
+   *            ABC as foldername and blockname, ABC is available in current space, but not in git,
+   *            so gets prefixed with space id. create generates a clone with folder name <space-id><blockname>
+   *
+   *            ABC as f & b, ABC not available in space -> ABC_1, git same as ABC_1
+   *
+   *            ABC as f&b, ABC not available in space -> ABC_1, not available in git -> <space-d>ABC_1
+   *
+   */
+
+  const newConfig = {
+    ...existingConfig,
+    name: blockDetails.name,
+    source: blockDetails.source,
+  }
+  writeFileSync(`${newPath}/block.config.json`, JSON.stringify(newConfig, null, 2))
+  console.debug(`New config written to ${newPath}`)
+  /**
+   * @type {Boolean}
+   */
+  let userWantsToMoveFiles = false
+  let userWantsToMoveGitHistory = false
+  /**
+   * Check if initial directory name and newly registered name is same
+   * @type {Boolean}
+   */
+  const hasSameName = path.basename(ele) === newConfig.name
+  const repoNameIsSameAsBlockName = cloneDirName === newConfig.name
+
+  console.debug({ repoNameIsSameAsBlockName })
+
+  console.debug({ hasSameName })
+
+  /**
+   * IMPORTANT: same block name doesn't guarantee same repo name
+   */
+
+  if (interactive) {
+    userWantsToMoveFiles = await confirmationPrompt({
+      message: 'Should I move all files to new location',
+      default: true,
+      name: 'moveBlockCode',
+    })
+  }
+  if (!interactive) userWantsToMoveFiles = true
+
+  /**
+   * If new block has same name as initial directory, and later had a git directory -> prompt.
+   * If user wants to move all files ( if registered in a new name ), and initial had a
+   *  git directory -> prompt
+   */
+
+  /**
+   * @type {boolean} User wants to move all files from a block folder that has a .git,
+   * to the new block folder that doesn't have the same block name
+   */
+  if (userWantsToMoveFiles && hasGitFolder && interactive) {
+    userWantsToMoveGitHistory = await confirmationPrompt({
+      message: 'Should i copy the git history',
+      default: false,
+      name: 'copyGitHistory',
+    })
+  }
+  if (userWantsToMoveFiles && hasGitFolder && !interactive) {
+    userWantsToMoveGitHistory = true
+  }
+
+  console.debug({ userWantsToMoveFiles, userWantsToMoveGitHistory })
+
+  if (!userWantsToMoveFiles && !userWantsToMoveGitHistory) {
+    console.log(`Please move the necessary files ${ele} to ${newPath}`)
+    console.log(`In ${newPath} checkout to a main git branch and commit, then push`)
+    console.log(`Using "bb push" will run into error as ${newPath} does not have a HEAD set`)
+    report.copied = false
+    // return report
+  }
+
+  if (userWantsToMoveFiles) {
+    const files = await prepareFileListForMoving(tempPath, newPath, ignoreList)
+    if (files.length) {
+      await moveFiles(false, files)
+    }
+    report.copied = true
+
+    await Git.checkoutbranch('main')
+    await Git.commit('happy hacking from appblock team!', '--allow-empty')
+    await Git.setUpstreamAndPush('main')
+    userWantsToMoveFiles = false
+  }
+
+  console.debug(`Files moved from ${tempPath} to ${newPath}`)
+
+  if (userWantsToMoveGitHistory) {
+    const target = path.normalize(`${newPath}/.git`)
+    const source = path.normalize(`${tempPath}/.git`)
+    const files = await prepareFileListForMoving(source, target, ['config'])
+    if (files.length) await moveFiles(files)
+    report.copied = true
+    await Git.setUpstreamAndPush()
+    userWantsToMoveGitHistory = false
+  }
+  console.debug(`Git files moved from ${tempPath} to ${newPath}`)
+
+  await rm(tempPath, { recursive: true, retryDelay: 200, force: true })
+  console.debug(`temp directory deleted`)
+
+  /**
+   * Create a dir with new block name, copy all files from cloneDir & delete cloneDir
+   * Cloned dir may be names <space-id><block-name>, but the user doesn't want that in local
+   * so sopy that to a folder with name <block-name>
+   */
+  await mkdir(path.join(clonePath, newConfig.name), { recursive: true })
+  const files = await prepareFileListForMoving(newPath, path.join(clonePath, newConfig.name))
+  if (files.length) {
+    await moveFiles(false, files)
+  }
+  console.debug(`Files moved from ${newPath} to ${path.join(clonePath, newConfig.name)}`)
+  // if moving fails, delete the newPath & as user to run 'git clone cloneDirname newConfig.name'
+  await rm(newPath, { recursive: true, retryDelay: 200, force: true })
+  console.debug(`${newPath} removed`)
+  console.debug('Completed')
+
+  return report
+}
 module.exports = { offerAndCreateBlock }

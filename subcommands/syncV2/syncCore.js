@@ -87,10 +87,11 @@ function scanHelper() {
       try {
         r = execSync(
           'find "$(pwd)" -mindepth 2 -type d -name node_modules -prune -false -o -name .git -prune -false -o -name "block.config.json" -print0 | xargs -0 --replace={} bash -c  "dirname {}"'
-        )
-          .toString()
-          .trimEnd()
-          .split('\n')
+        ).toString()
+        if (r !== '') r = r.toString().trim().split('\n')
+        else {
+          r = []
+        }
       } catch (err) {
         r = ''
       }
@@ -133,6 +134,11 @@ class SyncCore {
     this.packageConfigFileName = 'block.config.json'
 
     /**
+     * @type {string}
+     */
+    this.blockConfigFileName = 'block.config.json'
+
+    /**
      * Type of context to work in
      * @type {string}
      */
@@ -170,13 +176,16 @@ class SyncCore {
 
     /**
      * Sub directories with <packageConfigFileName> file present
-     * blocks from this list that are used will be removed
+     * blocks from this list that are used could be removed by the plugins,
+     * if they don't want plugins later the the chain to act on it
+     * Core will never remove blocks from this list
      * @type {Array<string>?}
      */
     this.blockDirectoriesFound = null
 
     /**
      * Block directories that failed <packageConfigFileName> validation
+     * i.e any kind of block validations (configs, folder structure etc)
      * To keep the blocks that are untouched and discarded
      * @type {Array<string>}
      */
@@ -184,6 +193,7 @@ class SyncCore {
 
     /**
      * List of blocks to be written to the config file
+     * The config will be based on this list, and this list alone
      * @type {Array<string>}
      */
     this.dependencies = null
@@ -231,7 +241,7 @@ class SyncCore {
 
   async loadBlockConfigs() {
     this.dependencyList = this.blockDirectoriesFound.reduce(async (acc, curr) => {
-      const configPath = path.resolve(curr, this.packageConfigFileName)
+      const configPath = path.resolve(curr, this.blockConfigFileName)
       try {
         const parsedConfig = await readFile(configPath).then((_d) => JSON.parse(_d))
         return acc.concat(parsedConfig)
@@ -246,7 +256,7 @@ class SyncCore {
     const core = this
     this.hooks.beforeGenerateConfig?.callAsync(core, () => {})
     console.log('build step')
-    console.log(this.blockDirectoriesFound)
+    console.log(this.dependencyList)
   }
 }
 

@@ -1,6 +1,6 @@
 // const FilterBlocksPlugin = require('./syncV2/plugins/filterBlocksStrategy')
 const RegisterNewBlocksPlugin = require('./syncV2/plugins/registerNewBlocksStrategy')
-const ReRegisterBlocksStrategy = require('./syncV2/plugins/reRegisterBlocksStrategy')
+// const ReRegisterBlocksStrategy = require('./syncV2/plugins/reRegisterBlocksStrategy')
 const SyncCore = require('./syncV2/syncCore')
 
 /**
@@ -15,7 +15,7 @@ async function Sync() {
    */
   // new FilterBlocksPlugin().apply(t)
   new RegisterNewBlocksPlugin().apply(t)
-  new ReRegisterBlocksStrategy().apply(t)
+  // new ReRegisterBlocksStrategy().apply(t)
   // t.hooks.onLocalConfigLoad.tapAsync('validatePlugin', (callback) => {
   //   console.log('validatePlugin', callback)
   //   callback()

@@ -103,4 +103,3 @@ cmd('create-env', 'create env for deploy')
 cmd('upload', 'upload block for deploy')
 
 program.parseAsync(process.argv)
-
