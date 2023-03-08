@@ -59,6 +59,7 @@ const createBlockVersion = require('../subcommands/createBlockVersion/index')
 const getBlockUpdate = require('../subcommands/getBlockUpdate')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const desc = require('./bb_command_descriptions')
+const setAppblockVersion = require('../subcommands/setAppblockVersion')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
@@ -289,6 +290,12 @@ async function init() {
     .requiredOption('-env, --environment <environment>', 'environment')
     .description(desc.upload)
     .action(upload)
+
+  program
+    .command('set-appblock-version')
+    .argument('[block-name]', 'Name of block')
+    .description(desc['set-appblock-version'])
+    .action(setAppblockVersion)
 
   program.parseAsync(process.argv)
 }

@@ -79,4 +79,6 @@ module.exports = {
   'get-block-update': 'To get latest update of a purchased block',
 
   'push-config': 'To update local appblocks configuration',
+
+  'set-appblock-version': 'To add supported version of appblock to block',
 }

@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const { exec } = require('child_process')
 const semver = require('semver')
+const chalk = require('chalk')
 const { post } = require('../../utils/axios')
 const {
   getLanguageVersionsApi,
@@ -185,49 +187,130 @@ const updateLanguageVersions = async (options) => {
   return true
 }
 
-const langVersionsLinkedToAbVersion = async (appblockVersionId, option) => {
-  const { search_keyword } = option
-  const { data, error } = await post(listLanguageVersions, {
-    appblock_version_id: appblockVersionId,
+const langVersionsLinkedToAbVersion = async ({ appblockVersionIds, supportedAppblockVersions }, option) => {
+  const { search_keyword } = option || {}
+
+  const reqBody = {
     search_keyword,
-  })
+  }
+
+  if (supportedAppblockVersions) reqBody.appblock_versions = supportedAppblockVersions
+  else reqBody.appblock_version_ids = appblockVersionIds
+
+  const { data, error } = await post(listLanguageVersions, reqBody)
 
   if (error) throw new Error(error)
 
   return data
 }
 
-const getLanguageVersionData = async ({ blockDetails, appblockVersionId }) => {
+const getLanguageVersionData = async ({
+  blockDetails,
+  appblockVersionIds,
+  supportedAppblockVersions,
+  noWarn = false,
+}) => {
   const systemLanguageVersion = await getSystemLanguageVersion({ blockDetails })
 
   spinnies.add('langVersion', { text: `Getting language versions` })
-  const langVersions = await langVersionsLinkedToAbVersion(appblockVersionId, {
-    search_keyword: systemLanguageVersion[0]?.name,
-  })
+  const langVersions = await langVersionsLinkedToAbVersion(
+    { appblockVersionIds, supportedAppblockVersions },
+    {
+      search_keyword: systemLanguageVersion[0]?.name,
+    }
+  )
   spinnies.remove('langVersion')
 
-  const choices = langVersions.data?.map((lang) => ({
-    name: `${lang.name}@${lang.version}`,
-    value: lang.id,
-  }))
+  const langSupportedAppblockVersions = {}
+  const choices = langVersions.data?.reduce((acc, lang) => {
+    if (lang.name.includes(blockDetails.meta.language)) {
+      langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
+      acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })
+    }
 
-  if (!choices) {
-    console.log('Error getting language versions')
-    process.exit(1)
+    return acc
+  }, [])
+
+  let allSupported = true
+
+  const keyData = Object.keys(langSupportedAppblockVersions)
+  if (!noWarn && supportedAppblockVersions?.length && keyData.length !== supportedAppblockVersions.length) {
+    const nonSupportedVersion = supportedAppblockVersions.filter((sav) => !keyData.includes(sav))
+    const {
+      meta: { name: bName, language: bLang },
+    } = blockDetails
+
+    allSupported = false
+
+    console.log(chalk.yellow(`Language ${bLang} ${bName} is not supported in appblock version ${nonSupportedVersion}`))
   }
 
-  const languageVersionId = await readInput({
-    type: 'list',
-    name: 'languageVersionId',
-    message: 'Select the language version',
-    choices,
-    validate: (input) => {
-      if (!input || input?.length < 1) return `Please add a language version`
-      return true
-    },
-  })
+  // const languageVersionIds = await readInput({
+  //   type: 'checkbox',
+  //   name: 'languageVersionIds',
+  //   message: 'Select the language version',
+  //   choices,
+  //   validate: (input) => {
+  //     if (!input || input?.length < 1) return `Please add a language version`
+  //     return true
+  //   },
+  // })
 
-  return { languageVersionId }
+  return { allSupported, languageVersionIds: choices?.map(({ value }) => value), languageVersions: choices }
+}
+
+const languageVersionCheckCommand = {
+  nodejs: 'node -v',
+  go: 'go version',
+  python3: 'python3 -V',
+}
+
+const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, blockLanguages }) => {
+  spinnies.add('langVersion', { text: `Getting language versions` })
+  const langVersionData = await langVersionsLinkedToAbVersion({ supportedAppblockVersions })
+  spinnies.remove('langVersion')
+  const bklangs = langVersionData?.data?.reduce((acc, { name, version }) => {
+    const [langName] = name.split('@')
+    if (!blockLanguages.includes(langName)) return acc
+
+    const [langVer] = version.split('.')
+    if (!acc[langName]) acc[langName] = [langVer]
+    else acc[langName].push(langVer)
+
+    return acc
+  }, {})
+
+  if (Object.keys(bklangs)?.length < 1) {
+    throw new Error(
+      `Appblocks versions (${supportedAppblockVersions}) doesn't support given languages (${blockLanguages})`
+    )
+  }
+
+  const errors = []
+
+  await Promise.all(
+    Object.entries(bklangs).map(async ([name, versions]) => {
+      const prmRes = await new Promise((resolve) => {
+        exec(`${languageVersionCheckCommand[name] || `${name} -v`} `, (err, stdout) => {
+          if (err) {
+            errors.push(`${name} language not found in system`)
+            resolve(false)
+            return
+          }
+
+          const localLangVer = stdout.match(/([0-9]+([.][0-9]+)+)/g)?.[0]?.split('.')[0]
+
+          if (!versions.includes(localLangVer)) {
+            errors.push(`Appblocks versions (${supportedAppblockVersions}) doesn't support ${name}@${localLangVer}*`)
+          }
+          resolve(true)
+        })
+      })
+      return prmRes
+    })
+  )
+
+  if (errors.length) throw new Error(errors)
 }
 
 module.exports = {
@@ -236,4 +319,6 @@ module.exports = {
   updateLanguageVersions,
   getAttchedLanguageVersions,
   getLanguageVersionData,
+  langVersionsLinkedToAbVersion,
+  checkLanguageVersionExistInSystem,
 }

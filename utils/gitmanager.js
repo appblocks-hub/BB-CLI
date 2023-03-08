@@ -102,6 +102,10 @@ class GitManager {
     return this._run('checkout', [`${tag}`])
   }
 
+  undoCheckout() {
+    return this._run('checkout', ['-'])
+  }
+
   cd(directoryPath) {
     this.cwd = path.resolve(directoryPath)
   }

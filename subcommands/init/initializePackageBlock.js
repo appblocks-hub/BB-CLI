@@ -21,6 +21,7 @@ const { feedback } = require('../../utils/cli-feedback')
 const { lrManager } = require('../../utils/locaRegistry/manager')
 const getRepoUrl = require('../../utils/noRepo')
 const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
+const { getAppblockVersionData } = require('../publish/util')
 
 const initializePackageBlock = async (appblockName, options) => {
   const { autoRepo } = options
@@ -29,6 +30,9 @@ const initializePackageBlock = async (appblockName, options) => {
     feedback({ type: 'warn', message: `${componentName} is not a valid name (Only snake case with numbers is valid)` })
     componentName = await getBlockName()
   }
+
+  // ========= appblockVersion ========================
+  const { appblockVersions } = await getAppblockVersionData()
 
   const availableName = await checkBlockNameAvailability(componentName)
 
@@ -80,6 +84,7 @@ const initializePackageBlock = async (appblockName, options) => {
     type: 'package',
     blockId,
     source: blockSource,
+    supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
   })
 
   await checkAndSetGitConfigNameEmail(blockFinalName)

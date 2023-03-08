@@ -38,8 +38,8 @@ const createZip = async ({ directory, version }) => {
   return zipFile
 }
 
-const getAllAppblockVersions = async () => {
-  const { data, error } = await post(listAppblockVersions)
+const getAllAppblockVersions = async (options) => {
+  const { data, error } = await post(listAppblockVersions, options || {})
 
   if (error) throw new Error(error)
 
@@ -51,9 +51,9 @@ const getAppblockVersionData = async () => {
   const abVersions = await getAllAppblockVersions()
   spinnies.remove('abVersion')
 
-  const choices = abVersions.data?.map((abVersion) => ({
-    name: abVersion.version,
-    value: abVersion.id,
+  const choices = abVersions.data?.map(({ version, id }) => ({
+    name: version,
+    value: { id, version },
   }))
 
   if (!choices) {
@@ -61,8 +61,8 @@ const getAppblockVersionData = async () => {
     process.exit(1)
   }
 
-  const appblockVersionId = await readInput({
-    type: 'list',
+  const appblockVersions = await readInput({
+    type: 'checkbox',
     name: 'abVersions',
     message: 'Select the appblock version',
     choices,
@@ -72,7 +72,7 @@ const getAppblockVersionData = async () => {
     },
   })
 
-  return { appblockVersionId }
+  return { appblockVersions }
 }
 
-module.exports = { getPublishedVersion, createZip, getAppblockVersionData }
+module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions }

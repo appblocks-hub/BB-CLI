@@ -23,6 +23,7 @@ const { runBash, runBashLongRunning } = require('../bash')
 const watchCompilation = require('./watchCompilation')
 const envToObj = require('./envToObj')
 const { feedback } = require('../../utils/cli-feedback')
+const { checkLanguageVersionExistInSystem } = require('../languageVersion/util')
 
 global.rootDir = process.cwd()
 
@@ -48,6 +49,19 @@ const start = async (blockname, { usePnpm }) => {
   }
   const configData = appConfig.appConfig
   await setupEnv(configData)
+
+  const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
+
+  const blockLanguages = blockname
+    ? [appConfig.getBlock(blockname).meta?.language]
+    : [...new Set([...appConfig.getAllBlockLanguages])]
+
+  try {
+    await checkLanguageVersionExistInSystem({ supportedAppblockVersions, blockLanguages })
+  } catch (error) {
+    console.log(chalk.red(error.message))
+    process.exit()
+  }
 
   if (blockname && !appConfig.has(blockname)) {
     console.log('Block not found')

@@ -193,7 +193,12 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     }
 
     const packageBlockName = appConfig.config?.name
+    const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
     const package_block_id = appConfig.packageBlockId
+
+    if (!supportedAppblockVersions) {
+      throw new Error('No supported appblock version set for package block. Please use set-appblock-version command')
+    }
 
     if (!packageBlockName && type !== 1) {
       throw new Error('Cannot create block without package block')
@@ -255,6 +260,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       build: '',
       postPull: 'npm i',
       standAloneBlock,
+      supportedAppblockVersions,
     }
 
     if (type === 2 || type === 3) {
@@ -347,7 +353,6 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       console.log('err:', err)
     }
   } catch (err) {
-    console.log(err)
     console.log('Something went wrong while creating!')
     logger.info('ERROR')
     logger.error(err)

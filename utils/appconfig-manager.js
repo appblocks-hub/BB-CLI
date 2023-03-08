@@ -238,6 +238,11 @@ class AppblockConfigManager {
     return this.getDependencies(false, null, picker)
   }
 
+  get getAllBlockLanguages() {
+    const picker = (block) => block.meta.language
+    return this.getDependencies(false, null, picker)
+  }
+
   get env() {
     if (this.config.env) return this.config.env
     return null

@@ -145,7 +145,8 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
    */
   let pulledBlockPath = ''
   let metaData = { ...da }
-  const { args, componentVersion } = options
+  const { args, componentVersion: cm } = options
+  let componentVersion = cm
   const tempPath = tmpdir()
   const pullByConfigFolderName = metaData.pull_by_config_folder_name
   const tempPullByConfigFolder = `${tempPath}/appblocks_${pullByConfigFolderName}/`
@@ -172,6 +173,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
         if (err) throw err
         rm(pullByConfigFolderName, { recursive: true, force: true }, () => {})
       })
+      componentVersion = metaData.version
       cwd = '.'
       await appConfig.init(cwd, null, 'pull', { reConfig: true })
     }

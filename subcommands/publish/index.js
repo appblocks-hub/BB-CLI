@@ -6,6 +6,7 @@
  */
 
 const open = require('open')
+const path = require('path')
 const { readFileSync } = require('fs')
 const { default: axios } = require('axios')
 const { spinnies } = require('../../loader')
@@ -14,10 +15,14 @@ const { appConfig } = require('../../utils/appconfigStore')
 const { getShieldHeader } = require('../../utils/getHeaders')
 const { readInput } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
-const { getDependencies, addDependencies, getDependencyIds } = require('./dependencyUtil')
+const { getDependencies, getDependencyIds } = require('./dependencyUtil')
 const { getLanguageVersionData } = require('../languageVersion/util')
-const { createZip, getAppblockVersionData } = require('./util')
+const { createZip } = require('./util')
 const { post } = require('../../utils/axios')
+const { configstore } = require('../../configstore')
+const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
+const { GitManager } = require('../../utils/gitmanager')
+const { isClean } = require('../../utils/gitCheckUtils')
 
 const publish = async (blockname) => {
   await appConfig.init(null, null)
@@ -39,6 +44,22 @@ const publish = async (blockname) => {
 
   // TODO - Check if there are any .sync files in the block and warn
   const blockDetails = appConfig.getBlock(blockname)
+
+  if (!isClean(blockDetails.directory)) {
+    console.log('Git directory is not clean, Please push before publish')
+    process.exit(1)
+  }
+
+  const {
+    meta: { source },
+    directory,
+  } = blockDetails
+
+  const prefersSsh = configstore.get('prefersSsh')
+  const originUrl = prefersSsh ? source.ssh : convertGitSshUrlToHttps(source.ssh)
+  const Git = new GitManager(path.resolve(), directory, originUrl, prefersSsh)
+  Git.cd(directory)
+  await Git.fetch('--all --tags')
 
   try {
     spinnies.add('p1', { text: `Getting block versions` })
@@ -71,29 +92,34 @@ const publish = async (blockname) => {
 
     const version = versionData.version_number
 
-    // ========= appblockVersion ========================
-    const { appblockVersionId } = await getAppblockVersionData()
+    Git.checkoutTagWithNoBranch(version)
+
+    const { supportedAppblockVersions } = blockDetails.meta
+    let appblockVersionIds
+
+    if (!supportedAppblockVersions) {
+      throw new Error(`Please set-appblock-version and try again`)
+    }
 
     // ========= languageVersion ========================
-    const { languageVersionId } = await getLanguageVersionData({ blockDetails, appblockVersionId })
+    const { languageVersionIds, languageVersions } = await getLanguageVersionData({
+      blockDetails,
+      appblockVersionIds,
+      supportedAppblockVersions,
+      noWarn: true,
+    })
 
-    // ========= dependencies ========================
-    // Check if the dependencies exit to link with block
-    const { dependencies, depExist } = await getDependencies({ blockDetails })
-    if (!depExist) {
-      const noDep = await readInput({
-        type: 'confirm',
-        name: 'noDep',
-        message: 'No package dependecies found to link with block. Do you want to continue ?',
-        default: true,
-      })
-
-      if (!noDep) process.exit(1)
-    }
+    let dependency_ids = []
+    const { dependencies } = await getDependencies({ blockDetails })
+    spinnies.add('p1', { text: `Getting dependency details for version ${version}` })
+    // eslint-disable-next-line prefer-const
+    const { depIds } = await getDependencyIds({ languageVersionIds, dependencies, languageVersions })
+    spinnies.remove('p1')
+    dependency_ids = depIds
 
     spinnies.add('p1', { text: `Uploading new version ${version}` })
 
-    const zipFile = await createZip({ directory: blockDetails.directory, version })
+    const zipFile = await createZip({ directory: blockDetails.directory, source: blockDetails.meta.source, version })
 
     const preSignedData = await axios.post(
       createSourceCodeSignedUrl,
@@ -116,35 +142,34 @@ const publish = async (blockname) => {
       },
     })
 
-    let dependency_ids = []
-    if (depExist) {
-      spinnies.update('p1', { text: `Getting dependency details ${version}` })
-      // eslint-disable-next-line prefer-const
-      const { depIds, newDeps } = await getDependencyIds({ languageVersionId, dependencies })
-      dependency_ids = depIds
-      if (newDeps.length > 0) {
-        await addDependencies({ languageVersionId, dependencies: newDeps })
-        const { depIds: latestDepIds } = await getDependencyIds({ languageVersionId, dependencies })
-        dependency_ids = latestDepIds
-      }
-    }
-
     // Link languageVersion to block
     spinnies.update('p1', { text: `Publishing block` })
-    const { error } = await post(publishBlockApi, {
+
+    const reqBody = {
       dependency_ids,
       block_id: blockId,
       block_version_id: versionData.id,
-      appblock_version_id: appblockVersionId,
-      language_version_id: languageVersionId,
+      appblock_version_ids: appblockVersionIds,
+      language_version_ids: languageVersionIds,
       source_code_key: preSignedData.data.key,
-    })
+    }
+
+    if (supportedAppblockVersions && !reqBody.appblock_version_ids) {
+      reqBody.appblock_versions = supportedAppblockVersions
+      delete reqBody.appblock_version_ids
+    }
+
+    const { error } = await post(publishBlockApi, reqBody)
 
     if (error) throw error
 
     spinnies.succeed('p1', { text: 'Block published successfully' })
+
+    Git.undoCheckout()
+
     await open(`${publishRedirectApi}`)
   } catch (error) {
+    Git.undoCheckout()
     spinnies.add('p1_error', { text: 'Error' })
     spinnies.fail('p1_error', { text: error.message })
     process.exit(1)
