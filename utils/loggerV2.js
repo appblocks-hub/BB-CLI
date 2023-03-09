@@ -5,19 +5,40 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { createLogger, transports } = require('winston')
+const { createLogger, transports, config, format } = require('winston')
 const { shieldHTTP, gitHTTP, gitRestHTTP } = require('./axiosInstances')
 const curlirize = require('./curlirize/main')
+
+/**
+ *
+ * @param {Array<string>} level
+ * @returns
+ */
+const levelFilter = (levels) => format((info) => (levels.includes(info.level) ? info : false))()
 
 class Logger {
   constructor(service) {
     this.service = service
     this.logger = createLogger({
-      defaultMeta: service,
+      defaultMeta: { service },
+      level: 'debug',
+      levels: config.syslog.levels,
+      // write all messages with levels in ('error','emerg','crit','alert') to errr.log
+      // write all messages with levels in ('warning','notice','info')
+      // write all messages with levels 'debug' to debug.log
       transports: [
-        new transports.File({ filename: 'debug.log', level: 'debug' }),
-        new transports.File({ filename: 'combined.log', level: 'warning' }),
-        new transports.File({ filename: 'error.log', level: 'emerg' }),
+        new transports.File({
+          filename: 'error.log',
+          level: 'error',
+        }),
+        new transports.File({
+          filename: 'combined.log',
+          format: format.combine(levelFilter(['warning', 'notice', 'info']), format.json()),
+        }),
+        new transports.File({
+          filename: 'debug.log',
+          format: format.combine(levelFilter(['debug']), format.json()),
+        }),
       ],
     })
     this.setUpCurlirize()

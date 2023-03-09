@@ -47,11 +47,11 @@ const archiveBlock = async (blockPath, configFileName) => {
 }
 const unArchiveBlock = async (blockPath, configFileName) => {
   const _configfilename = configFileName || 'block.config.json'
-  await rename(`${blockPath}_archive_`, blockPath)
   await rename(
-    path.join(`${blockPath}_archive_`, `old${_configfilename}`),
+    path.join(`${blockPath}_archive_`, `old_${_configfilename}`),
     path.join(`${blockPath}_archive_`, _configfilename)
   )
+  await rename(`${blockPath}_archive_`, blockPath)
 }
 
 /**

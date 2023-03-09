@@ -8,7 +8,6 @@
 /* eslint-disable consistent-return */
 const path = require('path')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
-const { transports } = require('winston')
 const chalk = require('chalk')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
 const createBlock = require('../utils/createBlock')
@@ -22,7 +21,6 @@ const {
 } = require('../utils/questionPrompts')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { checkAndSetGitConfigNameEmail } = require('../utils/gitCheckUtils')
-const { logger } = require('../utils/logger')
 const { appConfig } = require('../utils/appconfigStore')
 
 const {
@@ -60,9 +58,9 @@ const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
 const getRepoUrl = require('../utils/noRepo')
+const { Logger } = require('../utils/loggerV2')
 
-logger.add(new transports.File({ filename: 'create.log' }))
-
+const { logger } = new Logger('create')
 /**
  * @typedef createCommandOptions
  * @property {string} type
@@ -81,7 +79,7 @@ logger.add(new transports.File({ filename: 'create.log' }))
  */
 const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
   const { autoRepo } = options
-
+  logger.log({ level: 'emerg', messgae: 'sdosem' })
   let standAloneBlock = false
   let blockName = userPassedName
   let { type } = options
@@ -354,8 +352,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     }
   } catch (err) {
     console.log('Something went wrong while creating!')
-    logger.info('ERROR')
-    logger.error(err)
+    logger.error(err.message)
     throw new CreateError('create failed')
   }
 }
