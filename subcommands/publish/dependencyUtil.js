@@ -165,8 +165,6 @@ const getDependencyIds = async (options) => {
     })
   }
 
-  console.log(noExistingDeps)
-
   Object.entries(noExistingDeps).forEach(([lang, deps]) => {
     console.log(
       chalk.yellow(

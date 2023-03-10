@@ -129,7 +129,7 @@ const setAppblockVersion = async (blockName) => {
     // }
 
     Object.entries(selectedBlocks).forEach(([bName, bData]) => {
-      const sav = bData.meta?.supportedAppblockVersions || bData.supportedAppblockVersions
+      const sav = bData.meta?.supportedAppblockVersions || bData.supportedAppblockVersions || []
 
       if (bName === abBlockName) {
         appConfig.updateAppBlock({

@@ -31,6 +31,7 @@ const { pullSourceCodeFromAppblock } = require('./sourceCodeUtil')
 const { purchasedPull, checkIsBlockAppAssinged } = require('./purchasedPull')
 const { post } = require('../../utils/axios')
 const { getBlockPersmissionsApi } = require('../../utils/api')
+const { getAllAppblockVersions } = require('../publish/util')
 
 const handleOutOfContextCreation = async () => {
   const goAhead = await confirmationPrompt({
@@ -178,27 +179,6 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       await appConfig.init(cwd, null, 'pull', { reConfig: true })
     }
 
-    const pbSab = appConfig.config?.supportedAppblockVersions
-    if (metaData.appblock_versions && pbSab) {
-      const bSab = metaData.appblock_versions.map(({ version }) => version)
-      const isSupported = bSab.some((version) => pbSab.includes(version))
-
-      if (!isSupported) {
-        console.log(
-          chalk.dim(
-            `${appConfig.config.name} supported versions : ${pbSab}\n${metaData.block_name} supported versions : ${bSab}`
-          )
-        )
-        const goAhead = await confirmationPrompt({
-          name: 'goAhead',
-          message: `Found non-compatible appblock version in pulling block. Do you want to continue ?`,
-          default: false,
-        })
-
-        if (!goAhead) throw new Error('Cancelled pulling non-compatible block')
-      }
-    }
-
     spinnies.add('pab', { text: 'checking block permission ' })
     const { data: pData, error: pErr } = await post(getBlockPersmissionsApi, {
       block_id: metaData.block_id,
@@ -280,6 +260,31 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       if (!metaData.version_id) {
         feedback({ type: 'info', message: `${componentVersion} version not found ` })
         return
+      }
+
+      spinnies.add('at', { text: `Getting linked appblock versions` })
+      const abVers = await getAllAppblockVersions({ block_version_id: metaData.version_id })
+      spinnies.remove('at')
+      const bSab = abVers.data?.map(({ version }) => version) || []
+      const pbSab = appConfig.config?.supportedAppblockVersions
+
+      if (bSab?.length && pbSab?.length) {
+        const isSupported = bSab.some((version) => pbSab.includes(version))
+
+        if (!isSupported) {
+          console.log(
+            chalk.yellow(
+              `${appConfig.config.name} supported versions : ${pbSab}\n${metaData.block_name} supported versions : ${bSab}`
+            )
+          )
+          const goAhead = await confirmationPrompt({
+            name: 'goAhead',
+            message: `Found non-compatible appblock version in pulling block. Do you want to continue ?`,
+            default: false,
+          })
+
+          if (!goAhead) throw new Error('Cancelled pulling non-compatible block')
+        }
       }
     }
 
