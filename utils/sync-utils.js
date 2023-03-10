@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { execSync } = require('child_process')
 const { existsSync, writeFileSync } = require('fs')
 const { rm, rename, readFile, cp, mkdir } = require('fs/promises')
 const path = require('path')
@@ -42,8 +41,6 @@ const archiveBlock = async (blockPath, configFileName) => {
     path.join(`${blockPath}_archive_`, _configfilename),
     path.join(`${blockPath}_archive_`, `old_${_configfilename}`)
   )
-  const s = execSync('ls').toString()
-  console.log(s)
 }
 const unArchiveBlock = async (blockPath, configFileName) => {
   const _configfilename = configFileName || 'block.config.json'

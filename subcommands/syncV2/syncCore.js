@@ -1,7 +1,7 @@
 const { SyncHook, AsyncSeriesBailHook, AsyncSeriesHook } = require('tapable')
 const { readFile } = require('fs/promises')
 const path = require('path')
-const { execSync } = require('child_process')
+const { exec } = require('child_process')
 const os = require('os')
 const chalk = require('chalk')
 const { feedback } = require('../../utils/cli-feedback')
@@ -74,33 +74,33 @@ async function handleNoPackageConfig() {
   return { metaData, isRegistered }
 }
 
-function scanHelper() {
-  let r = ''
-  switch (os.platform()) {
-    case 'darwin':
-      r = ''
-      break
-    case 'win32':
-      r = ''
-      break
-    case 'linux':
-      try {
-        r = execSync(
-          'find "$(pwd)" -mindepth 2 -type d -name node_modules -prune -false -o -name .git -prune -false -o -name "block.config.json" -print0 | xargs -0 --replace={} bash -c  "dirname {}"'
-        ).toString()
-        if (r !== '') r = r.toString().trim().split('\n')
-        else {
-          r = []
-        }
-      } catch (err) {
-        r = ''
+function pexec(filename) {
+  return new Promise((resolve) => {
+    exec(path.join(__dirname, filename), {}, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ status: 'error', msg: stdout.toString() || stderr.toString() })
       }
-      break
-    default:
-      console.log(`OS not supported...`)
-      break
+      resolve({ status: 'success', msg: stdout.toString() || stderr.toString() })
+    })
+  })
+}
+
+async function scanHelper() {
+  const platform = os.platform()
+  if (platform === 'darwin' || platform === 'linux') {
+    const { status, msg } = await pexec('prepare.sh')
+    if (msg !== '') return msg.trim().split(os.EOL)
+    if (status === 'error') console.log('Error in scaning directories')
+    return []
   }
-  return r
+  if (platform === 'win32') {
+    const { status, msg } = await pexec('prepare.cmd')
+    if (msg !== '') return msg.trim().split(os.EOL)
+    if (status === 'error') console.log('Error in scanningg directories')
+    return []
+  }
+  console.log('Platform unsupported')
+  return []
 }
 
 /**
@@ -231,7 +231,7 @@ class SyncCore {
 
   async scanDirs() {
     await this.hooks.beforeWalk?.promise(this)
-    this.blockDirectoriesFound = scanHelper() || null
+    this.blockDirectoriesFound = (await scanHelper()) || null
 
     if (this.blockDirectoriesFound.length) {
       console.log(`Found ${this.blockDirectoriesFound.length} child directories with block.config.json`)
