@@ -77,12 +77,17 @@ const { logger } = new Logger('create')
  * @param {Boolean} skipConfigInit to Skip fn from trying to read config
  * @returns
  */
-const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
+const create = async (userPassedName, options, cmdObj, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
   const { autoRepo } = options
   logger.log({ level: 'emerg', messgae: 'sdosem' })
   let standAloneBlock = false
   let blockName = userPassedName
   let { type } = options
+  const cmdArgs = cmdObj.args
+
+  if (cmdArgs?.length > 1) {
+    blockName = cmdArgs.join(' ')
+  }
 
   let packageName
 
