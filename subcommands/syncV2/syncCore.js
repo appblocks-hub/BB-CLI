@@ -74,9 +74,9 @@ async function handleNoPackageConfig() {
   return { metaData, isRegistered }
 }
 
-function pexec(filename) {
+function pexec(cmd) {
   return new Promise((resolve) => {
-    exec(path.join(__dirname, filename), {}, (error, stdout, stderr) => {
+    exec(cmd, {}, (error, stdout, stderr) => {
       if (error) {
         resolve({ status: 'error', msg: stdout.toString() || stderr.toString() })
       }
@@ -86,15 +86,34 @@ function pexec(filename) {
 }
 
 async function scanHelper() {
+  const cmd = `
+    @echo off
+    setlocal enabledelayedexpansion
+    For /f %%i in ('dir /B /S /A:-D block*') do (
+      For %%A in ("%%i") do (
+          set p=%%~dpA
+          @REM remove trailing slash
+          if !p:~-1! equ \\ set p=!p:~0,-1!
+          @REM if path not equlat to current path echo
+          if not !cd! equ !p! echo !p!
+      )
+    )
+  `
+  const bash = `find "$(pwd)" -mindepth 2 -type d 
+-name node_modules -prune -false -o 
+-name .git -prune -false -o 
+-name "block.config.json" -print0 | 
+xargs -0 --replace={} bash -c  "dirname {}"`
+
   const platform = os.platform()
   if (platform === 'darwin' || platform === 'linux') {
-    const { status, msg } = await pexec('prepare.sh')
+    const { status, msg } = await pexec(bash.replace(new RegExp(os.EOL, 'g'), ''))
     if (msg !== '') return msg.trim().split(os.EOL)
     if (status === 'error') console.log('Error in scaning directories')
     return []
   }
   if (platform === 'win32') {
-    const { status, msg } = await pexec('prepare.cmd')
+    const { status, msg } = await pexec(cmd)
     if (msg !== '') return msg.trim().split(os.EOL)
     if (status === 'error') console.log('Error in scanningg directories')
     return []

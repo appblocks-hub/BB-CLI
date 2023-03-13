@@ -13,7 +13,6 @@ class RegisterNewBlocksPlugin {
 
   apply(syncer) {
     syncer.hooks.afterWalk.tapPromise('registerNewBlocksStrategy', async (/** @type {SyncCore} */ core) => {
-      console.log(core.blockDirectoriesFound)
       for (let i = 0; i < core.blockDirectoriesFound.length; i += 1) {
         const configPath = path.join(core.blockDirectoriesFound[i], core.blockConfigFileName)
         try {
