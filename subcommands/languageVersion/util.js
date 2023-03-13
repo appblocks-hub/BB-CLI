@@ -223,7 +223,9 @@ const getLanguageVersionData = async ({
 
   const langSupportedAppblockVersions = {}
   const choices = langVersions.data?.reduce((acc, lang) => {
-    if (lang.name.includes(blockDetails.meta.language)) {
+    const blockLang = blockDetails.meta.language === 'js' ? 'nodejs' : blockDetails.meta.language
+    console.log({ l: lang.name, blockLang })
+    if (lang.name.includes(blockLang)) {
       langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
       acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })
     }
@@ -263,6 +265,7 @@ const languageVersionCheckCommand = {
   nodejs: 'node -v',
   go: 'go version',
   python3: 'python3 -V',
+  reactjs: 'npm view react version',
 }
 
 const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, blockLanguages }) => {
@@ -271,7 +274,7 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
   spinnies.remove('langVersion')
   const bklangs = langVersionData?.data?.reduce((acc, { name, version }) => {
     const [langName] = name.split('@')
-    if (!blockLanguages.includes(langName)) return acc
+    if (!blockLanguages.some((l) => langName.includes(l))) return acc
 
     const [langVer] = version.split('.')
     if (!acc[langName]) acc[langName] = [langVer]
@@ -294,7 +297,7 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
         exec(`${languageVersionCheckCommand[name] || `${name} -v`} `, (err, stdout) => {
           if (err) {
             errors.push(`${name} language not found in system`)
-            resolve(false)
+            resolve(true)
             return
           }
 
@@ -310,7 +313,18 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
     })
   )
 
-  if (errors.length) throw new Error(errors)
+  if (errors.length) {
+    console.log(chalk.yellow(errors))
+    const goAhead = await readInput({
+      type: 'confirm',
+      name: 'goAhead',
+      message: `Do you want to continue start with above warinig ? `,
+    })
+
+    if (!goAhead) throw new Error('Cancelled start with warinig')
+  }
+
+  return []
 }
 
 module.exports = {
