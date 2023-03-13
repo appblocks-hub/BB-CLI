@@ -318,10 +318,10 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
     const goAhead = await readInput({
       type: 'confirm',
       name: 'goAhead',
-      message: `Do you want to continue start with above warinig ? `,
+      message: `Do you want to continue start with above warning ? `,
     })
 
-    if (!goAhead) throw new Error('Cancelled start with warinig')
+    if (!goAhead) throw new Error('Cancelled start with warning')
   }
 
   return []
