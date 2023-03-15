@@ -15,6 +15,7 @@ const isRunning = require('is-running')
 const { getBlockDetails } = require('./registryUtils')
 const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 const { lrManager } = require('./locaRegistry/manager')
+const { configstore } = require('../configstore')
 
 // eslint-disable-next-line no-unused-vars
 function debounce(func, wait, immediate) {
@@ -96,7 +97,18 @@ class AppblockConfigManager {
    * This is only called if command has no global flag
    */
   async liveConfigSetup() {
-    const _p = path.join(tmpdir(), path.resolve(this.cwd))
+    const username = configstore.get('appBlockUserName', 'unregistered-user')
+    const spacename = configstore.get('currentSpaceName', 'local-space')
+    if (!this.isInAppblockContext) {
+      /**
+       * TODO: Find a way to get package block name here, if calling from inside a block,
+       * and let user run from inside a block.
+       */
+      console.log('Cannot run from inside a block. Move up to a package block context and re-run')
+      process.exit(1)
+    }
+    const pckname = this.getName()
+    const _p = path.join(tmpdir(), 'appblocks', 'users', username, 'spaces', spacename, pckname)
     this.liveConfigPath = path.join(_p, this.liveConfigName)
     await mkdir(_p, { recursive: true })
   }
@@ -799,10 +811,10 @@ class AppblockConfigManager {
 
   /**
    * To get the current appblock
-   * @returns {String} Name of Appblock
+   * @returns {String?} Name of Packageblock
    */
   getName() {
-    return this.config.name || ''
+    return this.config.name || null
   }
 
   getStatus() {
