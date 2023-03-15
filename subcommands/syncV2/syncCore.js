@@ -86,19 +86,6 @@ function pexec(cmd) {
 }
 
 async function scanHelper() {
-  const cmd = `
-    @echo off
-    setlocal enabledelayedexpansion
-    For /f %%i in ('dir /B /S /A:-D block*') do (
-      For %%A in ("%%i") do (
-          set p=%%~dpA
-          @REM remove trailing slash
-          if !p:~-1! equ \\ set p=!p:~0,-1!
-          @REM if path not equlat to current path echo
-          if not !cd! equ !p! echo !p!
-      )
-    )
-  `
   const bash = `find "$(pwd)" -mindepth 2 -type d 
 -name node_modules -prune -false -o 
 -name .git -prune -false -o 
@@ -113,7 +100,7 @@ xargs -0 --replace={} bash -c  "dirname {}"`
     return []
   }
   if (platform === 'win32') {
-    const { status, msg } = await pexec(cmd)
+    const { status, msg } = await pexec('prepare.cmd')
     if (msg !== '') return msg.trim().split(os.EOL)
     if (status === 'error') console.log('Error in scanningg directories')
     return []
