@@ -31,6 +31,7 @@ const program = new Command().hook('preAction', async (_, actionCommand) => {
 
 program
   .argument('<component>', 'name of component')
+  .allowExcessArguments(false)
   .addOption(
     new Option('-t, --type <component-type>', 'type  of comp')
       .choices(
