@@ -40,7 +40,7 @@ const checkIsBlockAppAssinged = async (options) => {
 
   spinnies.add('bp', { text: 'Checking if block is assinged with app' })
   const { error: checkErr, data: checkD } = await post(checkBlockAssignedToApp, {
-    block_id: metaData.ID,
+    block_id: metaData.block_id,
     app_id: appData.app_id,
     space_id: configstore.get('currentSpaceId'),
   })
@@ -88,7 +88,7 @@ async function purchasedPull(options) {
     if (checkData.can_assign) {
       const assignAndContinue = await confirmationPrompt({
         name: 'assignAndContinue',
-        message: `Block is not assigned. Do you wish to assign ${metaData.BlockName} block with ${appData.app_name}`,
+        message: `Block is not assigned. Do you wish to assign ${metaData.block_name} block with ${appData.app_name}`,
         default: false,
       })
 
@@ -96,7 +96,7 @@ async function purchasedPull(options) {
 
       spinnies.add('bp', { text: 'assinging block with app' })
       const { error: assignErr } = await post(assignBlockToApp, {
-        block_id: metaData.ID,
+        block_id: metaData.block_id,
         app_id: appData.app_id,
         space_id: configstore.get('currentSpaceId'),
       })
@@ -108,10 +108,12 @@ async function purchasedPull(options) {
     }
   }
 
+  spinnies.stopAll()
+
   const availableName = await readInput({
     name: 'blockName',
     message: 'Enter the block name',
-    default: metaData.BlockName,
+    default: metaData.pull_by_config_folder_name || metaData.block_name,
     validate: async (ans) => {
       if (!isValidBlockName(ans)) return 'Only snake case with numbers is valid'
       try {
@@ -119,15 +121,14 @@ async function purchasedPull(options) {
           block_name: ans,
           block_id: metaData.block_id,
         })
-
-        return !res.data.err
+        return res.data.err ? res.data.msg : true
       } catch (err) {
-        return 'Something went wrong in blocknameavailability check'
+        return err.response?.data?.msg || 'Something went wrong in block name availability check'
       }
     },
   })
 
-  const clonePath = appConfig.isOutOfContext ? cwd : createDirForType(metaData.BlockType, cwd || '.')
+  const clonePath = appConfig.isOutOfContext ? cwd : createDirForType(metaData.block_type, cwd || '.')
   const {
     description,
     // visibility,
@@ -144,7 +145,7 @@ async function purchasedPull(options) {
     blockFolderPath,
     metaData,
     blockId: metaData.parent_id,
-    variantBlockId: metaData.ID,
+    variantBlockId: metaData.block_id,
     appId: appData.app_id,
     spaceId: configstore.get('currentSpaceId'),
   })
@@ -153,7 +154,7 @@ async function purchasedPull(options) {
   if (!checkData.in_use) {
     spinnies.add('pab', { text: 'updating block assinged' })
     const { error } = await post(setInUseStatusForBlock, {
-      block_id: metaData.ID,
+      block_id: metaData.block_id,
       app_id: appData.app_id,
       space_id: configstore.get('currentSpaceId'),
     })
@@ -164,7 +165,7 @@ async function purchasedPull(options) {
   // update the block details
   spinnies.add('pab', { text: 'updating block' })
   const { error: upErr } = await post(updateBlockApi, {
-    block_id: metaData.ID,
+    block_id: metaData.block_id,
     block_name: blockFinalName,
     block_short_name: blockFinalName,
     description,
@@ -193,9 +194,9 @@ async function purchasedPull(options) {
     if (err.code === 'ENOENT') {
       console.log(chalk.dim('Pulled block has no config file, adding a new one'))
 
-      const isViewType = [2, 3].includes(metaData.BlockType)
+      const isViewType = [2, 3].includes(metaData.block_type)
       blockConfig = {
-        type: metaData.BlockType,
+        type: metaData.block_type,
         language: isViewType ? 'js' : 'nodejs',
         start: isViewType ? 'npx webpack-dev-server' : 'node index.js',
         build: isViewType ? 'npx webpack' : '',
@@ -205,6 +206,7 @@ async function purchasedPull(options) {
     console.log('err blockConfig', err)
   }
   blockConfig.name = blockFinalName
+  blockConfig.blockId = metaData.block_id
   blockConfig.source = { https: convertGitSshUrlToHttps(sshUrl), ssh: sshUrl }
   writeFileSync(blockConfigPath, JSON.stringify(blockConfig, null, 2))
 
@@ -216,6 +218,7 @@ async function purchasedPull(options) {
     cloneDirName: cdName,
     clonePath,
     blockFinalName,
+    blockId: metaData.block_id,
   }
 }
 

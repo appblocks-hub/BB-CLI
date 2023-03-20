@@ -9,6 +9,9 @@ const { readFileSync } = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const { noop } = require('rxjs')
+const isRunning = require('is-running')
+const treeKill = require('tree-kill')
+const { promisify } = require('util')
 const { getFreePorts } = require('../port-check')
 const { getAbsPath } = require('../../utils/path-helper')
 const emulateNode = require('../emulate')
@@ -19,6 +22,8 @@ const { appConfig } = require('../../utils/appconfigStore')
 const { runBash, runBashLongRunning } = require('../bash')
 const watchCompilation = require('./watchCompilation')
 const envToObj = require('./envToObj')
+const { feedback } = require('../../utils/cli-feedback')
+const { checkLanguageVersionExistInSystem } = require('../languageVersion/util')
 
 global.rootDir = process.cwd()
 
@@ -45,12 +50,40 @@ const start = async (blockname, { usePnpm }) => {
   const configData = appConfig.appConfig
   await setupEnv(configData)
 
+  const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
+
+  const blockLanguages = blockname
+    ? [appConfig.getBlock(blockname).meta?.language]
+    : [...new Set([...appConfig.getAllBlockLanguages])]
+
+  try {
+    await checkLanguageVersionExistInSystem({ supportedAppblockVersions, blockLanguages })
+  } catch (error) {
+    console.log(chalk.red(error.message))
+    process.exit()
+  }
+
   if (blockname && !appConfig.has(blockname)) {
     console.log('Block not found')
     return
   }
 
   if (blockname) {
+    const blockToStart = appConfig.getBlockWithLive(blockname)
+    const treeKillPromise = promisify(treeKill)
+    /**
+     * If the block is already running, kill the process & restart
+     */
+    if (isRunning(blockToStart.pid)) {
+      try {
+        await treeKillPromise(blockToStart.pid)
+      } catch (_) {
+        feedback({
+          type: 'muted',
+          message: `${blockToStart.meta.name} was live with pid:${blockToStart.pid}, couldn't kill it`,
+        })
+      }
+    }
     const port = await getFreePorts(appConfig, blockname)
     await startBlock(blockname, port)
     return
@@ -67,6 +100,20 @@ const start = async (blockname, { usePnpm }) => {
   if ([...appConfig.nonLiveBlocks].length === 0) {
     console.log('\nAll blocks are already live!\n')
     return
+  }
+
+  /**
+   * If some blocks are already running, kill them before
+   * starting them again to avoid unkilled processes
+   */
+  for (const block of appConfig.liveBlocks) {
+    if (isRunning(block?.pid)) {
+      treeKill(block.pid, (err) => {
+        if (err) {
+          feedback({ type: 'muted', message: `${block.meta.name} was live with pid:${block.pid}, couldn't kill it` })
+        }
+      })
+    }
   }
 
   await startAllBlock()

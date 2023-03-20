@@ -17,6 +17,7 @@ const blockMetaSchema = object({
   start: string().required(),
   build: string().required(),
   postPull: string().required(),
+  language: string().required(),
 })
 
 const blockSchema = object({
@@ -29,8 +30,8 @@ const schema = object({
   source: sourceSchema,
   type: string()
     .required()
-    .matches(/appBlock/),
+    .matches(/package/),
   dependencies: lazy((obj) => object(Object.keys(obj).reduce((acc, curr) => ({ ...acc, [curr]: blockSchema }), {}))),
 })
 
-module.exports = { appblockConfigSchema: schema }
+module.exports = { appblockConfigSchema: schema, blockConfigSchema: blockMetaSchema }

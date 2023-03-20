@@ -12,144 +12,148 @@ const { isInGitRepository, isGitInstalled } = require('./gitCheckUtils')
 const { checkLogDirs } = require('./preActionMethods/preAction-start')
 
 const preActionChecks = async (actionCommand) => {
-  const noRepo = !actionCommand._optionValues?.repo
-  const subcommand = actionCommand.parent.args[0]
+  try {
+    const noRepo = !actionCommand._optionValues?.repo
+    const subcommand = actionCommand.parent.args[0]
 
-  switch (subcommand) {
-    // To add command specific checks
-    case 'start':
-      // TODO: check node version
-      checkLogDirs()
+    switch (subcommand) {
+      // To add command specific checks
+      case 'start':
+        // TODO: check node version
+        checkLogDirs()
 
-      break
+        break
 
-    case 'stop':
-      break
+      case 'stop':
+        break
 
-    case 'use':
-      await ensureUserLogins()
-      break
+      case 'sync':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
+      case 'use':
+        await ensureUserLogins()
+        break
 
-    case 'sync':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'ls':
+        break
 
-    case 'ls':
-      break
+      case 'exec':
+        break
 
-    case 'exec':
-      break
+      case 'mark':
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'mark':
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'push':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'push':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'pull':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'pull':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'push-config':
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'push-config':
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'add-tags':
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'add-tags':
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'flush':
+        break
 
-    case 'flush':
-      break
+      case 'pull_appblock':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'pull_appblock':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'create':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        await ensureUserLogins(noRepo)
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'create':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      await ensureUserLogins(noRepo)
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'log':
+        break
 
-    case 'log':
-      break
+      case 'init':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        if (isInGitRepository()) {
+          console.log('Already in a Git repository')
+          process.exit(1)
+        }
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'init':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      if (isInGitRepository()) {
-        console.log('Already in a Git repository')
-        process.exit(1)
-      }
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'create-version':
+        await ensureUserLogins()
+        await checkAndSetGitConnectionPreference()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'create-version':
-      await ensureUserLogins()
-      await checkAndSetGitConnectionPreference()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'publish':
+        await ensureUserLogins()
+        await checkAndSetUserSpacePreference()
+        break
 
-    case 'publish':
-      await ensureUserLogins()
-      await checkAndSetUserSpacePreference()
-      break
+      case 'connect':
+        if (!isGitInstalled()) {
+          console.log('Git not installed')
+          process.exit(1)
+        }
+        break
 
-    case 'connect':
-      if (!isGitInstalled()) {
-        console.log('Git not installed')
-        process.exit(1)
-      }
-      break
+      case 'login':
+        break
 
-    case 'login':
-      break
+      case 'config':
+        break
 
-    case 'config':
-      break
-
-    default:
-      break
+      default:
+        break
+    }
+  } catch (error) {
+    console.log(error.message)
+    process.exit(1)
   }
 }
 

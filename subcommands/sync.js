@@ -209,7 +209,7 @@ async function getAndCheckAppName() {
           if (res.data.err) {
             return `Error getting details..`
           }
-          // Make sure it is registered as appBlock, else unregistered
+          // Make sure it is registered as package, else unregistered
           if (res.data.data.BlockType !== 1) {
             return `${ans} is not registered as appblock`
           }
@@ -242,7 +242,7 @@ const sync = async () => {
   try {
     appConfiginLocal = await readFile('block.config.json', { encoding: 'utf8' }).then((d) => JSON.parse(d))
     feedback({ type: 'info', message: 'Found block.config.json' })
-    if (appConfiginLocal.type !== 'appBlock') {
+    if (appConfiginLocal.type !== 'package') {
       throw new Error(`We are inside a ${appConfiginLocal.type} type block`)
     }
     try {
@@ -263,7 +263,7 @@ const sync = async () => {
       )
     }
     // feedback({ type: 'error', message: `${validationData.summary.join('\n')}` })
-    if (appConfiginLocal.name && appConfiginLocal.type === 'appBlock') {
+    if (appConfiginLocal.name && appConfiginLocal.type === 'package') {
       insideAppblock = true
       const appid = await getBlockDetails(appConfiginLocal.name)
         .then((res) => {
@@ -275,7 +275,7 @@ const sync = async () => {
             appblockIsRegistered = false
             return null
           }
-          // Make sure it is registered as appBlock, else unregistered
+          // Make sure it is registered as package, else unregistered
           if (res.data.data.BlockType !== 1) {
             return null
           }
@@ -296,7 +296,7 @@ const sync = async () => {
         if (!config) {
           /**
            * Here it is okay to move forward without a config as we have a local valid config
-           * to work with. As opposed to case where user is providing the appBlock name, where
+           * to work with. As opposed to case where user is providing the package name, where
            * it is necessary to get a config to move forward with the operation.
            */
           // feedback({
@@ -325,7 +325,7 @@ const sync = async () => {
         let findAppBlockWithName = await getAndCheckAppName()
 
         // Loop until user enters "exit" or gives a block name that is registered
-        // as appBlock and has a valid config in registry
+        // as package and has a valid config in registry
         for (; findAppBlockWithName !== null; ) {
           appblockDetails = { ...findAppBlockWithName }
           appblockIsRegistered = true
@@ -738,7 +738,7 @@ const sync = async () => {
        */
       const { BlockName, GitUrl } = appblockDetails
       const source = { ssh: GitUrl, https: convertGitSshUrlToHttps(GitUrl) }
-      const newAppblockConfig = { name: BlockName, type: 'appBlock', source, dependencies: { ...deps } }
+      const newAppblockConfig = { name: BlockName, type: 'package', source, dependencies: { ...deps } }
 
       // console.log(`${chalk.bgYellow('INFO')} Writing new config`)
       // console.log(newAppblockConfig)
@@ -762,7 +762,7 @@ const sync = async () => {
       JSON.stringify(
         {
           name: blockFinalName,
-          type: 'appBlock',
+          type: 'package',
           source: blockSource,
           dependencies: { ...deps },
         },

@@ -9,7 +9,7 @@ const util = require('util')
 const fs = require('fs')
 const execPromise = util.promisify(require('child_process').exec)
 const cp = require('child_process')
-const { getAbsPath } = require('../utils/path-helper')
+const path = require('path')
 
 function runScript(scriptPath) {
   // console.log('running script', scriptPath)
@@ -56,8 +56,8 @@ function runBashLongRunning(command, loggers, dir) {
   // const bashOut = exec(command);
   // console.log('directory for child is =', dir)
   // console.log('loggesrs are ', loggers)
-  const out = fs.openSync(getAbsPath(loggers.out), 'w')
-  const err = fs.openSync(getAbsPath(loggers.err), 'w')
+  const out = fs.openSync(path.resolve(loggers.out), 'w')
+  const err = fs.openSync(path.resolve(loggers.err), 'w')
   const commandArr = command.split(' ')
   const com = commandArr[0]
   commandArr.shift()

@@ -6,9 +6,13 @@
  */
 
 const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('fs')
+const { prompt } = require('inquirer')
 const { homedir } = require('os')
 const path = require('path')
 const { EventEmitter } = require('stream')
+const { configstore } = require('../../configstore')
+const { getSpaceLinkedToBlock } = require('../api')
+const { post } = require('../axios')
 
 class LocalRegistryManager {
   constructor() {
@@ -44,21 +48,32 @@ class LocalRegistryManager {
   }
 
   async _readAllPackagedBlockConfig() {
-    this.packagedBlockConfigs = await Object.entries(this.localRegistryData).reduce(async (promAcc, [pb, pbData]) => {
-      const acc = await promAcc
-      try {
-        // If dependencies filed is an empty object in the read config, dont add it to acc.
-        // This is to avoid getting error on bb ls -g.
-        const _j = await JSON.parse(readFileSync(path.join(pbData.rootPath, this.blockConfigFileName)))
-        if (Object.keys(_j.dependencies).length) acc[pb] = _j
-      } catch (err) {
-        if (err.code === 'ENOENT') {
-          // remove entry
-          delete this.localRegistryData[pb]
-        }
-      }
-      return acc
-    }, Promise.resolve({}))
+    this.packagedBlockConfigs = await Object.entries(this.localRegistryData).reduce(
+      async (promAcc, [spaceName, spbDatas]) => {
+        const acc = await promAcc
+        const pbs = spbDatas.package_blocks || {}
+
+        const spacedPbData = Object.entries(pbs).reduce(async (promPBAcc, [pb, pbData]) => {
+          const accPB = await promPBAcc
+          try {
+            // If dependencies filed is an empty object in the read config, dont add it to acc.
+            // This is to avoid getting error on bb ls -g.
+            const _j = await JSON.parse(readFileSync(path.join(pbData.rootPath, this.blockConfigFileName)))
+            if (Object.keys(_j.dependencies).length) accPB[pb] = _j
+          } catch (err) {
+            if (err.code === 'ENOENT') {
+              // remove entry
+              delete this.localRegistryData[spaceName]?.package_blocks?.[pb]
+            }
+          }
+          return accPB
+        }, Promise.resolve({}))
+
+        acc[spaceName] = spacedPbData
+        return acc
+      },
+      Promise.resolve({})
+    )
     this.events.emit('write')
   }
 
@@ -96,9 +111,11 @@ class LocalRegistryManager {
   linkSpaceToPackageBlock(packagedData) {
     this._checkAndCreateLocalRegistryDir()
 
-    const { name, space_id, space_name } = packagedData
-    const curData = this.localRegistryData[name] || {}
-    this.localRegistryData[name] = { ...curData, space_id, space_name }
+    const { name, blockId, space_id, space_name } = packagedData
+    const curData = this.localRegistryData[space_name] || { space_id, space_name }
+    const curPBsData = curData.package_blocks || {}
+    const curBData = curPBsData[blockId] || { name, rootPath: path.resolve() }
+    this.localRegistryData[space_name] = { ...curData, package_blocks: { ...curPBsData, [blockId]: { ...curBData } } }
 
     this.events.emit('write')
   }
@@ -106,15 +123,62 @@ class LocalRegistryManager {
   /**
    * isSpaceLinkedToPackageBlock
    */
-  isSpaceLinkedToPackageBlock(name, spaceId) {
-    return this.localRegistryData[name]?.space_id === spaceId
+  isSpaceLinkedToPackageBlock(blockId, spaceId) {
+    return Object.values(this.localRegistryData).some((spbData) => {
+      if (spbData.space_id !== spaceId) return false
+      return !!spbData.package_blocks?.[blockId]
+    })
+  }
+
+  /**
+   *
+   * @param {String} name
+   */
+  async setSpaceLinkedToPackage(name, blockId) {
+    const { data, error } = await post(getSpaceLinkedToBlock, {
+      block_id: blockId,
+    })
+
+    if (error) throw error
+
+    const spDatas = data.data || []
+    let { space_id, space_name } = spDatas[0] || {}
+
+    if (spDatas.length > 1) {
+      const question = [
+        {
+          type: 'list',
+          message: 'Package Block is linked to multiple spaces. Choose a space to continue',
+          choices: spDatas.map((v) => ({ name: v.space_name, value: { id: v.space_id, name: v.space_name } })),
+          name: 'spaceSelect',
+        },
+      ]
+      const { spaceSelect } = await prompt(question)
+      space_id = spaceSelect.name
+      space_name = spaceSelect.id
+    }
+
+    if (!space_id) throw new Error(`No linked space found for ${name}`)
+
+    const packagedData = { name, space_id, space_name, blockId }
+    this.linkSpaceToPackageBlock(packagedData)
+
+    return packagedData
   }
 
   /**
    * linkedSpaceOfPackageBlock
    */
-  linkedSpaceOfPackageBlock(name) {
-    const curData = this.localRegistryData[name]
+  async linkedSpaceOfPackageBlock(name, blockId) {
+    const spaceName = configstore.get('currentSpaceName')
+    let curData = this.localRegistryData[spaceName]?.package_blocks?.[blockId]
+
+    if (!curData) {
+      curData = await this.setSpaceLinkedToPackage(name, blockId)
+    }
+
+    this.add = { ...curData, rootPath: path.resolve() }
+
     return {
       space_id: curData.space_id,
       space_name: curData.space_name,
@@ -128,10 +192,26 @@ class LocalRegistryManager {
   set add(packagedData) {
     this._checkAndCreateLocalRegistryDir()
 
-    const { name, rootPath } = packagedData
-    const curData = this.localRegistryData[name] || {}
-    this.localRegistryData[name] = { ...curData, rootPath }
-    this.packagedBlockConfigs[name] = JSON.parse(readFileSync(path.join(rootPath, this.blockConfigFileName)))
+    const dSpaceId = configstore.get('currentSpaceId')
+    const dSpaceName = configstore.get('currentSpaceName')
+
+    const { name, blockId, rootPath, space_id = dSpaceId, space_name = dSpaceName } = packagedData
+
+    const curData = this.localRegistryData[space_name] || { space_id, space_name }
+    const curPBsData = curData.package_blocks || {}
+    const curBData = curPBsData[blockId] || { rootPath, name }
+    this.localRegistryData[space_name] = {
+      ...curData,
+      package_blocks: { ...curPBsData, [blockId]: { ...curBData, rootPath } },
+    }
+
+    if (!this.packagedBlockConfigs[space_name]) {
+      this.packagedBlockConfigs[space_name] = {}
+    }
+
+    this.packagedBlockConfigs[space_name][blockId] = JSON.parse(
+      readFileSync(path.join(rootPath, this.blockConfigFileName))
+    )
 
     this.events.emit('write')
   }
@@ -140,9 +220,10 @@ class LocalRegistryManager {
    * Remove packaged to registry
    * @param {String} name  Name of packaged block
    */
-  set remove(name) {
-    delete this.localRegistryData[name]
-    delete this.packagedBlockConfigs[name]
+  remove(blockId, spaceName) {
+    const space_name = spaceName || configstore.get('currentSpaceName')
+    delete this.localRegistryData[space_name].package_blocks?.[blockId]
+    delete this.packagedBlockConfigs[space_name]?.[blockId]
     this.events.emit('write')
   }
 
@@ -164,19 +245,22 @@ class LocalRegistryManager {
    * Get all dependecies
    */
   get allDependencies() {
-    const allDeps = Object.entries(this.packagedBlockConfigs).reduce((acc, [pb, pbData]) => {
-      const deps = pbData.dependencies || {}
-
-      Object.values(deps).forEach((dep) => {
-        deps[dep.meta.name] = {
-          ...deps[dep.meta.name],
-          packagedBlock: pb,
-        }
+    const allDeps = Object.entries(this.packagedBlockConfigs).reduce((acc, [spaceName, spbData]) => {
+      const depDatas = {}
+      Object.entries(spbData).forEach((pb, pbData) => {
+        const pbName = pbData.name
+        const deps = pbData.dependencies || {}
+        Object.values(deps).forEach((dep) => {
+          depDatas[dep.meta.blockId] = {
+            ...deps[dep.meta.name],
+            packagedBlock: pbName,
+            packagedBlockId: pb,
+            spaceName,
+          }
+        })
+        // eslint-disable-next-line no-param-reassign
       })
-
-      // eslint-disable-next-line no-param-reassign
-
-      return { ...acc, ...deps }
+      return { ...acc, ...depDatas }
     }, {})
 
     return allDeps
@@ -186,16 +270,18 @@ class LocalRegistryManager {
    * Get dependecies by name
    * @param {String} name  Name of packaged block
    */
-  getPackageBlock(name) {
-    return this.packagedBlockConfigs[name]
+  getPackageBlock(blockId, spaceName) {
+    const space_name = spaceName || configstore.get('currentSpaceName')
+    return this.packagedBlockConfigs[space_name]?.[blockId]
   }
 
   /**
    * Get dependecies by name
    * @param {String} name  Name of packaged block
    */
-  getPackageBlockDependencies(name) {
-    return this.packagedBlockConfigs[name]?.dependencies
+  getPackageBlockDependencies(blockId, spaceName) {
+    const space_name = spaceName || configstore.get('currentSpaceName')
+    return this.packagedBlockConfigs[space_name]?.[blockId]?.dependencies
   }
 }
 

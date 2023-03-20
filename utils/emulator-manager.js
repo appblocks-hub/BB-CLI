@@ -44,7 +44,7 @@ async function copyEmulatorCode(PORTS, dependencies) {
   import cors from "cors";
   import { readFile } from "fs/promises";
   
-  const appHandler = (type) => async (req, res) => {
+  const appHandler = (type) => async (req, res, next) => {
     try {
       const blocks = ${JSON.stringify(blocksData)}
   
@@ -66,13 +66,18 @@ async function copyEmulatorCode(PORTS, dependencies) {
           res.send("Only " + type + " apis are allowed").status(403);
           return;
         }
+
         const func_route = "../" + blockData.dir + "/index.js"
         let handler = await import(func_route);
         if(process.env.NODE_ENV==="development"){
           handler = await import(func_route+"?update="+Date.now())
         }
+
         console.log("handler = ", handler);
-        await handler.default(req, res);
+
+        const event = {req, res, next}
+
+        await handler.default(event);
       } else {
         res.send("requested function not registered in app.").status(404);
       }

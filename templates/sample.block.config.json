@@ -1,6 +1,6 @@
 {
   "name": "",
-  "type": "appBlock",
+  "type": "package",
   "source": {
     "https": "",
     "ssh": ""

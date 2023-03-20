@@ -1,6 +1,6 @@
 {
   "name": "_ab_todo",
-  "type": "appBlock",
+  "type": "package",
   "env": {
     "function": {
       "DB_FILE_PATH": "../db.json"

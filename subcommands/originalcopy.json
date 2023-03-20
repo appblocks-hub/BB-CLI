@@ -1,6 +1,6 @@
 {
   "name": "_ab_todo",
-  "type": "appBlock",
+  "type": "package",
   "dependencies": {
     "addTodo": {
       "directory": "./functions/_ab_todo_addTodo",

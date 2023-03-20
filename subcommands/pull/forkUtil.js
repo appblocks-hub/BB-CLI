@@ -165,7 +165,7 @@ const pullForkedRepo = async (options) => {
  */
 const updateBlockConfig = async (options) => {
   spinnies.update('fork', { text: `Updating block config` })
-  const { clonePath, cloneDirName, blockType, blockFinalName, url, sshUrl } = options
+  const { clonePath, cloneDirName, blockType, blockFinalName, url, sshUrl, blockId } = options
   let blockConfig
   try {
     blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json')))
@@ -184,6 +184,7 @@ const updateBlockConfig = async (options) => {
     }
   }
   blockConfig.name = blockFinalName
+  blockConfig.blockId = blockId
   blockConfig.source = { https: url, ssh: sshUrl }
   blockConfig.isFork = true
   writeFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'), JSON.stringify(blockConfig))
@@ -224,6 +225,11 @@ const forkRepo = (metaData, newBlockName, clonePath) =>
       // const updatedRepoData = updateRepo(userInputs)
 
       await pullForkedRepo({ clonePath, sshUrl, url, name, version_number })
+
+      spinnies.update('fork', { text: `Registering block` })
+      const resData = await registerBlock(BlockType, name, name, true, sshUrl, description)
+      spinnies.update('fork', { text: `Registered block` })
+
       await updateBlockConfig({
         clonePath,
         cloneDirName: name,
@@ -232,11 +238,8 @@ const forkRepo = (metaData, newBlockName, clonePath) =>
         name,
         blockFinalName,
         blockType: BlockType,
+        blockId: resData.data?.ID,
       })
-
-      spinnies.update('fork', { text: `Registering block` })
-      await registerBlock(BlockType, name, name, true, sshUrl, description)
-      spinnies.update('fork', { text: `Registered block` })
 
       spinnies.succeed('fork', { text: `Successfully forked` })
       resolve({ description, visibility, url, sshUrl, name, blockFinalName })

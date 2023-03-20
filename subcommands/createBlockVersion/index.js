@@ -16,8 +16,10 @@ const { ensureReadMeIsPresent, uploadReadMe } = require('../../utils/fileAndFold
 const { getShieldHeader } = require('../../utils/getHeaders')
 const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
 const { GitManager } = require('../../utils/gitmanager')
-const { readInput } = require('../../utils/questionPrompts')
+const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { updateReadme } = require('../../utils/registryUtils')
+const { getLanguageVersionData } = require('../languageVersion/util')
+const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
 
 const createBlockVersion = async (blockname) => {
   await appConfig.init(null, null)
@@ -59,6 +61,7 @@ const createBlockVersion = async (blockname) => {
     spinnies.add('p1', { text: `Getting blocks details` })
     const blockId = await appConfig.getBlockId(blockname)
     spinnies.remove('p1')
+    spinnies.stopAll()
 
     const version = await readInput({
       name: 'version',
@@ -80,6 +83,62 @@ const createBlockVersion = async (blockname) => {
       message: 'Enter a message to add to tag.(defaults to empty)',
     })
 
+    // check for abVersion langVersion Dependencies support for block
+    const { supportedAppblockVersions } = blockDetails.meta
+    let appblockVersionIds
+
+    if (!supportedAppblockVersions) {
+      throw new Error(`Please set-appblock-version and try again`)
+    }
+
+    // ========= languageVersion ========================
+    const { languageVersionIds, languageVersions, allSupported } = await getLanguageVersionData({
+      blockDetails,
+      appblockVersionIds,
+      supportedAppblockVersions,
+    })
+
+    if (!allSupported) {
+      const goAhead = await confirmationPrompt({
+        message: `Some appblock version doesn't have support for given languages. Do you want to continue ?`,
+        name: 'goAhead',
+        default: false,
+      })
+
+      if (!goAhead) throw new Error(`Cancelled on no support`)
+    }
+
+    // ========= dependencies ========================
+    // Check if the dependencies exit to link with block
+    const { dependencies, depExist } = await getDependencies({ blockDetails })
+    if (!depExist) {
+      const noDep = await readInput({
+        type: 'confirm',
+        name: 'noDep',
+        message: 'No package dependecies found to link with block. Do you want to continue ?',
+        default: true,
+      })
+
+      if (!noDep) process.exit(1)
+    } else {
+      // eslint-disable-next-line prefer-const
+      const { isAllDepExist } = await getDependencyIds({
+        languageVersionIds,
+        dependencies,
+        languageVersions,
+        noRequest: true,
+      })
+      if (!isAllDepExist) {
+        const goAhead = await confirmationPrompt({
+          message: `Appblock version doesn't have support for some dependencies. Do you want to continue ?`,
+          name: 'goAhead',
+          default: false,
+        })
+
+        if (!goAhead) throw new Error(`Cancelled on no support`)
+      }
+    }
+
     spinnies.add('p1', { text: `Creating new version ${version}` })
 
     const blockSource = blockDetails.meta.source
@@ -94,16 +153,19 @@ const createBlockVersion = async (blockname) => {
 
     spinnies.update('p1', { text: `Registring new version ${version}` })
 
-    const resp = await axios.post(
-      appBlockAddVersion,
-      {
-        block_id: blockId,
-        version_no: semver.parse(version).version,
-        status: 1,
-        release_notes: message,
-      },
-      { headers: getShieldHeader() }
-    )
+    const reqBody = {
+      block_id: blockId,
+      version_no: semver.parse(version).version,
+      status: 1,
+      release_notes: message,
+    }
+
+    if (supportedAppblockVersions && appblockVersionIds?.length < 1) {
+      reqBody.appblock_versions = supportedAppblockVersions
+      delete reqBody.appblock_version_ids
+    }
+
+    const resp = await axios.post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
 
     const { data } = resp
     if (data.err) {
@@ -128,6 +190,7 @@ const createBlockVersion = async (blockname) => {
   } catch (error) {
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })
+    spinnies.stopAll()
     process.exit(1)
   }
 }

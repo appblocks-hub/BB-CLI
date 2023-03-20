@@ -34,7 +34,7 @@ module.exports = function isValidAppBlockProject(dir) {
        * @type {import('./jsDoc/types').appblockConfigShape}
        */
       const d = JSON.parse(fs.readFileSync(path.join(dir, 'block.config.json')))
-      if (d.type === 'appBlock') return true
+      if (d.type === 'package') return true
       return false
     }
     return false

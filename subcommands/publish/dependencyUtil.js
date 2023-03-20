@@ -5,10 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const chalk = require('chalk')
 const { readFileSync } = require('fs')
 const path = require('path')
-const { addDependenciesApi, listDependenciesApi } = require('../../utils/api')
+const { addDependenciesApi, checkDependenciesApi, submitForDependenciesReview } = require('../../utils/api')
 const { post } = require('../../utils/axios')
+// const { confirmationPrompt } = require('../../utils/questionPrompts')
 
 /**
  *
@@ -16,20 +18,30 @@ const { post } = require('../../utils/axios')
  * @returns {Array}
  */
 
-const getPackageJsonDependencies = async (directory) => {
-  const packageJson = await JSON.parse(readFileSync(path.resolve(directory, 'package.json')))
-  return [packageJson.dependencies, packageJson.devDependencies].reduce((acc, dep, i) => {
-    if (!dep) return acc
-    Object.entries(dep).forEach(([name, version]) => {
-      acc.push({
-        name,
-        version,
-        type: i, // using index since dependencies is 0 and devDependencies is 1
-        url: '',
+const getPackageJsonDependencies = async ({ directory, name: bName, blockId }) => {
+  try {
+    const packageJson = await JSON.parse(readFileSync(path.resolve(directory, 'package.json')))
+    return [packageJson.dependencies, packageJson.devDependencies].reduce((acc, dep, i) => {
+      if (!dep) return acc
+      Object.entries(dep).forEach(([name, version]) => {
+        acc.push({
+          name,
+          version,
+          type: i, // using index since dependencies is 0 and devDependencies is 1
+          url: '',
+          blockId,
+        })
       })
-    })
-    return acc
-  }, [])
+      return acc
+    }, [])
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.log(`No package.json found for ${bName} `)
+      return []
+    }
+
+    throw err
+  }
 }
 
 const getDependencies = async (options) => {
@@ -37,17 +49,17 @@ const getDependencies = async (options) => {
 
   const {
     directory,
-    meta: { language },
+    meta: { blockId, name, language },
   } = blockDetails
 
   let dependencies = []
 
   switch (language) {
     case 'nodejs':
-      dependencies = await getPackageJsonDependencies(directory)
+      dependencies = await getPackageJsonDependencies({ directory, name, blockId })
       break
     case 'js':
-      dependencies = await getPackageJsonDependencies(directory)
+      dependencies = await getPackageJsonDependencies({ directory, name, blockId })
       break
 
     default:
@@ -72,32 +84,111 @@ const addDependencies = async (options) => {
   if (error) throw error
 }
 
+const requestForDepSubmit = async (requestDeps) => {
+  const { data, error } = await post(submitForDependenciesReview, {
+    dependencies: requestDeps,
+  })
+
+  if (error) throw error
+
+  return data?.data
+}
+
 /**
  *
  * @param {*} options
  */
 const getDependencyIds = async (options) => {
-  const { languageVersionId, dependencies } = options
+  const { languageVersionIds, dependencies, languageVersions, noRequest = false, blockName } = options
 
-  const { data, error } = await post(listDependenciesApi, {
-    language_version_id: languageVersionId,
-    page_limit: 10000,
+  const { data, error } = await post(checkDependenciesApi, {
+    language_version_ids: languageVersionIds,
+    dependencies,
   })
 
   if (error) throw error
 
-  const deps = data.data || []
+  const depRes = data.data || {}
 
-  const newDeps = []
-  const depIds = []
+  let depIds = depRes.dependency_ids || []
 
-  dependencies.forEach((dep) => {
-    const depData = deps.find((d) => dep.name === d.name && dep.version === d.version && dep.type === d.type)
-    if (depData?.id) depIds.push(depData.id)
-    else newDeps.push(dep)
+  if (depRes.is_all_exist) {
+    return { depIds, isAllDepExist: true }
+  }
+
+  const noExistingDeps = {}
+  const requestDeps = []
+
+  if (depRes.existing_dependencies?.length) {
+    depIds = depRes.existing_dependencies
+    depRes.existing_dependencies.forEach((exLang) => {
+      const { name: langVersion, value: langId } =
+        languageVersions.find(({ value }) => value === exLang[0].language_version_id) || {}
+      dependencies.forEach((dep) => {
+        const isExist = exLang.find((d) => dep.name === d.name && dep.version === d.version && dep.type === d.type)
+        if (!isExist) {
+          let langversionIds = [langId]
+
+          const reqDepIndex = requestDeps.findIndex(
+            (d) => dep.name === d.name && dep.version === d.version && dep.type === d.type
+          )
+
+          if (reqDepIndex > -1) {
+            langversionIds = [...new Set([...requestDeps[reqDepIndex].language_version_ids, ...langversionIds])]
+            requestDeps[reqDepIndex] = {
+              ...requestDeps[reqDepIndex],
+              language_version_ids: langversionIds,
+            }
+          } else {
+            requestDeps.push({ ...dep, language_version_ids: langversionIds })
+          }
+
+          if (!noExistingDeps[langVersion]) noExistingDeps[langVersion] = []
+          noExistingDeps[langVersion].push({
+            ...dep,
+            showVal: `${dep.name}@${dep.version} ${dep.type === 1 ? 'devDependency' : 'dependency'}`,
+          })
+        }
+      })
+    })
+  } else {
+    dependencies.forEach((dep) => {
+      requestDeps.push({
+        ...dep,
+        language_version_ids: languageVersionIds,
+        showVal: `${dep.name}@${dep.version} ${dep.type === 1 ? 'devDependency' : 'dependency'}`,
+      })
+    })
+
+    languageVersions.forEach(({ name }) => {
+      noExistingDeps[name] = requestDeps
+    })
+  }
+
+  Object.entries(noExistingDeps).forEach(([lang, deps]) => {
+    console.log(
+      chalk.yellow(
+        `${lang} does not support listed dependencies for ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
+      )
+    )
   })
 
-  return { depIds, newDeps }
+  if (noRequest) return { isAllDepExist: false, depIds }
+
+  // const confirm = await confirmationPrompt({
+  //   name: 'confirm',
+  //   message: 'Do you want to request for these dependencies support?',
+  //   default: false,
+  // })
+
+  // if (confirm) {
+  await requestForDepSubmit(requestDeps)
+  console.log(chalk.yellow(`Requested for non existing dependencies support.`))
+  // } else {
+  //   console.log(chalk.red(`Version can't be created without dependencies support`))
+  // }
+
+  return { requestDeps, depIds, isAllDepExist: false }
 }
 
 module.exports = { getDependencies, addDependencies, getDependencyIds }

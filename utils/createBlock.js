@@ -62,7 +62,7 @@ async function createBlock(
   if (!presentPrefix && blockTypeNo > 1) {
     // If we are here from init, then block.config.json would not have been
     // created yet, so trying to set will cause problem,
-    // to avoid that prompt only if blockType is other than 1 i.e 'appBlock'
+    // to avoid that prompt only if blockType is other than 1 i.e 'package'
     const prefix = await getPrefix(appConfig.getName())
     appConfig.prefix = prefix
   }
@@ -207,8 +207,9 @@ async function createBlock(
     }
   }
 
+  let blockId
   try {
-    await registerBlock(
+    const resData = await registerBlock(
       blockTypeNo,
       blockFinalName,
       blockFinalName,
@@ -218,6 +219,8 @@ async function createBlock(
       jobConfig,
       package_block_id
     )
+
+    blockId = resData.data.ID
   } catch (err) {
     console.log(err.message)
     process.exit(1)
@@ -228,6 +231,7 @@ async function createBlock(
     cloneDirName,
     clonePath,
     blockFinalName,
+    blockId,
   }
 }
 

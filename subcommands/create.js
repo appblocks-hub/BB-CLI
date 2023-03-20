@@ -8,7 +8,6 @@
 /* eslint-disable consistent-return */
 const path = require('path')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
-const { transports } = require('winston')
 const chalk = require('chalk')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
 const createBlock = require('../utils/createBlock')
@@ -22,7 +21,6 @@ const {
 } = require('../utils/questionPrompts')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { checkAndSetGitConfigNameEmail } = require('../utils/gitCheckUtils')
-const { logger } = require('../utils/logger')
 const { appConfig } = require('../utils/appconfigStore')
 
 const {
@@ -60,10 +58,9 @@ const { feedback } = require('../utils/cli-feedback')
 const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
 const getRepoUrl = require('../utils/noRepo')
-const { getBlockDetails } = require('../utils/registryUtils')
+const { Logger } = require('../utils/loggerV2')
 
-logger.add(new transports.File({ filename: 'create.log' }))
-
+const { logger } = new Logger('create')
 /**
  * @typedef createCommandOptions
  * @property {string} type
@@ -82,7 +79,7 @@ logger.add(new transports.File({ filename: 'create.log' }))
  */
 const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
   const { autoRepo } = options
-
+  logger.log({ level: 'emerg', messgae: 'sdosem' })
   let standAloneBlock = false
   let blockName = userPassedName
   let { type } = options
@@ -173,6 +170,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     // If user is giving a url then no chance of changing this name
     let blockFinalName = availableName
     let blockSource
+    let blockId
     let cloneDirName
     let clonePath
     let userHasProvidedRepoUrl = false
@@ -193,21 +191,11 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
     }
 
     const packageBlockName = appConfig.config?.name
-    let package_block_id
+    const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
+    const package_block_id = appConfig.packageBlockId
 
-    if (packageBlockName) {
-      const {
-        status,
-        data: { err, msg, data: packageBlockDetails },
-      } = await getBlockDetails(packageBlockName)
-
-      if (status === 204) {
-        feedback({ type: 'info', message: `${packageBlockName} doesn't exists in block repository` })
-        return
-      }
-      if (err) throw new Error(msg).message
-
-      package_block_id = packageBlockDetails.ID
+    if (!supportedAppblockVersions) {
+      throw new Error('No supported appblock version set for package block. Please use set-appblock-version command')
     }
 
     if (!packageBlockName && type !== 1) {
@@ -229,6 +217,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         package_block_id
       )
       blockFinalName = d.blockFinalName
+      blockId = d.blockId
       blockSource = d.blockSource
       cloneDirName = d.cloneDirName
       clonePath = d.clonePath
@@ -259,6 +248,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
     const blockDetails = {
       name: blockFinalName,
+      blockId,
       type: blockTypeInverter(type),
       source: {
         ...blockSource,
@@ -268,6 +258,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       build: '',
       postPull: 'npm i',
       standAloneBlock,
+      supportedAppblockVersions,
     }
 
     if (type === 2 || type === 3) {
@@ -360,10 +351,8 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       console.log('err:', err)
     }
   } catch (err) {
-    console.log(err)
     console.log('Something went wrong while creating!')
-    logger.info('ERROR')
-    logger.error(err)
+    logger.error(err.message)
     throw new CreateError('create failed')
   }
 }

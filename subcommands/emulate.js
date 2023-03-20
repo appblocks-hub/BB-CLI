@@ -5,8 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
+const { existsSync, mkdirSync } = require('fs')
 const { runBash, runBashLongRunning } = require('./bash')
 const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-manager')
+const { createFileSync } = require('../utils/fileAndFolderHelpers')
 
 global.rootDir = process.cwd()
 
@@ -30,11 +33,20 @@ const emulateNode = async (ports, dependencies) => {
     if (i.status === 'failed') {
       throw new Error(i.msg)
     }
-    const child = runBashLongRunning(
-      'node index.js',
-      { out: './logs/out/functions.log', err: './logs/err/functions.log' },
-      './._ab_em'
-    )
+
+    const logOutPath = path.resolve('./logs/out/functions.log')
+    const logErrPath = path.resolve('./logs/err/functions.log')
+
+    if (!existsSync(logErrPath)) {
+      mkdirSync(path.join('./logs', 'err'), { recursive: true })
+      createFileSync(logErrPath, '')
+    }
+    if (!existsSync(logOutPath)) {
+      mkdirSync(path.join('./logs', 'out'), { recursive: true })
+      createFileSync(logOutPath, '')
+    }
+
+    const child = runBashLongRunning('node index.js', { out: logOutPath, err: logErrPath }, './._ab_em')
     // console.log('pid - ', child.pid)
     addEmulatorProcessData({ pid: child.pid })
 

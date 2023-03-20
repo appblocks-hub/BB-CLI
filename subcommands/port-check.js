@@ -149,7 +149,8 @@ const getFreePorts = async (appConfig, blockName) => {
   }
 
   // Get port for emulator
-  ports.emulatorPorts = await validateAndAssignPortProxy(5000, 5005)
+  const emPortFavoured = parseInt(process.env.BB_EM_PORT || 5000)
+  ports.emulatorPorts = await validateAndAssignPortProxy(emPortFavoured, emPortFavoured + 5)
   // ports.emulator = await validateAndAssignPortProxy(5000)
 
   // Update the ports to env

@@ -21,6 +21,7 @@ const { feedback } = require('../../utils/cli-feedback')
 const { lrManager } = require('../../utils/locaRegistry/manager')
 const getRepoUrl = require('../../utils/noRepo')
 const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
+const { getAppblockVersionData } = require('../publish/util')
 
 const initializePackageBlock = async (appblockName, options) => {
   const { autoRepo } = options
@@ -30,11 +31,15 @@ const initializePackageBlock = async (appblockName, options) => {
     componentName = await getBlockName()
   }
 
+  // ========= appblockVersion ========================
+  const { appblockVersions } = await getAppblockVersionData()
+
   const availableName = await checkBlockNameAvailability(componentName)
 
   // If user is giving a url then no chance of changing this name
   let blockFinalName = availableName
   let blockSource
+  let blockId
   let userHasProvidedRepoUrl = false
 
   if (!autoRepo) {
@@ -52,6 +57,7 @@ const initializePackageBlock = async (appblockName, options) => {
   if (autoRepo) {
     const d = await createBlock(availableName, availableName, 1, '', false, '.')
     blockFinalName = d.blockFinalName
+    blockId = d.blockId
     blockSource = d.blockSource
   }
 
@@ -75,8 +81,10 @@ const initializePackageBlock = async (appblockName, options) => {
   const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
   createFileSync(CONFIGPATH, {
     name: blockFinalName,
-    type: 'appBlock',
+    type: 'package',
+    blockId,
     source: blockSource,
+    supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
   })
 
   await checkAndSetGitConfigNameEmail(blockFinalName)
@@ -92,11 +100,12 @@ const initializePackageBlock = async (appblockName, options) => {
   // Add packaged block into local registry
   await lrManager.init()
   lrManager.add = {
+    blockId,
     name: blockFinalName,
     rootPath: path.resolve(blockFinalName),
   }
 
-  await initializeSpaceToPackageBlock(blockFinalName)
+  await initializeSpaceToPackageBlock(blockFinalName, blockId)
 
   return { DIRPATH, blockFinalName, Git, prefersSsh }
 }

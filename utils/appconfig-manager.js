@@ -15,6 +15,7 @@ const isRunning = require('is-running')
 const { getBlockDetails } = require('./registryUtils')
 const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 const { lrManager } = require('./locaRegistry/manager')
+const { configstore } = require('../configstore')
 
 // eslint-disable-next-line no-unused-vars
 function debounce(func, wait, immediate) {
@@ -96,7 +97,18 @@ class AppblockConfigManager {
    * This is only called if command has no global flag
    */
   async liveConfigSetup() {
-    const _p = path.join(tmpdir(), path.resolve(this.cwd))
+    const username = configstore.get('appBlockUserName', 'unregistered-user')
+    const spacename = configstore.get('currentSpaceName', 'local-space')
+    if (!this.isInAppblockContext) {
+      /**
+       * TODO: Find a way to get package block name here, if calling from inside a block,
+       * and let user run from inside a block.
+       */
+      console.log('Cannot run from inside a block. Move up to a package block context and re-run')
+      process.exit(1)
+    }
+    const pckname = this.getName()
+    const _p = path.join(tmpdir(), 'appblocks', 'users', username, 'spaces', spacename, pckname)
     this.liveConfigPath = path.join(_p, this.liveConfigName)
     await mkdir(_p, { recursive: true })
   }
@@ -147,7 +159,7 @@ class AppblockConfigManager {
           bdirs = await getBlockDirsIn(allDirsInRoot)
         } else {
           // if we are in a context, since tempGroup is called only if enclosing
-          // block is not appBlock, we can be sure the user is calling from inside a
+          // block is not package, we can be sure the user is calling from inside a
           // block and the action needs to be done on it.
           // Eg: bb push from inside a block directory */blockname
           bdirs = [path.resolve()]
@@ -181,6 +193,12 @@ class AppblockConfigManager {
   get appConfig() {
     return this.config
     // return this.getAppConfig()
+  }
+
+  /**
+   */
+  get packageBlockId() {
+    return this.config.blockId
   }
 
   get prefix() {
@@ -232,6 +250,11 @@ class AppblockConfigManager {
     return this.getDependencies(false, null, picker)
   }
 
+  get getAllBlockLanguages() {
+    const picker = (block) => block.meta.language
+    return this.getDependencies(false, null, picker)
+  }
+
   get env() {
     if (this.config.env) return this.config.env
     return null
@@ -255,8 +278,9 @@ class AppblockConfigManager {
     }
     this.liveDetails[blockname] = { ...this.liveDetails[blockname], ...stop }
     if (this.isGlobal) {
-      const pbName = lrManager.allDependencies[blockname].packagedBlock
-      const rootPath = lrManager.localRegistry[pbName]?.rootPath
+      const bId = this.getBlockId(this.currentPackageBlox)
+      const pbId = lrManager.allDependencies[bId].packagedBlockId
+      const rootPath = lrManager.localRegistry[pbId]?.rootPath
       const tempPath = tmpdir()
       this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigName)
     }
@@ -267,8 +291,9 @@ class AppblockConfigManager {
     const stop = { job_cmd: null, isJobOn: false }
     this.liveDetails[blockname] = { ...this.liveDetails[blockname], ...stop }
     if (this.isGlobal) {
-      const pbName = lrManager.allDependencies[blockname].packagedBlock
-      const rootPath = lrManager.localRegistry[pbName]?.rootPath
+      const bId = this.getBlockId(this.currentPackageBlox)
+      const pbId = lrManager.allDependencies[bId].packagedBlockId
+      const rootPath = lrManager.localRegistry[pbId]?.rootPath
       const tempPath = tmpdir()
       this.liveConfigPath = path.join(tempPath, rootPath, this.liveConfigName)
     }
@@ -311,7 +336,7 @@ class AppblockConfigManager {
    * @param {import('./jsDoc/types').appConfigInitOptions} options
    * @returns {Promise<undefined>}
    */
-  async init(cwd, configName, subcmd, options = { reConfig: false, isGlobal: false }) {
+  async init(cwd, configName, subcmd, options = { reConfig: true, isGlobal: false }) {
     this.configName = configName || 'block.config.json'
     this.cwd = cwd || '.'
     this.subcmd = subcmd || null
@@ -348,7 +373,7 @@ class AppblockConfigManager {
     try {
       await this.readAppblockConfig()
 
-      if (this.config.type !== 'appBlock') {
+      if (this.config.type !== 'package') {
         this.isInAppblockContext = false
       } else {
         this.isInAppblockContext = true
@@ -500,7 +525,8 @@ class AppblockConfigManager {
 
     if (this.isGlobal && this.liveConfigPath) {
       const pbName = this.liveConfigPath?.split('/').at(-2)
-      const { dependencies: deps } = lrManager.getPackageBlock(pbName) || {}
+      const id = this.getBlockId(pbName)
+      const { dependencies: deps } = lrManager.getPackageBlock(id) || {}
       if (!deps) return {}
       for (const block of Object.values(deps)) {
         liveConfig[block.meta.name] = {
@@ -566,8 +592,9 @@ class AppblockConfigManager {
         return acc
       }, {})
 
-      const rootPath = lrManager.localRegistry[this.currentPackageBlox]?.rootPath
-      const pbConfig = lrManager.getPackageBlock(this.currentPackageBlox)
+      const id = this.getBlockId(this.currentPackageBlox)
+      const rootPath = lrManager.localRegistry[id]?.rootPath
+      const pbConfig = lrManager.getPackageBlock(id)
       writeData = { ...pbConfig, dependencies: deps }
 
       p = path.resolve(rootPath, this.configName)
@@ -648,6 +675,14 @@ class AppblockConfigManager {
   getBlockId(blockName) {
     return new Promise(async (resolve) => {
       try {
+        const blockData = await this.getBlock(blockName)
+        const localBlockId = blockData?.meta?.blockId || blockData?.blockId
+
+        if (localBlockId) {
+          resolve(localBlockId)
+          return
+        }
+
         const resp = await getBlockDetails(blockName)
         if (resp.status === 204) throw new Error(`${blockName} doesn't exists in block repository`).message
 
@@ -656,7 +691,7 @@ class AppblockConfigManager {
           throw new Error('Something went wrong from our side\n', data.msg).message
         }
 
-        resolve(data.data.ID)
+        resolve(data.data.id)
       } catch (err) {
         console.log(`Something went wrong while getting details of block:${blockName} -- ${err} `)
         resolve(null)
@@ -776,10 +811,10 @@ class AppblockConfigManager {
 
   /**
    * To get the current appblock
-   * @returns {String} Name of Appblock
+   * @returns {String?} Name of Packageblock
    */
   getName() {
-    return this.config.name || ''
+    return this.config.name || null
   }
 
   getStatus() {

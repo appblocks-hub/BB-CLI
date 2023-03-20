@@ -62,7 +62,7 @@ const pullSourceCodeFromAppblock = async (options) => {
   const signedSourceCodeUrl = await getSignedSourceCodeUrl(options)
   if (!signedSourceCodeUrl) throw new Error('Error getting source code from appblocks')
 
-  await downloadSourceCode(signedSourceCodeUrl, blockFolderPath, metaData.BlockName)
+  await downloadSourceCode(signedSourceCodeUrl, blockFolderPath, metaData.block_name)
 }
 
 module.exports = { pullSourceCodeFromAppblock }

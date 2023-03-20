@@ -19,8 +19,10 @@ const { logFail } = require('../../utils')
 const { readInput } = require('../../utils/questionPrompts')
 const onPremUpload = require('./onPrem')
 const abPremUpload = require('./abPrem')
+const { appConfig } = require('../../utils/appconfigStore')
 
 const upload = async (blockName, options) => {
+  await appConfig.init()
   deployConfig.init()
 
   const { environment } = options
@@ -89,9 +91,9 @@ const upload = async (blockName, options) => {
   })
 
   if (uploadPremise === 0) {
-    await onPremUpload({ blockName, envData, appData, environment })
+    await onPremUpload({ blockName, envData, appData, environment, appConfig })
   } else {
-    await abPremUpload({ blockName, envData, appData, environment })
+    await abPremUpload({ blockName, envData, appData, environment, appConfig })
   }
 }
 

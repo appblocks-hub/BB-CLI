@@ -49,6 +49,10 @@ api.updateBlockApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/update-blo
 api.getBlockPersmissionsApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-permissions/invoke`
 api.trackBlockUpdatePull = `${api.appBlockRegistryOrigin}/api/registry/v0.1/track-block-updates-pull/invoke`
 api.listUnpulledBlockBersions = `${api.appBlockRegistryOrigin}/api/registry/v0.1/list-unpulled-block-versions/invoke`
+api.getSpaceLinkedToBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-space-linked-to-block/invoke`
+api.checkDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/check-dependencies/invoke`
+api.submitForDependenciesReview = `${api.appBlockRegistryOrigin}/api/registry/v0.1/submit-dependency-for-review/invoke`
+api.linkAbVersionBlockVersion = `${api.appBlockRegistryOrigin}/api/registry/v0.1/link-ab-version-to-block-version/invoke`
 
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
