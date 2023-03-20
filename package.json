@@ -65,6 +65,7 @@
     "ora": "5.4.1",
     "parse-link-header": "2.0.0",
     "portfinder": "1.0.28",
+    "pstree.remy": "^1.1.0",
     "run-async": "2.4.1",
     "rxjs": "7.3.0",
     "semver": "7.3.5",

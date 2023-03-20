@@ -7,7 +7,7 @@ async function setupTemplateV2(options) {
   const configPath = path.join(DIRPATH, 'block.config.json')
   const config = await readFile(configPath, { encoding: 'utf8' })
 
-  const templatesPath = path.join(__dirname, '..', '..', 'templates', 'sample-todo-template')
+  const templatesPath = path.join(__dirname, '..', '..', 'templates', 'sample-todo-template-v2')
   const templateCOnfigPath = path.join(templatesPath, '..', 'sample.block.config.json')
   const templateConfig = await readFile(templateCOnfigPath, { encoding: 'utf8' })
 

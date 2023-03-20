@@ -2,8 +2,9 @@
 
 const { capitalize } = require('../../../utils/capitalize')
 
-const generateUiElementJs = (name) => `import React from 'react'
-// import env from 'env'
+const generateUiElementJs = (name) => `
+import React from 'react'
+
 export const ${capitalize(name)} = () => {
   return (
    <p>Hello from ${name} </p>

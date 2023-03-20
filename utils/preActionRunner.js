@@ -121,7 +121,7 @@ const preActionChecks = async (actionCommand) => {
         }
         await ensureUserLogins()
         await checkAndSetGitConnectionPreference()
-        await checkAndSetUserSpacePreference()
+        await checkAndSetUserSpacePreference('init')
         break
 
       case 'create-version':

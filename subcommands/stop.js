@@ -10,6 +10,7 @@ const treeKill = require('tree-kill')
 const { stopEmulator } = require('../utils/emulator-manager')
 const { appConfig } = require('../utils/appconfigStore')
 const { sleep } = require('../utils')
+const { stopEmulatedElements } = require('./start/singleBuild/util')
 
 global.rootDir = process.cwd()
 
@@ -81,15 +82,19 @@ async function stopAllBlock(rootPath) {
     process.exit(1)
   }
 
-  for (const {
-    meta: { name },
-  } of appConfig.uiBlocks) {
-    if (appConfig.isLive(name)) {
-      stopBlock(name)
+  for (const bk of appConfig.uiBlocks) {
+    const bName = bk.meta.name
+    const liveData = appConfig.getLiveDetailsof(bName)
+    if (liveData?.isOn && !liveData.singleBuild) {
+      stopBlock(bName)
     }
   }
 
+  await stopEmulatedElements({ rootPath })
+
   stopEmulator(rootPath)
+  global.assignedPorts = []
+
   // If Killing emulator is successfull, update all function block configs..
   for (const {
     meta: { name },

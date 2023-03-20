@@ -13,12 +13,12 @@ const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
 
-async function checkSpaceLinkedToPackageBlock() {
+async function checkSpaceLinkedToPackageBlock(cmd) {
   // check space is linked with package block
-  await appConfig.init()
+  await appConfig.init(null, null, cmd)
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
     if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
-      await appConfig.init('../', null, null, { reConfig: true })
+      await appConfig.init('../', null, cmd, { reConfig: true })
     }
 
     const { name, blockId } = appConfig.config
@@ -54,12 +54,12 @@ async function checkSpaceLinkedToPackageBlock() {
   return false
 }
 
-async function checkAndSetUserSpacePreference() {
+async function checkAndSetUserSpacePreference(cmd) {
   const currentSpaceName = configstore.get('currentSpaceName')
 
   if (!currentSpaceName) {
     try {
-      const isLinked = await checkSpaceLinkedToPackageBlock()
+      const isLinked = await checkSpaceLinkedToPackageBlock(cmd)
       if (isLinked) return
 
       const res = await listSpaces()
@@ -94,7 +94,7 @@ async function checkAndSetUserSpacePreference() {
     // present space name and hope it works.No need to abort then.
     // If the space is not present in the returned list, prompt for new space selection
     feedback({ type: 'success', message: `Current Space: ${currentSpaceName}` })
-    await checkSpaceLinkedToPackageBlock()
+    await checkSpaceLinkedToPackageBlock(cmd)
   }
 }
 module.exports = checkAndSetUserSpacePreference

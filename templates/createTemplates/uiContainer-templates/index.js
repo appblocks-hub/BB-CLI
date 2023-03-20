@@ -4,18 +4,18 @@ const { generateUiContainerIndexHtml } = require('./generate-indexHtml')
 const { generateUiContainerIndexJs } = require('./generate-indexJs')
 const { generateUiContainerPackageJson } = require('./generate-packageJson')
 const { generateUiContainerReadme } = require('./generate-readme')
-const { generateUiContainerStoreJs } = require('./generate-store')
-const { generateUiContainerSystemJs } = require('./generate-systemJs')
 const { generateUiContainerWebpack } = require('./generate-webpackConfig')
+const { generateUiContainerLayout } = require('./generate-layout')
+const { generateUiContainerAppRoute } = require('./generate-appRoute')
 
 module.exports = {
   generateUiContainerIndexHtml,
   generateUiContainerWebpack,
-  generateUiContainerStoreJs,
   generateUiContainerIndexJs,
   generateUiContainerBootstrapJs,
   generateUiContainerAppJs,
   generateUiContainerPackageJson,
-  generateUiContainerSystemJs,
   generateUiContainerReadme,
+  generateUiContainerLayout,
+  generateUiContainerAppRoute,
 }

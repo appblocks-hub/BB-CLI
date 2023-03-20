@@ -33,12 +33,12 @@ const {
   generateUiContainerIndexHtml,
   generateUiContainerWebpack,
   generateUiContainerIndexJs,
-  generateUiContainerStoreJs,
   generateUiContainerBootstrapJs,
   generateUiContainerAppJs,
   generateUiContainerPackageJson,
-  generateUiContainerSystemJs,
   generateUiContainerReadme,
+  generateUiContainerAppRoute,
+  generateUiContainerLayout,
 } = require('../templates/createTemplates/uiContainer-templates')
 const {
   generateUiElementIndexHtml,
@@ -49,6 +49,7 @@ const {
   generateUiElementPackageJson,
   generateUiElementJs,
   generateUiElementsReadme,
+  generateUiElementFederationExpose,
 } = require('../templates/createTemplates/uiElement-templates')
 const { GitManager } = require('../utils/gitmanager')
 const { configstore } = require('../configstore')
@@ -365,24 +366,27 @@ function createUiContainerFolders(componentpath, componentname) {
   const indexHtmlString = generateUiContainerIndexHtml(componentname)
   const webpackConfigString = generateUiContainerWebpack(componentname)
   const indexJsString = generateUiContainerIndexJs(componentname)
-  const storeJsString = generateUiContainerStoreJs(componentname)
   const bootstrapString = generateUiContainerBootstrapJs(componentname)
   const appJsString = generateUiContainerAppJs(componentname)
   const packageJsonString = generateUiContainerPackageJson(componentname)
-  const systemJsString = generateUiContainerSystemJs(componentname)
   const gitignore = generateGitIgnore()
   const readmeString = generateUiContainerReadme(componentname)
+  const appRouteString = generateUiContainerAppRoute(componentname)
+  const layoutString = generateUiContainerLayout(componentname)
 
   mkdirSync(`${componentpath}/public`)
+  mkdirSync(`${componentpath}/common/routes`, { recursive: true })
+  mkdirSync(`${componentpath}/components/Layout`, { recursive: true })
+  mkdirSync(`${componentpath}/src`)
+
   writeFileSync(`${componentpath}/public/index.html`, indexHtmlString)
 
-  mkdirSync(`${componentpath}/src`)
-  mkdirSync(`${componentpath}/src/components`)
   writeFileSync(`${componentpath}/src/index.js`, indexJsString)
   writeFileSync(`${componentpath}/src/bootstrap.js`, bootstrapString)
   writeFileSync(`${componentpath}/src/App.js`, appJsString)
-  writeFileSync(`${componentpath}/src/System.js`, systemJsString)
-  writeFileSync(`${componentpath}/src/store.js`, storeJsString)
+
+  writeFileSync(`${componentpath}/common/routes/appRoute.js`, appRouteString)
+  writeFileSync(`${componentpath}/components/Layout/index.js`, layoutString)
 
   writeFileSync(`${componentpath}/package.json`, packageJsonString)
   writeFileSync(`${componentpath}/README.md`, readmeString)
@@ -402,21 +406,22 @@ function createUiElementFolders(componentpath, componentname) {
   const uiElementString = generateUiElementJs(componentname)
   const gitignore = generateGitIgnore()
   const readmeString = generateUiElementsReadme(componentname)
+  const fedExposeString = generateUiElementFederationExpose(componentname)
 
   mkdirSync(`${componentpath}/public`)
+
   writeFileSync(`${componentpath}/public/index.html`, indexHtmlString)
 
-  mkdirSync(`${componentpath}/src`)
-  mkdirSync(`${componentpath}/src/components`)
+  mkdirSync(`${componentpath}/src/remote`, { recursive: true })
+
   writeFileSync(`${componentpath}/src/index.js`, indexJsString)
   writeFileSync(`${componentpath}/src/bootstrap.js`, bootstrapString)
   writeFileSync(`${componentpath}/src/App.js`, appJsString)
-  writeFileSync(`${componentpath}/src/${componentname}.js`, uiElementString)
-  // writeFileSync(`${componentpath}/src/System.js`, '')
-  // writeFileSync(`${componentpath}/src/store.js`, '')
+  writeFileSync(`${componentpath}/src/remote/${componentname}.js`, uiElementString)
 
   writeFileSync(`${componentpath}/package.json`, packageJsonString)
   writeFileSync(`${componentpath}/README.md`, readmeString)
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
+  writeFileSync(`${componentpath}/federation-expose.js`, fedExposeString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
 }
