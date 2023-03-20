@@ -95,7 +95,7 @@ const initializePackageBlock = async (appblockName, options) => {
   await Git.commit('initial app commit')
   await Git.setUpstreamAndPush('main')
 
-  appConfig.init(path.resolve(blockFinalName))
+  await appConfig.init(path.resolve(blockFinalName), null, 'init')
 
   // Add packaged block into local registry
   await lrManager.init()

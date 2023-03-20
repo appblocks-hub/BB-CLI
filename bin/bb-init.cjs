@@ -10,7 +10,7 @@
 const { Command } = require('commander')
 const init = require('../subcommands/init')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const { default: checkAndSetUserSpacePreference } = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isInGitRepository, isGitInstalled } = require('../utils/gitCheckUtils')
 
@@ -25,7 +25,7 @@ const program = new Command().hook('preAction', async () => {
   }
   await ensureUserLogins()
   await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference()
+  await checkAndSetUserSpacePreference('init')
 })
 program
   .argument('<appblock-name>', 'Name of app')

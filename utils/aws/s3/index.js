@@ -5,12 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const {
+ const {
   S3Client,
   CreateBucketCommand,
   PutBucketPolicyCommand,
   PutBucketWebsiteCommand,
   PutObjectCommand,
+  PutBucketCorsCommand,
 } = require('@aws-sdk/client-s3')
 const fs = require('fs')
 const path = require('path')
@@ -57,6 +58,24 @@ class S3_Handler {
     return { bucket, policy }
   }
 
+  async putBucketCors(options) {
+    const { bucket } = options
+    const corsRules = [
+      {
+        AllowedHeaders: ['*'],
+        AllowedMethods: ['GET'],
+        AllowedOrigins: ['*'],
+        ExposeHeaders: [],
+      },
+    ]
+    const command = new PutBucketCorsCommand({
+      CORSConfiguration: { CORSRules: corsRules },
+      Bucket: bucket,
+    })
+    await this.S3Client.send(command)
+    return { bucket, corsRules }
+  }
+
   async putBucketWebsite(options) {
     const { bucket } = options
     const { region } = awsHandler.getAWSCredConfig
@@ -83,7 +102,10 @@ class S3_Handler {
     const files = fs.readdirSync(dirPath)
     const uploadedBlocks = []
     const uploads = files.map(async (fileName) => {
-      const filePath = path.join(path.resolve(), dirPath, fileName)
+      const filePath = dirPath.includes(path.resolve())
+        ? path.join(dirPath, fileName)
+        : path.join(path.resolve(), dirPath, fileName)
+
       const ContentType = mime.lookup(fileName) || 'application/x-javascript'
       const Key = prefix ? `${prefix}/${fileName}` : fileName
 

@@ -300,11 +300,12 @@ class AppblockConfigManager {
     this.events.emit('liveChanged')
   }
 
-  set startedBlock({ name, pid, port, log }) {
+  set startedBlock({ name, pid, port, log, singleBuild }) {
     const start = {
       pid,
       port,
       isOn: true,
+      singleBuild: singleBuild || false,
       ...(log && { log }),
     }
     this.liveDetails[name] = { ...this.liveDetails[name], ...start }
@@ -369,6 +370,7 @@ class AppblockConfigManager {
 
       return
     }
+
     // If not global, set live details as well
     try {
       await this.readAppblockConfig()
@@ -379,7 +381,10 @@ class AppblockConfigManager {
         this.isInAppblockContext = true
       }
       // await this.tempSetup()
-      await this.liveConfigSetup()
+
+      if (this.subcmd !== 'init') {
+        await this.liveConfigSetup()
+      }
     } catch (err) {
       console.log(err.message)
       process.exit(1)
@@ -440,7 +445,7 @@ class AppblockConfigManager {
           meta: { name, type },
         } = block
         if (existingLiveConfig[name]) {
-          const { log, pid, port, isJobOn, job_cmd } = existingLiveConfig[name]
+          const { log, pid, port, isJobOn, job_cmd, singleBuild } = existingLiveConfig[name]
 
           const blockRunning = isRunning(pid)
           // console.log(`${name} with ${pid} is running: ${blockRunning}`)
@@ -451,6 +456,7 @@ class AppblockConfigManager {
               err: `./logs/err/${name}.log`,
             },
             isOn: !!blockRunning,
+            singleBuild,
             pid: blockRunning ? pid : null,
             port: port || null,
           }

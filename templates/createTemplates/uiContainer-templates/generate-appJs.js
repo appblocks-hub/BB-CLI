@@ -1,16 +1,29 @@
 /* eslint-disable */
 
 const generateUiContainerAppJs = () => `
-import React, { lazy } from 'react'
-import { Suspense } from 'react'
-import env from 'env'
+import React from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import AppRoute from "../common/routes/appRoute";
 
-function App() {
+const App = () => {
+
+  const handleError = (error, errorInfo) => {
+    // handle error
+    console.log(error, errorInfo)
+  };
+
   return (
-      <h1>Container</h1>
-  )
-}
+    <ErrorBoundary fallback="" onError={handleError}>
+      <div className="App">
+        <React.Suspense fallback="">
+          <AppRoute />
+        </React.Suspense>
+      </div>
+    </ErrorBoundary>
+  );
+};
 
-export default App`
+export default App;
+`
 
 module.exports = { generateUiContainerAppJs }

@@ -4,7 +4,7 @@ const generateUiElementWebpack = (name) => `
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import path from 'path'
 import webpack from 'webpack'
-// import { MFLiveReloadPlugin } from "@module-federation/fmr"
+import exposed from './federation-expose.js'
 
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 
@@ -13,12 +13,21 @@ env.init()
 
 const __dirname = path.resolve()
 
+const port =
+  (process.env.BLOCK_ENV_URL_${name} &&
+    Number(
+      process.env.BLOCK_ENV_URL_${name}.substr(
+        process.env.BLOCK_ENV_URL_${name}.length - 4
+      )
+    )) ||
+  3000;
+
 export default {
   entry: './src/index',
   mode: 'development',
   devServer: {
     static: path.join(__dirname, 'dist'),
-    port: 4008,
+    port,
   },
   externals: {
     env: JSON.stringify(process.env),
@@ -29,28 +38,28 @@ export default {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /.js$/,
         loader: 'babel-loader',
         options: {
           presets: ['@babel/preset-react'],
         },
       },
       {
-        test: /\.css$/i,
+        test: /.css$/i,
         use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\.m?js/,
+        test: /.m?js/,
         type: 'javascript/auto',
       },
       {
-        test: /\.m?js/,
+        test: /.m?js/,
         resolve: {
           fullySpecified: false,
         },
       },
       {
-        test: /\.(jpg|png|svg)$/,
+        test: /.(jpg|png|svg)$/,
         use: {
           loader: "url-loader",
         },
@@ -61,24 +70,56 @@ export default {
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env),
     }), 
-    // new MFLiveReloadPlugin({
-    //   port: 4001, // the port your app runs on
-    //   container: "Container", // the name of your app, must be unique
-    //   // standalone: false, // false uses chrome extention
-    // }),
     new ModuleFederationPlugin({
       name: '${name}',
       filename: 'remoteEntry.js',
-      exposes: {
-        './${name}': './src/${name}',
-      },
+      exposes: exposed,
       shared: {
         react: {
           import: 'react', // the "react" package will be used a provided and fallback module
           shareKey: 'react', // under this name the shared module will be placed in the share scope
           shareScope: 'default', // share scope with this name will be used
           singleton: true, // only a single version of the shared module is allowed
-          version: '^17.0.2',
+          requiredVersion: '^18.2.0',
+        },
+        'react-dom': {
+          import: 'react-dom', // the "react" package will be used a provided and fallback module
+          shareKey: 'react-dom', // under this name the shared module will be placed in the share scope
+          shareScope: 'default', // share scope with this name will be used
+          singleton: true, // only a single version of the shared module is allowed
+          requiredVersion: '^18.2.0',
+        },
+        'react-redux': {
+          import: 'react-redux', // the "react" package will be used a provided and fallback module
+          shareKey: 'react-redux', // under this name the shared module will be placed in the share scope
+          shareScope: 'default', // share scope with this name will be used
+          singleton: true, // only a single version of the shared module is allowed
+          version: '^7.2.5',
+        },
+        'react-router-dom': {
+          import: 'react-router-dom',
+          shareKey: 'react-router-dom',
+          shareScope: 'default',
+          singleton: true,
+          version: '^6.9.0',
+        },
+        '@appblocks/js-sdk': {
+          import: '@appblocks/js-sdk',
+          shareKey: '@appblocks/js-sdk',
+          shareScope: 'default',
+          singleton: true,
+          version: '^0.0.11',
+        },
+        'react-query': {
+          import: 'react-query',
+          shareKey: 'react-query',
+          shareScope: 'default',
+          singleton: true,
+          version: '^3.39.2',
+        },
+        "state-pool": {
+          requiredVersion: "^0.8.1",
+          singleton: true, // only a single version of the shared module is allowed
         },
       },
     }),
@@ -87,6 +128,7 @@ export default {
     }),
   ],
 }
+
 `
 
 module.exports = { generateUiElementWebpack }

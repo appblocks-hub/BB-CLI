@@ -11,12 +11,12 @@ const path = require('path')
 const fs = require('fs')
 const fsPromise = require('fs/promises')
 
-const convertToEnv = (object) => {
+const convertToEnv = (object, existingValue) => {
   return Object.entries(object).reduce((acc, [key, value]) => {
     // eslint-disable-next-line no-param-reassign
     acc += `${key}=${value}\n`
     return acc
-  }, '')
+  }, existingValue || '')
 }
 
 const upsertEnv = async (envPath, envData) => {
@@ -58,10 +58,10 @@ const updateEnv = (type, envData) => {
     let blockType = type
     if (['ui-container', 'ui-elements'].includes(type)) blockType = 'view'
 
-    const envPath = `${path.resolve()}/.env.${blockType}`
+    const envPath = path.join(path.resolve(), `.env.${blockType}`)
     await upsertEnv(envPath, envData)
     resolve()
   })
 }
 
-module.exports = { setupEnv, updateEnv }
+module.exports = { setupEnv, updateEnv, convertToEnv }
