@@ -6,7 +6,7 @@
  */
 
 const { createLogger, transports, config, format } = require('winston')
-const { shieldHTTP, gitHTTP, gitRestHTTP } = require('./axiosInstances')
+const { shieldHTTP, gitGraphHTTP, gitRestHTTP } = require('./axiosInstances')
 const curlirize = require('./curlirize/main')
 
 /**
@@ -56,7 +56,7 @@ class Logger {
   setUpCurlirize() {
     if (process.env?.BB_DEBUG) {
       curlirize(shieldHTTP, this.curlirizeCallback)
-      curlirize(gitHTTP, this.curlirizeCallback)
+      curlirize(gitGraphHTTP, this.curlirizeCallback)
       curlirize(gitRestHTTP, this.curlirizeCallback)
     }
   }
