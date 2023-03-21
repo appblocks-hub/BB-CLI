@@ -9,6 +9,7 @@ const blockTypes = [
   ['package', 1, ''],
   ['ui-container', 2, 'view/container'],
   ['ui-elements', 3, 'view/elements'],
+  ['ui-dep-lib', 8, ''],
   ['function', 4, 'functions'],
   ['data', 5, ''],
   ['shared-fn', 6, 'functions/shared-fns'],

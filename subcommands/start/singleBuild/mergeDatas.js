@@ -17,7 +17,7 @@ const updatePackageVersionIfNeeded = (mergedPackages) => {
 
         updatedDeps[dep] = dependencies[dep]
       } catch (e) {
-        console.log(e.message)
+        // console.log(e.message)
       }
     }
   }
@@ -52,7 +52,7 @@ const mergeFederationExpose = async (fedExData, dir) => {
   return exposedJs
 }
 
-const mergeAllDatas = async (elementBlocks, emEleFolder, env) => {
+const mergeAllDatas = async (elementBlocks, emEleFolder, env, depLib) => {
   const mergedPackages = { dependencies: {}, devDependencies: {} }
   let mergedEnvs = {}
   let mergedFeds = {}
@@ -61,7 +61,7 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env) => {
   await Promise.all(
     elementBlocks.map(async (bk) => {
       const {
-        meta: { name },
+        meta: { name, type },
         directory: dir,
       } = bk
 
@@ -69,15 +69,19 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env) => {
       try {
         const src = path.join(directory, 'src', 'remote')
         if (existsSync(src)) {
-          const dest = path.join(emEleFolder, 'src', dir)
-          await symlink(src, dest)
+          if (type !== 'ui-dep-lib') {
+            const dest = path.join(emEleFolder, 'src', dir)
+            await symlink(src, dest)
+          }
         } else {
           throw new Error(`No src/remote found for block ${name}`)
         }
 
-        const packages = JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
-        mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
-        mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+        if (!depLib) {
+          const packages = JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
+          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
+          mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+        }
 
         const fedExData = await import(path.join(directory, 'federation-expose.js'))
         const processedFeds = await mergeFederationExpose(fedExData, dir)
@@ -86,7 +90,6 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env) => {
         const processedEnvData = await mergeEnvs(path.join(directory, env), name)
         mergedEnvs = { ...mergedEnvs, ...processedEnvData }
       } catch (err) {
-        // console.log(err)
         errorBlocks.push(name)
         console.log(chalk.red(`Error on ${name}: ${err.message}`))
       }
@@ -96,12 +99,32 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env) => {
   return { mergedPackages, mergedEnvs, mergedFeds, errorBlocks }
 }
 
-const mergeDatas = async (elementBlocks, emEleFolder, env = '.env') => {
-  const { mergedPackages, mergedEnvs, mergedFeds, errorBlocks } = await mergeAllDatas(elementBlocks, emEleFolder, env)
+const mergeDatas = async (elementBlocks, emEleFolder, depLib, env = '.env') => {
+  const { mergedPackages, mergedEnvs, mergedFeds, errorBlocks } = await mergeAllDatas(
+    elementBlocks,
+    emEleFolder,
+    env,
+    depLib
+  )
 
-  const dependencies = updatePackageVersionIfNeeded(mergedPackages.dependencies)
-  const devDependencies = updatePackageVersionIfNeeded(mergedPackages.devDependencies)
+  let dependencies
+  let devDependencies
+  let mergedFedExposes = mergedFeds
 
+  if (depLib) {
+    const directory = path.resolve(depLib.directory)
+    const packages = JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
+    dependencies = packages.dependencies
+    devDependencies = packages.devDependencies
+
+    const fedExData = await import(path.join(directory, 'federation-expose.js'))
+    const processedFeds = await mergeFederationExpose(fedExData, depLib.directory)
+    mergedFedExposes = { ...mergedFedExposes, ...processedFeds }
+
+  } else {
+    dependencies = updatePackageVersionIfNeeded(mergedPackages.dependencies)
+    devDependencies = updatePackageVersionIfNeeded(mergedPackages.devDependencies)
+  }
   const packageJson = {
     name: 'emulator',
     type: 'module',
@@ -117,16 +140,14 @@ const mergeDatas = async (elementBlocks, emEleFolder, env = '.env') => {
     dependencies,
     devDependencies,
   }
-
-  writeFileSync(path.join(emEleFolder, 'package.json'), JSON.stringify(packageJson, null, '\t'))
+  writeFileSync(path.join(emEleFolder, 'package.json'), JSON.stringify(packageJson, null, 2))
 
   const processedEnvData = await mergeEnvs(path.resolve('.env.view'))
   const mergedEnvsData = { ...mergedEnvs, ...processedEnvData }
-
   const envData = Object.entries(mergedEnvsData).reduce((acc, [key, val]) => `${acc}${key}=${val}\n`, '')
   writeFileSync(path.join(emEleFolder, '.env'), envData)
 
-  const fedExpoData = `export default ${JSON.stringify(mergedFeds, null, '\t')}`
+  const fedExpoData = `export default ${JSON.stringify(mergedFedExposes, null, 2)}`
   writeFileSync(path.join(emEleFolder, 'federation-expose.js'), fedExpoData)
 
   writeFileSync(path.join(emEleFolder, 'src', 'index.js'), '')

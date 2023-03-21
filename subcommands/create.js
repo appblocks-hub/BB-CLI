@@ -153,6 +153,18 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       logger.info(`Prompted user for a type and got back ${type}`)
     }
 
+    if (type === 8) {
+      const viewBlocks = [...appConfig.uiBlocks]
+      const depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
+      if (depLibBlocks) {
+        console.log(
+          `${chalk.bgRed('ERROR')}: One dependency library block already exist with name ${depLibBlocks.meta.name}`
+        )
+        process.exit(1)
+      }
+      logger.info(`Dependency library block will be added as block dependencies for all element blocks `)
+    }
+
     let jobConfig = {}
     if (type === 7) jobConfig = await getJobConfig()
 
@@ -262,7 +274,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       supportedAppblockVersions,
     }
 
-    if (type === 2 || type === 3) {
+    if (type === 2 || type === 3 || type === 8) {
       blockDetails.language = 'js'
       blockDetails.start = 'npx webpack-dev-server'
       blockDetails.build = 'npx webpack'
@@ -281,10 +293,11 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
     if (returnBeforeCreatingTemplates) return { clonePath, cloneDirName, blockDetails }
 
+    const blockConfigData = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json')))
     // if (!standAloneBlock) {
     appConfig.addBlock({
       directory: path.relative('.', path.resolve(clonePath, cloneDirName)),
-      meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
+      meta: blockConfigData,
     })
     // }
 
@@ -329,6 +342,9 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       } else if (type === 7) {
         // job
         generateJobBlock(entry, blockFinalName)
+      } else if (type === 8) {
+        // job
+        createUiDepLibFolders(entry, blockFinalName)
       }
 
       /**
@@ -346,6 +362,26 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       await Git.commit('initial commit')
       // await Git.push('main')
       await Git.setUpstreamAndPush('main')
+
+      if (type === 8) {
+        // Adding dep-lib as dependency to all ui blocks config
+        const viewBlocks = [...appConfig.uiBlocks]
+        const elementBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
+        elementBlocks.forEach((b) => {
+          const bName = b.meta.name
+          const bDep = b.meta.blockDependencies || []
+          const blockDependencies = [
+            ...bDep,
+            {
+              block_id: blockConfigData.blockId,
+              block_name: blockConfigData.name,
+            },
+          ]
+          appConfig.updateBlock(bName, {
+            blockDependencies,
+          })
+        })
+      }
 
       if (packageName) console.log(chalk.dim(`\ncd ${packageName} and start hacking.\n`))
     } catch (err) {
@@ -424,4 +460,30 @@ function createUiElementFolders(componentpath, componentname) {
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
   writeFileSync(`${componentpath}/federation-expose.js`, fedExposeString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
+}
+
+// ui-dep-lib
+function createUiDepLibFolders(componentpath, componentname) {
+  const indexHtmlString = generateUiElementIndexHtml(componentname)
+  const webpackConfigString = generateUiElementWebpack(componentname)
+  const packageJsonString = generateUiElementPackageJson(componentname)
+  const gitignore = generateGitIgnore()
+  const readmeString = generateUiElementsReadme(componentname)
+
+  mkdirSync(`${componentpath}/public`)
+  mkdirSync(`${componentpath}/src`)
+
+  writeFileSync(`${componentpath}/public/index.html`, indexHtmlString)
+  writeFileSync(`${componentpath}/src/index.js`, '')
+  writeFileSync(`${componentpath}/package.json`, packageJsonString)
+  writeFileSync(`${componentpath}/README.md`, readmeString)
+  writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
+  writeFileSync(`${componentpath}/.gitignore`, gitignore)
+
+  const fedExpose = Object.keys(JSON.parse(packageJsonString).dependencies).reduce((acc, dep) => {
+    acc[`./${dep}`] = dep
+    return acc
+  }, {})
+
+  writeFileSync(`${componentpath}/federation-expose.js`, `export default ${JSON.stringify(fedExpose, null, 2)}`)
 }

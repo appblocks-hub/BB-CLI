@@ -17,8 +17,6 @@ const generateUiContainerPackageJson = (name) => `
       "react-dom": "^18.2.0",
       "react-redux": "^7.2.5",
       "@appblocks/js-sdk": "^0.0.11",
-      "sass": "^1.32.2",
-		  "sass-loader": "^10.1.0",
 		  "react-router-dom": "^6.9.0",
 		  "react-query": "^3.39.2",
 		  "redux": "^4.1.2",
