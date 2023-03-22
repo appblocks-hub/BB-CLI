@@ -166,7 +166,7 @@ function tryStageRestore(dir) {
   } catch (err) {
     // console.log('Something went wrong while tryig to unstage\n', err)
     // throw new Error('git unstage failed in gitStageAllIn')
-    console.log(err.stderr.toString().trim())
+    // console.log(err.stderr.toString().trim())
     if (err.stderr.toString().trim() === 'fatal: could not resolve HEAD') {
       return
     }

@@ -403,6 +403,9 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         if (_2) logger.error('commit-msg hook setup failed')
       }
 
+      await pexec('npm run lint:fix', { cwd: entry })
+      await pexec('npm run format', { cwd: entry })
+
       await Git.newBranch('main')
       await Git.stageAll()
       await Git.commit('chore: initial commit')
