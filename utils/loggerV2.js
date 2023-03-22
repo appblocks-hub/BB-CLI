@@ -6,8 +6,8 @@
  */
 
 const { createLogger, transports, config, format } = require('winston')
-const { shieldHTTP, gitGraphHTTP, gitRestHTTP } = require('./axiosInstances')
 const curlirize = require('./curlirize/main')
+const { axios } = require('./axiosInstances')
 
 /**
  *
@@ -28,15 +28,15 @@ class Logger {
       // write all messages with levels 'debug' to debug.log
       transports: [
         new transports.File({
-          filename: 'error.log',
+          filename: 'cliruntimelogs/error.log',
           level: 'error',
         }),
         new transports.File({
-          filename: 'combined.log',
+          filename: 'cliruntimelogs/combined.log',
           format: format.combine(levelFilter(['warning', 'notice', 'info']), format.json()),
         }),
         new transports.File({
-          filename: 'debug.log',
+          filename: 'cliruntimelogs/debug.log',
           format: format.combine(levelFilter(['debug']), format.json()),
         }),
       ],
@@ -55,9 +55,7 @@ class Logger {
 
   setUpCurlirize() {
     if (process.env?.BB_DEBUG) {
-      curlirize(shieldHTTP, this.curlirizeCallback)
-      curlirize(gitGraphHTTP, this.curlirizeCallback)
-      curlirize(gitRestHTTP, this.curlirizeCallback)
+      curlirize(axios, this.curlirizeCallback)
     }
   }
 }

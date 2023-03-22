@@ -6,9 +6,9 @@
  */
 
 // TODO -- could retry 3 times.
-const axios = require('axios')
 const { appBlockVerifyToken, githubGraphQl, clientId } = require('./api')
-const { gitGraphHTTP } = require('./axiosInstances')
+const { axios } = require('./axiosInstances')
+const { getGitHeader } = require('./getHeaders')
 
 /**
  * @typedef getSignedInGitUserReturnPart
@@ -28,7 +28,7 @@ const { gitGraphHTTP } = require('./axiosInstances')
  * Get the username and id of current signed in user from Github
  * @returns {Promise<getSignedInGitUserReturn>}
  */
-async function getGithubSignedInUser() {
+async function getGithubSignedInUser(TOKEN) {
   const QUERY = `query { 
         viewer { 
           login
@@ -42,7 +42,9 @@ async function getGithubSignedInUser() {
   }
 
   try {
-    const { id, login } = (await gitGraphHTTP.post(githubGraphQl, { QUERY })).data.data
+    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGitHeader(TOKEN) })).data
+      .data.viewer
+
     result.user = {
       userId: id,
       userName: login,
@@ -56,6 +58,7 @@ async function getGithubSignedInUser() {
     if (e.response?.status === 401) {
       result.user = null
       result.error = e.response.statusText
+      return result
     }
     console.log('Something went terribly wrong -- ', e.message)
     process.exitCode = 1
