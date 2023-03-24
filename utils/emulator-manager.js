@@ -43,6 +43,9 @@ async function copyEmulatorCode(PORTS, dependencies) {
   import http from "http";
   import cors from "cors";
   import { readFile } from "fs/promises";
+  import swaggerUi from "swagger-ui-express";
+  import swaggerJSDoc from "swagger-jsdoc";
+  import fs from "fs"
   
   const appHandler = (type) => async (req, res, next) => {
     try {
@@ -90,6 +93,29 @@ async function copyEmulatorCode(PORTS, dependencies) {
   
   for (const [bt, port] of ${JSON.stringify(emulatorDataEntries)}) {
       const app = express();
+      
+      const OpenApiDocfilePath = "../";
+      const apis=[]
+    
+      fs.readdirSync(OpenApiDocfilePath).forEach(file=>{
+        let filePath ="../" + file + "/*.js";
+        apis.push(filePath)
+      })
+          
+      const options = {
+        definition: {
+          openapi: '3.0.0',
+          info: {
+            title: 'Api Doc',
+            version: '1.0.0',
+          },
+        },
+        apis: apis, // files containing annotations as above
+      };
+
+      const openapiSpecification = swaggerJSDoc(options)
+
+      app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification));
       app.use(cors());
       app.all("/*", appHandler(bt));
       const server = http.createServer(app);
