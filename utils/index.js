@@ -9,6 +9,6 @@ const sleep = (ms) =>
 
 const isEmptyObject = (obj) => obj == null || typeof obj !== 'object' || Object.keys(obj).length === 0
 
-const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/
+const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-.]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/
 
 module.exports = { logFail, sleep, isEmptyObject, domainRegex }
