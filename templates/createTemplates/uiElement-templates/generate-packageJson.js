@@ -7,7 +7,18 @@ const generateUiElementPackageJson = (name) => `{
   "license": "ISC", 
   "scripts": {
     "start": "webpack-dev-server",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "prepare": "npx husky install",
+    "test": "npx jest",
+    "lint:fix": "npx eslint *.js --fix",
+    "format": "npx prettier ./**/*{.js,.json} --write",
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint:fix",
+      "npm run format"
+    ]
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -20,6 +31,18 @@ const generateUiElementPackageJson = (name) => `{
     "state-pool": "^0.8.1"
   },
   "devDependencies": {
+    "@types/eslint":"7.28.1",
+    "@types/jest":"27.4.0",
+    "jest":"27.4.3",
+    "eslint":"8.13.0", 
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-import": "2.25.2",
+    "husky":"7.0.0",
+    "lint-staged":"11.2.3",
+    "prettier":"2.4.1",
+    "@commitlint/cli": "15.0.0",
+    "@commitlint/config-conventional": "15.0.0",
     "@babel/core": "7.15.0",
     "@babel/preset-react": "7.14.5",
     "babel-loader": "8.2.2",

@@ -9,6 +9,7 @@
 const path = require('path')
 const { readFileSync, writeFileSync, mkdirSync } = require('fs')
 const chalk = require('chalk')
+const { exec } = require('child_process')
 const checkBlockNameAvailability = require('../utils/checkBlockNameAvailability')
 const createBlock = require('../utils/createBlock')
 const { createFileSync, createDirForType, isDirEmpty } = require('../utils/fileAndFolderHelpers')
@@ -60,6 +61,23 @@ const { getJobConfig, generateJobBlock } = require('../utils/job')
 const initializePackageBlock = require('./init/initializePackageBlock')
 const getRepoUrl = require('../utils/noRepo')
 const { Logger } = require('../utils/loggerV2')
+const { generateFunctionEsLintRc } = require('../templates/createTemplates/function-templates/generate-eslintrc')
+const { generateFunctionPrettierRc } = require('../templates/createTemplates/function-templates/generate-prettierrc')
+const {
+  generateFunctionCommitlintRc,
+} = require('../templates/createTemplates/function-templates/generate-commitlintrc')
+const { generateUiContainerEsLintRc } = require('../templates/createTemplates/uiContainer-templates/generate-eslintrc')
+const {
+  generateUiContainerPrettierRc,
+} = require('../templates/createTemplates/uiContainer-templates/generate-prettierrc')
+const {
+  generateUiContainerCommitlintRc,
+} = require('../templates/createTemplates/uiContainer-templates/generate-commitlintrc')
+const { generateUiElementsEsLintRc } = require('../templates/createTemplates/uiElement-templates/generate-eslintrc')
+const {
+  generateUiElementsCommitlintRc,
+} = require('../templates/createTemplates/uiElement-templates/generate-commitlintrc')
+const { generateUiElementsPrettierRc } = require('../templates/createTemplates/uiElement-templates/generate-prettierrc')
 
 const { logger } = new Logger('create')
 /**
@@ -80,7 +98,6 @@ const { logger } = new Logger('create')
  */
 const create = async (userPassedName, options, _, returnBeforeCreatingTemplates, cwd, skipConfigInit = false) => {
   const { autoRepo } = options
-  logger.log({ level: 'emerg', messgae: 'sdosem' })
   let standAloneBlock = false
   let blockName = userPassedName
   let { type } = options
@@ -333,6 +350,12 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
         writeFileSync(`${entry}/.gitignore`, gitIgnoreString)
         const readmeString = generateFunctionReadme(blockFinalName)
         writeFileSync(`${entry}/README.md`, readmeString)
+        const eslintrcString = generateFunctionEsLintRc()
+        writeFileSync(`${entry}/.eslintrc.json`, eslintrcString)
+        const prettierrcString = generateFunctionPrettierRc()
+        writeFileSync(`${entry}/.prettierrc.json`, prettierrcString)
+        const commitlintrcString = generateFunctionCommitlintRc()
+        writeFileSync(`${entry}/.commitlintrc.json`, commitlintrcString)
       } else if (type === 2) {
         // ui-container
         createUiContainerFolders(entry, blockFinalName)
@@ -357,9 +380,35 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
       Git.cd(entry)
 
+      console.log('Installling dependencies...')
+      // install only necesssary packages for now, to reduce waiting time
+      const { err: npmierr } = await pexec('npm i -D husky @commitlint/cli @commitlint/config-conventional', {
+        cwd: entry,
+      })
+      if (npmierr) {
+        console.log('npm i failed')
+        logger.error(npmierr)
+      }
+      logger.info('npm i done')
+      const { err } = await pexec('npm run prepare', { cwd: entry })
+      if (err) {
+        console.log('Husky setup failed ')
+        logger.error(err)
+      }
+      console.log('Setting up git hooks')
+      if (!err) {
+        const { _1 } = await pexec('npx husky add .husky/pre-commit "npm run pre-commit"', { cwd: entry })
+        if (_1) logger.error('precommit hook set up failed')
+        const { _2 } = await pexec('npx husky add .husky/commit-msg "npx commitlint --edit"', { cwd: entry })
+        if (_2) logger.error('commit-msg hook setup failed')
+      }
+
+      await pexec('npm run lint:fix', { cwd: entry })
+      await pexec('npm run format', { cwd: entry })
+
       await Git.newBranch('main')
       await Git.stageAll()
-      await Git.commit('initial commit')
+      await Git.commit('chore: initial commit')
       // await Git.push('main')
       await Git.setUpstreamAndPush('main')
 
@@ -396,6 +445,17 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
 
 module.exports = create
 
+function pexec(cmd, options) {
+  return new Promise((resolve) => {
+    exec(cmd, options, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ err: error, out: stderr.toString() })
+        return
+      }
+      resolve({ err: null, out: stdout.toString() })
+    })
+  })
+}
 // ui container
 //
 function createUiContainerFolders(componentpath, componentname) {
@@ -409,6 +469,9 @@ function createUiContainerFolders(componentpath, componentname) {
   const readmeString = generateUiContainerReadme(componentname)
   const appRouteString = generateUiContainerAppRoute(componentname)
   const layoutString = generateUiContainerLayout(componentname)
+  const eslintrcString = generateUiContainerEsLintRc()
+  const prettierrcString = generateUiContainerPrettierRc()
+  const commitlintrcString = generateUiContainerCommitlintRc()
 
   mkdirSync(`${componentpath}/public`)
   mkdirSync(`${componentpath}/common/routes`, { recursive: true })
@@ -428,6 +491,9 @@ function createUiContainerFolders(componentpath, componentname) {
   writeFileSync(`${componentpath}/README.md`, readmeString)
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
+  writeFileSync(`${componentpath}/.eslintrc.json`, eslintrcString)
+  writeFileSync(`${componentpath}/.prettierrc.json`, prettierrcString)
+  writeFileSync(`${componentpath}/.commitlintrc.json`, commitlintrcString)
 }
 
 // ui element
@@ -443,6 +509,9 @@ function createUiElementFolders(componentpath, componentname) {
   const gitignore = generateGitIgnore()
   const readmeString = generateUiElementsReadme(componentname)
   const fedExposeString = generateUiElementFederationExpose(componentname)
+  const eslintrcString = generateUiElementsEsLintRc()
+  const commitlintrcString = generateUiElementsCommitlintRc()
+  const prettierrcString = generateUiElementsPrettierRc()
 
   mkdirSync(`${componentpath}/public`)
 
@@ -460,6 +529,9 @@ function createUiElementFolders(componentpath, componentname) {
   writeFileSync(`${componentpath}/webpack.config.js`, webpackConfigString)
   writeFileSync(`${componentpath}/federation-expose.js`, fedExposeString)
   writeFileSync(`${componentpath}/.gitignore`, gitignore)
+  writeFileSync(`${componentpath}/.eslintrc.json`, eslintrcString)
+  writeFileSync(`${componentpath}/.prettierrc.json`, prettierrcString)
+  writeFileSync(`${componentpath}/.commitlintrc.json`, commitlintrcString)
 }
 
 // ui-dep-lib
