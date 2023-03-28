@@ -69,7 +69,6 @@ class AppblockConfigManager {
     this.cwd = '.'
     this.events = new EventEmitter()
     this.lrManager = lrManager
-
     this.isGlobal = false
 
     // this.events.on('write', () => this._write())
@@ -749,6 +748,28 @@ class AppblockConfigManager {
       return []
     }
     return []
+  }
+
+  /**
+   * @async
+   * @type {Iterable<import('./jsDoc/types').blockDetailsdataFromRegistry?>}
+   */
+  blockDetailsdataFromRegistry = {
+    that: this,
+    async *[Symbol.asyncIterator]() {
+      if (this.that.config?.dependencies) {
+        for (const block in this.that.config.dependencies)
+          if (Object.hasOwnProperty.call(this.that.config.dependencies, block)) {
+            try {
+              const res = await getBlockDetails(block)
+              if (res.data.err) throw new Error('Some error at backend')
+              yield res.data.data
+            } catch (err) {
+              yield null
+            }
+          }
+      }
+    },
   }
 
   /**

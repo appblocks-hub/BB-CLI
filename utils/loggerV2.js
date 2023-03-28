@@ -16,6 +16,7 @@ const { axios } = require('./axiosInstances')
  */
 const levelFilter = (levels) => format((info) => (levels.includes(info.level) ? info : false))()
 
+const myFormat = format.printf(({ level, message, label, timestamp }) => `${timestamp} [${label}] ${level}: ${message}`)
 class Logger {
   constructor(service) {
     this.service = service
@@ -37,7 +38,7 @@ class Logger {
         }),
         new transports.File({
           filename: 'cliruntimelogs/debug.log',
-          format: format.combine(levelFilter(['debug']), format.json()),
+          format: format.combine(levelFilter(['debug']), myFormat),
         }),
       ],
     })
@@ -55,7 +56,7 @@ class Logger {
 
   setUpCurlirize() {
     if (process.env?.BB_DEBUG) {
-      curlirize(axios, this.curlirizeCallback)
+      curlirize(axios, this.curlirizeCallback.bind(this))
     }
   }
 }
