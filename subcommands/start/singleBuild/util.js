@@ -60,17 +60,18 @@ const packageInstall = async (emEleFolder, elementBlocks) => {
     let installer = 'npm i'
     if (global.usePnpm) installer = 'pnpm i'
     const i = await runBash(`cd ${emEleFolder} && ${installer}`)
-    if (i.status === 'failed') {
-      throw new Error(i.msg)
-    }
+    if (i.status === 'failed') throw new Error(i.msg)
 
     await Promise.all(
       elementBlocks.map(async (bk) => {
         const dest = path.resolve(bk.directory, 'node_modules')
 
-        if (existsSync(dest)) {
+        try {
           rmSync(dest, { recursive: true, force: true })
+        } catch (e) {
+          // nothing
         }
+
         const src = path.join(emEleFolder, 'node_modules')
         await symlink(src, dest)
       })

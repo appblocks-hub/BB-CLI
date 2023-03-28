@@ -226,7 +226,7 @@ class AppblockConfigManager {
   }
 
   get uiBlocks() {
-    const filter = (block) => ['ui-container', 'ui-elements'].includes(block.meta.type)
+    const filter = (block) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(block.meta.type)
     return this.getDependencies(false, filter)
   }
 

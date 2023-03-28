@@ -22,6 +22,7 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false }) => {
 
     const viewBlocks = [...appConfig.uiBlocks]
     const elementBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
+    const depLib = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
     const containerBlock = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')[0]
 
     if (!elementBlocks?.length) return `No element blocks found`
@@ -36,10 +37,10 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false }) => {
     if (existsSync(emEleFolder)) rmSync(emEleFolder, { recursive: true, force: true })
 
     spinnies.update('singleBuild', { text: `Generating elements emulator` })
-    await generateElementsEmulator(emEleFolder, { emPort: emElPort })
+    await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
     spinnies.update('singleBuild', { text: `Merging elements` })
-    const errorBlocks = await mergeDatas(elementBlocks, emEleFolder)
+    const errorBlocks = await mergeDatas(elementBlocks, emEleFolder, depLib)
 
     spinnies.update('singleBuild', { text: `Installing dependencies for elements emulator` })
     await packageInstall(emEleFolder, elementBlocks)
