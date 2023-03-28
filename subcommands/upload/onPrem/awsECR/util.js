@@ -21,7 +21,7 @@
  
    const fileData = `
   #syntax=docker/dockerfile:1
-  FROM node:${version}-alpine
+  FROM --platform=linux/amd64 node:${version}-alpine
   
   RUN apk --no-cache add git
   

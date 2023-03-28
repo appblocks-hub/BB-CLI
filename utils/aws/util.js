@@ -22,6 +22,7 @@ const readAWSCredConfig = async () => {
   const region = await readInput({
     name: 'region',
     message: 'Enter aws region ',
+    default: 'us-east-1',
     validate: (input) => {
       if (!input || input?.length < 3) return `Invalid input`
       return true
