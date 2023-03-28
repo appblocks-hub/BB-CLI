@@ -82,7 +82,7 @@ api.assignBlockToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/assign-block
 
 // SPACES UI
 api.appBlockSpacesUIOrigin = `https://spaces.appblocks.com`
-api.publishRedirectApi = `${api.appBlockSpacesUIOrigin}`
+api.publishRedirectApi = `${api.appBlockSpacesUIOrigin}/manage-blocks`
 
 const github = {}
 github.githubOrigin = `https://github.com`

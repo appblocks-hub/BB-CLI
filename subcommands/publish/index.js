@@ -113,7 +113,13 @@ const publish = async (blockname) => {
     const { dependencies } = await getDependencies({ blockDetails })
     spinnies.add('p1', { text: `Getting dependency details for version ${version}` })
     // eslint-disable-next-line prefer-const
-    const { depIds } = await getDependencyIds({ languageVersionIds, dependencies, languageVersions })
+    const { depIds } = await getDependencyIds({
+      languageVersionIds,
+      dependencies,
+      languageVersions,
+      noWarn: true,
+      blockName: blockDetails.meta.name,
+    })
     spinnies.remove('p1')
     dependency_ids = depIds
 
@@ -170,8 +176,9 @@ const publish = async (blockname) => {
     await open(`${publishRedirectApi}`)
   } catch (error) {
     Git.undoCheckout()
-    spinnies.add('p1_error', { text: 'Error' })
-    spinnies.fail('p1_error', { text: error.message })
+    spinnies.add('p1', { text: 'Error' })
+    spinnies.fail('p1', { text: error.message })
+    spinnies.stopAll()
     process.exit(1)
   }
 }

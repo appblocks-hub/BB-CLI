@@ -99,7 +99,7 @@ const requestForDepSubmit = async (requestDeps) => {
  * @param {*} options
  */
 const getDependencyIds = async (options) => {
-  const { languageVersionIds, dependencies, languageVersions, noRequest = false, blockName } = options
+  const { languageVersionIds, dependencies, languageVersions, noRequest = false, blockName, noWarn } = options
 
   const { data, error } = await post(checkDependenciesApi, {
     language_version_ids: languageVersionIds,
@@ -119,28 +119,30 @@ const getDependencyIds = async (options) => {
   const noExistingDeps = {}
   const requestDeps = []
 
+
   if (depRes.existing_dependencies?.length) {
-    depIds = depRes.existing_dependencies
+    if (!depIds) depIds = []
     depRes.existing_dependencies.forEach((exLang) => {
       const { name: langVersion, value: langId } =
         languageVersions.find(({ value }) => value === exLang[0].language_version_id) || {}
       dependencies.forEach((dep) => {
+        
         const isExist = exLang.find((d) => dep.name === d.name && dep.version === d.version && dep.type === d.type)
         if (!isExist) {
-          let langversionIds = [langId]
+          let langVersionIds = [langId]
 
           const reqDepIndex = requestDeps.findIndex(
             (d) => dep.name === d.name && dep.version === d.version && dep.type === d.type
           )
 
           if (reqDepIndex > -1) {
-            langversionIds = [...new Set([...requestDeps[reqDepIndex].language_version_ids, ...langversionIds])]
+            langVersionIds = [...new Set([...requestDeps[reqDepIndex].language_version_ids, ...langVersionIds])]
             requestDeps[reqDepIndex] = {
               ...requestDeps[reqDepIndex],
-              language_version_ids: langversionIds,
+              language_version_ids: langVersionIds,
             }
           } else {
-            requestDeps.push({ ...dep, language_version_ids: langversionIds })
+            requestDeps.push({ ...dep, language_version_ids: langVersionIds })
           }
 
           if (!noExistingDeps[langVersion]) noExistingDeps[langVersion] = []
@@ -148,6 +150,8 @@ const getDependencyIds = async (options) => {
             ...dep,
             showVal: `${dep.name}@${dep.version} ${dep.type === 1 ? 'devDependency' : 'dependency'}`,
           })
+        }else{
+          depIds.push(isExist.id)
         }
       })
     })
@@ -165,15 +169,17 @@ const getDependencyIds = async (options) => {
     })
   }
 
-  Object.entries(noExistingDeps).forEach(([lang, deps]) => {
-    console.log(
-      chalk.yellow(
-        `${lang} does not support listed dependencies for ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
+  if (!noWarn) {
+    Object.entries(noExistingDeps).forEach(([lang, deps]) => {
+      console.log(
+        chalk.yellow(
+          `${lang} does not support listed dependencies for ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
+        )
       )
-    )
-  })
+    })
+  }
 
-  if (noRequest) return { isAllDepExist: false, depIds }
+  if (noRequest) return { isAllDepExist: false, depIds: [...new Set(depIds)] }
 
   // const confirm = await confirmationPrompt({
   //   name: 'confirm',
@@ -188,7 +194,7 @@ const getDependencyIds = async (options) => {
   //   console.log(chalk.red(`Version can't be created without dependencies support`))
   // }
 
-  return { requestDeps, depIds, isAllDepExist: false }
+  return { requestDeps, depIds: [...new Set(depIds)], isAllDepExist: false }
 }
 
 module.exports = { getDependencies, addDependencies, getDependencyIds }
