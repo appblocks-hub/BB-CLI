@@ -224,7 +224,6 @@
    const langSupportedAppblockVersions = {}
    const choices = langVersions.data?.reduce((acc, lang) => {
      const blockLang = blockDetails.meta.language === 'js' ? 'nodejs' : blockDetails.meta.language
-     console.log({ l: lang.name, blockLang })
      if (lang.name.includes(blockLang)) {
        langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
        acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })

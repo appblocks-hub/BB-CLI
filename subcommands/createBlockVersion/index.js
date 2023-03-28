@@ -21,26 +21,28 @@ const { updateReadme } = require('../../utils/registryUtils')
 const { getLanguageVersionData } = require('../languageVersion/util')
 const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
 
-const createBlockVersion = async (blockname) => {
+const createBlockVersion = async (blockName) => {
   await appConfig.init(null, null)
 
   if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
     // eslint-disable-next-line no-param-reassign
-    blockname = appConfig.allBlockNames.next().value
+    blockName = appConfig.allBlockNames.next().value
   }
 
-  if (!appConfig.has(blockname)) {
+  console.log({ blockName })
+
+  if (!appConfig.has(blockName)) {
     console.log('Block not found!')
     process.exit(1)
   }
 
-  if (appConfig.isLive(blockname)) {
+  if (appConfig.isLive(blockName)) {
     console.log('Block is live, please stop before operation')
     process.exit(1)
   }
 
   // TODO - Check if there are any .sync files in the block and warn
-  const blockDetails = appConfig.getBlock(blockname)
+  const blockDetails = appConfig.getBlock(blockName)
 
   try {
     const latestVersion = getLatestVersion(blockDetails.directory)
@@ -52,14 +54,14 @@ const createBlockVersion = async (blockname) => {
     }
 
     // ------------------------------------------ //
-    const [readmePath] = ensureReadMeIsPresent(blockDetails.directory, blockname, false)
+    const [readmePath] = ensureReadMeIsPresent(blockDetails.directory, blockName, false)
     if (!readmePath) {
       console.log('Make sure to add a README.md ')
       process.exit(1)
     }
 
     spinnies.add('p1', { text: `Getting blocks details` })
-    const blockId = await appConfig.getBlockId(blockname)
+    const blockId = await appConfig.getBlockId(blockName)
     spinnies.remove('p1')
     spinnies.stopAll()
 
@@ -115,7 +117,7 @@ const createBlockVersion = async (blockname) => {
       const noDep = await readInput({
         type: 'confirm',
         name: 'noDep',
-        message: 'No package dependecies found to link with block. Do you want to continue ?',
+        message: 'No package dependencies found to link with block. Do you want to continue ?',
         default: true,
       })
 
@@ -127,6 +129,7 @@ const createBlockVersion = async (blockname) => {
         dependencies,
         languageVersions,
         noRequest: true,
+        blockName: blockDetails.meta.name
       })
       if (!isAllDepExist) {
         const goAhead = await confirmationPrompt({
@@ -151,7 +154,7 @@ const createBlockVersion = async (blockname) => {
 
     // Update source code to appblock cloud
 
-    spinnies.update('p1', { text: `Registring new version ${version}` })
+    spinnies.update('p1', { text: `Registering new version ${version}` })
 
     const reqBody = {
       block_id: blockId,
@@ -184,7 +187,7 @@ const createBlockVersion = async (blockname) => {
     if (upResp.status !== 200) {
       throw new Error('Something went wrong while updating readme.')
     }
-    spinnies.update('p1', { text: `ReadMe updated succesfully` })
+    spinnies.update('p1', { text: `ReadMe updated successfully` })
 
     spinnies.succeed('p1', { text: `new version created successfully` })
   } catch (error) {
