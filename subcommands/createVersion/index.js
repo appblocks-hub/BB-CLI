@@ -4,15 +4,13 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const open = require('open')
 
 const { spinnies } = require('../../loader')
 const { appConfig } = require('../../utils/appconfigStore')
-const { publishPackageBlock } = require('./publishPackageBlock')
-const publishBlock = require('./publishBlock')
-const { publishRedirectApi } = require('../../utils/api')
+const createBlockVersion = require('./createBlockVersion')
+const { createPackageVersion } = require('./createPackageVersion')
 
-const publish = async (blockName) => {
+const createVersion = async (blockName, args) => {
   await appConfig.init(null, null)
 
   if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
@@ -21,17 +19,13 @@ const publish = async (blockName) => {
   }
 
   try {
-    // Publish package block
-    if (!blockName || appConfig.config.name === blockName) {
-      await publishPackageBlock({ appConfig })
+    if (!blockName || blockName === appConfig.config.name) {
+      await createPackageVersion({ appConfig, args })
     } else {
-      // Publish single block
-      await publishBlock({ appConfig, blockName })
+      await createBlockVersion({ appConfig, blockName })
     }
-
-    spinnies.stopAll()
-    await open(`${publishRedirectApi}`)
   } catch (error) {
+    console.log(error);
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })
     spinnies.stopAll()
@@ -39,4 +33,4 @@ const publish = async (blockName) => {
   }
 }
 
-module.exports = publish
+module.exports = createVersion
