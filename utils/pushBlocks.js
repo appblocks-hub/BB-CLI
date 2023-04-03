@@ -49,9 +49,11 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
           )
 
           console.log('\n')
-          console.log(`${success} blocks pushed successfully,`)
-          console.log(`${failed} blocks failed to push..`)
-          console.log('Check pushlogs for error details')
+          if (success > 0) console.log(`${success} blocks pushed successfully,`)
+          if (failed > 0) {
+            console.log(`${failed} blocks failed to push..`)
+            console.log('Check pushlogs for error details')
+          }
 
           // console.log(pushReport)
           for (const key in pushReport) {
@@ -59,6 +61,7 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
               feedback({ type: pushReport[key]?.type, message: pushReport[key]?.message })
             }
           }
+
           res('Completed push')
         }, 300)
       })
