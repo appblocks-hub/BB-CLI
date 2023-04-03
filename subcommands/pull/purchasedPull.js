@@ -22,7 +22,7 @@ const deployConfigManager = require('../deploy/manager')
 const { isValidBlockName } = require('../../utils/blocknameValidator')
 const { GitManager } = require('../../utils/gitmanager')
 
-const checkIsBlockAppAssinged = async (options) => {
+const checkIsBlockAppAssigned = async (options) => {
   const { metaData, appData: ap } = options
 
   let appData = ap
@@ -38,7 +38,7 @@ const checkIsBlockAppAssinged = async (options) => {
     }
   }
 
-  spinnies.add('bp', { text: 'Checking if block is assinged with app' })
+  spinnies.add('bp', { text: 'Checking if block is assigned with app' })
   const { error: checkErr, data: checkD } = await post(checkBlockAssignedToApp, {
     block_id: metaData.block_id,
     app_id: appData.app_id,
@@ -82,7 +82,7 @@ async function purchasedPull(options) {
     process.exit(1)
   }
 
-  const checkData = await checkIsBlockAppAssinged({ metaData, appData })
+  const checkData = await checkIsBlockAppAssigned({ metaData, appData })
 
   if (!checkData.exist) {
     if (checkData.can_assign) {
@@ -94,7 +94,7 @@ async function purchasedPull(options) {
 
       if (!assignAndContinue) throw new Error('Paid block should be assigned to an app').message
 
-      spinnies.add('bp', { text: 'assinging block with app' })
+      spinnies.add('bp', { text: 'assigning block with app' })
       const { error: assignErr } = await post(assignBlockToApp, {
         block_id: metaData.block_id,
         app_id: appData.app_id,
@@ -152,7 +152,7 @@ async function purchasedPull(options) {
   spinnies.remove('pab')
 
   if (!checkData.in_use) {
-    spinnies.add('pab', { text: 'updating block assinged' })
+    spinnies.add('pab', { text: 'updating block assigned' })
     const { error } = await post(setInUseStatusForBlock, {
       block_id: metaData.block_id,
       app_id: appData.app_id,
@@ -222,4 +222,4 @@ async function purchasedPull(options) {
   }
 }
 
-module.exports = { purchasedPull, checkIsBlockAppAssinged }
+module.exports = { purchasedPull, checkIsBlockAppAssigned }

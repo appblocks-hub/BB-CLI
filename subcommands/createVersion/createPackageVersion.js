@@ -134,6 +134,7 @@ const createPackageVersion = async ({ appConfig, args }) => {
 
   const appConfigData = { ...appConfig.config }
   appConfigData.dependencies = updatedDependencies
+  appConfigData.blockVersion = version
 
   // update gitignore with block_names
   const blockConfigPath = path.join('.', 'block.config.json')
@@ -197,18 +198,18 @@ const createPackageVersion = async ({ appConfig, args }) => {
 
   const versionId = addRes?.data?.id
 
-  spinnies.update('p1', { text: `Uploading readme` })
+  spinnies.update('cBv', { text: `Uploading readme` })
   const res = await uploadReadMe(readmePath, pkBlockId, versionId)
   if (res.status !== 200) {
     throw new Error('Something went wrong while uploading readme.')
   }
 
-  spinnies.update('p1', { text: `Updating readme` })
+  spinnies.update('cBv', { text: `Updating readme` })
   const upResp = await updateReadme(pkBlockId, versionId, res.key)
   if (upResp.status !== 200) {
     throw new Error('Something went wrong while updating readme.')
   }
-  spinnies.update('p1', { text: `ReadMe updated successfully` })
+  spinnies.update('cBv', { text: `ReadMe updated successfully` })
 
   spinnies.succeed('cBv', { text: 'Created package version successfully' })
 

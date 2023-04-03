@@ -69,7 +69,7 @@ const preActionChecks = async (actionCommand) => {
         }
         await ensureUserLogins()
         await checkAndSetGitConnectionPreference()
-        await checkAndSetUserSpacePreference()
+        await checkAndSetUserSpacePreference('pull')
         break
 
       case 'push-config':

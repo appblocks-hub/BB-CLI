@@ -53,7 +53,13 @@ const getSignedSourceCodeUrl = async ({ metaData, appId, spaceId, blockId, varia
 
   if (error) throw error
 
-  return data.data?.download_url
+  const resData = data.data
+
+  if (resData?.member_blocks_url) {
+    return { download_url: resData.download_url, member_blocks_url: resData.member_blocks_url }
+  }
+
+  return resData?.download_url
 }
 
 const pullSourceCodeFromAppblock = async (options) => {
@@ -65,4 +71,4 @@ const pullSourceCodeFromAppblock = async (options) => {
   await downloadSourceCode(signedSourceCodeUrl, blockFolderPath, metaData.block_name)
 }
 
-module.exports = { pullSourceCodeFromAppblock }
+module.exports = { pullSourceCodeFromAppblock, downloadSourceCode, getSignedSourceCodeUrl }

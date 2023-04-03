@@ -10,20 +10,20 @@ const chalk = require('chalk')
 const { mkdirSync, existsSync, rm } = require('fs')
 
 const { spinnies } = require('../../loader')
-const { getBlockPersmissionsApi, trackBlockUpdatePull, listUnpulledBlockBersions } = require('../../utils/api')
+const { getBlockPermissionsApi, trackBlockUpdatePull, listUnPulledBlockVersions } = require('../../utils/api')
 const { getBlockMetaData, getAllBlockVersions } = require('../../utils/registryUtils')
 const { post } = require('../../utils/axios')
 const { feedback } = require('../../utils/cli-feedback')
 const { pullSourceCodeFromAppblock } = require('../pull/sourceCodeUtil')
 const { configstore } = require('../../configstore')
-const { checkIsBlockAppAssinged } = require('../pull/purchasedPull')
+const { checkIsBlockAppAssigned } = require('../pull/purchasedPull')
 const { readInput } = require('../../utils/questionPrompts')
 
 const pullBlockUpdate = async (options) => {
   let blockFolderPath
   try {
     const { blockDetails, cwd, appConfig } = options
-    // get the version id of the latest verion of parent
+    // get the version id of the latest version of parent
     spinnies.add('pbu', { text: 'Getting block meta data ' })
     const c = await getBlockMetaData(blockDetails.id)
     spinnies.remove('pbu')
@@ -32,50 +32,50 @@ const pullBlockUpdate = async (options) => {
     const bmd = c.data.data
 
     spinnies.add('pbu', { text: 'Checking block permission ' })
-    const { data: pData, error: pErr } = await post(getBlockPersmissionsApi, {
+    const { data: pData, error: pErr } = await post(getBlockPermissionsApi, {
       block_id: blockDetails.id,
     })
     spinnies.remove('pbu')
     if (pErr) throw pErr
     const bpd = pData.data
 
-    const blockMetatData = { ...bmd, ...blockDetails, ...bpd }
+    const blockMetaData = { ...bmd, ...blockDetails, ...bpd }
 
     const {
       has_pull_access: hasPullBlockAccess,
-      block_visibility: blockVisiblity,
-      is_purchased_variant: isPurcahsedVariant,
-    } = blockMetatData
+      block_visibility: blockVisibility,
+      is_purchased_variant: isPurchasedVariant,
+    } = blockMetaData
 
-    if (!hasPullBlockAccess && blockVisiblity !== 4) {
-      feedback({ type: 'info', message: `Pull access denied for block ${blockMetatData.block_name}` })
+    if (!hasPullBlockAccess && blockVisibility !== 4) {
+      feedback({ type: 'info', message: `Pull access denied for block ${blockMetaData.block_name}` })
       return
     }
 
-    let pullUpdateBlockId = blockMetatData.id
+    let pullUpdateBlockId = blockMetaData.id
     let appData
     let pullableBlockVersions = []
 
-    if (isPurcahsedVariant) {
+    if (isPurchasedVariant) {
       // purchased block
-      pullUpdateBlockId = blockMetatData.purchased_parent_block_id
+      pullUpdateBlockId = blockMetaData.purchased_parent_block_id
 
       spinnies.add('pbu', { text: 'Getting parent block meta data ' })
-      const parentBlockRes = await getBlockMetaData(blockMetatData.purchased_parent_block_id)
+      const parentBlockRes = await getBlockMetaData(blockMetaData.purchased_parent_block_id)
       spinnies.remove('pbu')
       if (parentBlockRes.data.err) throw new Error(parentBlockRes.data.msg)
       const pbmd = parentBlockRes.data.data
 
-      blockMetatData.parentBlockName = pbmd.block_name
+      blockMetaData.parentBlockName = pbmd.block_name
 
-      const checkData = await checkIsBlockAppAssinged({ metaData: blockMetatData })
+      const checkData = await checkIsBlockAppAssigned({ metaData: blockMetaData })
       if (!checkData.exist) {
         throw new Error(chalk.red(`Block is not assigned with ${checkData.app_name} \n`))
       }
       appData = checkData.appData
 
       spinnies.add('pbu', { text: 'Getting latest block version ' })
-      const { data, error: luErr } = await post(listUnpulledBlockBersions, {
+      const { data, error: luErr } = await post(listUnPulledBlockVersions, {
         app_id: appData.app_id,
         block_id: pullUpdateBlockId,
       })
@@ -121,48 +121,48 @@ const pullBlockUpdate = async (options) => {
       },
       choices: pullableBlockVersions.map((d) => {
         const data = {
-          version_number: isPurcahsedVariant ? d.block_version_number : d.version_number,
-          id: isPurcahsedVariant ? d.block_version_id : d.id,
+          version_number: isPurchasedVariant ? d.block_version_number : d.version_number,
+          id: isPurchasedVariant ? d.block_version_id : d.id,
         }
         return { name: data.version_number, value: data }
       }),
     })
-    blockMetatData.version_id = pullVersion?.id
-    blockMetatData.version_number = pullVersion?.version_number
+    blockMetaData.version_id = pullVersion?.id
+    blockMetaData.version_number = pullVersion?.version_number
 
-    if (!blockMetatData.version_id) {
+    if (!blockMetaData.version_id) {
       throw new Error('Error getting version data')
     }
 
-    const pulledFolderName = isPurcahsedVariant
-      ? `${blockMetatData.parentBlockName}@${blockMetatData.version_number}`
-      : `${blockMetatData.block_name}@${blockMetatData.version_number}`
+    const pulledFolderName = isPurchasedVariant
+      ? `${blockMetaData.parentBlockName}@${blockMetaData.version_number}`
+      : `${blockMetaData.block_name}@${blockMetaData.version_number}`
     const blockUpdatesFolder = '_block_updates'
 
     blockFolderPath = path.resolve(cwd, blockUpdatesFolder, pulledFolderName)
 
     if (!existsSync(blockFolderPath)) mkdirSync(blockFolderPath, { recursive: true })
 
-    const pullOptions = { blockFolderPath, metaData: blockMetatData, blockId: blockMetatData.id }
+    const pullOptions = { blockFolderPath, metaData: blockMetaData, blockId: blockMetaData.id }
 
-    if (isPurcahsedVariant) {
-      pullOptions.blockId = blockMetatData.purchased_parent_block_id
-      pullOptions.variantBlockId = blockMetatData.id
+    if (isPurchasedVariant) {
+      pullOptions.blockId = blockMetaData.purchased_parent_block_id
+      pullOptions.variantBlockId = blockMetaData.id
       pullOptions.appId = appData.app_id
       pullOptions.spaceId = configstore.get('currentSpaceId')
     }
 
-    spinnies.add('pbu', { text: `Pulling block source code for version ${blockMetatData.version_number}` })
+    spinnies.add('pbu', { text: `Pulling block source code for version ${blockMetaData.version_number}` })
     await pullSourceCodeFromAppblock(pullOptions)
     spinnies.succeed('pbu', {
       text: `Block update pulled successfully to ${blockUpdatesFolder}/${pulledFolderName} folder`,
     })
 
-    if (isPurcahsedVariant) {
+    if (isPurchasedVariant) {
       // update
       const { error } = await post(trackBlockUpdatePull, {
-        block_id: blockMetatData.purchased_parent_block_id,
-        block_version_id: blockMetatData.version_id,
+        block_id: blockMetaData.purchased_parent_block_id,
+        block_version_id: blockMetaData.version_id,
         app_id: pullOptions.appId,
       })
 

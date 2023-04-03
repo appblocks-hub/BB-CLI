@@ -11,7 +11,7 @@ const path = require('path')
 const { existsSync, readFileSync } = require('fs')
 const { transports } = require('winston')
 const { appConfig } = require('../../utils/appconfigStore')
-const pullAppblock = require('../../utils/pullAppblock')
+const { pullPackage } = require('./pullPackage')
 const { spinnies } = require('../../loader')
 const { getBlockDetails, getBlockMetaData } = require('../../utils/registryUtils')
 const { feedback } = require('../../utils/cli-feedback')
@@ -20,6 +20,8 @@ const { logger } = require('../../utils/logger')
 const { confirmationPrompt } = require('../../utils/questionPrompts')
 
 const pull = async (pullBlockData, options, { cwd = '.' }) => {
+  logger.add(new transports.File({ filename: `./pull.log` }))
+
   const cwdValue = pullBlockData ? cwd : '../'
 
   await appConfig.init(cwdValue, null, 'pull', { reConfig: true })
@@ -41,7 +43,6 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
       if (!existsSync(appConfig.blockConfigName)) {
         throw new Error('Block name or Block config not found')
       }
-
       const config = JSON.parse(readFileSync(appConfig.blockConfigName))
       if (!config.blockId) throw new Error('Block ID not found in block config')
 
@@ -108,7 +109,7 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
         return
       }
       if (err) {
-        logger.error(`Error from regsitry: ${msg}`)
+        logger.error(`Error from registry: ${msg}`)
         throw new Error(msg).message
       }
       metaData = { ...metaData, ...blockDetails }
@@ -144,12 +145,9 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
     }
 
     if (metaData.block_type === 1) {
-      logger.info('calling pullAppblock')
-      const res = await pullAppblock(componentName)
-      process.exit(res ? 0 : 1)
-    }
-
-    if (metaData.block_type !== 1 && appConfig.isInAppblockContext) {
+      logger.info('calling pullPackage')
+      await pullPackage({ metaData, componentName, args: options, componentVersion })
+    } else if (metaData.block_type !== 1 && appConfig.isInAppblockContext) {
       logger.info('calling pullBlock')
       await pullBlock(metaData, appConfig, cwdValue, componentName, {
         args: options,
@@ -159,6 +157,7 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
 
     process.exit()
   } catch (err) {
+    console.log(err);
     // console.log('Something went wrong while getting block details..')
     spinnies.add('blockExistsCheck')
 
