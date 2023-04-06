@@ -152,6 +152,7 @@ async function init() {
   program
     .command('create-version')
     .argument('[block-name]', 'Name of block to create-version')
+    .option('--latest', 'Select the latest version of member blocks on package version create')
     .description(desc['create-version'])
     .action(createVersion)
 

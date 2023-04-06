@@ -1,6 +1,6 @@
 const path = require('path')
 const chalk = require('chalk')
-const { writeFileSync, readFileSync } = require('fs')
+const { writeFileSync, readFileSync, existsSync } = require('fs')
 const semver = require('semver')
 const { configstore } = require('../../configstore')
 const { spinnies } = require('../../loader')
@@ -155,7 +155,7 @@ const createPackageVersion = async ({ appConfig, args }) => {
   ]
 
   const gitignorePath = path.join('.', '.gitignore')
-  const gitignoreData = readFileSync(gitignorePath).toString()
+  const gitignoreData = existsSync(gitignorePath) ? readFileSync(gitignorePath).toString() : ''
 
   const ignoreDependencies = Object.values(appConfigData.dependencies).map((v) => `${v.directory}/`)
   const newGitIgnore = ignoresApCreated.concat(ignoreDependencies).reduce((acc, ig) => {

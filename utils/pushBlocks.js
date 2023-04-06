@@ -16,7 +16,7 @@ const { multibar } = require('./multibar')
  * @param {String} commitMessage Commit message to use while committing
  * @param {Array} blocksToPush Array with block meta data
  */
-function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
+function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush, nologs) {
   return new Promise((res, rej) => {
     try {
       const pushReport = {}
@@ -26,7 +26,7 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
       const promises = []
       blocksToPush.forEach((v) => {
         promises.push(
-          new BlockPusher(v, multibar).push({
+          new BlockPusher(v, multibar, nologs).push({
             gitUserEmail,
             gitUserName,
             commitMessage,
@@ -48,17 +48,19 @@ function pushBlocks(gitUserName, gitUserEmail, commitMessage, blocksToPush) {
             { success: 0, failed: 0 }
           )
 
-          console.log('\n')
-          if (success > 0) console.log(`${success} blocks pushed successfully,`)
-          if (failed > 0) {
-            console.log(`${failed} blocks failed to push..`)
-            console.log('Check pushlogs for error details')
-          }
+          if (!nologs) {
+            console.log('\n')
+            if (success > 0) console.log(`${success} blocks pushed successfully,`)
+            if (failed > 0) {
+              console.log(`${failed} blocks failed to push..`)
+              console.log('Check pushlogs for error details')
+            }
 
-          // console.log(pushReport)
-          for (const key in pushReport) {
-            if (Object.hasOwnProperty.call(pushReport, key)) {
-              feedback({ type: pushReport[key]?.type, message: pushReport[key]?.message })
+            // console.log(pushReport)
+            for (const key in pushReport) {
+              if (Object.hasOwnProperty.call(pushReport, key)) {
+                feedback({ type: pushReport[key]?.type, message: pushReport[key]?.message })
+              }
             }
           }
 
