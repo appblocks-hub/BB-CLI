@@ -195,9 +195,10 @@ class StartCore {
     for (const { blocks } of this.blockGroups) {
       blocks.forEach((v) => v.key.abort())
     }
-    for (const { blocks } of this.blockGroups) {
-      blocks.forEach((v) => v.key.abort())
-    }
+    // for (const { blocks } of this.blockGroups) {
+    //   blocks.forEach((v) => v.key.abort())
+    // }
+    process.exitCode = 0
   }
 }
 

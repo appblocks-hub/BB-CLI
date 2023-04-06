@@ -1,16 +1,20 @@
 const { spawn } = require('child_process')
-const { openSync } = require('fs')
+const { openSync, existsSync } = require('fs')
 const { mkdir, writeFile } = require('fs/promises')
 const path = require('path')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
 const { checkPnpm } = require('../../../../utils/pnpmUtils')
+const { updateEnv } = require('../../../../utils/env')
+const envToObj = require('../../envToObj')
 
 class BuildNodeFnEmulator {
   constructor() {
     this.fnBlocks = []
     this.blocksData = {}
+    this.depsInstallReport = []
     this.port = 0
+    this.pid = 0
   }
 
   // experimentalEMCODE = `
@@ -136,81 +140,126 @@ class BuildNodeFnEmulator {
     return res
   }
 
+  /**
+   *
+   * @param {} StartCore
+   */
   apply(StartCore) {
-    StartCore.hooks.buildFnEmulator.tapPromise('BuildNodeFnEmulator', async (core, config) => {
-      const emPath = path.join(config.cwd, '._ab_em_')
-
-      spinnies.add('emBuild', { text: 'building fn emulator' })
-      /**
-       * Filter node fn blocks
-       */
-      for (const { type, blocks } of core.blockGroups) {
-        if (type !== 'function') continue
-        this.fnBlocks = blocks.filter((b) => b.meta.language === 'nodejs')
-      }
-      this.fnBlocks.forEach((_v) => {
-        this.blocksData[_v.meta.name] = { type: _v.meta.type, dir: _v.directory }
-      })
-      /**
-       * Get port
-       */
-      this.port = this.fnBlocks[0].availablePort
-
-      const _emFolderGen = await this.generateEmFolder(emPath)
-      if (_emFolderGen.err) {
-        spinnies.fail('emBuild', { text: 'emulator build failed' })
-        process.exit(1)
-      }
-      const cmd = checkPnpm() ? 'pnpm i' : 'npm i'
-      spinnies.succeed('emBuild', { text: 'emulator built' })
-      spinnies.add('npm', { text: 'installing packages' })
-      const res = await pexec(cmd, { cwd: emPath })
-      if (res.err) {
-        spinnies.fail('npm', { text: 'installing package failed' })
-        process.exit(1)
-      }
-      spinnies.succeed('npm', { text: 'installing completed' })
-      spinnies.add('startEm', { text: 'Starting emulator' })
-      try {
+    StartCore.hooks.buildFnEmulator.tapPromise(
+      'BuildNodeFnEmulator',
+      async (/** @type {StartCore} */ core, /** @type {AppblockConfigManager} */ config) => {
+        const emPath = path.join(config.cwd, '._ab_em_')
+        const cmd = checkPnpm() ? 'pnpm i' : 'npm i'
         const logOutPath = path.join(config.cwd, './logs/out/functions.log')
         const logErrPath = path.resolve(config.cwd, './logs/err/functions.log')
-        await mkdir(path.join(config.cwd, './logs', 'err'), { recursive: true })
-        await mkdir(path.join(config.cwd, './logs', 'out'), { recursive: true })
 
+        spinnies.add('emBuild', { text: 'building fn emulator' })
         /**
-         * Release port before server start
+         * Filter node fn blocks
          */
-        this.fnBlocks[0].key.abort()
-
-        const child = spawn('node', ['index.js'], {
-          cwd: emPath,
-          detached: true,
-          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-          env: { ...process.env, parentPath: config.cwd },
+        for (const { type, blocks } of core.blockGroups) {
+          if (type !== 'function') continue
+          this.fnBlocks = blocks.filter((b) => b.meta.language === 'nodejs')
+        }
+        this.fnBlocks.forEach((_v) => {
+          this.blocksData[_v.meta.name] = { type: _v.meta.type, dir: _v.directory }
         })
-        child.unref()
+        /**
+         * Get port
+         */
+        this.port = this.fnBlocks[0].availablePort
 
-        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
-        spinnies.succeed('startEm', { text: `Emulator started at ${this.port}` })
-      } catch (err) {
-        spinnies.fail('startEm', { text: 'Failed to start emulator' })
-      }
-      spinnies.add('fnDepIns', { text: 'Installing dependencies in fn blocks' })
-      const parray = []
-      this.fnBlocks.forEach((_v) => {
-        parray.push(pexec(cmd, { cwd: _v.directory }))
-      })
-
-      const _r = await Promise.allSettled(parray)
-      spinnies.succeed('fnDepIns', { text: 'installed deps' })
-      _r.forEach((_v, i) => {
-        if (!_v.value.err) {
+        const _emFolderGen = await this.generateEmFolder(emPath)
+        if (_emFolderGen.err) {
+          spinnies.fail('emBuild', { text: 'emulator build failed' })
           return
         }
-        // console.log(`✓ installed deps in ${this.fnBlocks[i].meta.name}`)
-        console.log(`✗ error installing deps in ${this.fnBlocks[i].meta.name}`)
-      })
-    })
+        spinnies.succeed('emBuild', { text: 'emulator built' })
+        spinnies.add('npm', { text: 'installing packages' })
+        const res = await pexec(cmd, { cwd: emPath })
+        if (res.err) {
+          spinnies.fail('npm', { text: 'installing package failed' })
+          process.exit(1)
+        }
+        spinnies.succeed('npm', { text: 'installing completed' })
+        spinnies.add('startEm', { text: 'Starting emulator' })
+        try {
+          await mkdir(path.join(config.cwd, './logs', 'err'), { recursive: true })
+          await mkdir(path.join(config.cwd, './logs', 'out'), { recursive: true })
+
+          /**
+           * Release port before server start
+           */
+          this.fnBlocks[0].key.abort()
+          const child = spawn('node', ['index.js'], {
+            cwd: emPath,
+            detached: true,
+            stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+            env: { ...process.env, parentPath: config.cwd },
+          })
+          child.unref()
+          this.pid = child.pid
+          await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
+          spinnies.succeed('startEm', { text: `Emulator started at ${this.port}` })
+        } catch (err) {
+          spinnies.fail('startEm', { text: 'Failed to start emulator' })
+          return
+        }
+
+        spinnies.add('fnDepIns', { text: 'Installing dependencies in fn blocks' })
+        const parray = []
+        this.fnBlocks.forEach((_v) => {
+          parray.push(pexec(cmd, { cwd: _v.directory }, _v))
+        })
+
+        /**
+         * @type {PromiseFulfilledResult<{err:boolean,data:object}>}
+         */
+        this.depsInstallReport = await Promise.allSettled(parray)
+        spinnies.succeed('fnDepIns', { text: 'installed deps' })
+        const tsBlocks = []
+        for (const _v of this.depsInstallReport) {
+          if (!_v.value.err) {
+            /**
+             * If dependencies were properly installed,
+             * Load the env's from block to global function.env
+             */
+            const _ = await envToObj(path.resolve(_v.value.data.directory, '.env'))
+            await updateEnv('function', _)
+
+            if (existsSync(path.join(path.resolve(_v.value.data.directory), 'index.ts'))) {
+              tsBlocks.push(path.resolve(_v.value.data.directory))
+            }
+
+            // eslint-disable-next-line no-param-reassign
+            config.startedBlock = {
+              name: _v.value.data.meta.name,
+              pid: this.pid || null,
+              isOn: true,
+              port: this.port || null,
+              log: {
+                out: logOutPath,
+                err: logErrPath,
+              },
+            }
+            continue
+          }
+          // console.log(`✓ installed deps in ${this.fnBlocks[i].meta.name}`)
+          console.log(`✗ error installing deps in ${_v.value.data.meta.name}`)
+        }
+        /**
+         * TODO: write a proper plugin for typescript
+         */
+        const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
+          detached: true,
+          cwd: path.join(__dirname),
+          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+        })
+        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
+
+        watcher.unref()
+      }
+    )
   }
 }
 
