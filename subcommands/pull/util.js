@@ -28,9 +28,9 @@ const { checkPnpm } = require('../../utils/pnpmUtils')
 // eslint-disable-next-line no-unused-vars
 const { AppblockConfigManager } = require('../../utils/appconfig-manager')
 const { pullSourceCodeFromAppblock } = require('./sourceCodeUtil')
-const { purchasedPull, checkIsBlockAppAssinged } = require('./purchasedPull')
+const { purchasedPull, checkIsBlockAppAssigned } = require('./purchasedPull')
 const { post } = require('../../utils/axios')
-const { getBlockPersmissionsApi } = require('../../utils/api')
+const { getBlockPermissionsApi } = require('../../utils/api')
 const { getAllAppblockVersions } = require('../publish/util')
 
 const handleOutOfContextCreation = async () => {
@@ -63,7 +63,7 @@ const handleOutOfContextCreation = async () => {
 }
 
 const updateBlockConfig = async (options) => {
-  const { blockConfigPath, metaData, createCustomVersion } = options
+  const { blockConfigPath, metaData, createCustomVariant } = options
   // -------------------------------------------------
   // -------------BELOW CODE IS REPEATED--------------
   // -------------------------------------------------
@@ -90,7 +90,7 @@ const updateBlockConfig = async (options) => {
     }
   }
 
-  if (createCustomVersion) {
+  if (createCustomVariant) {
     if (metaData.purchased_parent_block_id) {
       spinnies.add('pbu', { text: 'Getting parent block meta data ' })
       const parentBlockRes = await getBlockMetaData(metaData.purchased_parent_block_id)
@@ -156,7 +156,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
 
   try {
     if (!metaData.block_id) {
-      // get the version id of the latest verion of parent
+      // get the version id of the latest version of parent
       const c = await getBlockMetaData(metaData.id)
       if (c.data.err) {
         throw new Error(c.data.msg)
@@ -180,7 +180,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
     }
 
     spinnies.add('pab', { text: 'checking block permission ' })
-    const { data: pData, error: pErr } = await post(getBlockPersmissionsApi, {
+    const { data: pData, error: pErr } = await post(getBlockPermissionsApi, {
       block_id: metaData.block_id,
     })
 
@@ -195,7 +195,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       has_access: hasBlockAccess,
       has_pull_access: hasPullBlockAccess,
       block_visibility: blockVisibility,
-      is_purchased_variant: isPurcahsedVariant,
+      is_purchased_variant: isPurchasedVariant,
     } = metaData
 
     if (!hasPullBlockAccess && [1, 2, 3].includes(blockVisibility)) {
@@ -205,7 +205,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
 
     let statusFilter = hasBlockAccess ? undefined : [4]
     let versionOf = metaData.block_id
-    if (isPurcahsedVariant && blockVisibility === 5) {
+    if (isPurchasedVariant && blockVisibility === 5) {
       statusFilter = [4] // approved versions
       versionOf = metaData.purchased_parent_block_id
     }
@@ -290,27 +290,27 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
 
     const { addVariant, variant, variantType } = args
 
-    let createCustomVersion
-    if (isPurcahsedVariant && blockVisibility !== 5) {
+    let createCustomVariant
+    if (isPurchasedVariant && blockVisibility !== 5) {
       // FOR NOW: No variant allowed for purchased variant
-      createCustomVersion = false
-    } else if (addVariant === true || (isPurcahsedVariant && blockVisibility === 5)) {
-      createCustomVersion = true
-    } else if (variant === false) createCustomVersion = false
+      createCustomVariant = false
+    } else if (addVariant === true || (isPurchasedVariant && blockVisibility === 5)) {
+      createCustomVariant = true
+    } else if (variant === false) createCustomVariant = false
     else {
-      createCustomVersion = await wantToCreateNewVersion(metaData.block_name)
+      createCustomVariant = await wantToCreateNewVersion(metaData.block_name)
     }
 
-    if (pullWithoutVersion && createCustomVersion) {
+    if (pullWithoutVersion && createCustomVariant) {
       throw new Error(`Variant can't be created under block without version`)
     }
 
-    if (createCustomVersion) {
+    if (createCustomVariant) {
       let clonePath
       let cloneDirName
       let blockFinalName
 
-      if (isPurcahsedVariant && blockVisibility === 5) {
+      if (isPurchasedVariant && blockVisibility === 5) {
         const {
           cloneDirName: cDN,
           clonePath: cP,
@@ -443,10 +443,10 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       const blockFolderPath = path.resolve(clonePath, localDirName)
 
       if (hasPullBlockAccess) {
-        if (isPurcahsedVariant) {
-          const checkData = await checkIsBlockAppAssinged({ metaData })
+        if (isPurchasedVariant) {
+          const checkData = await checkIsBlockAppAssigned({ metaData })
           if (!checkData.exist) {
-            feedback({ type: 'error', message: `Block is not assinged with ${checkData.appName} app` })
+            feedback({ type: 'error', message: `Block is not assigned with ${checkData.appName} app` })
             return
           }
         }
@@ -483,7 +483,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       // -------------------------------------------------
       const blockConfigPath = path.resolve(blockFolderPath, 'block.config.json')
 
-      await updateBlockConfig({ blockConfigPath, metaData, createCustomVersion })
+      await updateBlockConfig({ blockConfigPath, metaData, createCustomVariant })
 
       appConfig.addBlock({
         directory: path.relative(cwd, path.resolve(clonePath, localDirName)),

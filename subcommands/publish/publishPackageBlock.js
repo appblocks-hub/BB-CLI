@@ -120,6 +120,7 @@ const publishPackageBlock = async ({ appConfig }) => {
 
   const reqBody = {
     block_id: pkBlockId,
+    source_code_key: preSignedData.data.key,
     block_version_id: versionData.id,
     appblock_versions: supportedAppblockVersions,
     language_version_ids: languageVersionIds,

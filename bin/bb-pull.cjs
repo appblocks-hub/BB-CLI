@@ -23,7 +23,7 @@ const program = new Command().hook('preAction', async () => {
   }
   await ensureUserLogins()
   await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference()
+  await checkAndSetUserSpacePreference('pull')
 })
 
 program

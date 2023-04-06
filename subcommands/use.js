@@ -41,7 +41,7 @@ const promptAndSetSpace = async (Data) => {
  */
 const use = async (space_name) => {
   // check space is linked with block
-  await appConfig.init()
+  await appConfig.init(null, null, 'use')
   const currentSpaceName = configstore.get('currentSpaceName')
 
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {

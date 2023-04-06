@@ -4,18 +4,22 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const clientId = 'console-appblocks-1842'
+const envConfig = require('../envConfig')
+
+const { BLOCK_REG_BASE_URL, SHIELD_BASE_URL, APP_REG_BASE_URL, SPACES_API_BASE_URL, SPACES_BASE_URL, CLIENT_ID } =
+  envConfig
+
+const clientId = CLIENT_ID
 
 const api = {}
-// api.appBlockOrigin = `http://shield.appblock.io`
-api.appBlockOrigin = `https://shield.appblocks.com`
+api.appBlockOrigin = SHIELD_BASE_URL
 api.appBlockLogin = `${api.appBlockOrigin}/login`
 api.appBlockLogout = `${api.appBlockOrigin}/logout`
 api.appBlockAccessToken = `${api.appBlockOrigin}/auth/device/get-token`
 api.appBlockVerifyToken = `${api.appBlockOrigin}/device/verify-token`
 
 // BLOCKS-REGISTRY
-api.appBlockRegistryOrigin = `https://api-blocks-registry.appblocks.com`
+api.appBlockRegistryOrigin = BLOCK_REG_BASE_URL
 api.appBlockCheckBlockNameAvailability = `${api.appBlockRegistryOrigin}/api/registry/v0.1/check-block-name-availabilty/invoke`
 api.appBlockRegister = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/register-block/invoke`
 api.appBlockEditBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.0.1/edit-block/invoke`
@@ -47,16 +51,16 @@ api.listDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.
 api.addDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-dependencies/invoke`
 api.publishBlockApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/publish-block/invoke`
 api.updateBlockApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/update-block/invoke`
-api.getBlockPersmissionsApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-permissions/invoke`
+api.getBlockPermissionsApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-permissions/invoke`
 api.trackBlockUpdatePull = `${api.appBlockRegistryOrigin}/api/registry/v0.1/track-block-updates-pull/invoke`
-api.listUnpulledBlockBersions = `${api.appBlockRegistryOrigin}/api/registry/v0.1/list-unpulled-block-versions/invoke`
+api.listUnPulledBlockVersions = `${api.appBlockRegistryOrigin}/api/registry/v0.1/list-unpulled-block-versions/invoke`
 api.getSpaceLinkedToBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-space-linked-to-block/invoke`
 api.checkDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/check-dependencies/invoke`
 api.submitForDependenciesReview = `${api.appBlockRegistryOrigin}/api/registry/v0.1/submit-dependency-for-review/invoke`
 api.linkAbVersionBlockVersion = `${api.appBlockRegistryOrigin}/api/registry/v0.1/link-ab-version-to-block-version/invoke`
 
 // APP-REGISTRY
-api.appBlockAppRegistryOrigin = `https://api-app-registry.appblocks.com`
+api.appBlockAppRegistryOrigin = APP_REG_BASE_URL
 api.appRegistryCreateApp = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-app/invoke`
 api.appRegistryCheckDomainName = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-domain-name/invoke`
 api.appRegistryCreateEnv = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-hosting-environment/invoke`
@@ -75,14 +79,14 @@ api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/
 api.appRegistryCopyObject = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/copy-s3-object/invoke`
 
 // SPACES
-api.appBlockSpacesOrigin = `https://api-spaces.appblocks.com`
+api.appBlockSpacesOrigin = SPACES_API_BASE_URL
 api.appBlockListSpaces = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/list-spaces/invoke`
 api.setInUseStatusForBlock = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/set-inuse-block-in-app/invoke`
 api.checkBlockAssignedToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/check-assigned-block-to-app/invoke`
 api.assignBlockToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/assign-block-to-app/invoke`
 
 // SPACES UI
-api.appBlockSpacesUIOrigin = `https://spaces.appblocks.com`
+api.appBlockSpacesUIOrigin = SPACES_BASE_URL
 api.publishRedirectApi = `${api.appBlockSpacesUIOrigin}/manage-blocks`
 
 const github = {}
