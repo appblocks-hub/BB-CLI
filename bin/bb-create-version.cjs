@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const createBlockVersion = require('../subcommands/createBlockVersion')
+const createVersion = require('../subcommands/createVersion')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
@@ -19,6 +19,9 @@ const program = new Command().hook('preAction', async () => {
   await checkAndSetUserSpacePreference()
 })
 
-program.argument('[block-name]', 'Name of block to create-version').action(createBlockVersion)
+program
+  .argument('[block-name]', 'Name of block to create-version')
+  .option('--latest', 'Select the latest version of member blocks on package version create')
+  .action(createVersion)
 
 program.parse(process.argv)

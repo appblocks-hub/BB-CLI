@@ -25,6 +25,7 @@ api.appBlockRemoveBlockMapping = `${api.appBlockRegistryOrigin}/api/registry/v0.
 api.appBlockGetBlockDetails = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-details/invoke`
 api.appBlockGetBlockMetadata = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/get-block-metadata/invoke`
 api.appBlockGetAllBlockVersions = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/get-all-block-version/invoke`
+api.getAllBlocksVersions = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/get-all-blocks-version/invoke`
 api.appBlockGetPresignedUrlForReadMe = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-readme-signed-url/invoke`
 api.appBlockUpdateReadme = `${api.appBlockRegistryOrigin}/api/registry/v0.1/update-readme/invoke`
 api.appBlockAddVersion = `${api.appBlockRegistryOrigin}/api/registry/v0.1/add-block-version/invoke`
