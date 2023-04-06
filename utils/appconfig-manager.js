@@ -381,7 +381,7 @@ class AppblockConfigManager {
       }
       // await this.tempSetup()
 
-      if (this.subcmd !== 'init') {
+      if (!['init', 'pull', 'use'].includes(this.subcmd)) {
         await this.liveConfigSetup()
       }
     } catch (err) {

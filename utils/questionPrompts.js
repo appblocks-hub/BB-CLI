@@ -243,6 +243,7 @@ function wantToCreateNewVersion(name) {
       type: 'confirm',
       name: 'createNewBlockFrom',
       message: `Do you wish to create a new block from ${name}?`,
+      default: false,
     })
     .then((ans) => ans.createNewBlockFrom)
 }
