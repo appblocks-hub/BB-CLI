@@ -9,7 +9,9 @@
   "extends": ["airbnb-base", "prettier"],
   "rules": {
     "no-underscore-dangle": "off",
+    "no-unused-vars":["error",{"varsIgnorePattern":"^_"}],
     "no-console": "off",
+    "no-continue":"warn",
     "camelcase": "off",
     "no-await-in-loop": 0,
     "no-restricted-syntax": 0,

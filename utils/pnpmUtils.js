@@ -7,6 +7,10 @@
 
 const { execSync } = require('child_process')
 
+/**
+ * Checks if pnpm is executable
+ * @returns {boolean}
+ */
 const checkPnpm = () => {
   try {
     execSync('pnpm -v', { stdio: 'ignore' })

@@ -328,6 +328,58 @@ class AppblockConfigManager {
     }
   }
 
+  async initV2(cwd, configName, subcmd, options = { reConfig: true, isGlobal: false }) {
+    this.configName = configName || 'block.config.json'
+    this.cwd = cwd || '.'
+    this.subcmd = subcmd || null
+
+    const { isGlobal, reConfig } = options
+
+    this.isGlobal = isGlobal
+
+    if (this.config && !reConfig) {
+      return
+    }
+    /**
+     * If global don't collect live details,
+     * user can loop through localregistry and call init with reconfig and get
+     * the live details.
+     */
+    if (isGlobal) {
+      await lrManager.init()
+      this.lrManager = lrManager
+
+      const deps = lrManager.allDependencies
+      this.config = {
+        name: 'local_registry',
+        source: {},
+        type: 'all',
+        dependencies: deps,
+      }
+
+      // await this.readLiveAppblockConfig()
+
+      return
+    }
+    // If not global, set live details as well
+    try {
+      await this.readAppblockConfig()
+
+      if (this.config.type !== 'package') {
+        this.isInAppblockContext = false
+        return
+      }
+      this.isInAppblockContext = true
+
+      await this.liveConfigSetup()
+    } catch (err) {
+      console.log(err.message)
+      process.exit(1)
+    }
+
+    await this.readLiveAppblockConfig()
+  }
+
   /**
    * Initialzes the config on the current given dir or '.'
    * @param {import('fs').PathLike} cwd Dir to init
