@@ -25,7 +25,6 @@ const createVersion = async (blockName, args) => {
       await createBlockVersion({ appConfig, blockName })
     }
   } catch (error) {
-    console.log(error);
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: error.message })
     spinnies.stopAll()

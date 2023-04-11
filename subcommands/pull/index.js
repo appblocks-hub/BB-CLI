@@ -157,7 +157,6 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
 
     process.exit()
   } catch (err) {
-    console.log(err);
     // console.log('Something went wrong while getting block details..')
     spinnies.add('blockExistsCheck')
 

@@ -85,6 +85,7 @@ const publishPackageBlock = async ({ appConfig }) => {
     }, gitignoreData)
     .split('\n')
     .map((ex) => ex.replaceAll(/\/|(\.)\.(?=\/)|\*/g, '').replaceAll('..', '.'))
+    .filter((e) => e !== '')
 
   const zipFile = await createZip({
     directory: '.',
@@ -120,7 +121,7 @@ const publishPackageBlock = async ({ appConfig }) => {
 
   const reqBody = {
     block_id: pkBlockId,
-    source_code_key: preSignedData.data.key,
+    source_code_key: preSignedData.key,
     block_version_id: versionData.id,
     appblock_versions: supportedAppblockVersions,
     language_version_ids: languageVersionIds,
