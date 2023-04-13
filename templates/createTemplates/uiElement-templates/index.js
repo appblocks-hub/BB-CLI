@@ -10,6 +10,9 @@ const { generateUiElementFederationExpose } = require('./generate-federation-exp
 const { generateLayoutTemplateJs } = require('./generate-layout-template')
 const { generateHeaderTemplateJs } = require('./generate-header-template')
 const { generateSidebarTemplateJs } = require('./generate-sidebar-template')
+const { generateUiElementsEsLintRc } = require('./generate-eslintrc')
+const { generateUiElementsCommitlintRc } = require('./generate-commitlintrc')
+const { generateUiElementsPrettierRc } = require('./generate-prettierrc')
 
 module.exports = {
   generateUiElementIndexHtml,
@@ -24,4 +27,7 @@ module.exports = {
   generateLayoutTemplateJs,
   generateHeaderTemplateJs,
   generateSidebarTemplateJs,
+  generateUiElementsEsLintRc,
+  generateUiElementsCommitlintRc,
+  generateUiElementsPrettierRc,
 }
