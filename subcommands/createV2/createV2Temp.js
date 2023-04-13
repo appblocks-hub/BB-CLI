@@ -14,8 +14,6 @@ async function create(blockName, cmdOptions) {
   const { logger } = new Logger('create')
   const Create = new CreateCore(blockName, cmdOptions, { logger, spinnies })
 
-  console.log('create v2 temp up')
-
   try {
     new HandleOutOfContext().apply(Create)
     new handleBeforeCreate().apply(Create)
