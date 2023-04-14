@@ -254,6 +254,32 @@ query ($first:Int,$last:Int,$before:String,$after:String,) {
   }
 }`
 
+const existingRepoData =( { data: { data } }) => {
+  const isInorg = data.user.repository.isInOrganization
+  return {
+    isInorg,
+    ownerId:isInorg?data.organization.id:data.user.id,
+    visibility:data.repository.visibility,
+    description:data.repository.description
+  }}
+
+
+const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
+  user(login: $user) {
+    id
+    name
+    repository(name: $reponame) {
+      id
+      isInOrganization
+      visibility
+      description
+    }
+    organization(login: $orgname){
+      id
+    }
+  }
+}`
+
 module.exports = {
   listVersions: { Q: listVersions, Tr: listVersionsTr },
   listFlavours: { Q: listFlavours, Tr: listFlavoursTR },
@@ -267,4 +293,5 @@ module.exports = {
   userOrgs: { Q: userOrgs, Tr: userOrgsTR },
   appBlockRepos: { Q: appBlockRepos, Tr: appBlockReposTR },
   orgTeams: { Q: listTeams, Tr: listTeamsTr },
+  isInRepo:{Q:isInRepo,Tr:existingRepoData}
 }

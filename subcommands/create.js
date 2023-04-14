@@ -340,7 +340,7 @@ const create = async (userPassedName, options, _, returnBeforeCreatingTemplates,
       // const Git = new GitManager(entry, cloneDirName, originUrl, prefersSsh)
 
       Git.cd(entry)
-
+      
       await Git.newBranch('main')
       await Git.stageAll()
       await Git.commit('initial commit')

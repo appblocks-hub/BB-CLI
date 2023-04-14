@@ -155,6 +155,10 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
+  currentBranch(){
+    return this._run('branch',["--show-current"])
+  }
+
   push(upstreamBranch) {
     return this._run('push', [this.remote, upstreamBranch || 'main'])
   }
