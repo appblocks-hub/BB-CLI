@@ -3,9 +3,9 @@
 const { writeFileSync } = require('fs')
 const {
   generateIndex,
-  generatePackageJson,
   generateGitIgnore,
   generateFunctionReadme,
+  generatePackageJsonWithoutLint,
 } = require('../../../templates/createTemplates/function-templates')
 const { getJobConfig } = require('../../../utils/job')
 // eslint-disable-next-line no-unused-vars
@@ -17,7 +17,7 @@ class handleJobBlock {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handleJobBlock',
       async (
         /**
@@ -35,9 +35,10 @@ class handleJobBlock {
         core.blockDetails.start = core.blockDetails.start || 'node index.js'
 
         const indexString = generateIndex(blockName)
-        const packageJsonString = generatePackageJson(blockName)
+        const packageJsonString = generatePackageJsonWithoutLint(blockName)
         const gitIgnoreString = generateGitIgnore()
         const readmeString = generateFunctionReadme(blockName)
+        // const packageJsonString = generatePackageJson(blockName)
         // const eslintrcString = generateFunctionEsLintRc()
         // const prettierrcString = generateFunctionPrettierRc()
         // const commitlintRcString = generateFunctionCommitlintRc()

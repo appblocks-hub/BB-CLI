@@ -1,6 +1,6 @@
 const { generateGitIgnore } = require('./generate-gitignore')
 const { generateIndex } = require('./generate-index')
-const { generatePackageJson } = require('./generate-packageJson')
+const { generatePackageJson, generatePackageJsonWithoutLint } = require('./generate-packageJson')
 const { generateFunctionReadme } = require('./generate-readme')
 const { generateFunctionCommitlintRc } = require('./generate-commitlintrc')
 const { generateFunctionEsLintRc } = require('./generate-eslintrc')
@@ -13,4 +13,5 @@ module.exports = {
   generateFunctionCommitlintRc,
   generateFunctionEsLintRc,
   generateFunctionPrettierRc,
+  generatePackageJsonWithoutLint,
 }

@@ -5,7 +5,7 @@ const { writeFileSync } = require('fs')
 const {
   generateGitIgnore,
   generateSharedFunctionIndex,
-  generateSharedFunctionPackageJson,
+  generateSharedFunctionPackageJsonWithoutLint,
   generateSharedFunctionReadme,
 } = require('../../../templates/createTemplates/shared-templates')
 // eslint-disable-next-line no-unused-vars
@@ -17,7 +17,7 @@ class handleSharedFunction {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handleSharedFunction',
       async (
         /**
@@ -34,9 +34,10 @@ class handleSharedFunction {
         core.blockDetails.start = core.blockDetails.start || 'node index.js'
 
         const indexString = generateSharedFunctionIndex(blockName)
-        const packageJsonString = generateSharedFunctionPackageJson(blockName)
+        const packageJsonString = generateSharedFunctionPackageJsonWithoutLint(blockName)
         const readmeString = generateSharedFunctionReadme(blockName)
         const gitIgnoreString = generateGitIgnore()
+        // const packageJsonString = generateSharedFunctionPackageJson(blockName)
         // const prettierrcString = generateSharedFunctionPrettierRc()
         // const commitlintRcString = generateSharedFunctionCommitlintRc()
         // const eslintrcString = generateSharedFunctionEsLintRc()

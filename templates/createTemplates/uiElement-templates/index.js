@@ -1,7 +1,7 @@
 const { generateUiElementAppJs } = require('./generate-appJs')
 const { generateUiElementBootstrapJs } = require('./generate-bootstrapJs')
 const { generateUiElementIndexJs } = require('./generate-indexJs')
-const { generateUiElementPackageJson } = require('./generate-packageJson')
+const { generateUiElementPackageJson, generateUiElementPackageJsonWithoutLint } = require('./generate-packageJson')
 const { generateUiElementsReadme } = require('./generate-readme')
 const { generateUiElementJs } = require('./generate-uiElementJs')
 const { generateUiElementWebpack } = require('./generate-webpackConfig')
@@ -30,4 +30,5 @@ module.exports = {
   generateUiElementsEsLintRc,
   generateUiElementsCommitlintRc,
   generateUiElementsPrettierRc,
+  generateUiElementPackageJsonWithoutLint,
 }

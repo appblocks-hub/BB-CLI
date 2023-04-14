@@ -8,7 +8,7 @@ const {
   generateUiElementIndexJs,
   generateUiElementBootstrapJs,
   generateUiElementAppJs,
-  generateUiElementPackageJson,
+  generateUiElementPackageJsonWithoutLint,
   generateUiElementJs,
   generateUiElementsReadme,
   generateUiElementFederationExpose,
@@ -23,7 +23,7 @@ class handleUIElement {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handleUIElement',
       async (
         /**
@@ -45,11 +45,12 @@ class handleUIElement {
         const indexJsString = generateUiElementIndexJs(blockName)
         const bootstrapString = generateUiElementBootstrapJs(blockName)
         const appJsString = generateUiElementAppJs(blockName)
-        const packageJsonString = generateUiElementPackageJson(blockName)
+        const packageJsonString = generateUiElementPackageJsonWithoutLint(blockName)
         const uiElementString = generateUiElementJs(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const fedExposeString = generateUiElementFederationExpose(blockName)
+        // const packageJsonString = generateUiElementPackageJson(blockName)
         // const eslintrcString = generateUiElementsEsLintRc()
         // const commitLintRcString = generateUiElementsCommitlintRc()
         // const prettierrcString = generateUiElementsPrettierRc()

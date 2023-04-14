@@ -11,7 +11,7 @@ class handlePackageBlock {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handlePackageBlock',
       async (
         /**

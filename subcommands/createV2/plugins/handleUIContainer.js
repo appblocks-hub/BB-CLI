@@ -8,7 +8,7 @@ const {
   generateUiContainerIndexJs,
   generateUiContainerBootstrapJs,
   generateUiContainerAppJs,
-  generateUiContainerPackageJson,
+  generateUiContainerPackageJsonWithoutLint,
   generateUiContainerReadme,
   generateUiContainerAppRoute,
   generateUiContainerLayout,
@@ -23,7 +23,7 @@ class handleUIContainer {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handleUIContainer',
       async (
         /**
@@ -45,11 +45,12 @@ class handleUIContainer {
         const indexJsString = generateUiContainerIndexJs(blockName)
         const bootstrapString = generateUiContainerBootstrapJs(blockName)
         const appJsString = generateUiContainerAppJs(blockName)
-        const packageJsonString = generateUiContainerPackageJson(blockName)
+        const packageJsonString = generateUiContainerPackageJsonWithoutLint(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiContainerReadme(blockName)
         const appRouteString = generateUiContainerAppRoute(blockName)
         const layoutString = generateUiContainerLayout(blockName)
+        // const packageJsonString = generateUiContainerPackageJson(blockName)
         // const eslintrcString = generateUiContainerEsLintRc()
         // const prettierrcString = generateUiContainerPrettierRc()
         // const commitlintRcString = generateUiContainerCommitlintRc()

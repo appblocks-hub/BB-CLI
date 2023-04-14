@@ -27,6 +27,7 @@ class CreateCore {
 
     this.hooks = {
       beforeCreate: new AsyncSeriesHook(['core']),
+      beforeConfigUpdate: new AsyncSeriesHook(['core']),
       afterCreate: new AsyncSeriesHook(['core']),
     }
   }
@@ -70,6 +71,7 @@ class CreateCore {
       supportedAppblockVersions: parentPackageConfig.supportedAppblockVersions,
     }
 
+    await this.hooks.beforeConfigUpdate?.promise(this)
     // template setup hooks
     await writeFile(blockConfigPath, JSON.stringify(this.blockDetails, null, 2))
     appConfig.addBlock({ directory: blockName, meta: this.blockDetails })

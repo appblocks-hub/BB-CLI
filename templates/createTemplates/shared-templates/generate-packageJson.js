@@ -37,5 +37,20 @@ const generateSharedFunctionPackageJson = (name) => `{
     }
   }
 `
+const generateSharedFunctionPackageJsonWithoutLint = (name) => `{
+  "name": "${name}",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js --port=3000",
+  },
+  "type": "module",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.3"
+   },
+  "devDependencies":{}
+}
+`
 
-module.exports = { generateSharedFunctionPackageJson }
+module.exports = { generateSharedFunctionPackageJson, generateSharedFunctionPackageJsonWithoutLint }

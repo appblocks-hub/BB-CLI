@@ -5,7 +5,7 @@ const { generateGitIgnore } = require('../../../templates/createTemplates/functi
 const {
   generateUiElementIndexHtml,
   generateUiElementWebpack,
-  generateUiElementPackageJson,
+  generateUiElementPackageJsonWithoutLint,
   generateUiElementsReadme,
 } = require('../../../templates/createTemplates/uiElement-templates')
 // eslint-disable-next-line no-unused-vars
@@ -17,7 +17,7 @@ class handleUIDependency {
    * @param {CreateCore} createCore
    */
   apply(createCore) {
-    createCore.hooks.afterCreate.tapPromise(
+    createCore.hooks.beforeConfigUpdate.tapPromise(
       'handleUIDependency',
       async (
         /**
@@ -36,9 +36,10 @@ class handleUIDependency {
 
         const indexHtmlString = generateUiElementIndexHtml(blockName)
         const webpackConfigString = generateUiElementWebpack(blockName)
-        const packageJsonString = generateUiElementPackageJson(blockName)
+        const packageJsonString = generateUiElementPackageJsonWithoutLint(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
+        // const packageJsonString = generateUiElementPackageJson(blockName)
         // const eslintrcString = generateUiElementsEsLintRc()
         // const commitLintRcString = generateUiElementsCommitlintRc()
         // const prettierrcString = generateUiElementsPrettierRc()
