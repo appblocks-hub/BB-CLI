@@ -143,7 +143,7 @@
      sBDeployment = await readInput({
        type: 'list',
        name: 'sBDeployment',
-       message: 'Select the upload service',
+       message: 'Select the build process type',
        choices: [
          { name: 'Single Build', value: true },
          { name: 'Normal Build', value: false },
@@ -169,7 +169,7 @@
      const choices =
        blockType === 'view'
          ? Object.values(dependencies)
-             .filter((b) => ['ui-container', 'ui-elements'].includes(b.meta.type))
+             .filter((b) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(b.meta.type))
              .map((b) => b.meta.name)
          : Object.values(dependencies)
              .filter((b) => ['function', 'shared-fn'].includes(b.meta.type))

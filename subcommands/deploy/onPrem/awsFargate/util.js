@@ -9,7 +9,7 @@ const { spinnies } = require('../../../../loader')
 const { ec2Handler } = require('../../../../utils/aws/ec2')
 const { readInput } = require('../../../../utils/questionPrompts')
 
-const CPU_MEMORY_COMPINATIONS = [
+const CPU_MEMORY_COMBINATIONS = [
   {
     cpu: '.25 vCPU',
     memory: ['.5 GB', '1 GB', '2 GB'],
@@ -37,6 +37,17 @@ const CPU_MEMORY_COMPINATIONS = [
 ]
 
 const getAWSFargateConfig = async () => {
+  const sBDeployment = await readInput({
+    type: 'list',
+    name: 'sBDeployment',
+    message: 'Select the build process type',
+    choices: [
+      { name: 'Single Build', value: true },
+      { name: 'Normal Build', value: false },
+    ],
+    default: true,
+  })
+
   spinnies.add('vpcGet', { text: 'Getting vpcs' })
   const vpcs = await ec2Handler.describeVpcs()
   spinnies.remove('vpcGet')
@@ -86,7 +97,7 @@ const getAWSFargateConfig = async () => {
     type: 'list',
     name: 'cpu',
     message: 'Select the amount of CPU to reserve for your task',
-    choices: CPU_MEMORY_COMPINATIONS.map(({ cpu: c }) => c),
+    choices: CPU_MEMORY_COMBINATIONS.map(({ cpu: c }) => c),
     validate: (input) => {
       if (!input || input?.length < 1) return `Invalid input`
       return true
@@ -97,7 +108,7 @@ const getAWSFargateConfig = async () => {
     type: 'list',
     name: 'memory',
     message: 'Select the amount of memory to reserve for your task',
-    choices: CPU_MEMORY_COMPINATIONS.find(({ cpu: c }) => c === cpu)?.memory,
+    choices: CPU_MEMORY_COMBINATIONS.find(({ cpu: c }) => c === cpu)?.memory,
     validate: (input) => {
       if (!input || input?.length < 1) return `Invalid input`
       return true
@@ -112,10 +123,18 @@ const getAWSFargateConfig = async () => {
   //   default: true,
   // })
 
-  const cofigData = { vpcId, subnetIds, securityGroupIds, memory, cpu, autoScaleAllowed }
+  const configData = {
+    vpcId,
+    subnetIds,
+    securityGroupIds,
+    memory,
+    cpu,
+    autoScaleAllowed,
+    singleBuildDeployment: sBDeployment,
+  }
 
   if (autoScaleAllowed) {
-    cofigData.minCapacity = await readInput({
+    configData.minCapacity = await readInput({
       type: 'number',
       name: 'minCapacity',
       message: 'Enter the minimum value that you plan to scale in to (min no of instances).',
@@ -126,26 +145,26 @@ const getAWSFargateConfig = async () => {
       default: 1,
     })
 
-    cofigData.maxCapacity = await readInput({
+    configData.maxCapacity = await readInput({
       type: 'number',
       name: 'maxCapacity',
       message: 'Enter the maximum value that you plan to scale out to (max no of instances).',
       validate: (input) => {
-        if (!input || !/[0-9]/.test(input) || input < cofigData.minCapacity) return `Invalid input`
+        if (!input || !/[0-9]/.test(input) || input < configData.minCapacity) return `Invalid input`
         return true
       },
       default: 3,
     })
   }
 
-  cofigData.desiredCount = await readInput({
+  configData.desiredCount = await readInput({
     type: 'number',
     name: 'desiredCount',
     message:
       'Enter the number of instantiations of the specified task definition to place and keep running on your cluster.',
     validate: (input) => {
       if (!input) return `Invalid input`
-      if (!/[0-9]/.test(input) || input < cofigData.minCapacity || input > cofigData.maxCapacity) {
+      if (!/[0-9]/.test(input) || input < configData.minCapacity || input > configData.maxCapacity) {
         return `Value should be in between min capacity and max capacity`
       }
       return true
@@ -153,7 +172,7 @@ const getAWSFargateConfig = async () => {
     default: 2,
   })
 
-  return cofigData
+  return configData
 }
 
 module.exports = {
