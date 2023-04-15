@@ -20,19 +20,21 @@ const tempPull = async (options) => {
     const rootConfig = appConfig.config
     const rootPath = process.cwd()
 
-    const Git = new GitManager(rootPath, 'Git instance for migrate', rootConfig.source.ssh, false)
+    console.log(rootConfig)
+
+    const Git = new GitManager(rootPath, "", rootConfig.source.https, false)
 
     console.log('rootpath inside pull is \n', rootPath)
     console.log('appconfig inside pull is  \n', rootConfig)
 
-    const currentBranch = await Git.currentBranch()
+    let currentBranch = await Git.currentBranch()
 
-    console.log('current branch is \n', currentBranch)
+    currentBranch = currentBranch.msg.split('\n')[0]
 
     await Git.pull(currentBranch)
-
+    console.log("PULLED SUCCESSFULLY")
   } catch (e) {
-    console.log(e.message)
+    console.log(e)
   }
 }
 

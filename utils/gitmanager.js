@@ -90,6 +90,10 @@ class GitManager {
     return this._run('clone', [this.remote, destination])
   }
 
+  init() {
+    return this._run('init', [])
+  }
+
   checkoutbranch(name) {
     return this._run('checkout', [name])
   }
@@ -155,8 +159,8 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
-  currentBranch(){
-    return this._run('branch',["--show-current"])
+  currentBranch() {
+    return this._run('branch', ['--show-current'])
   }
 
   push(upstreamBranch) {
