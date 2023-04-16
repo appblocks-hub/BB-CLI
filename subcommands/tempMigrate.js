@@ -6,7 +6,7 @@
  */
 
 const { resolve } = require('path')
-const { unlinkSync, rmSync, existsSync,writeFileSync } = require('fs')
+const { unlinkSync, rmSync, existsSync, writeFileSync } = require('fs')
 const { GitManager } = require('../utils/gitmanager')
 const { appConfig } = require('../utils/appconfigStore')
 const appconfigStore = require('../utils/appconfigStore')
@@ -79,9 +79,6 @@ const tempMigrate = async (options) => {
 
       const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
-      console.log('existing repo data is \n', existingRepoData)
-
-
       // console.log(BLOCKNAME)
       const { data: innerData } = await axios.post(
         githubGraphQl,
@@ -97,7 +94,7 @@ const tempMigrate = async (options) => {
             team: null,
           },
         },
-        { headers:  getGitHeader() }
+        { headers: getGitHeader() }
       )
       if (innerData.errors) {
         // TODO -- write data.errors.message to combined log here
@@ -126,33 +123,32 @@ const tempMigrate = async (options) => {
       return innerData
     })(defaultBlockName)
 
-    const { url, sshUrl} =  createRepository.Tr(data)
-
+    const { url, sshUrl } = createRepository.Tr(data)
 
     //updating config using write file sync
 
-    rootConfig.source.https=url
-    rootConfig.source.ssh=sshUrl
+    rootConfig.source.https = url
+    rootConfig.source.ssh = sshUrl
 
-    writeFileSync("./block.config.json",JSON.stringify(rootConfig),{encoding:'utf8',flag:'w'})
+    writeFileSync('./block.config.json', JSON.stringify(rootConfig), { encoding: 'utf8', flag: 'w' })
 
     //initialising git for new main branch creation and pushing
 
-
-    const Git = new GitManager(rootPath, 'Git instance for migrate',url, false)
+    const Git = new GitManager(rootPath, 'Git instance for migrate', url, false)
 
     await Git.init()
 
-    await Git.addRemote("origin",url)
+    await Git.addRemote('origin', url)
 
-    await Git.newBranch("main")
+    await Git.newBranch('main')
 
     await Git.stageAll()
 
-    await Git.commit("Initial Commit")
+    await Git.commit('Initial Commit')
 
-    await Git.setUpstreamAndPush("main")
+    await Git.setUpstreamAndPush('main')
 
+    console.log('MIGRATED SUCCESSFULLY')
   } catch (e) {
     console.log('Error running migrations \n', e)
   }
