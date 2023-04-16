@@ -163,6 +163,10 @@ class GitManager {
     return this._run('branch', ['--show-current'])
   }
 
+  diff() {
+    return this._run('diff --name-only --staged', [])
+  }
+
   push(upstreamBranch) {
     return this._run('push', [this.remote, upstreamBranch || 'main'])
   }

@@ -9,6 +9,8 @@ const chalk = require('chalk')
 const Table = require('cli-table3')
 const { appConfig } = require('../utils/appconfigStore')
 const { GitManager } = require('../utils/gitmanager')
+const { readInput } = require('../utils/questionPrompts')
+
 
 const tempPush = async (options) => {
   try {
@@ -22,19 +24,33 @@ const tempPush = async (options) => {
 
     console.log(rootConfig)
 
-    const Git = new GitManager(rootPath, "", rootConfig.source.https, false)
-
-    console.log('rootpath inside push is \n', rootPath)
-    console.log('appconfig inside push is  \n', rootConfig)
+    const Git = new GitManager(rootPath, '', rootConfig.source.https, false)
 
     let currentBranch = await Git.currentBranch()
 
     currentBranch = currentBranch.msg.split('\n')[0]
 
+    await Git.stageAll()
 
-    await Git.push(currentBranch)
-    console.log("PUSHED SUCCESSFULLY")
+    let changedFiles = (await Git.diff()).msg.split('\n').filter((item) => item)
 
+    if (changedFiles.length > 0) {
+      const commitMessage = await readInput({
+        name: 'commitMessage',
+        message: 'Enter the commit message',
+        validate: (input) => {
+          if (!input || input?.length < 3) return `Please enter the commit message with atleast 3 characters`
+          return true
+        },
+      })
+
+      await Git.commit(commitMessage)
+      await Git.push(currentBranch)
+      console.log('PUSHED SUCCESSFULLY')
+    }
+    else{
+      console.log("No Files changed to push")
+    }
   } catch (e) {
     console.log(e)
   }

@@ -22,17 +22,14 @@ const tempPull = async (options) => {
 
     console.log(rootConfig)
 
-    const Git = new GitManager(rootPath, "", rootConfig.source.https, false)
-
-    console.log('rootpath inside pull is \n', rootPath)
-    console.log('appconfig inside pull is  \n', rootConfig)
+    const Git = new GitManager(rootPath, '', rootConfig.source.https, false)
 
     let currentBranch = await Git.currentBranch()
 
     currentBranch = currentBranch.msg.split('\n')[0]
 
     await Git.pull(currentBranch)
-    console.log("PULLED SUCCESSFULLY")
+    console.log('PULLED SUCCESSFULLY')
   } catch (e) {
     console.log(e)
   }
