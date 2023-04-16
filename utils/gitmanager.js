@@ -48,17 +48,14 @@ class GitManager {
    * @param {Boolean} ssh If passed url is ssh, then true else false
    */
   constructor(cwd, reponame, url, ssh) {
-    // console.log(cwd, reponame, url, ssh)
     this.cwd = path.resolve(cwd)
     this.ssh = ssh || false
     this.source = `${url}.git`
     this.username = configstore.get('githubUserName')
     this.repository = reponame
-    // this.token = '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:x-oauth-basic@github.com'
     this.token = configstore.get('gitPersonalAccessToken')
     this.remote = `https://${this.token}/${this.username}/${this.repository}.git`
     this._createRemote(url, ssh)
-    // console.log(`${this.remote}is set as remote`)
   }
 
   /**

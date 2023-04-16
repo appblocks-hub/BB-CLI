@@ -52,7 +52,12 @@ class RegisterNewBlocksPlugin {
       }
       console.log('------------------------------')
       const result = await offerAndCreateBlock.apply(core, [this.sourceLessBlocks])
-      console.log(result)
+      result
+        .filter((b) => !b.registered)
+        .forEach((v) => {
+          core.blockDirectoriesFound.push(v.oldPath)
+        })
+      core.newDependencies.push(...result.filter((b) => b.registered))
     })
   }
 }

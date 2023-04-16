@@ -1,12 +1,14 @@
 const generateWebpackConfig = (options) => {
-  const { env, emPort } = options || {}
+  const { env, emPort, depLib } = options || {}
 
   const rulesRegex = {
     'babel-loader': /\.jsx?$/,
     'url-loader': /\.(jpg|png|gif|svg|eot|svg|ttf|woff|woff2)$/,
-    'sass-loader': /\.s[ac]ss$/i,
     'style-loader': /\.css$/i,
   }
+
+  // eslint-disable-next-line no-template-curly-in-string
+  const depLibUrl = '${process.env.BLOCK_DEP_LIB_URL}'
 
   return `
 import HtmlWebpackPlugin from 'html-webpack-plugin'
@@ -21,7 +23,6 @@ const { DefinePlugin } = webpackPkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const env = process.env.NODE_ENV || 'dev'
 const Dotenv = dotenv.config({
   path: \`${env ? `./.env.${env}` : './.env'}\`,
 })
@@ -67,20 +68,6 @@ const config = {
         },
       },
       {
-        test: ${rulesRegex['sass-loader']},
-        use: [
-          'style-loader',
-          'css-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              // Prefer  \`dart-sass \`
-              implementation: import('sass'),
-            },
-          },
-        ],
-      },
-      {
         test: ${rulesRegex['style-loader']},
         use: ['style-loader', 'css-loader'],
       },
@@ -93,7 +80,14 @@ const config = {
     new ModuleFederationPlugin({
       name: 'remotes',
       filename: "remoteEntry.js",
-      exposes: exposedJson,
+      exposes: exposedJson,${
+        depLib
+          ? `
+      remotes: {
+        dep_lib: \`remotes@${depLibUrl}\`,
+      },`
+          : ''
+      }
       shared: {
         react: {
           import: 'react', // the "react" package will be used a provided and fallback module

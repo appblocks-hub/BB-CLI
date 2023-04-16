@@ -10,7 +10,7 @@
 const { Command } = require('commander')
 const init = require('../subcommands/init')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const { default: checkAndSetUserSpacePreference } = require('../utils/checkAndSetUserSpacePreference')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isInGitRepository, isGitInstalled } = require('../utils/gitCheckUtils')
 

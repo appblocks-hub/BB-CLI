@@ -6,65 +6,64 @@
  */
 
 // TODO -- could retry 3 times.
-const axios = require('axios')
 const { appBlockVerifyToken, githubGraphQl, clientId } = require('./api')
+const { axios } = require('./axiosInstances')
+const { getGitHeader } = require('./getHeaders')
 
 /**
- * @typedef userObject
+ * @typedef getSignedInGitUserReturnPart
  * @type {object}
  * @property {(String|Null)} userName
  * @property {(String|Null)} userId
  */
 
 /**
- * @typedef ReturnType
+ * @typedef getSignedInGitUserReturn
  * @type {object}
- * @property {userObject} user The name and id of user if call is success, both null otherwise
+ * @property {getSignedInGitUserReturnPart} user The name and id of user if call is success, both null otherwise
  * @property {(string|null)} error A human readable error message
  */
 
 /**
- * Make call with the given token and retrieve the name of user
- * @param {string} TOKEN Token from env
- * @returns {ReturnType}
+ * Get the username and id of current signed in user from Github
+ * @returns {Promise<getSignedInGitUserReturn>}
  */
-// eslint-disable-next-line consistent-return
 async function getGithubSignedInUser(TOKEN) {
-  const query = `query { 
+  const QUERY = `query { 
         viewer { 
           login
           id
         }
       }`
-  // const url = 'https://api.github.com/graphql'
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization: `bearer ${TOKEN}`,
-    Accept: 'application/vnd.github.v4+json',
+
+  const result = {
+    user: null,
+    error: null,
   }
+
   try {
-    // Check if TOKEN still working
-    const response = await axios.post(githubGraphQl, { query }, { headers })
-    return {
-      user: {
-        userId: response.data.data.viewer.id,
-        userName: response.data.data.viewer.login,
-      },
-      error: null,
+    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGitHeader(TOKEN) })).data
+      .data.viewer
+
+    result.user = {
+      userId: id,
+      userName: login,
     }
+    result.error = null
   } catch (e) {
     // If not properly working, redo auth again.
     // console.log(e.response.status, e.response.statusText, e.response.data)
     // if status is 401 return with message {user,error}
     // else retry with 1sec delay
     if (e.response?.status === 401) {
-      return { user: null, error: e.response.statusText }
+      result.user = null
+      result.error = e.response.statusText
+      return result
     }
     console.log('Something went terribly wrong -- ', e.message)
-    // retry here
-    // TODO
-    process.exit(0)
+    process.exitCode = 1
   }
+  return result
 }
 
 /**

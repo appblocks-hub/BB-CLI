@@ -13,14 +13,14 @@ const { buildBlock } = require('../../../start/util')
 const { removeSync } = require('./util')
 const { awsHandler } = require('../../../../utils/aws')
 
-const singleBuildDeployment = async ({ deployConfigManager, deployedData, config, opdBackupFolder }) => {
+const singleBuildDeployment = async ({ deployConfigManager, deployedData, config, opdBackupFolder, env }) => {
   const delPaths = []
   const deployData = deployedData
   try {
     await appConfig.init()
     spinnies.add('ele', { text: `Preparing elements block to upload` })
 
-    const { elementsBuildFolder, emEleFolder, containerBlock } = await singleBuild({ appConfig, buildOnly: true })
+    const { elementsBuildFolder, emEleFolder, containerBlock } = await singleBuild({ appConfig, buildOnly: true, env })
     delPaths.push(emEleFolder)
 
     if (!elementsBuildFolder) throw new Error('Error building elements')
@@ -48,13 +48,17 @@ const singleBuildDeployment = async ({ deployConfigManager, deployedData, config
     spinnies.add(`cont`, { text: `Building container` })
 
     // Upload Container
-    const { blockBuildFolder } = await buildBlock(containerBlock, {
-      BLOCK_ELEMENTS_URL: `http://${deployData.elementsBucket}.s3-website-${region}.amazonaws.com/remoteEntry.js`,
-    })
+    const { blockBuildFolder , error} = await buildBlock(
+      containerBlock,
+      {
+        BLOCK_ELEMENTS_URL: `http://${deployData.elementsBucket}.s3-website-${region}.amazonaws.com/remoteEntry.js`,
+      },
+      env
+    )
 
     delPaths.push(blockBuildFolder)
 
-    if (!blockBuildFolder) throw new Error('Error building container')
+    if (!blockBuildFolder) throw new Error(`Error building container ${error}`)
 
     spinnies.update('cont', { text: `Uploading container` })
     const uploadedContainer = await s3Handler.uploadDir({

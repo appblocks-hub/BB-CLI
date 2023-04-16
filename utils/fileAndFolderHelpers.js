@@ -317,7 +317,7 @@ function isDirEmpty(dirname, ...acceptedItems) {
  * @param {Array<String>} ignoreList
  * @returns {Promise<Array<Record<'oldPath'|'newPath'|'name',String>>}
  */
-async function prepareFileListForMoving(dirPath, destinationPath, ignoreList) {
+async function prepareFileListForMoving(dirPath, destinationPath, ignoreList = []) {
   const files = await readdir(dirPath)
   return files.reduce((acc, curr) => {
     if (!ignoreList.includes(curr))

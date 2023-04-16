@@ -1,11 +1,11 @@
 /* eslint-disable */
 
 const generateUiContainerAppRoute = () => `
-import React, { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { Suspense, lazy } from 'react'
+import { Routes, Route } from 'react-router-dom'
 
 const AppRoute = () => {
-  const Layout = lazy(() => import("../../components/Layout/index.js"));
+  const Layout = lazy(() => import('../../components/Layout/index'))
 
   return (
     <Suspense fallback="">
@@ -13,11 +13,10 @@ const AppRoute = () => {
         <Route path="/" element={<Layout />} exact />
       </Routes>
     </Suspense>
-  );
-};
+  )
+}
 
-export default AppRoute;
-;
+export default AppRoute
 `
 
 module.exports = { generateUiContainerAppRoute }

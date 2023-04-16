@@ -14,6 +14,8 @@ const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
 
 async function checkSpaceLinkedToPackageBlock(cmd) {
+  if (cmd === 'pull') return true
+
   // check space is linked with package block
   await appConfig.init(null, null, cmd)
   if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
@@ -51,6 +53,7 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
       feedback({ type: 'success', message: `Current Space: ${configstore.get('currentSpaceName')}` })
     }
   }
+
   return false
 }
 

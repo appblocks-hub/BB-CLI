@@ -55,7 +55,7 @@ const pr = require('../subcommands/pr')
 const updateLanguageVersionCommand = require('../subcommands/languageVersion/update')
 const deleteCommand = require('../subcommands/delete')
 const listLanguageVersionCommand = require('../subcommands/languageVersion/list')
-const createBlockVersion = require('../subcommands/createBlockVersion/index')
+const createVersion = require('../subcommands/createVersion/index')
 const getBlockUpdate = require('../subcommands/getBlockUpdate')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const desc = require('./bb_command_descriptions')
@@ -156,8 +156,9 @@ async function init() {
   program
     .command('create-version')
     .argument('[block-name]', 'Name of block to create-version')
+    .option('--latest', 'Select the latest version of member blocks on package version create')
     .description(desc['create-version'])
-    .action(createBlockVersion)
+    .action(createVersion)
 
   program
     .command('publish')

@@ -14,6 +14,7 @@ const create = require('../subcommands/create')
 const { blockTypeInverter } = require('./blockTypeInverter')
 const { CreateError } = require('./errors/createError')
 const { moveFiles, prepareFileListForMoving, ensureDirSync } = require('./fileAndFolderHelpers')
+const { checkAndSetGitConfigNameEmail } = require('./gitCheckUtils')
 const { GitManager } = require('./gitmanager')
 const { confirmationPrompt, readInput } = require('./questionPrompts')
 
@@ -91,26 +92,14 @@ const handleCreate = async (type, ele, blockName) => {
 }
 
 /**
- * @typedef {object} report
- * @property {String} oldPath
- * @property {boolean} registered
- * @property {boolean} copied
- * @property {string} directory
- * @property {boolean} sourcemismatch
- * @property {string} name
- * @property {string} newName
- * @property {object} data
- */
-
-/**
  * From a list of absolute paths to directories, prompts user
  * and call create function and set new block folders accordingly
  * @param {Array<string>} list A List of absolute paths
- * @returns {Promise<Array<report>>}
+ * @returns {Promise<Array<import('./jsDoc/types').offerAndCreateBlockFnReturn>>}
  */
 async function offerAndCreateBlock(list) {
   /**
-   * @type {report}
+   * @type {Array<import('./jsDoc/types').offerAndCreateBlockFnReturn>}
    */
   const report = []
 
@@ -123,7 +112,15 @@ async function offerAndCreateBlock(list) {
   })
 
   if (!ans) {
-    return []
+    return list.map((v) => ({
+      oldPath: v,
+      copied: false,
+      registered: false,
+      directory: v,
+      sourcemismatch: false,
+      name: '',
+      newName: '',
+    }))
   }
 
   for (let i = 0; i < list.length; i += 1) {
@@ -133,9 +130,14 @@ async function offerAndCreateBlock(list) {
   return report
 }
 
+/**
+ *
+ * @param {String} ele
+ * @returns {import('./jsDoc/types').offerAndCreateBlockFnReturn}
+ */
 const x = async (ele) => {
   /**
-   * @type {report}
+   * @type {import('./jsDoc/types').offerAndCreateBlockFnReturn}
    */
   const report = { oldPath: ele, registered: false, copied: false }
 
@@ -246,7 +248,7 @@ const x = async (ele) => {
   /**
    * If user wants git history, they can copy the git folder to new location, but don't replace the git config file
    */
-  const ignoreList = ['.git', 'block.config.json']
+  const ignoreList = ['.git', 'block.config.json', 'node_modules', 'package-lock.json']
 
   // TODO: make GitManager handle the url set
   const url = configstore.get('prefersSsh') ? blockDetails.source.ssh : blockDetails.source.https
@@ -339,11 +341,6 @@ const x = async (ele) => {
       await moveFiles(false, files)
     }
     report.copied = true
-
-    await Git.checkoutbranch('main')
-    await Git.commit('happy hacking from appblock team!', '--allow-empty')
-    await Git.setUpstreamAndPush('main')
-    userWantsToMoveFiles = false
   }
 
   console.debug(`Files moved from ${tempPath} to ${newPath}`)
@@ -352,16 +349,39 @@ const x = async (ele) => {
     const target = path.normalize(`${newPath}/.git`)
     const source = path.normalize(`${tempPath}/.git`)
     const files = await prepareFileListForMoving(source, target, ['config'])
-    if (files.length) await moveFiles(files)
+    if (files.length) await moveFiles(false, files)
+    console.debug(`Git files moved from ${tempPath} to ${newPath}`)
     report.copied = true
-    await Git.setUpstreamAndPush()
-    userWantsToMoveGitHistory = false
   }
-  console.debug(`Git files moved from ${tempPath} to ${newPath}`)
+  if (!userWantsToMoveGitHistory) {
+    /**
+     * Which could mean no new branches or commits in the current git repo,
+     * so create a new branch main
+     */
+    Git.newBranch('main')
+  }
+  /**
+   * Try and set the local git name and email, to avoid git complaining on commit
+   */
+  await checkAndSetGitConfigNameEmail(newPath)
+  try {
+    /**
+     * Now push all the new changes
+     */
+    await Git.checkoutbranch('main')
+  } catch (_) {
+    // ignore error if could'nt checkout main..maybe because no commit yet
+  }
+  await Git.commit('happy hacking from appblock team!', '--allow-empty')
+  await Git.setUpstreamAndPush('main')
+
+  userWantsToMoveGitHistory = false
+  userWantsToMoveFiles = false
 
   await rm(tempPath, { recursive: true, retryDelay: 200, force: true })
   console.debug(`temp directory deleted`)
 
+  if (repoNameIsSameAsBlockName) return report
   /**
    * Create a dir with new block name, copy all files from cloneDir & delete cloneDir
    * Cloned dir may be names <space-id><block-name>, but the user doesn't want that in local

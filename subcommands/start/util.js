@@ -158,9 +158,18 @@ async function startGoProgram(block) {
   }
 }
 
-const buildBlock = async (block, envData) => {
+const buildBlock = async (block, envData, env) => {
   const envType = ['ui-elements', 'ui-container'].includes(block.meta.type) ? 'view' : 'function'
-  const existingEnvDataFile = await readFileSync(path.resolve(`.env.${envType}`)).toString()
+
+  let envPath = path.resolve(`.env.${envType}.${env}`)
+  if (!existsSync(envPath)) {
+    envPath = path.resolve(`.env.${envType}`)
+  } else {
+    // eslint-disable-next-line no-param-reassign
+    envData = {}
+  }
+
+  const existingEnvDataFile = await readFileSync(envPath).toString()
   const updatedEnv = convertToEnv(envData, existingEnvDataFile)
 
   const nodePackageManager = configstore.get('nodePackageManager')

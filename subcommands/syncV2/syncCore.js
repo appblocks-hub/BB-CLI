@@ -4,6 +4,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const os = require('os')
 const chalk = require('chalk')
+const { writeFileSync } = require('fs')
 const { feedback } = require('../../utils/cli-feedback')
 const { confirmationPrompt, readInput } = require('../../utils/questionPrompts')
 const { getConfigFromRegistry, getBlockDetails } = require('../../utils/registryUtils')
@@ -202,7 +203,20 @@ class SyncCore {
      * The config will be based on this list, and this list alone
      * @type {Array<string>}
      */
-    this.dependencies = null
+    this.dependencies = []
+
+    /**
+     * Stores the present local dependencies...In the last step, moves through
+     * all the blocks present in blockDirectoriesFound and runs test and builds this list
+     * @type {Array<import('../../utils/jsDoc/types').offerAndCreateBlockFnReturn>}
+     */
+    this.dependencyList = []
+
+    /**
+     * Updates every time a new block is registered or re-registered from
+     * blockDirectoriesFound list
+     */
+    this.newDependencies = []
   }
 
   /**
@@ -246,24 +260,92 @@ class SyncCore {
   }
 
   async loadBlockConfigs() {
-    this.dependencyList = this.blockDirectoriesFound.reduce(async (acc, curr) => {
-      const configPath = path.resolve(curr, this.blockConfigFileName)
+    for (let i = 0; i < this.blockDirectoriesFound.length; i += 1) {
+      const p = this.blockDirectoriesFound[i]
+      const configPath = path.resolve(p, this.blockConfigFileName)
       try {
+        /**
+         * @type {import('../../utils/jsDoc/types').dependecyMetaShape}
+         */
         const parsedConfig = await readFile(configPath).then((_d) => JSON.parse(_d))
-        return acc.concat(parsedConfig)
+        this.dependencyList.push({
+          name: parsedConfig.name,
+          newName: '',
+          registered: false,
+          copied: false,
+          directory: p,
+          sourcemismatch: false,
+          data: {
+            detailsInRegsitry: '',
+            localBlockConfig: parsedConfig,
+          },
+        })
       } catch (err) {
-        // console.log(err.message)
-        return acc
+        console.log(err.message)
       }
-    }, [])
+    }
   }
 
   async buildDepList() {
+    await this.loadBlockConfigs()
     const core = this
     this.hooks.beforeGenerateConfig?.callAsync(core, () => {})
-    console.log('build step')
-    console.log(this.dependencyList)
+    for await (const { i, details } of getBlockDetailsFn([...this.dependencyList])) {
+      if (!details) {
+        // If details are null remove it
+        this.dependencyList[i] = null
+      } else {
+        this.dependencyList[i].data.detailsInRegistry = details
+      }
+    }
+
+    this.dependencies = [...(this.dependencyList || []), ...this.newDependencies].reduce((acc, curr) => {
+      acc[curr.newName ? curr.newName : curr.name] = {
+        ...acc[curr.name],
+        directory: path.relative('.', curr.directory),
+        meta: curr.data.localBlockConfig,
+      }
+      return acc
+    }, {})
+    console.log('Please add below deps to config')
+    console.log(this.dependencies)
+    writeFileSync(path.resolve('./newconfig.json'), JSON.stringify(this.dependencies, null, 2))
   }
 }
+
+/**
+ *
+ * @param {} List
+ * @async
+ * @generator
+ * @yields {}
+ */
+async function* getBlockDetailsFn(List) {
+  for (let i = 0; i < List.length; i += 1) {
+    const blockname = List[i].name
+    try {
+      const res = await getBlockDetails(blockname)
+      if (res.data.err) throw new Error('Some error at backend')
+      yield { i, details: res.data.data }
+    } catch (err) {
+      yield { i, details: null }
+    }
+  }
+}
+// const getBlockDetailsIterator = {
+//   async *[Symbol.asyncIterator]() {
+//     for (let i = 0; i < this.length; i += 1) {
+//       console.log(this[i])
+//       const blockname = this[i].name
+//       try {
+//         const res = await getBlockDetails(blockname)
+//         if (res.data.err) throw new Error('Some error at backend')
+//         yield res.data.data
+//       } catch (err) {
+//         yield null
+//       }
+//     }
+//   },
+// }
 
 module.exports = SyncCore

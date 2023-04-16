@@ -6,6 +6,29 @@
  */
 
 /**
+ * @typedef {object} offerAndCreateBlockFnReturn
+ * @property {String} oldPath Path received
+ * @property {boolean} registered True if new block created from existing one
+ * @property {boolean} copied True if all old block files are copied
+ * @property {string} directory new directory path
+ * @property {boolean} sourcemismatch
+ * @property {string} name Old name
+ * @property {string} newName New name
+ * @property {{detailsInRegistry:import('./jsDoc/types').dependecyMetaShape,localBlockConfig:import('./jsDoc/types').dependecyMetaShape}} data
+ */
+
+/**
+ * @typedef {object} report
+ * @property {String} oldPath Path received
+ * @property {boolean} registered True if new block created from existing one
+ * @property {boolean} copied True if all old block files are copied
+ * @property {string} directory new directory path
+ * @property {boolean} sourcemismatch
+ * @property {string} name Old name
+ * @property {string} newName New name
+ * @property {{detailsInRegistry:import('./jsDoc/types').dependecyMetaShape,localBlockConfig:import('./jsDoc/types').dependecyMetaShape}} data
+ */
+/**
  * @typedef {Object} appConfigInitOptions
  * @property {Boolean} reConfig Regenerate config ( default: returns the config in memory)
  * @property {Boolean} isGlobal Is the command invoked with global flag
@@ -43,10 +66,18 @@
  * @property {String} language Language
  * @property {String} postPull Post pull command
  * @property {blockSource} source Source of block
+ * @property {Array<string>} supportedAppblockVersions
+ * @property {String} blockId
  */
 
 /**
  * @typedef {Object.<string,dependencyShape>} dependencies
+ */
+
+/**
+ * @typedef {Object} block_author
+ * @property {String} user_name
+ * @property {Number} author_type
  */
 
 /**
@@ -57,19 +88,24 @@
 
 /**
  * @typedef {Object} blockDetailsdataFromRegistry
- * @property {String} CreatedAt
- * @property {String} UpdatedAt
- * @property {String|null} DeletedAt
- * @property {String} ID
- * @property {Number} BlockType
- * @property {String} BlockName
- * @property {String} BlockShortName
- * @property {String} BlockDesc
- * @property {Boolean} IsPublic
- * @property {String} GitUrl
- * @property {Number} Lang
- * @property {Number} Status
- * @property {Boolean} Verified
+ * @property {String}  id
+ * @property {Number} block_type
+ * @property {String} block_name
+ * @property {String} block_short_name
+ * @property {String} block_desc
+ * @property {Number} block_visibility
+ * @property {String} git_url
+ * @property {Number} status
+ * @property {String} updated_at
+ * @property {String} created_at
+ * @property {Boolean} verified
+ * @property {String} block_version_id
+ * @property {String} block_version_number
+ * @property {String} appblock_version_id
+ * @property {String} appblock_version
+ * @property {String} appblock_version_name
+ * @property {Array<block_author>} block_authors
+ * @property {Array|null} child_blocks
  */
 
 /**

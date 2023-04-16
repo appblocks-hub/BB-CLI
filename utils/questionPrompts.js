@@ -243,6 +243,7 @@ function wantToCreateNewVersion(name) {
       type: 'confirm',
       name: 'createNewBlockFrom',
       message: `Do you wish to create a new block from ${name}?`,
+      default: false,
     })
     .then((ans) => ans.createNewBlockFrom)
 }
@@ -257,9 +258,13 @@ function wouldLikeToRegisterTemplateBlocksAsNewBlock() {
     .then((ans) => ans.registerTemplateAsNew)
 }
 
-function getGitConfigNameEmail() {
+function getGitConfigNameEmail(defaultContinue) {
   const localGitName = configstore.get('localGitName', '')
   const localGitEmail = configstore.get('localGitEmail', '')
+
+  if (defaultContinue && localGitName && localGitEmail) {
+    return { gitUserEmail: localGitEmail, gitUserName: localGitName }
+  }
 
   const questions = [
     {

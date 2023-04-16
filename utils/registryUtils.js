@@ -5,7 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const axios = require('axios')
+// const axios = require('axios')
+const { axios } = require('./axiosInstances')
 const { configstore } = require('../configstore')
 const {
   appBlockGetBlockDetails,

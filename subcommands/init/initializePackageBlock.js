@@ -9,7 +9,7 @@
 const path = require('path')
 const chalk = require('chalk')
 const { createFileSync, isDirEmpty } = require('../../utils/fileAndFolderHelpers')
-const { getBlockName } = require('../../utils/questionPrompts')
+const { getBlockName, readInput } = require('../../utils/questionPrompts')
 const createBlock = require('../../utils/createBlock')
 const checkBlockNameAvailability = require('../../utils/checkBlockNameAvailability')
 const { checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
@@ -24,7 +24,8 @@ const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
 const { getAppblockVersionData } = require('../publish/util')
 
 const initializePackageBlock = async (appblockName, options) => {
-  const { autoRepo } = options
+  const { autoRepo, repositoryType } = options
+  let repoType = repositoryType
   let componentName = appblockName
   if (!isValidBlockName(componentName)) {
     feedback({ type: 'warn', message: `${componentName} is not a valid name (Only snake case with numbers is valid)` })
@@ -33,6 +34,19 @@ const initializePackageBlock = async (appblockName, options) => {
 
   // ========= appblockVersion ========================
   const { appblockVersions } = await getAppblockVersionData()
+
+  //
+  if (!repoType) {
+    repoType = await readInput({
+      type: 'list',
+      name: 'repoType',
+      message: 'Select the repository type',
+      choices: [
+        { name: 'Mono Repo', value: 'mono' },
+        { name: 'Multi Repo', value: 'multi' },
+      ],
+    })
+  }
 
   const availableName = await checkBlockNameAvailability(componentName)
 
@@ -85,6 +99,7 @@ const initializePackageBlock = async (appblockName, options) => {
     blockId,
     source: blockSource,
     supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
+    repoType
   })
 
   await checkAndSetGitConfigNameEmail(blockFinalName)
@@ -103,6 +118,7 @@ const initializePackageBlock = async (appblockName, options) => {
     blockId,
     name: blockFinalName,
     rootPath: path.resolve(blockFinalName),
+    repoType
   }
 
   await initializeSpaceToPackageBlock(blockFinalName, blockId)

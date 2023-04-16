@@ -160,16 +160,24 @@ function gitPushAllIn(dir) {
   })
 }
 
+function tryStageRestore(dir) {
+  try {
+    execSync(`git restore --stage .`, { stdio: 'pipe', cwd: dir }).toString()
+  } catch (err) {
+    // console.log('Something went wrong while tryig to unstage\n', err)
+    // throw new Error('git unstage failed in gitStageAllIn')
+    // console.log(err.stderr.toString().trim())
+    if (err.stderr.toString().trim() === 'fatal: could not resolve HEAD') {
+      return
+    }
+    throw new GitError(dir, err.message.split('\n')[0], false, 'restore', ['--stage'])
+  }
+}
+
 function gitStageAllIn(dir) {
   return new Promise((res, rej) => {
     if (isGitRepo(dir)) {
-      try {
-        execSync(`cd ${dir} && git restore --stage .`, { stdio: 'ignore' })
-      } catch (err) {
-        // console.log('Something went wrong while tryig to unstage\n', err)
-        // throw new Error('git unstage failed in gitStageAllIn')
-        throw new GitError(dir, err.message.split('\n')[0], false, 'restore', ['--stage'])
-      }
+      tryStageRestore(dir)
       exec(`cd ${dir} && git add -A --verbose`, (err, stdout) => {
         if (err === null) {
           if (stdout.trim() === '') {
@@ -202,6 +210,9 @@ function gitCommitWithMsg(dir, msg) {
           res('')
         } else if (err.code === 1 && stdout.indexOf('nothing to commit') > -1) {
           res('')
+        } else if (err.code === 1 && err.message.indexOf('husky') > -1) {
+          const error = err.message.slice(err.message.indexOf('husky'), err.message.indexOf('(error)'))
+          rej(new GitError(dir, error, false, 'commit', ['-m']))
         } else {
           rej(new GitError(dir, err.message.split('\n')[0]), false, 'commit', ['-m'])
         }

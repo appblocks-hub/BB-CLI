@@ -38,6 +38,10 @@ cmd('connect', 'to connect github')
 
 cmd('create', 'to create a new block')
 
+cmd('create-temp', 'to create a new block')
+
+cmd('create-v2', 'to create a new block v2')
+
 cmd('create-app', 'register app for deploy')
 
 cmd('create-version', 'Create version for block')

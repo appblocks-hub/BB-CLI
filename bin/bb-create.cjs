@@ -13,20 +13,16 @@ const { blockTypes } = require('../utils/blockTypes')
 const create = require('../subcommands/create')
 
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 
-const program = new Command().hook('preAction', async (_, actionCommand) => {
-  const noRepo = !actionCommand._optionValues?.repo
+const program = new Command().hook('preAction', async () => {
+  // const noRepo = !actionCommand._optionValues?.repo
   if (!isGitInstalled()) {
     console.log('Git not installed')
     process.exitCode = 1
     return
   }
-  await ensureUserLogins(noRepo)
   await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference()
 })
 
 program
@@ -34,12 +30,7 @@ program
   .allowExcessArguments(false)
   .addOption(
     new Option('-t, --type <component-type>', 'type  of comp')
-      .choices(
-        blockTypes.reduce((acc, v) => {
-          if (v[0] !== 'package') return acc.concat(v[0])
-          return acc
-        }, [])
-      )
+      .choices(blockTypes.filter((d) => d[0] !== 'package'))
       .argParser((s) => blockTypeInverter(s))
   )
   .option('--no-autoRepo')

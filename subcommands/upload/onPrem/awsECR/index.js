@@ -9,7 +9,7 @@ const { spinnies } = require('../../../../loader')
 const { ecrHandler } = require('../../../../utils/aws/ecr')
 const { getBBConfig } = require('../../../../utils/config-manager')
 const { copyEmulatorCode } = require('../../../../utils/emulator-manager')
-const { generateRootPackageJsonFile, generateDockerFile } = require('./util')
+const { generateRootPackageJsonFile, generateDockerFile, beSingleBuildDeployment } = require('./util')
 
 const onPremECRUpload = async (options) => {
   const { appData, envData, config, deployConfigManager } = options
@@ -18,7 +18,7 @@ const onPremECRUpload = async (options) => {
 
   try {
     const { app_id: appId, app_name: appName } = appData
-    const { environment_id: envId } = envData
+    const { environment_id: envId, environment_name: envName } = envData
 
     const container = {
       // eslint-disable-next-line no-useless-escape
@@ -33,12 +33,22 @@ const onPremECRUpload = async (options) => {
     let ecrData = deployedData.aws_ecr
 
     let { dependencies } = await getBBConfig()
+    if (!config.blocks) {
+      config.blocks = Object.values(dependencies)
+        .filter((b) => ['function', 'shared-fn'].includes(b.meta.type))
+        .map((b) => b.meta.name)
+    }
+
     dependencies = Object.values(dependencies).filter((d) => config.blocks.includes(d.meta.name))
 
     const container_ports = [container.port]
-    await copyEmulatorCode(container_ports, dependencies)
-    generateRootPackageJsonFile({ appName, dependencies })
-    generateDockerFile({ ports: container_ports, dependencies })
+    if (config.singleBuildDeployment) {
+      await beSingleBuildDeployment({ container_ports, dependencies, appName, config, env: envName })
+    } else {
+      await copyEmulatorCode(container_ports, dependencies)
+      generateRootPackageJsonFile({ appName, dependencies })
+      generateDockerFile({ ports: container_ports, dependencies, envName })
+    }
 
     if (!ecrData?.repositoryUri) {
       spinnies.add('ecrup', { text: `Creating image container registry for ${container.name}` })

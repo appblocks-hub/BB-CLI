@@ -4,7 +4,7 @@ const generateUiElementWebpack = (name) => `
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import path from 'path'
 import webpack from 'webpack'
-import exposed from './federation-expose.js'
+import exposed from './federation-expose'
 
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 

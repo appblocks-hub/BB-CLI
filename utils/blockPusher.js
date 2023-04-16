@@ -14,18 +14,20 @@ const { readFileSync } = require('fs')
 const traverse = require('@babel/traverse').default
 
 class BlockPusher {
-  constructor(block, bar) {
+  constructor(block, bar, nologs) {
     this.blockMeta = block
     this.blockPath = block.directory
     this.blockName = block.meta.name
     this.blockSource = block.meta.source
     this.blockType = block.meta.type
-    this.progress = bar.create(10, 0, {
-      // TODO -- change this to a dynamic bar, so no need to give the length(10) here
-      // it could be any number
-      status: 'starting..',
-      block: this.blockName,
-    })
+    this.progress = nologs
+      ? null
+      : bar.create(10, 0, {
+          // TODO -- change this to a dynamic bar, so no need to give the length(10) here
+          // it could be any number
+          status: 'starting..',
+          block: this.blockName,
+        })
     this.report = { name: this.blockName, data: { message: '', type: '' } }
   }
 
@@ -59,9 +61,9 @@ class BlockPusher {
           this.report.data = {
             message: `Failed to push ${chalk.whiteBright(this.blockName)}.\nFunction should export handler as default.`,
           }
-          this.progress.update({ status: 'failed', ...payload })
+          this.progress?.update({ status: 'failed', ...payload })
           this.report.data.type = 'error'
-          this.progress.stop()
+          this.progress?.stop()
           rej(this.report)
           return
         }
@@ -71,7 +73,7 @@ class BlockPusher {
       this.child.on('message', ({ failed, message, errorCode }) => {
         this.report.data = { message, type: 'success' }
         if (!failed) {
-          this.progress.increment(1, { status: message, ...payload })
+          this.progress?.increment(1, { status: message, ...payload })
           return
         }
         if (errorCode) {
@@ -90,21 +92,21 @@ class BlockPusher {
       })
       this.child.on('exit', (code) => {
         if (code === 1) {
-          this.progress.update({ status: 'failed', ...payload })
-          this.progress.stop()
+          this.progress?.update({ status: 'failed', ...payload })
+          this.progress?.stop()
           this.report.data.type = 'error'
           rej(this.report)
           return
         }
         if (code === 2) {
-          this.progress.update(10, { status: 'warning', ...payload })
-          this.progress.stop()
+          this.progress?.update(10, { status: 'warning', ...payload })
+          this.progress?.stop()
           this.report.data.type = 'warn'
           rej(this.report)
           return
         }
-        this.progress.update(10, { status: 'success', ...payload })
-        this.progress.stop()
+        this.progress?.update(10, { status: 'success', ...payload })
+        this.progress?.stop()
         res(this.report)
       })
       // send a msg to start
