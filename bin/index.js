@@ -60,10 +60,11 @@ const getBlockUpdate = require('../subcommands/getBlockUpdate')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const desc = require('./bb_command_descriptions')
 const setAppblockVersion = require('../subcommands/setAppblockVersion')
+const tempMigrate = require('../subcommands/tempMigrate')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
-process.global = { cwd: process.cwd() }
+process.global = { cwd: process.cwd() } 
 
 // eslint-disable-next-line no-unused-vars
 function configSetOptionParse(value, _) {
@@ -148,6 +149,9 @@ async function init() {
   program.command('flush').description(desc.flush).action(flush)
 
   program.command('ls').description(desc.ls).option('-g, --global', 'execute globally').action(ls)
+
+  program.command('temp-migrate').description("").option('-g, --global', 'execute globally').action(tempMigrate)
+
 
   program
     .command('create-version')

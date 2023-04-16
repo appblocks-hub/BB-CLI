@@ -80,6 +80,12 @@ cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
 
+cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
+
+cmd('temp-push', 'Temporary Push command')
+
+cmd('temp-pull', 'Temporary Pull command')
+
 cmd('stop-job', 'Stop the job')
 
 cmd('sync', 'To sync all blocks')
