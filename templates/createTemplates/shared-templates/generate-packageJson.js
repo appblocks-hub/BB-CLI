@@ -1,10 +1,9 @@
-const generatePackageJson = (name) => `{
+const generateSharedFunctionPackageJson = (name) => `{
     "name": "${name}",
     "version": "0.0.1",
-    "description": "",
     "main": "index.js",
     "scripts": {
-      "start": "node index.js --port=3000",
+      "start": "node index.js",
       "prepare": "npx husky install",
       "test": "npx jest",
       "lint:fix": "npx eslint *.js --fix",
@@ -18,12 +17,8 @@ const generatePackageJson = (name) => `{
       ]
     },
     "type": "module",
-    "keywords": [],
-    "author": "",
     "license": "ISC",
-    "dependencies": {
-      "express": "^4.17.3"
-     },
+    "dependencies": {},
     "devDependencies":{
       "@types/node":"16.9.6",
       "@types/eslint":"7.28.1",
@@ -42,8 +37,7 @@ const generatePackageJson = (name) => `{
     }
   }
 `
-
-const generatePackageJsonWithoutLint = (name) => `{
+const generateSharedFunctionPackageJsonWithoutLint = (name) => `{
   "name": "${name}",
   "version": "0.0.1",
   "main": "index.js",
@@ -59,4 +53,4 @@ const generatePackageJsonWithoutLint = (name) => `{
 }
 `
 
-module.exports = { generatePackageJson, generatePackageJsonWithoutLint }
+module.exports = { generateSharedFunctionPackageJson, generateSharedFunctionPackageJsonWithoutLint }

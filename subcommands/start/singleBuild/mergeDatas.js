@@ -52,7 +52,7 @@ const mergeFederationExpose = async (fedExData, dir) => {
   return exposedJs
 }
 
-const mergeAllDatas = async (elementBlocks, emEleFolder, env, depLib) => {
+const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
   const mergedPackages = { dependencies: {}, devDependencies: {} }
   let mergedEnvs = {}
   let mergedFeds = {}
@@ -87,7 +87,7 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env, depLib) => {
         const processedFeds = await mergeFederationExpose(fedExData, dir)
         mergedFeds = { ...mergedFeds, ...processedFeds }
 
-        const processedEnvData = await mergeEnvs(path.join(directory, env), name)
+        const processedEnvData = await mergeEnvs(path.join(directory, '.env'), name)
         mergedEnvs = { ...mergedEnvs, ...processedEnvData }
       } catch (err) {
         errorBlocks.push(name)
@@ -99,11 +99,10 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, env, depLib) => {
   return { mergedPackages, mergedEnvs, mergedFeds, errorBlocks }
 }
 
-const mergeDatas = async (elementBlocks, emEleFolder, depLib, env = '.env') => {
+const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
   const { mergedPackages, mergedEnvs, mergedFeds, errorBlocks } = await mergeAllDatas(
     elementBlocks,
     emEleFolder,
-    env,
     depLib
   )
 
@@ -120,7 +119,6 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env = '.env') => {
     const fedExData = await import(path.join(directory, 'federation-expose.js'))
     const processedFeds = await mergeFederationExpose(fedExData, depLib.directory)
     mergedFedExposes = { ...mergedFedExposes, ...processedFeds }
-
   } else {
     dependencies = updatePackageVersionIfNeeded(mergedPackages.dependencies)
     devDependencies = updatePackageVersionIfNeeded(mergedPackages.devDependencies)
@@ -142,8 +140,15 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env = '.env') => {
   }
   writeFileSync(path.join(emEleFolder, 'package.json'), JSON.stringify(packageJson, null, 2))
 
-  const processedEnvData = await mergeEnvs(path.resolve('.env.view'))
-  const mergedEnvsData = { ...mergedEnvs, ...processedEnvData }
+  let envPath = path.resolve(`.env.view.${env}`)
+  let mergedEnvsFromDotEnv = mergedEnvs
+  if (!existsSync(envPath)) {
+    envPath = path.resolve('.env.view')
+  } else {
+    mergedEnvsFromDotEnv = {}
+  }
+  const processedEnvData = await mergeEnvs(envPath)
+  const mergedEnvsData = { ...mergedEnvsFromDotEnv, ...processedEnvData }
   const envData = Object.entries(mergedEnvsData).reduce((acc, [key, val]) => `${acc}${key}=${val}\n`, '')
   writeFileSync(path.join(emEleFolder, '.env'), envData)
 
@@ -157,4 +162,5 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env = '.env') => {
 
 module.exports = {
   mergeDatas,
+  updatePackageVersionIfNeeded,
 }

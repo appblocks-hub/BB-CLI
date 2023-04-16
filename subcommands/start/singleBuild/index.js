@@ -14,7 +14,7 @@ const { mergeDatas } = require('./mergeDatas')
 const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
 const { spinnies } = require('../../../loader')
 
-const singleBuild = async ({ appConfig, ports, buildOnly = false }) => {
+const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
   const relativePath = path.resolve()
 
   try {
@@ -40,7 +40,7 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false }) => {
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
     spinnies.update('singleBuild', { text: `Merging elements` })
-    const errorBlocks = await mergeDatas(elementBlocks, emEleFolder, depLib)
+    const errorBlocks = await mergeDatas(elementBlocks, emEleFolder, depLib, env)
 
     spinnies.update('singleBuild', { text: `Installing dependencies for elements emulator` })
     await packageInstall(emEleFolder, elementBlocks)
