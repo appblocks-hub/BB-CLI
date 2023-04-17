@@ -403,7 +403,7 @@ async function getGitRepoVisibility() {
     type: 'list',
     name: 'visibility',
     message: 'visibility of repo',
-    choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: true }],
+    choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: false }],
   }
   return inquirer
     .prompt([question])
