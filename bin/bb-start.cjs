@@ -8,8 +8,8 @@
  */
 
 const { Command } = require('commander')
-// const start = require('../subcommands/start')
-const start = require('../subcommands/startV2')
+const start = require('../subcommands/start')
+// const start = require('../subcommands/startV2')
 const { checkLogDirs } = require('../utils/preActionMethods/preAction-start')
 
 const program = new Command().hook('preAction', async () => {
