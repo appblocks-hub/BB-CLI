@@ -46,8 +46,6 @@ const tempMigrate = async (options) => {
     const rootConfig = appConfig.config
     const rootPath = process.cwd()
 
-    console.log(configstore)
-
     // removing .git from the root package block
 
     if (existsSync(`${rootPath}/.git`)) {
@@ -153,13 +151,13 @@ const tempMigrate = async (options) => {
 
     // initialising git for new main branch creation and pushing
 
-    const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
-    await checkAndSetGitConfigNameEmail(rootPath, { gitUserEmail, gitUserName })
-    console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
-
     const Git = new GitManager(rootPath, 'Git instance for migrate', url, false)
 
     await Git.init()
+
+    const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+    await checkAndSetGitConfigNameEmail(rootPath, { gitUserEmail, gitUserName })
+    console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
 
     await Git.addRemote('origin', url)
 
