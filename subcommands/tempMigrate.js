@@ -11,7 +11,7 @@ const { GitManager } = require('../utils/gitmanager')
 const { appConfig } = require('../utils/appconfigStore')
 const appconfigStore = require('../utils/appconfigStore')
 const { configstore } = require('../configstore')
-const { readInput } = require('../utils/questionPrompts')
+const { readInput,getGitRepoVisibility, getGitRepoDescription } = require('../utils/questionPrompts')
 const { githubGraphQl } = require('../utils/api')
 const { isInRepo } = require('../utils/Queries')
 const { createRepository } = require('../utils/Mutations')
@@ -78,6 +78,19 @@ const tempMigrate = async (options) => {
       )
 
       const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
+
+
+      if (!existingRepoData.description){
+        const repoDescription = await getGitRepoDescription()
+
+        existingRepoData.description=repoDescription
+      }
+
+      if(!existingRepoData.visibility){
+        const repoVisibility =  await getGitRepoVisibility()
+
+        existingRepoData.visibility=repoVisibility
+      }
 
       // console.log(BLOCKNAME)
       const { data: innerData } = await axios.post(
