@@ -14,7 +14,7 @@ const { readInput } = require('../../../../utils/questionPrompts')
 const { runBash } = require('../../../bash')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 
-const generateDockerFile = ({ ports, dependencies, version, env }) => {
+const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   // eslint-disable-next-line no-param-reassign
   if (!version) version = process.version.replace('v', '')
 
@@ -22,6 +22,7 @@ const generateDockerFile = ({ ports, dependencies, version, env }) => {
 
   const addPackageManager = `RUN npm install -g pnpm@7.9.0`
   const runPackageManager = `RUN pnpm i`
+  const beforeDockerStartCommand = config.beforeDockerStartCommand?.length > 0 ? config.beforeDockerStartCommand : []
 
   const fileData = `
   #syntax=docker/dockerfile:1
@@ -48,6 +49,8 @@ const generateDockerFile = ({ ports, dependencies, version, env }) => {
   
   RUN npm install pm2 -g
   
+  ${beforeDockerStartCommand.map((c) => c).join('\n')}
+
   # USER node
   
   CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
@@ -131,7 +134,7 @@ const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) 
   spinnies.remove('singleBuild')
 }
 
-const generateDockerFileSingleBuild = ({ ports, dependencies, version, env }) => {
+const generateDockerFileSingleBuild = ({ ports, dependencies, version, env, config }) => {
   // eslint-disable-next-line no-param-reassign
   if (!version) version = process.version.replace('v', '')
 
@@ -140,39 +143,42 @@ const generateDockerFileSingleBuild = ({ ports, dependencies, version, env }) =>
   const addPackageManager = `RUN npm install -g pnpm@7.9.0`
   const runPackageManager = `RUN pnpm i`
 
+  const beforeDockerStartCommand = config.beforeDockerStartCommand?.length > 0 ? config.beforeDockerStartCommand : []
+
   const fileData = `
-  #syntax=docker/dockerfile:1
-  FROM --platform=linux/amd64 node:${version}-alpine
-  
-  RUN apk --no-cache add git
-  
-  # ${addPackageManager}
-  
-  ENV NODE_ENV production
-  
-  WORKDIR .
-  
-  COPY ._ab_em ./._ab_em/
-  ${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
-  COPY ${envPath} .env.function
-  COPY block.config.json .
-  
-  WORKDIR ./._ab_em/
+#syntax=docker/dockerfile:1
+FROM --platform=linux/amd64 node:${version}-alpine
 
-  # ${runPackageManager}
-  RUN node setSymlink.js
+RUN apk --no-cache add git
 
-  WORKDIR ../
-  
-  EXPOSE ${ports}
-  
-  RUN npm install pm2 -g
-  
-  # USER node
-  
-  CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
-  
-  `
+# ${addPackageManager}
+
+ENV NODE_ENV production
+
+WORKDIR .
+
+COPY ._ab_em ./._ab_em/
+${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
+COPY ${envPath} .env.function
+COPY block.config.json .
+
+WORKDIR ./._ab_em/
+# ${runPackageManager}
+RUN node setSymlink.js
+WORKDIR ../
+
+EXPOSE ${ports}
+
+RUN npm install pm2 -g
+
+# Before docker start
+${beforeDockerStartCommand.map((c) => c).join('\n')}
+
+# USER node
+
+CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
+
+`
   writeFileSync('./Dockerfile', fileData)
 }
 
@@ -204,20 +210,23 @@ await Promise.all(
   writeFileSync(path.join(emulatorPath, 'setSymlink.js'), setSymlinkCodeData)
 }
 
-const generateDockerIgnoreFileSingleBuild = (dependencies) => {
-  const fileData = Object.values(dependencies)
-    .map((d) => path.join(d.directory, 'node_modules'))
-    .join('\n')
-  writeFileSync('.dockerignore', fileData)
+const generateDockerIgnoreFileSingleBuild = (dependencies, config) => {
+  let fileData = Object.values(dependencies).map((d) => path.join(d.directory, 'node_modules'))
+
+  if (config.dockerIgnore?.length > 0) {
+    fileData = fileData.concat(config.dockerIgnore)
+  }
+
+  writeFileSync('.dockerignore', fileData.join('\n'))
 }
 
-const beSingleBuildDeployment = async ({ container_ports, dependencies, env }) => {
+const beSingleBuildDeployment = async ({ container_ports, dependencies, env, config }) => {
   const emulatorPath = '._ab_em'
   await copyEmulatorCode(container_ports, dependencies)
   await setSymlinkCode(dependencies, emulatorPath)
   await updateEmulatorPackageSingleBuild({ dependencies, emulatorPath })
-  generateDockerIgnoreFileSingleBuild(dependencies)
-  generateDockerFileSingleBuild({ ports: container_ports, dependencies, env })
+  generateDockerIgnoreFileSingleBuild(dependencies, config)
+  generateDockerFileSingleBuild({ ports: container_ports, dependencies, env, config })
 }
 
 module.exports = {
