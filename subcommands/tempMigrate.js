@@ -79,6 +79,33 @@ const tempMigrate = async (options) => {
 
       const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
+
+      if (!existingRepoData.description){
+        const repoDescription = await readInput({
+          name: 'repoDescription',
+          message: 'Enter the repository description',
+          validate: (input) => {
+            if (!input || input?.length < 3) return `Please enter the repository name with atleast 3 characters`
+            return true
+          },
+        })
+
+        existingRepoData.description=repoDescription
+      }
+
+      if(!existingRepoData.visibility){
+        const repoVisibility =  await readInput({
+          name: 'repoVisibility',
+          message: 'Enter the repository visibility  (PRIVATE or PUBLIC)',
+          validate: (input) => {
+            if (!input || (input!=="PRIVATE"|| input!=="PUBLIC")) return `Please enter either PRIVATE or PUBLIC`
+            return true
+          },
+        })
+
+        existingRepoData.visibility=repoVisibility
+      }
+
       // console.log(BLOCKNAME)
       const { data: innerData } = await axios.post(
         githubGraphQl,

@@ -255,12 +255,12 @@ query ($first:Int,$last:Int,$before:String,$after:String,) {
 }`
 
 const existingRepoData =( { data: { data } }) => {
-  const isInorg = data.user.repository.isInOrganization
+  const isInorg = data?.user?.repository?.isInOrganization
   return {
     isInorg,
-    ownerId:isInorg?data.organization.id:data.user.id,
-    visibility:data.user.repository.visibility,
-    description:data.user.repository.description
+    ownerId:isInorg?data?.organization?.id:data?.user?.id,
+    visibility:data?.user?.repository?.visibility,
+    description:data?.user?.repository?.description
   }}
 
 
