@@ -280,6 +280,46 @@ const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
   }
 }`
 
+/**
+ * @template K,D
+ * @typedef {Record<K,D>} graphData
+ */
+/**
+ * @template E
+ * @typedef {Array<E>} graphErrors
+ */
+/**
+ * @template T,I
+ * @typedef {object} gitGraphResponseData
+ * @property {graphData<'user',T>} data
+ * @property {graphErrors<I>} errors
+ */
+
+/**
+ * @typedef {object} user
+ * @property {string} id ID of user
+ * @property {string} name Name of user (same as the name passed)
+ * @property {{id:string}?} repository Will be null, if repository with the passed name doesn't exist. Else returns ID
+ */
+/**
+ * @typedef {gitGraphResponseData<user,''>} isRepoNameAvailableReturn
+ */
+/**
+ *
+ * @param {AxiosResponse<isRepoNameAvailableReturn>} param0
+ * @returns
+ */
+const isRepoNameAvailableTr = ({ data: { data } }) => !data.user.repository
+const isRepoNameAvailable = ` query ($user:String!,$search:String!) {
+  user(login: $user) {
+    id
+    name
+    repository(name: $search) {
+      id
+    }
+  }
+}`
+
 module.exports = {
   listVersions: { Q: listVersions, Tr: listVersionsTr },
   listFlavours: { Q: listFlavours, Tr: listFlavoursTR },
@@ -293,5 +333,28 @@ module.exports = {
   userOrgs: { Q: userOrgs, Tr: userOrgsTR },
   appBlockRepos: { Q: appBlockRepos, Tr: appBlockReposTR },
   orgTeams: { Q: listTeams, Tr: listTeamsTr },
-  isInRepo:{Q:isInRepo,Tr:existingRepoData}
+  isInRepo: { Q: isInRepo, Tr: existingRepoData },
+  isRepoNameAvailable: { Q: isRepoNameAvailable, Tr: isRepoNameAvailableTr },
 }
+
+// const isInRepoTr = ({ data: { data } }) => {
+//   const isInorg = data.user.repository.isInOrganization
+//   return {
+//     isInorg,
+//     ownerId: isInorg ? data.organization.id : data.user.id,
+//   }
+// }
+
+// const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
+//     user(login: $user) {
+//       id
+//       name
+//       repository(name: $reponame) {
+//         id
+//         isInOrganization
+//       }
+//       organization(login: $orgname){
+//         id
+//       }
+//     }
+//   }`

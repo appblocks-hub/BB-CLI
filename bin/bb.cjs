@@ -24,6 +24,8 @@ program.version(packageJson.version)
 
 const cmd = program.command.bind(program)
 
+// cmd('test', 'to tests')
+
 cmd('add-categories', 'block assign categories to blocks')
 
 cmd('add-tags', 'block add tags')

@@ -146,4 +146,14 @@
  * @property  {Array<roleDetails>} roles
  */
 
+/**
+ * @typedef {array<string>} cmdStartArgs
+ *
+ */
+
+/**
+ * @typedef {object} cmdStartOptions
+ * @property {boolean} usePnpm sdasda
+ */
+
 module.exports = {}
