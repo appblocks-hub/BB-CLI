@@ -2,37 +2,11 @@
  * Action for bb-start
  */
 
-const { readFile } = require('fs/promises')
-const path = require('path')
 const { AsyncSeriesHook, AsyncSeriesBailHook, AsyncSeriesWaterfallHook } = require('tapable')
+const { findMyParentPackage } = require('../../utils')
 // eslint-disable-next-line no-unused-vars
 const { AppblockConfigManager } = require('../../utils/appconfig-manager')
 const { appConfig } = require('../../utils/appconfigStore')
-
-/**
- * TODO: this should happen in appConfig.init()
- * Finds a package for the current block by moving up the dir tree
- * @param {string} name block name
- * @param {string} dirPath block path
- */
-const findMyParentPackage = async (name, myPath, filename) => {
-  let parentPackageFound = false
-  let parentPackageConfig
-  let currentPath = myPath
-  let parent = path.dirname(currentPath)
-  for (; parent !== currentPath && !parentPackageFound; currentPath = parent, parent = path.dirname(parent)) {
-    const { data, err } = await readJsonAsync(path.join(parent, filename))
-    if (err) continue
-    if (data.type !== 'package') continue
-    if (!Object.prototype.hasOwnProperty.call(data.dependencies, name)) continue
-    parentPackageFound = true
-    parentPackageConfig = { ...data }
-  }
-  return {
-    data: { parent, parentPackageConfig },
-    err: currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
-  }
-}
 
 /**
  * What does start do?
@@ -142,7 +116,7 @@ class StartCore {
    * the group should look like
    * {...
    *  function:[
-   *    {addTodo...},{pck12/addTodo},{pck13/addtTodo}
+   *    {addTodo...},{pck12/addTodo},{pck13/addTodo}
    *  ]
    * }
    * By doing it like this, later in bb start, fn emulator can set this as path
@@ -201,7 +175,7 @@ class StartCore {
   }
 
   /**
-   * Frees the uused locked ports
+   * Frees the used locked ports
    */
   async cleanUp() {
     for (const { blocks } of this.blockGroups) {
@@ -214,14 +188,4 @@ class StartCore {
   }
 }
 
-async function readJsonAsync(s) {
-  if (typeof s !== 'string') return { data: null, err: true }
-  try {
-    const file = await readFile(s)
-    const data = JSON.parse(file)
-    return { data, err: null }
-  } catch (err) {
-    return { data: null, err }
-  }
-}
 module.exports = StartCore
