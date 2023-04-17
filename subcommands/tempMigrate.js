@@ -6,17 +6,22 @@
  */
 
 const { resolve } = require('path')
-const { unlinkSync, rmSync, existsSync, writeFileSync } = require('fs')
+const { rmSync, existsSync, writeFileSync } = require('fs')
+const { default: axios } = require('axios')
 const { GitManager } = require('../utils/gitmanager')
 const { appConfig } = require('../utils/appconfigStore')
-const appconfigStore = require('../utils/appconfigStore')
 const { configstore } = require('../configstore')
-const { readInput,getGitRepoVisibility, getGitRepoDescription } = require('../utils/questionPrompts')
+const {
+  readInput,
+  getGitRepoVisibility,
+  getGitRepoDescription,
+  getGitConfigNameEmail,
+} = require('../utils/questionPrompts')
 const { githubGraphQl } = require('../utils/api')
 const { isInRepo } = require('../utils/Queries')
 const { createRepository } = require('../utils/Mutations')
-const { default: axios } = require('axios')
 const { getGitHeader } = require('../utils/getHeaders')
+const { checkAndSetGitConfigNameEmail } = require('../utils/gitCheckUtils')
 
 /**
  * @typedef {object} _p1
@@ -41,16 +46,16 @@ const tempMigrate = async (options) => {
     const rootConfig = appConfig.config
     const rootPath = process.cwd()
 
-    //removing .git from the root package block
+    // removing .git from the root package block
 
-    if (existsSync(rootPath + '/.git')) {
-      rmSync(rootPath + '/.git', { recursive: true })
+    if (existsSync(`${rootPath}/.git`)) {
+      rmSync(`${rootPath}/.git`, { recursive: true })
     }
 
-    //removing .git from all the member blocks
+    // removing .git from all the member blocks
     for (const block of appConfig.getDependencies(true)) {
-      //finding out the path of each member block and deleting the .git file inside the member block folder
-      blockGitFilePath = resolve(rootPath + '/' + block.directory + '/.git')
+      // finding out the path of each member block and deleting the .git file inside the member block folder
+      const blockGitFilePath = resolve(`${rootPath}/${block.directory}/.git`)
 
       if (existsSync(blockGitFilePath)) {
         rmSync(blockGitFilePath, { recursive: true })
@@ -79,17 +84,16 @@ const tempMigrate = async (options) => {
 
       const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
-
-      if (!existingRepoData.description){
+      if (!existingRepoData.description) {
         const repoDescription = await getGitRepoDescription()
 
-        existingRepoData.description=repoDescription
+        existingRepoData.description = repoDescription
       }
 
-      if(!existingRepoData.visibility){
-        const repoVisibility =  await getGitRepoVisibility()
+      if (!existingRepoData.visibility) {
+        const repoVisibility = await getGitRepoVisibility()
 
-        existingRepoData.visibility=repoVisibility
+        existingRepoData.visibility = repoVisibility
       }
 
       // console.log(BLOCKNAME)
@@ -138,18 +142,22 @@ const tempMigrate = async (options) => {
 
     const { url, sshUrl } = createRepository.Tr(data)
 
-    //updating config using write file sync
+    // updating config using write file sync
 
     rootConfig.source.https = url
     rootConfig.source.ssh = sshUrl
 
     writeFileSync('./block.config.json', JSON.stringify(rootConfig), { encoding: 'utf8', flag: 'w' })
 
-    //initialising git for new main branch creation and pushing
+    // initialising git for new main branch creation and pushing
 
     const Git = new GitManager(rootPath, 'Git instance for migrate', url, false)
 
     await Git.init()
+
+    const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+    await checkAndSetGitConfigNameEmail(rootPath, { gitUserEmail, gitUserName })
+    console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
 
     await Git.addRemote('origin', url)
 

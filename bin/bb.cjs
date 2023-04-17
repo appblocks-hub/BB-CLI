@@ -86,6 +86,8 @@ cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
 
+cmd('temp-init', 'temporary init command')
+
 cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
 
 cmd('temp-push', 'Temporary Push command')

@@ -16,7 +16,7 @@ async function setupTemplateV2(options) {
 
   await cp(templatesPath, DIRPATH, { recursive: true })
   await writeFile(path.join(DIRPATH, 'block.config.json'), JSON.stringify(b, null, 2))
-  await writeFile(path.join(DIRPATH, '.gitignore'), 'node_modules\n')
+  // await writeFile(path.join(DIRPATH, '.gitignore'), 'node_modules\n')
 }
 
 module.exports = setupTemplateV2
