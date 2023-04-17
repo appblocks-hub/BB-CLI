@@ -2,16 +2,6 @@
  * Action for bb-start
  */
 
-/**
- * @typedef bbStartCommandOptions
- * @type {object}
- * @property {boolean} usePnpm
- */
-/**
- * @typedef bbStartCommandArguments
- *
- */
-
 const { readFile } = require('fs/promises')
 const path = require('path')
 const { AsyncSeriesHook, AsyncSeriesBailHook, AsyncSeriesWaterfallHook } = require('tapable')
@@ -52,6 +42,11 @@ const findMyParentPackage = async (name, myPath, filename) => {
  *
  */
 class StartCore {
+  /**
+   * Create a start factory
+   * @param {import('../../utils/jsDoc/types').cmdStartArgs} blockname
+   * @param {import('../../utils/jsDoc/types').cmdStartOptions} options
+   */
   constructor(blockname, options) {
     this.cmdArgs = { blockname }
     this.cmdOpts = { ...options }
@@ -61,12 +56,22 @@ class StartCore {
        * @type {AsyncSeriesBailHook}
        */
       afterEnv: new AsyncSeriesBailHook(['core', 'config']),
+      /**
+       * @type {AsyncSeriesHook}
+       */
       beforeAppConfigInit: new AsyncSeriesHook(),
+      /**
+       * @type {AsyncSeriesBailHook}
+       */
       afterAppConfigInit: new AsyncSeriesBailHook(),
       /**
        * this.blocksToStart gets filled before grouping
+       * @type {AsyncSeriesWaterfallHook}
        */
       beforeGroupingBlocks: new AsyncSeriesWaterfallHook(['core', 'config']),
+      /**
+       * @type {AsyncSeriesWaterfallHook}
+       */
       afterGroupingBlocks: new AsyncSeriesWaterfallHook(['core', 'config']),
       /**
        * Find free ports for each block in group here,
@@ -92,6 +97,10 @@ class StartCore {
     this.blockGroups = {}
   }
 
+  /**
+   *
+   * @returns
+   */
   async setEnvironment() {
     global.rootDir = process.cwd()
     global.usePnpm = false
@@ -142,6 +151,9 @@ class StartCore {
   async groupBlocks() {
     this.blocksToStart = this.cmdArgs.blockname ? [this.cmdArgs.blockname] : [...appConfig.allBlockNames]
 
+    /**
+     * TODO: create this with blockTypes from blockTypes.js as the source truth
+     */
     this.blockGroups = {
       'ui-container': [
         ...appConfig.getDependencies(

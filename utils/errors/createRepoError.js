@@ -11,7 +11,7 @@ class CreateRepoError extends BBError {
   /**
    *
    * @constructor
-   * @param {*} message
+   * @param {string} message
    * @param {(0 | 1)} type
    */
   constructor(message, type) {

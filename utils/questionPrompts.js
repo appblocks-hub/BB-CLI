@@ -359,6 +359,58 @@ function confirmationPrompt(data) {
     .then((ans) => ans[data.name])
 }
 
+/**
+ *
+ * @returns {Promise<('my git'|'org git')?>}
+ */
+async function getGitTarget() {
+  const question = {
+    type: 'list',
+    message: 'Where should I create the repository',
+    name: 'gitTarget',
+    choices: ['my git', 'org git'],
+  }
+
+  return inquirer
+    .prompt([question])
+    .then((ans) => ans.gitTarget)
+    .catch(() => null)
+}
+
+/**
+ *
+ * @returns {Promise<string>}
+ */
+async function getGitRepoDescription() {
+  const question = {
+    type: 'input',
+    name: 'description',
+    message: 'Description to add To Repo (ENTER for empty string)',
+  }
+
+  return inquirer
+    .prompt([question])
+    .then((ans) => ans.description)
+    .catch(() => '')
+}
+
+/**
+ *
+ * @returns {Promise<('PUBLIC' | 'PRIVATE')?>}
+ */
+async function getGitRepoVisibility() {
+  const question = {
+    type: 'list',
+    name: 'visibility',
+    message: 'visibility of repo',
+    choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: true }],
+  }
+  return inquirer
+    .prompt([question])
+    .then((ans) => ans.visibility)
+    .catch(() => null)
+}
+
 module.exports = {
   WipeAllConfirmation,
   getOrgId,
@@ -378,4 +430,7 @@ module.exports = {
   confirmationPrompt,
   getMergeConfirmation,
   sourceUrlOptions,
+  getGitTarget,
+  getGitRepoDescription,
+  getGitRepoVisibility,
 }

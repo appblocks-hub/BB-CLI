@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable no-unused-expressions */
 
 /**
@@ -7,44 +8,49 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const inquirer = require('inquirer')
-const axios = require('axios')
 const { createRepository } = require('./Mutations')
 const { githubGraphQl } = require('./api')
 const { getGitHeader } = require('./getHeaders')
-const { spinnies } = require('../loader')
 const { CreateRepoError } = require('./errors/createRepoError')
+const { axios } = require('./axiosInstances')
+const { getGitRepoDescription, getGitTarget, getOrgId, getGitRepoVisibility } = require('./questionPrompts')
+const { configstore } = require('../configstore')
 
 /**
- * @param {Boolean} muted
- * @param {String} ownerId User id
- * @param {String} blockShortName Name of block to try to create with
+ * @param {String}  reponame reponame to try to create repo with
  */
-async function createRepo(muted, ownerId, blockShortName) {
-  const questions = [
-    {
-      type: 'list',
-      name: 'visibility',
-      message: 'visibility of repo',
-      choices: ['PUBLIC', { name: 'PRIVATE', value: 'PRIVATE', disabled: true }],
-    },
-  ]
-
-  const ans = await inquirer.prompt(questions)
-
+async function createRepo(reponame) {
   const headersV4 = getGitHeader()
-  !muted && spinnies.add('createrepo', { text: `Creating ${blockShortName}` })
+  const inputs = {}
+  const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS === 'true'
+
+  inputs.gitTarget = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS.gitTarget : await getGitTarget()
+
+  /**
+   * Default target is 'my git'
+   */
+  inputs.ownerName = configstore.get('githubUserName')
+  inputs.ownerId = configstore.get('githubUserId')
+
+  if (inputs.gitTarget === 'org git') {
+    const _r = await getOrgId()
+    inputs.ownerName = _r[0]
+    inputs.ownerId = _r[1]
+  }
+  inputs.description = await getGitRepoDescription()
+  inputs.visibility = await getGitRepoVisibility()
+
   const { data } = await axios.post(
     githubGraphQl,
     {
       query: createRepository.Q,
       variables: {
-        name: blockShortName,
-        owner: ownerId,
+        name: reponame.toString(),
+        owner: inputs.ownerId,
         templateRepo: null,
         template: false,
-        description: '',
-        visibility: ans.visibility,
+        description: inputs.description,
+        visibility: inputs.visibility,
         team: null,
       },
     },
@@ -52,16 +58,12 @@ async function createRepo(muted, ownerId, blockShortName) {
   )
   if (data.errors) {
     if (data.errors.length === 1 && data.errors[0].type === 'UNPROCESSABLE') {
-      spinnies.fail('createRepo', { text: `Repo name ${blockShortName} already exists` })
-      spinnies.remove('createRepo')
-      throw new CreateRepoError('', 0)
+      throw new CreateRepoError(`Repository (${reponame}) already exists for ${inputs.ownerName} `, 0)
     }
-    !muted && spinnies.fail('createrepo', { text: `Something went wrong!` })
     throw new CreateRepoError('', 1)
   }
-  !muted && spinnies.succeed('createrepo', { text: `Created repo ${blockShortName}` })
-  const blockFinalName = blockShortName
+  const blockFinalName = reponame
   return { blockFinalName, ...createRepository.Tr(data) }
 }
 
-module.exports = { createRepo: createRepo.bind(null, false), createRepoMuted: createRepo.bind(null, true) }
+module.exports = { createRepo }
