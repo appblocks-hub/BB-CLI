@@ -63,9 +63,7 @@ class LockAndAssignPorts {
         server.on('error', (err) => {
           throw err
         })
-        // server.on('close', () => {
-        //   console.log('YEAH')
-        // })
+
         const controller = new AbortController()
         server.listen({
           port: availablePort,
