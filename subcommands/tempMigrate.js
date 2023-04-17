@@ -11,7 +11,7 @@ const { GitManager } = require('../utils/gitmanager')
 const { appConfig } = require('../utils/appconfigStore')
 const appconfigStore = require('../utils/appconfigStore')
 const { configstore } = require('../configstore')
-const { readInput } = require('../utils/questionPrompts')
+const { readInput,getGitRepoVisibility, getGitRepoDescription } = require('../utils/questionPrompts')
 const { githubGraphQl } = require('../utils/api')
 const { isInRepo } = require('../utils/Queries')
 const { createRepository } = require('../utils/Mutations')
@@ -81,27 +81,13 @@ const tempMigrate = async (options) => {
 
 
       if (!existingRepoData.description){
-        const repoDescription = await readInput({
-          name: 'repoDescription',
-          message: 'Enter the repository description',
-          validate: (input) => {
-            if (!input || input?.length < 3) return `Please enter the repository name with atleast 3 characters`
-            return true
-          },
-        })
+        const repoDescription = await getGitRepoDescription()
 
         existingRepoData.description=repoDescription
       }
 
       if(!existingRepoData.visibility){
-        const repoVisibility =  await readInput({
-          name: 'repoVisibility',
-          message: 'Enter the repository visibility  (PRIVATE or PUBLIC)',
-          validate: (input) => {
-            if (!input || (input!=="PRIVATE"|| input!=="PUBLIC")) return `Please enter either PRIVATE or PUBLIC`
-            return true
-          },
-        })
+        const repoVisibility =  await getGitRepoVisibility()
 
         existingRepoData.visibility=repoVisibility
       }
