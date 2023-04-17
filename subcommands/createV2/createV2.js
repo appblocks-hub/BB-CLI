@@ -29,7 +29,6 @@ async function create(blockName, cmdOptions) {
     await Create.initializeAppConfig()
     await Create.createBlock()
   } catch (error) {
-    console.log(error);
     logger.error(error)
     spinnies.add('err', { text: error.message })
     spinnies.fail('err', { text: error.message })

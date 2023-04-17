@@ -4,8 +4,11 @@ const { writeFileSync } = require('fs')
 const {
   generateIndex,
   generateGitIgnore,
+  generatePackageJson,
   generateFunctionReadme,
-  generatePackageJsonWithoutLint,
+  generateFunctionEsLintRc,
+  generateFunctionPrettierRc,
+  generateFunctionCommitlintRc,
 } = require('../../../templates/createTemplates/function-templates')
 const { getJobConfig } = require('../../../utils/job')
 // eslint-disable-next-line no-unused-vars
@@ -35,21 +38,20 @@ class handleJobBlock {
         core.blockDetails.start = core.blockDetails.start || 'node index.js'
 
         const indexString = generateIndex(blockName)
-        const packageJsonString = generatePackageJsonWithoutLint(blockName)
         const gitIgnoreString = generateGitIgnore()
         const readmeString = generateFunctionReadme(blockName)
-        // const packageJsonString = generatePackageJson(blockName)
-        // const eslintrcString = generateFunctionEsLintRc()
-        // const prettierrcString = generateFunctionPrettierRc()
-        // const commitlintRcString = generateFunctionCommitlintRc()
+        const packageJsonString = generatePackageJson(blockName)
+        const eslintrcString = generateFunctionEsLintRc()
+        const prettierrcString = generateFunctionPrettierRc()
+        const commitlintRcString = generateFunctionCommitlintRc()
 
         writeFileSync(`${core.blockFolderPath}/index.js`, indexString)
         writeFileSync(`${core.blockFolderPath}/package.json`, packageJsonString)
         writeFileSync(`${core.blockFolderPath}/README.md`, readmeString)
         writeFileSync(`${core.blockFolderPath}/.gitignore`, gitIgnoreString)
-        // writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
-        // writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
-        // writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitlintRcString)
+        writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
+        writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
+        writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitlintRcString)
       }
     )
   }
