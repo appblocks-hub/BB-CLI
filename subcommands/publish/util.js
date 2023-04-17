@@ -52,7 +52,7 @@ const getAppblockVersionData = async () => {
    */
   // console.log(typeof process.env.BB_CLI_RUN_HEADLESS)
   if (process.env.BB_CLI_RUN_HEADLESS === 'true') {
-    return { appblockVersions: global.headlessCONFIGS }
+    return { appblockVersions: global.HEADLESS_CONFIGS.appblockVersion }
   }
   spinnies.add('abVersion', { text: `Getting appblock versions` })
   const abVersions = await getAllAppblockVersions()
