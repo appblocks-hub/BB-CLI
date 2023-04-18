@@ -40,8 +40,6 @@ cmd('connect', 'to connect github')
 
 cmd('create', 'to create a new block')
 
-cmd('create-temp', 'to create a new block')
-
 cmd('create-v2', 'to create a new block v2')
 
 cmd('create-app', 'register app for deploy')
@@ -85,6 +83,10 @@ cmd('start', 'To start one or all blocks')
 cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
+
+cmd('temp-create', 'to create a new block')
+
+cmd('temp-init', 'temporary init command')
 
 cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
 

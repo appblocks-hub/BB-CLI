@@ -47,7 +47,7 @@ const onPremECRUpload = async (options) => {
     } else {
       await copyEmulatorCode(container_ports, dependencies)
       generateRootPackageJsonFile({ appName, dependencies })
-      generateDockerFile({ ports: container_ports, dependencies, envName })
+      generateDockerFile({ ports: container_ports, dependencies, envName, config })
     }
 
     if (!ecrData?.repositoryUri) {
