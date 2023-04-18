@@ -258,7 +258,7 @@ const existingRepoData =( { data: { data } }) => {
   const isInorg = data?.user?.repository?.isInOrganization
   return {
     isInorg,
-    ownerId:isInorg?data?.organization?.id:data?.user?.id,
+    ownerId:isInorg?data?.user?.organization?.id:data?.user?.id,
     visibility:data?.user?.repository?.visibility,
     description:data?.user?.repository?.description
   }}
