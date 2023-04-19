@@ -7,6 +7,8 @@ const { Locked, getLocalHosts, getAvailablePort } = require('./utils')
 class LockAndAssignPorts {
   constructor() {
     this.emPortFromEnv = parseInt(process.env.BB_EM_PORT, 10) || null
+    this.elePortFromEnv = parseInt(process.env.BB_ELEMENTS_PORT, 10) || null
+    this.containerPortFromEnv = parseInt(process.env.BB_CONTAINER_PORT, 10) || null
 
     this.lockedPorts = {
       old: new Set(),
@@ -19,8 +21,10 @@ class LockAndAssignPorts {
     }, 1000 * 15)
 
     this.map = {
-      'ui-container': [3000, 3999],
-      'ui-elements': [3000, 3999],
+      'ui-container': this.elePortFromEnv ? [this.elePortFromEnv, this.elePortFromEnv + 10] : [3000, 3999],
+      'ui-elements': this.containerPortFromEnv
+        ? [this.containerPortFromEnv, this.containerPortFromEnv + 10]
+        : [3000, 3999],
       function: this.emPortFromEnv ? [this.emPortFromEnv, this.emPortFromEnv + 10] : [5000, 6000],
     }
   }

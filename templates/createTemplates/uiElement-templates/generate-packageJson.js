@@ -70,7 +70,7 @@ const generateUiElementPackageJsonWithoutLint = (name) => `
     "scripts": {
       "start": "webpack-dev-server",
       "build": "webpack --mode production",
-      "serve": "webpack-cli serve",
+      "serve": "webpack-cli serve"
     },
     "dependencies": {
       "@appblocks/js-sdk": "^0.0.11",

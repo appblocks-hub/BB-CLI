@@ -10,8 +10,9 @@ const path = require('path')
 const { configstore } = require('../../../../configstore')
 const { spinnies } = require('../../../../loader')
 const { copyEmulatorCode } = require('../../../../utils/emulator-manager')
+const { pexec } = require('../../../../utils/execPromise')
+const { checkPnpm } = require('../../../../utils/pnpmUtils')
 const { readInput } = require('../../../../utils/questionPrompts')
-const { runBash } = require('../../../bash')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 
 const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
@@ -110,9 +111,13 @@ const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) 
       } = bk
       const directory = path.resolve(dir)
 
-      const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
-      mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
-      mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+      try {
+        const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
+        mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
+        mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+      } catch (error) {
+        console.log(`Error reading package.json for block ${name} : ${error.message}`)
+      }
     })
   )
 
@@ -126,11 +131,11 @@ const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) 
 
   let installer = 'npm i'
   const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager === 'pnpm'
+  global.usePnpm = nodePackageManager === 'pnpm' || checkPnpm()
   if (global.usePnpm) installer = 'pnpm i'
   spinnies.add('singleBuild', { text: `Installing dependencies for emulator (${installer})` })
-  const i = await runBash(`cd ${emulatorPath} && ${installer}`)
-  if (i.status === 'failed') throw new Error(i.msg)
+  const i = await pexec(`cd ${emulatorPath} && ${installer}`)
+  if (i.err) throw new Error(i.err)
   spinnies.remove('singleBuild')
 }
 
@@ -234,4 +239,5 @@ module.exports = {
   generateRootPackageJsonFile,
   getAWSECRConfig,
   beSingleBuildDeployment,
+  updateEmulatorPackageSingleBuild,
 }

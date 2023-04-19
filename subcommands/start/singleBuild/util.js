@@ -6,6 +6,8 @@ const { symlink } = require('fs/promises')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } = require('fs')
 const { createFileSync } = require('../../../utils/fileAndFolderHelpers')
 const { runBashLongRunning, runBash } = require('../../bash')
+const { checkPnpm } = require('../../../utils/pnpmUtils')
+const { pexec } = require('../../../utils/execPromise')
 
 const emulateElements = async (emEleFolder, port) => {
   const logOutPath = path.resolve('./logs/out/elements.log')
@@ -54,13 +56,12 @@ async function stopEmulatedElements(options) {
 
 const packageInstall = async (emEleFolder, elementBlocks) => {
   try {
-    const modulesPath = path.join(emEleFolder, 'node_modules')
-    if (existsSync(modulesPath)) rmSync(modulesPath, { recursive: true })
+    const src = path.join(emEleFolder, 'node_modules')
 
     let installer = 'npm i'
-    if (global.usePnpm) installer = 'pnpm i'
-    const i = await runBash(`cd ${emEleFolder} && ${installer}`)
-    if (i.status === 'failed') throw new Error(i.msg)
+    if (global.usePnpm || checkPnpm()) installer = 'pnpm i'
+    const res = await pexec(`cd ${emEleFolder} && ${installer}`, { cwd: emEleFolder })
+    if (res.err) throw new Error(res.err)
 
     await Promise.all(
       elementBlocks.map(async (bk) => {
@@ -72,7 +73,6 @@ const packageInstall = async (emEleFolder, elementBlocks) => {
           // nothing
         }
 
-        const src = path.join(emEleFolder, 'node_modules')
         await symlink(src, dest)
       })
     )

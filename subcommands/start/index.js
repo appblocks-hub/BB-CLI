@@ -28,7 +28,9 @@ const { configstore } = require('../../configstore')
 
 global.rootDir = process.cwd()
 
-const start = async (blockname, { usePnpm, singleInstance = true }) => {
+const start = async (blockName, { usePnpm, multiInstance = false }) => {
+  const singleInstance = !multiInstance
+
   const nodePackageManager = configstore.get('nodePackageManager')
   global.usePnpm = nodePackageManager !== 'pnpm'
 
@@ -48,15 +50,15 @@ const start = async (blockname, { usePnpm, singleInstance = true }) => {
   // Setup env from block.config.json data
   if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
     // eslint-disable-next-line no-param-reassign
-    blockname = appConfig.allBlockNames.next().value
+    blockName = appConfig.allBlockNames.next().value
   }
   const configData = appConfig.appConfig
   await setupEnv(configData)
 
   const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
 
-  const blockLanguages = blockname
-    ? [appConfig.getBlock(blockname).meta?.language]
+  const blockLanguages = blockName
+    ? [appConfig.getBlock(blockName).meta?.language]
     : [...new Set([...appConfig.getAllBlockLanguages])]
 
   try {
@@ -66,13 +68,13 @@ const start = async (blockname, { usePnpm, singleInstance = true }) => {
     process.exit()
   }
 
-  if (blockname && !appConfig.has(blockname)) {
+  if (blockName && !appConfig.has(blockName)) {
     console.log('Block not found')
     return
   }
 
-  if (blockname) {
-    const blockToStart = appConfig.getBlockWithLive(blockname)
+  if (blockName) {
+    const blockToStart = appConfig.getBlockWithLive(blockName)
     const treeKillPromise = promisify(treeKill)
     /**
      * If the block is already running, kill the process & restart
@@ -87,8 +89,8 @@ const start = async (blockname, { usePnpm, singleInstance = true }) => {
         })
       }
     }
-    const port = await getFreePorts(appConfig, blockname)
-    await startBlock(blockname, port)
+    const port = await getFreePorts(appConfig, blockName)
+    await startBlock(blockName, port, appConfig)
     return
   }
 
@@ -131,13 +133,13 @@ async function startAllBlock({ singleInstance }) {
     // let containerBlock = null
     const emulateLang = 'nodejs'
     let emData
-    spinnies.add('emulator', { text: 'Starting emulator' })
+    spinnies.add('emulator', { text: 'Starting function emulator' })
     switch (emulateLang) {
       case 'nodejs':
-        emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
+        emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies], singleInstance)
         break
       default:
-        emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies])
+        emData = await emulateNode(PORTS.emulatorPorts, [...appConfig.dependencies], singleInstance)
         break
     }
     if (emData.status === 'success') {
@@ -230,7 +232,7 @@ async function startAllBlock({ singleInstance }) {
 
     const promiseArray = []
     for (const block of appConfig.uiBlocks) {
-      promiseArray.push(startBlock(block.meta.name, PORTS[block.meta.name]))
+      promiseArray.push(startBlock(block.meta.name, PORTS[block.meta.name], appConfig))
       if (block.meta.type === 'ui-container') {
         // containerBlock = block
       }
