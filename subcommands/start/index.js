@@ -224,6 +224,7 @@ async function startAllBlock({ singleInstance }) {
   const viewBlocks = [...appConfig.uiBlocks]
   if (viewBlocks?.length) {
     if (singleInstance) {
+      console.log("entering here")
       await singleBuild({ appConfig, ports: PORTS })
       return
     }
