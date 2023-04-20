@@ -13,7 +13,7 @@ const stop = require('../subcommands/stop')
 const program = new Command()
 
 program
-  .argument('[name]', 'Name of block to stop')
+  .argument('[name...]', 'Name of block to stop')
   .option('-g, --global', 'execute globally')
   .action(stop)
 
