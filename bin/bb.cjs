@@ -80,6 +80,8 @@ cmd('push-config', 'to push package lock config')
 
 cmd('start', 'To start one or all blocks')
 
+cmd('start-v2', 'To start one or all blocks')
+
 cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')

@@ -91,15 +91,15 @@ function getMergeConfirmation() {
     .catch((err) => console.log('o_0', err))
 }
 
-function getBlockType() {
+function getBlockType(filterList) {
   const questions = [
     {
       type: 'list',
       name: 'blockType',
       message: 'Select the type of block',
       choices: blockTypes.reduce((acc, v) => {
-        const filterList = ['package', 'data']
-        if (!filterList.includes(v[0])) return acc.concat({ name: v[0], value: v[1] })
+        const filterListData = filterList || ['package', 'data']
+        if (!filterListData.includes(v[0])) return acc.concat({ name: v[0], value: v[1] })
         return acc
       }, []),
     },

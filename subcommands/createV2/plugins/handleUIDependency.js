@@ -3,10 +3,13 @@
 const { mkdirSync, writeFileSync } = require('fs')
 const { generateGitIgnore } = require('../../../templates/createTemplates/function-templates')
 const {
-  generateUiElementIndexHtml,
   generateUiElementWebpack,
-  generateUiElementPackageJsonWithoutLint,
   generateUiElementsReadme,
+  generateUiElementsEsLintRc,
+  generateUiElementIndexHtml,
+  generateUiElementsPrettierRc,
+  generateUiElementPackageJson,
+  generateUiElementsCommitlintRc,
 } = require('../../../templates/createTemplates/uiElement-templates')
 // eslint-disable-next-line no-unused-vars
 const CreateCore = require('../createCore')
@@ -36,13 +39,12 @@ class handleUIDependency {
 
         const indexHtmlString = generateUiElementIndexHtml(blockName)
         const webpackConfigString = generateUiElementWebpack(blockName)
-        const packageJsonString = generateUiElementPackageJsonWithoutLint(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
-        // const packageJsonString = generateUiElementPackageJson(blockName)
-        // const eslintrcString = generateUiElementsEsLintRc()
-        // const commitLintRcString = generateUiElementsCommitlintRc()
-        // const prettierrcString = generateUiElementsPrettierRc()
+        const packageJsonString = generateUiElementPackageJson(blockName)
+        const eslintrcString = generateUiElementsEsLintRc()
+        const commitLintRcString = generateUiElementsCommitlintRc()
+        const prettierrcString = generateUiElementsPrettierRc()
 
         mkdirSync(`${core.blockFolderPath}/public`, { recursive: true })
         mkdirSync(`${core.blockFolderPath}/src`, { recursive: true })
@@ -53,9 +55,9 @@ class handleUIDependency {
         writeFileSync(`${core.blockFolderPath}/README.md`, readmeString)
         writeFileSync(`${core.blockFolderPath}/webpack.config.js`, webpackConfigString)
         writeFileSync(`${core.blockFolderPath}/.gitignore`, gitignore)
-        // writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
-        // writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
-        // writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
+        writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
+        writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
+        writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
 
         const fedExpose = Object.keys(JSON.parse(packageJsonString).dependencies).reduce((acc, dep) => {
           acc[`./${dep}`] = dep

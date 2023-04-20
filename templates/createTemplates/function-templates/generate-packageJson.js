@@ -48,7 +48,7 @@ const generatePackageJsonWithoutLint = (name) => `{
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js --port=3000",
+    "start": "node index.js --port=3000"
   },
   "type": "module",
   "license": "ISC",

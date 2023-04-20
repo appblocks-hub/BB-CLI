@@ -28,6 +28,10 @@ const headlessSCHEMA = {
     type: 'string',
     default: 'PUBLIC',
   },
+  gitDescription: {
+    type: 'string',
+    default: '',
+  },
   blockNamingStrategyFnBody: {
     type: 'string',
     default:

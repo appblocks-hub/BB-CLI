@@ -1,12 +1,13 @@
 const { spawn } = require('child_process')
-const { openSync, existsSync } = require('fs')
-const { mkdir, writeFile } = require('fs/promises')
+const { openSync, existsSync, readFileSync, writeFileSync, rmSync } = require('fs')
+const { mkdir, writeFile, symlink, unlink, lstat } = require('fs/promises')
 const path = require('path')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
 const { checkPnpm } = require('../../../../utils/pnpmUtils')
 const { updateEnv } = require('../../../../utils/env')
 const envToObj = require('../../envToObj')
+const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 
 class BuildNodeFnEmulator {
   constructor() {
@@ -142,18 +143,82 @@ class BuildNodeFnEmulator {
 
   /**
    *
+   * @param {import('fs').PathLike} emPath Emulator directory path
+   * @returns
+   */
+  async linkEmulatedNodeModulesToBlocks(emEleFolder) {
+    const src = path.resolve(emEleFolder, 'node_modules')
+    await Promise.all(
+      this.fnBlocks.map(async (bk) => {
+        const dest = path.resolve(bk.directory, 'node_modules')
+
+        try {
+          if (existsSync(dest)) {
+            await rmSync(dest, { recursive: true, force: true })
+          } else if (lstat(dest)) {
+            await unlink(dest)
+          }
+        } catch (e) {
+          console.log({ e })
+          // nothing
+        }
+
+        await symlink(src, dest)
+      })
+    )
+  }
+
+  /**
+   *
+   * @param {import('fs').PathLike} emulatorPath Emulator directory path
+   * @returns
+   */
+  async updateEmulatorPackageSingleBuild(emulatorPath) {
+    const emulatorPackageJsonPath = path.join(emulatorPath, 'package.json')
+    const emulatorPackageJson = await JSON.parse(readFileSync(path.resolve(emulatorPackageJsonPath)).toString())
+    // await symlink(src, dest)
+    const mergedPackages = {
+      dependencies: { em: emulatorPackageJson.dependencies || {} },
+      devDependencies: { em: emulatorPackageJson.devDependencies || {} },
+    }
+
+    await Promise.all(
+      this.fnBlocks.map(async (bk) => {
+        const {
+          meta: { name },
+          directory: dir,
+        } = bk
+        const directory = path.resolve(dir)
+        try {
+          const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
+          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
+          mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+        } catch (error) {
+          console.error(`${error.message} on block ${name}`)
+        }
+      })
+    )
+
+    emulatorPackageJson.dependencies = updatePackageVersionIfNeeded(mergedPackages.dependencies)
+    emulatorPackageJson.devDependencies = updatePackageVersionIfNeeded(mergedPackages.devDependencies)
+
+    writeFileSync(emulatorPackageJsonPath, JSON.stringify(emulatorPackageJson, null, 2))
+  }
+
+  /**
+   *
    * @param {} StartCore
    */
   apply(StartCore) {
     StartCore.hooks.buildFnEmulator.tapPromise(
       'BuildNodeFnEmulator',
       async (/** @type {StartCore} */ core, /** @type {AppblockConfigManager} */ config) => {
-        const emPath = path.join(config.cwd, '._ab_em_')
+        const emPath = path.join(config.cwd, '._ab_em')
         const cmd = checkPnpm() ? 'pnpm i' : 'npm i'
         const logOutPath = path.join(config.cwd, './logs/out/functions.log')
         const logErrPath = path.resolve(config.cwd, './logs/err/functions.log')
 
-        spinnies.add('emBuild', { text: 'building fn emulator' })
+        spinnies.add('emBuild', { text: 'Building function emulator' })
         /**
          * Filter node fn blocks
          */
@@ -171,18 +236,27 @@ class BuildNodeFnEmulator {
 
         const _emFolderGen = await this.generateEmFolder(emPath)
         if (_emFolderGen.err) {
-          spinnies.fail('emBuild', { text: 'emulator build failed' })
+          spinnies.fail('emBuild', { text: 'Function emulator build failed' })
           return
         }
-        spinnies.succeed('emBuild', { text: 'emulator built' })
-        spinnies.add('npm', { text: 'installing packages' })
+
+        if (core.cmdOpts.singleInstance) {
+          await this.updateEmulatorPackageSingleBuild(emPath)
+        }
+
+        spinnies.update('emBuild', { text: 'Installing dependencies for function emulator' })
         const res = await pexec(cmd, { cwd: emPath })
         if (res.err) {
-          spinnies.fail('npm', { text: 'installing package failed' })
+          spinnies.fail('emBuild', { text: 'Installing dependencies  failed for function emulator' })
           process.exit(1)
         }
-        spinnies.succeed('npm', { text: 'installing completed' })
-        spinnies.add('startEm', { text: 'Starting emulator' })
+
+        if (core.cmdOpts.singleInstance) {
+          // symlink to all function blocks
+          await this.linkEmulatedNodeModulesToBlocks(emPath)
+        }
+
+        spinnies.update('emBuild', { text: 'Starting emulator' })
         try {
           await mkdir(path.join(config.cwd, './logs', 'err'), { recursive: true })
           await mkdir(path.join(config.cwd, './logs', 'out'), { recursive: true })
@@ -200,64 +274,65 @@ class BuildNodeFnEmulator {
           child.unref()
           this.pid = child.pid
           await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
-          spinnies.succeed('startEm', { text: `Emulator started at ${this.port}` })
+          spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
         } catch (err) {
-          spinnies.fail('startEm', { text: 'Failed to start emulator' })
+          spinnies.fail('emBuild', { text: 'Failed to start emulator' })
           return
         }
 
-        spinnies.add('fnDepIns', { text: 'Installing dependencies in fn blocks' })
-        const parray = []
-        this.fnBlocks.forEach((_v) => {
-          parray.push(pexec(cmd, { cwd: _v.directory }, _v))
-        })
+        if (!core.cmdOpts.singleInstance) {
+          spinnies.add('fnDepIns', { text: 'Installing dependencies in fn blocks' })
+          const pArray = []
+          this.fnBlocks.forEach((_v) => {
+            pArray.push(pexec(cmd, { cwd: _v.directory }, _v))
+          })
+          /**
+           * @type {PromiseFulfilledResult<{err:boolean,data:object}>}
+           */
+          this.depsInstallReport = await Promise.allSettled(pArray)
+          spinnies.succeed('fnDepIns', { text: 'installed deps' })
+          const tsBlocks = []
+          for (const _v of this.depsInstallReport) {
+            if (!_v.value.err) {
+              /**
+               * If dependencies were properly installed,
+               * Load the env's from block to global function.env
+               */
+              const _ = await envToObj(path.resolve(_v.value.data.directory, '.env'))
+              await updateEnv('function', _)
 
-        /**
-         * @type {PromiseFulfilledResult<{err:boolean,data:object}>}
-         */
-        this.depsInstallReport = await Promise.allSettled(parray)
-        spinnies.succeed('fnDepIns', { text: 'installed deps' })
-        const tsBlocks = []
-        for (const _v of this.depsInstallReport) {
-          if (!_v.value.err) {
+              if (existsSync(path.join(path.resolve(_v.value.data.directory), 'index.ts'))) {
+                tsBlocks.push(path.resolve(_v.value.data.directory))
+              }
+
+              // eslint-disable-next-line no-param-reassign
+              config.startedBlock = {
+                name: _v.value.data.meta.name,
+                pid: this.pid || null,
+                isOn: true,
+                port: this.port || null,
+                log: {
+                  out: logOutPath,
+                  err: logErrPath,
+                },
+              }
+              continue
+            }
+            // console.log(`✓ installed deps in ${this.fnBlocks[i].meta.name}`)
+            console.log(`✗ error installing deps in ${_v.value.data.meta.name}`)
             /**
-             * If dependencies were properly installed,
-             * Load the env's from block to global function.env
+             * TODO: write a proper plugin for typescript
              */
-            const _ = await envToObj(path.resolve(_v.value.data.directory, '.env'))
-            await updateEnv('function', _)
+            const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
+              detached: true,
+              cwd: path.join(__dirname),
+              stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+            })
+            await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
 
-            if (existsSync(path.join(path.resolve(_v.value.data.directory), 'index.ts'))) {
-              tsBlocks.push(path.resolve(_v.value.data.directory))
-            }
-
-            // eslint-disable-next-line no-param-reassign
-            config.startedBlock = {
-              name: _v.value.data.meta.name,
-              pid: this.pid || null,
-              isOn: true,
-              port: this.port || null,
-              log: {
-                out: logOutPath,
-                err: logErrPath,
-              },
-            }
-            continue
+            watcher.unref()
           }
-          // console.log(`✓ installed deps in ${this.fnBlocks[i].meta.name}`)
-          console.log(`✗ error installing deps in ${_v.value.data.meta.name}`)
         }
-        /**
-         * TODO: write a proper plugin for typescript
-         */
-        const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
-          detached: true,
-          cwd: path.join(__dirname),
-          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-        })
-        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
-
-        watcher.unref()
       }
     )
   }

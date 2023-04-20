@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * Copyright (c) Appblocks. and its affiliates.
  *
@@ -11,7 +12,6 @@ const { existsSync, readFileSync, writeFileSync, cpSync } = require('fs')
 const { getAbsPath } = require('../../utils/path-helper')
 const emulateNode = require('../emulate')
 const { spinnies } = require('../../loader')
-const { appConfig } = require('../../utils/appconfigStore')
 const { runBash, runBashLongRunning } = require('../bash')
 const watchCompilation = require('./watchCompilation')
 const { convertToEnv } = require('../../utils/env')
@@ -24,7 +24,7 @@ const { removeSync } = require('../upload/onPrem/awsS3/util')
  * @param {Number} port One port number
  * @returns
  */
-async function startBlock(name, port) {
+async function startBlock(name, port, appConfig) {
   spinnies.add(name, { text: `Starting ${name}` })
   if (!appConfig.has(name)) {
     // console.log('Block not found!')
