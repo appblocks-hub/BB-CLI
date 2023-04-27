@@ -25,8 +25,8 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
     const depLib = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
     const containerBlock = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')[0]
 
-    if (!elementBlocks?.length) return `No element blocks found`
-    if (!containerBlock) return `No container block found`
+    if (!elementBlocks?.length) return { error: `No element blocks found` }
+    if (!containerBlock) return { error: `No container block found` }
 
     const emElPort = ports?.emElements[0] || 4200
     const containerPort = ports?.container[0] || 3000
@@ -89,7 +89,7 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
 
     spinnies.succeed('singleBuild', { text: sMsg })
 
-    const containerProcessData = await startBlock(containerBlock.meta.name, containerPort)
+    const containerProcessData = await startBlock(containerBlock.meta.name, containerPort, appConfig)
     return { emData, containerProcessData, errorBlocks }
   } catch (error) {
     await stopEmulatedElements({ rootPath: relativePath })

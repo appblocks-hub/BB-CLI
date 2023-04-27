@@ -2,37 +2,12 @@
  * Action for bb-start
  */
 
-const { readFile } = require('fs/promises')
-const path = require('path')
 const { AsyncSeriesHook, AsyncSeriesBailHook, AsyncSeriesWaterfallHook } = require('tapable')
+const { findMyParentPackage } = require('../../utils')
 // eslint-disable-next-line no-unused-vars
 const { AppblockConfigManager } = require('../../utils/appconfig-manager')
 const { appConfig } = require('../../utils/appconfigStore')
-
-/**
- * TODO: this should happen in appConfig.init()
- * Finds a package for the current block by moving up the dir tree
- * @param {string} name block name
- * @param {string} dirPath block path
- */
-const findMyParentPackage = async (name, myPath, filename) => {
-  let parentPackageFound = false
-  let parentPackageConfig
-  let currentPath = myPath
-  let parent = path.dirname(currentPath)
-  for (; parent !== currentPath && !parentPackageFound; currentPath = parent, parent = path.dirname(parent)) {
-    const { data, err } = await readJsonAsync(path.join(parent, filename))
-    if (err) continue
-    if (data.type !== 'package') continue
-    if (!Object.prototype.hasOwnProperty.call(data.dependencies, name)) continue
-    parentPackageFound = true
-    parentPackageConfig = { ...data }
-  }
-  return {
-    data: { parent, parentPackageConfig },
-    err: currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
-  }
-}
+const { checkPnpm } = require('../../utils/pnpmUtils')
 
 /**
  * What does start do?
@@ -44,11 +19,11 @@ const findMyParentPackage = async (name, myPath, filename) => {
 class StartCore {
   /**
    * Create a start factory
-   * @param {import('../../utils/jsDoc/types').cmdStartArgs} blockname
+   * @param {import('../../utils/jsDoc/types').cmdStartArgs} blockName
    * @param {import('../../utils/jsDoc/types').cmdStartOptions} options
    */
-  constructor(blockname, options) {
-    this.cmdArgs = { blockname }
+  constructor(blockName, options) {
+    this.cmdArgs = { blockName }
     this.cmdOpts = { ...options }
     this.hooks = {
       beforeEnv: new AsyncSeriesBailHook(),
@@ -81,8 +56,10 @@ class StartCore {
       buildFnEmulator: new AsyncSeriesHook(['core', 'config']),
       buildJobEmulator: new AsyncSeriesHook(['core', 'config']),
       buildSharedFnEmulator: new AsyncSeriesHook(['core', 'config']),
+
+      singleBuildForView: new AsyncSeriesHook(['core', 'config']),
       /**
-       * Building emulator is totaly in hands of user of this class
+       * Building emulator is totally in hands of user of this class
        */
     }
 
@@ -103,17 +80,17 @@ class StartCore {
    */
   async setEnvironment() {
     global.rootDir = process.cwd()
-    global.usePnpm = false
+    global.usePnpm = checkPnpm()
     await appConfig.initV2()
     if (!appConfig.isInAppblockContext && appConfig.isInBlockContext) {
       /**
-       * If blockname is given, but is not same as the block directory user is in, return error
+       * If blockName is given, but is not same as the block directory user is in, return error
        * eg: bb start ui , called from pck/addTodo
        */
-      if (this.cmdArgs.blockname && this.cmdArgs.blockname !== appConfig.getName()) {
+      if (this.cmdArgs.blockName && this.cmdArgs.blockName !== appConfig.getName()) {
         return {
           data: '',
-          err: `cannot start ${this.cmdArgs.blockname} from ${appConfig.getName()}`,
+          err: `cannot start ${this.cmdArgs.blockName} from ${appConfig.getName()}`,
         }
       }
       /**
@@ -123,9 +100,9 @@ class StartCore {
       const {
         data: { parent },
         err,
-      } = await findMyParentPackage(this.cmdArgs.blockname || appConfig.getName(), process.cwd(), appConfig.configName)
+      } = await findMyParentPackage(this.cmdArgs.blockName || appConfig.getName(), process.cwd(), appConfig.configName)
       if (err) return { data: '', err }
-      this.cmdArgs.blockname = appConfig.getName()
+      this.cmdArgs.blockName = appConfig.getName()
       global.rootDir = parent
       await appConfig.initV2(parent, null, 'start', { reConfig: true })
     }
@@ -142,14 +119,14 @@ class StartCore {
    * the group should look like
    * {...
    *  function:[
-   *    {addTodo...},{pck12/addTodo},{pck13/addtTodo}
+   *    {addTodo...},{pck12/addTodo},{pck13/addTodo}
    *  ]
    * }
    * By doing it like this, later in bb start, fn emulator can set this as path
    * iF blocks inside are for auth, it'll look like 5000/auth/fn
    */
   async groupBlocks() {
-    this.blocksToStart = this.cmdArgs.blockname ? [this.cmdArgs.blockname] : [...appConfig.allBlockNames]
+    this.blocksToStart = this.cmdArgs.blockName ? [this.cmdArgs.blockName] : [...appConfig.allBlockNames]
 
     /**
      * TODO: create this with blockTypes from blockTypes.js as the source truth
@@ -165,6 +142,12 @@ class StartCore {
         ...appConfig.getDependencies(
           true,
           (block) => ['ui-elements'].includes(block.meta.type) && this.blocksToStart.includes(block.meta.name)
+        ),
+      ],
+      'ui-dep-lib': [
+        ...appConfig.getDependencies(
+          true,
+          (block) => ['ui-dep-lib'].includes(block.meta.type) && this.blocksToStart.includes(block.meta.name)
         ),
       ],
       function: [
@@ -200,28 +183,20 @@ class StartCore {
     await this.hooks.buildSharedFnEmulator?.promise(this, appConfig)
   }
 
+  async singleBuildForView() {
+    await this.hooks.singleBuildForView?.promise(this, appConfig)
+  }
+
   /**
-   * Frees the uused locked ports
+   * Frees the used locked ports
    */
   async cleanUp() {
     for (const { blocks } of this.blockGroups) {
-      blocks.forEach((v) => v.key.abort())
+      blocks.forEach((v) => v.key?.abort())
     }
-    // for (const { blocks } of this.blockGroups) {
-    //   blocks.forEach((v) => v.key.abort())
-    // }
+  
     process.exitCode = 0
   }
 }
 
-async function readJsonAsync(s) {
-  if (typeof s !== 'string') return { data: null, err: true }
-  try {
-    const file = await readFile(s)
-    const data = JSON.parse(file)
-    return { data, err: null }
-  } catch (err) {
-    return { data: null, err }
-  }
-}
 module.exports = StartCore

@@ -138,7 +138,10 @@ async function copyEmulatorCode(PORTS, dependencies) {
   "dependencies": {
     "express": "^4.17.2",
     "http": "0.0.1-security",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^4.6.2",
+    "openapi-types": "^12.1.0"
   }
 }
 `

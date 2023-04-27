@@ -3,14 +3,17 @@
 const { writeFileSync, mkdirSync } = require('fs')
 const { generateGitIgnore } = require('../../../templates/createTemplates/function-templates')
 const {
-  generateUiElementIndexHtml,
+  generateUiElementJs,
+  generateUiElementAppJs,
   generateUiElementWebpack,
   generateUiElementIndexJs,
-  generateUiElementBootstrapJs,
-  generateUiElementAppJs,
-  generateUiElementPackageJsonWithoutLint,
-  generateUiElementJs,
   generateUiElementsReadme,
+  generateUiElementIndexHtml,
+  generateUiElementsEsLintRc,
+  generateUiElementBootstrapJs,
+  generateUiElementPackageJson,
+  generateUiElementsPrettierRc,
+  generateUiElementsCommitlintRc,
   generateUiElementFederationExpose,
 } = require('../../../templates/createTemplates/uiElement-templates')
 
@@ -45,15 +48,14 @@ class handleUIElement {
         const indexJsString = generateUiElementIndexJs(blockName)
         const bootstrapString = generateUiElementBootstrapJs(blockName)
         const appJsString = generateUiElementAppJs(blockName)
-        const packageJsonString = generateUiElementPackageJsonWithoutLint(blockName)
         const uiElementString = generateUiElementJs(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const fedExposeString = generateUiElementFederationExpose(blockName)
-        // const packageJsonString = generateUiElementPackageJson(blockName)
-        // const eslintrcString = generateUiElementsEsLintRc()
-        // const commitLintRcString = generateUiElementsCommitlintRc()
-        // const prettierrcString = generateUiElementsPrettierRc()
+        const packageJsonString = generateUiElementPackageJson(blockName)
+        const eslintrcString = generateUiElementsEsLintRc()
+        const commitLintRcString = generateUiElementsCommitlintRc()
+        const prettierrcString = generateUiElementsPrettierRc()
 
         mkdirSync(`${core.blockFolderPath}/public`)
         mkdirSync(`${core.blockFolderPath}/src/remote`, { recursive: true })
@@ -70,9 +72,9 @@ class handleUIElement {
         writeFileSync(`${core.blockFolderPath}/webpack.config.js`, webpackConfigString)
         writeFileSync(`${core.blockFolderPath}/federation-expose.js`, fedExposeString)
         writeFileSync(`${core.blockFolderPath}/.gitignore`, gitignore)
-        // writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
-        // writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
-        // writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
+        writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
+        writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
+        writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
       }
     )
   }

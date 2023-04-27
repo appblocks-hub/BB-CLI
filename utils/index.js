@@ -38,7 +38,6 @@ const findMyParentPackage = async (name, myPath, filename) => {
   let parent = path.dirname(currentPath)
   while (parent !== currentPath && !parentPackageFound) {
     try {
-      console.log(parent)
       const { data } = await readJsonAsync(path.join(parent, filename)) // Use destructuring to get 'data' from the result
       if (
         data.type === 'package' &&
@@ -48,6 +47,7 @@ const findMyParentPackage = async (name, myPath, filename) => {
         parentPackageFound = true
         parentPackageConfig = JSON.parse(JSON.stringify(data)) // Use deep copy to create a new object
       }
+      break
     } catch (err) {
       // Handle readJsonAsync() errors, e.g., log the error message
     }

@@ -30,7 +30,7 @@ program
   .allowExcessArguments(false)
   .addOption(
     new Option('-t, --type <component-type>', 'type  of comp')
-      .choices(blockTypes.filter((d) => d[0] !== 'package'))
+      .choices(blockTypes.map((t) => t[0]).filter((d) => d !== 'package'))
       .argParser((s) => blockTypeInverter(s))
   )
   .option('--no-autoRepo')

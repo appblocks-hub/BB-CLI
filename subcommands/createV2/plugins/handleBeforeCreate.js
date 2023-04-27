@@ -49,7 +49,7 @@ class handleBeforeCreate {
         }
 
         if (!type) {
-          type = await getBlockType()
+          type = await getBlockType(['data'])
           logger.info(`Prompted user for a type and got back ${type}`)
         }
 
