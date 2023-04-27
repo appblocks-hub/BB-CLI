@@ -32,6 +32,7 @@ const config = {
   mode: 'development',
   resolve: {
     symlinks: true,
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   devServer: {
     historyApiFallback: true,
