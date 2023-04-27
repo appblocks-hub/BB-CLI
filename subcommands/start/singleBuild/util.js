@@ -67,7 +67,7 @@ const packageInstall = async (emEleFolder, elementBlocks) => {
 
     spinnies.update('singleBuild', { text: `Installing dependencies for elements emulator (${installer})` })
 
-    const res = await pexec(`cd ${emEleFolder} && ${installer}`, { cwd: emEleFolder })
+    const res = await pexec(installer, { cwd: emEleFolder })
     if (res.err) throw new Error(res.err)
 
     for (const block of elementBlocks) {
