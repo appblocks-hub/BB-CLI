@@ -5,7 +5,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const { writeFileSync, readFileSync, existsSync, rmSync } = require('fs')
+const { writeFileSync, readFileSync, existsSync } = require('fs')
 const path = require('path')
 const { configstore } = require('../../../../configstore')
 const { spinnies } = require('../../../../loader')
@@ -94,6 +94,18 @@ const getAWSECRConfig = async (options) => {
   return { container }
 }
 
+const emPackageInstall = async (emulatorPath) => {
+  let installer = 'npm i'
+  const nodePackageManager = configstore.get('nodePackageManager')
+  global.usePnpm = nodePackageManager === 'pnpm' || (!nodePackageManager && checkPnpm())
+  if (global.usePnpm) installer = 'pnpm i'
+
+  spinnies.add('singleBuild', { text: `Installing dependencies for emulator (${installer})` })
+  const i = await pexec(installer, { cwd: emulatorPath })
+  if (i.err) throw new Error(i.err)
+  spinnies.remove('singleBuild')
+}
+
 const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) => {
   const emulatorPackageJsonPath = path.join(emulatorPath, 'package.json')
   const emulatorPackageJson = await JSON.parse(readFileSync(path.resolve(emulatorPackageJsonPath)).toString())
@@ -102,41 +114,26 @@ const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) 
     dependencies: { em: emulatorPackageJson.dependencies || {} },
     devDependencies: { em: emulatorPackageJson.devDependencies || {} },
   }
+  for (const block of Object.values(dependencies)) {
+    const {
+      meta: { name },
+      directory: dir,
+    } = block
+    const directory = path.resolve(dir)
 
-  await Promise.all(
-    Object.values(dependencies).map(async (bk) => {
-      const {
-        meta: { name },
-        directory: dir,
-      } = bk
-      const directory = path.resolve(dir)
-
-      try {
-        const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
-        mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
-        mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
-      } catch (error) {
-        console.log(`Error reading package.json for block ${name} : ${error.message}`)
-      }
-    })
-  )
+    try {
+      const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf-8'))
+      mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages?.dependencies || {} }
+      mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages?.devDependencies || {} }
+    } catch (error) {
+      console.log(`Error reading package.json for block ${name} : ${error.message}`)
+    }
+  }
 
   emulatorPackageJson.dependencies = updatePackageVersionIfNeeded(mergedPackages.dependencies)
   emulatorPackageJson.devDependencies = updatePackageVersionIfNeeded(mergedPackages.devDependencies)
 
   writeFileSync(emulatorPackageJsonPath, JSON.stringify(emulatorPackageJson, null, 2))
-
-  const modulesPath = path.join(emulatorPath, 'node_modules')
-  if (existsSync(modulesPath)) rmSync(modulesPath, { recursive: true })
-
-  let installer = 'npm i'
-  const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager === 'pnpm' || checkPnpm()
-  if (global.usePnpm) installer = 'pnpm i'
-  spinnies.add('singleBuild', { text: `Installing dependencies for emulator (${installer})` })
-  const i = await pexec(`cd ${emulatorPath} && ${installer}`)
-  if (i.err) throw new Error(i.err)
-  spinnies.remove('singleBuild')
 }
 
 const generateDockerFileSingleBuild = ({ ports, dependencies, version, env, config }) => {
@@ -187,32 +184,29 @@ CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
   writeFileSync('./Dockerfile', fileData)
 }
 
+
+
+
 const setSymlinkCode = async (dependencies, emulatorPath) => {
-  const dependenciesData = Object.values(dependencies)
+  const dependenciesDirectories = Object.values(dependencies).map(({directory}) => directory)
 
   const setSymlinkCodeData = `
 import { symlink } from 'fs/promises'
-import { rmSync } from 'fs'
 import path from 'path'
 
 const src = path.resolve('node_modules')
-const dependencies = ${JSON.stringify(dependenciesData)}
+const dependenciesDirectories = ${JSON.stringify(dependenciesDirectories)}
 
-await Promise.all(
-  dependencies.map(async (bk) => {
-    const dest = path.resolve('..', bk.directory, 'node_modules')
-
-    try {
-      rmSync(dest, { recursive: true, force: true })
-    } catch (e) {
-      // nothing
-    }
-
+for (const dir of dependenciesDirectories) {
+  const dest = path.resolve('..', dir, 'node_modules')
+  try {
     await symlink(src, dest)
-  })
-)
+  } catch (e) {
+    // nothing
+  }
+}
 `
-  writeFileSync(path.join(emulatorPath, 'setSymlink.js'), setSymlinkCodeData)
+  writeFileSync(path.join(emulatorPath, 'setSymlink.js'), setSymlinkCodeData.trim())
 }
 
 const generateDockerIgnoreFileSingleBuild = (dependencies, config) => {
@@ -230,6 +224,7 @@ const beSingleBuildDeployment = async ({ container_ports, dependencies, env, con
   await copyEmulatorCode(container_ports, dependencies)
   await setSymlinkCode(dependencies, emulatorPath)
   await updateEmulatorPackageSingleBuild({ dependencies, emulatorPath })
+  await emPackageInstall(emulatorPath)
   generateDockerIgnoreFileSingleBuild(dependencies, config)
   generateDockerFileSingleBuild({ ports: container_ports, dependencies, env, config })
 }
@@ -240,4 +235,5 @@ module.exports = {
   getAWSECRConfig,
   beSingleBuildDeployment,
   updateEmulatorPackageSingleBuild,
+  emPackageInstall,
 }

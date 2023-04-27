@@ -42,9 +42,6 @@ async function copyEmulatorCode(PORTS, dependencies) {
   import express from "express";
   import http from "http";
   import cors from "cors";
-  import { readFile } from "fs/promises";
-  import swaggerUi from "swagger-ui-express";
-  import swaggerJSDoc from "swagger-jsdoc";
   import fs from "fs"
   
   const appHandler = (type) => async (req, res, next) => {
@@ -93,29 +90,6 @@ async function copyEmulatorCode(PORTS, dependencies) {
   
   for (const [bt, port] of ${JSON.stringify(emulatorDataEntries)}) {
       const app = express();
-      
-      const OpenApiDocfilePath = "../";
-      const apis=[]
-    
-      fs.readdirSync(OpenApiDocfilePath).forEach(file=>{
-        let filePath ="../" + file + "/*.js";
-        apis.push(filePath)
-      })
-          
-      const options = {
-        definition: {
-          openapi: '3.0.0',
-          info: {
-            title: 'Api Doc',
-            version: '1.0.0',
-          },
-        },
-        apis: apis, // files containing annotations as above
-      };
-
-      const openapiSpecification = swaggerJSDoc(options)
-
-      app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification));
       app.use(cors());
       app.all("/*", appHandler(bt));
       const server = http.createServer(app);
@@ -249,7 +223,7 @@ function addEmulatorProcessData(processData) {
   fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
 }
 
-async function stopEmulator(rootPath) {
+async function stopEmulator(rootPath, hard) {
   // if (localRegistry) {
   //   await Promise.all(
   //     Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
@@ -272,7 +246,7 @@ async function stopEmulator(rootPath) {
       await runBash(`kill ${processData.pid}`)
     }
 
-    await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
+    if (hard) await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
     console.log('emulator stopped successfully!')
   }
   // }

@@ -10,18 +10,15 @@ const { appConfig } = require('../../../../utils/appconfigStore')
 const { s3Handler } = require('../../../../utils/aws/s3')
 const { spinnies } = require('../../../../loader')
 const { buildBlock } = require('../../../start/util')
-const { removeSync } = require('./util')
 const { awsHandler } = require('../../../../utils/aws')
 
 const singleBuildDeployment = async ({ deployConfigManager, deployedData, config, opdBackupFolder, env }) => {
-  const delPaths = []
   const deployData = deployedData
   try {
     await appConfig.init()
     spinnies.add('ele', { text: `Preparing elements block to upload` })
 
-    const { elementsBuildFolder, emEleFolder, containerBlock } = await singleBuild({ appConfig, buildOnly: true, env })
-    delPaths.push(emEleFolder)
+    const { elementsBuildFolder, containerBlock } = await singleBuild({ appConfig, buildOnly: true, env })
 
     if (!elementsBuildFolder) throw new Error('Error building elements')
 
@@ -48,15 +45,13 @@ const singleBuildDeployment = async ({ deployConfigManager, deployedData, config
     spinnies.add(`cont`, { text: `Building container` })
 
     // Upload Container
-    const { blockBuildFolder , error} = await buildBlock(
+    const { blockBuildFolder, error } = await buildBlock(
       containerBlock,
       {
         BLOCK_ELEMENTS_URL: `http://${deployData.elementsBucket}.s3-website-${region}.amazonaws.com/remoteEntry.js`,
       },
       env
     )
-
-    delPaths.push(blockBuildFolder)
 
     if (!blockBuildFolder) throw new Error(`Error building container ${error}`)
 
@@ -77,8 +72,6 @@ const singleBuildDeployment = async ({ deployConfigManager, deployedData, config
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployData, name: config.name })
 
     spinnies.succeed(`cont`, { text: `Upload success` })
-
-    await removeSync(delPaths)
   } catch (error) {
     spinnies.stopAll()
 
@@ -87,7 +80,6 @@ const singleBuildDeployment = async ({ deployConfigManager, deployedData, config
 
     deployData.newUploads = false
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployData, name: config.name })
-    await removeSync(delPaths)
   }
 }
 

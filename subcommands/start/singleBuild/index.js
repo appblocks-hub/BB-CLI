@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { existsSync, rmSync } = require('fs')
 const path = require('path')
 const { runBash } = require('../../bash')
 const { startBlock } = require('../util')
@@ -34,15 +33,12 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
     const emEleFolderName = '._ab_em_elements'
     const emEleFolder = path.join(relativePath, emEleFolderName)
 
-    if (existsSync(emEleFolder)) rmSync(emEleFolder, { recursive: true, force: true })
-
     spinnies.update('singleBuild', { text: `Generating elements emulator` })
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
     spinnies.update('singleBuild', { text: `Merging elements` })
     const errorBlocks = await mergeDatas(elementBlocks, emEleFolder, depLib, env)
 
-    spinnies.update('singleBuild', { text: `Installing dependencies for elements emulator` })
     await packageInstall(emEleFolder, elementBlocks)
 
     if (buildOnly) {

@@ -6,13 +6,14 @@
  */
 
 const path = require('path')
-const { existsSync, mkdirSync, rmSync } = require('fs')
-const { symlink } = require('fs/promises')
+const { existsSync, mkdirSync, unlinkSync, lstat, rmSync, symlinkSync } = require('fs')
 const { runBashLongRunning } = require('./bash')
 const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-manager')
 const { createFileSync } = require('../utils/fileAndFolderHelpers')
-const { updateEmulatorPackageSingleBuild } = require('./upload/onPrem/awsECR/util')
+const { updateEmulatorPackageSingleBuild, emPackageInstall } = require('./upload/onPrem/awsECR/util')
 const { pexec } = require('../utils/execPromise')
+const { configstore, headLessConfigStore } = require('../configstore')
+const { checkPnpm } = require('../utils/pnpmUtils')
 
 global.rootDir = process.cwd()
 
@@ -39,10 +40,38 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       return acc
     }, {})
 
+    const emulatorPath = '._ab_em'
+
     if (singleInstance) {
-      await updateEmulatorPackageSingleBuild({ dependencies: depBlocks, emulatorPath: '._ab_em' })
+      await updateEmulatorPackageSingleBuild({ dependencies: depBlocks, emulatorPath })
+      await emPackageInstall(emulatorPath)
+
+      const src = path.resolve(emulatorPath, 'node_modules')
+      for (const bk of Object.values(depBlocks)) {
+        try {
+          const dest = path.resolve(bk.directory, 'node_modules')
+          lstat(dest, (err, stats) => {
+            if (err && err.code !== 'ENOENT') throw err
+
+            if (stats?.isSymbolicLink()) unlinkSync(dest)
+            if (stats?.isDirectory()) rmSync(dest, { recursive: true })
+
+            // cpSync(src, dest, { recursive: true })
+            symlinkSync(src, dest)
+          })
+        } catch (e) {
+          if (e.code !== 'ENOENT' && e.code !== 'EEXIST') {
+            console.log(e.message, '\n')
+          }
+        }
+      }
     } else {
-      const i = await pexec('cd ./._ab_em/ && npm i')
+      let installer = 'npm i'
+      const nodePackageManager = configstore.get('nodePackageManager')
+      global.usePnpm = nodePackageManager === 'pnpm' || (!nodePackageManager && checkPnpm())
+      if (global.usePnpm) installer = 'pnpm i'
+
+      const i = await pexec(installer, { cwd: emulatorPath })
       if (i.err) throw new Error(i.err)
     }
 
@@ -58,23 +87,10 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       createFileSync(logOutPath, '')
     }
 
-    if (singleInstance) {
-      const src = path.resolve('._ab_em', 'node_modules')
-      await Promise.all(
-        Object.values(depBlocks).map(async (bk) => {
-          const dest = path.resolve(bk.directory, 'node_modules')
-
-          try {
-            rmSync(dest, { recursive: true, force: true })
-          } catch (e) {
-            // nothing
-          }
-
-          await symlink(src, dest)
-
-          return true
-        })
-      )
+    const headlessConfig = headLessConfigStore.store
+    if (headlessConfig.prismaSchemaFolderPath) {
+      const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
+      if (ie.err) throw new Error(ie.err)
     }
 
     const child = runBashLongRunning('node index.js', { out: logOutPath, err: logErrPath }, './._ab_em')
