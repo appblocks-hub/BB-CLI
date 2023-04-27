@@ -15,7 +15,7 @@ const { stopEmulatedElements } = require('./start/singleBuild/util')
 global.rootDir = process.cwd()
 
 const stop = async (name, options) => {
-  const { global: isGlobal } = options
+  const { global: isGlobal, hard, blockType } = options
 
   await appConfig.init(null, null, null, { isGlobal })
 
@@ -23,7 +23,8 @@ const stop = async (name, options) => {
     // eslint-disable-next-line no-param-reassign
     name = appConfig.allBlockNames.next().value
   }
-  if (!name) {
+
+  if (name?.length < 1) {
     if ([...appConfig.allBlockNames].length <= 0) {
       console.log('\nNo blocks to stop!\n')
       process.exit(1)
@@ -39,12 +40,12 @@ const stop = async (name, options) => {
           // console.log(`---Stopping blocks in ${pck}---`)
           const { rootPath } = localRegistryData[pck]
           await appConfig.init(rootPath, null, null, { isGlobal: false, reConfig: true })
-          stopAllBlock(rootPath)
+          stopAllBlock(rootPath, hard, blockType)
         }
       }
       return
     }
-    stopAllBlock('.')
+    stopAllBlock('.', hard, blockType)
   } else if (appConfig.has(name)) {
     if (appConfig.isLive(name)) {
       for (const blck of appConfig.fnBlocks) {
@@ -70,7 +71,7 @@ const stop = async (name, options) => {
   }
 }
 
-async function stopAllBlock(rootPath) {
+async function stopAllBlock(rootPath, hard, blockType) {
   if ([...appConfig.liveJobBlocks].length !== 0) {
     console.log('\nJob blocks are live! Please stop jobs and try again\n')
     process.exit(1)
@@ -82,30 +83,32 @@ async function stopAllBlock(rootPath) {
     process.exit(1)
   }
 
-  for (const bk of appConfig.uiBlocks) {
-    const bName = bk.meta.name
-    const liveData = appConfig.getLiveDetailsof(bName)
-    if (liveData?.isOn && !liveData.singleBuild) {
-      stopBlock(bName)
+  if (!blockType || blockType === 'ui') {
+    for (const bk of appConfig.uiBlocks) {
+      const bName = bk.meta.name
+      const liveData = appConfig.getLiveDetailsof(bName)
+      if (liveData?.isOn && !liveData.singleBuild) {
+        stopBlock(bName)
+      }
     }
+    await stopEmulatedElements({ rootPath, hard })
   }
 
-  await stopEmulatedElements({ rootPath })
-
-  stopEmulator(rootPath)
-  global.assignedPorts = []
-
-  // If Killing emulator is successfull, update all function block configs..
-  for (const {
-    meta: { name },
-  } of appConfig.fnBlocks) {
-    appConfig.stopBlock = name
-  }
-  // If Killing emulator is successfull, update all job block configs..
-  for (const {
-    meta: { name },
-  } of appConfig.jobBlocks) {
-    appConfig.stopBlock = name
+  if (!blockType || blockType === 'function') {
+    stopEmulator(rootPath, hard)
+    global.assignedPorts = []
+    // If Killing emulator is successful, update all function block configs..
+    for (const {
+      meta: { name },
+    } of appConfig.fnBlocks) {
+      appConfig.stopBlock = name
+    }
+    // If Killing emulator is successful, update all job block configs..
+    for (const {
+      meta: { name },
+    } of appConfig.jobBlocks) {
+      appConfig.stopBlock = name
+    }
   }
 }
 

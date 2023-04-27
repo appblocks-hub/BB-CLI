@@ -74,6 +74,7 @@ const upload = async (blockName, options) => {
       })
     }
   } catch (error) {
+    console.log(error);
     spinnies.fail('up', { text: 'Error checking app data' })
     process.exit(1)
   }
