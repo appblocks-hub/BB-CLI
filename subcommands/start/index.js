@@ -126,7 +126,7 @@ const start = async (blockName, { usePnpm, multiInstance = false, blockType }) =
 
 async function startAllBlock({ singleInstance, startBlockType }) {
   // Build env for all blocks
-  const PORTS = await getFreePorts(appConfig)
+  const PORTS = await getFreePorts(appConfig, null, startBlockType)
 
   // IF FUNCTION BLOCK EXIST
   if (
