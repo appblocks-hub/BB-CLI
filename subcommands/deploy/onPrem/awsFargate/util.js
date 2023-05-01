@@ -37,17 +37,6 @@ const CPU_MEMORY_COMBINATIONS = [
 ]
 
 const getAWSFargateConfig = async () => {
-  const sBDeployment = await readInput({
-    type: 'list',
-    name: 'sBDeployment',
-    message: 'Select the build process type',
-    choices: [
-      { name: 'Single Build', value: true },
-      { name: 'Normal Build', value: false },
-    ],
-    default: true,
-  })
-
   spinnies.add('vpcGet', { text: 'Getting vpcs' })
   const vpcs = await ec2Handler.describeVpcs()
   spinnies.remove('vpcGet')

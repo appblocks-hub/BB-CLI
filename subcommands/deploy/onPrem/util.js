@@ -139,20 +139,18 @@
      })
    }
  
-   if (blockType === 'view') {
-     sBDeployment = await readInput({
-       type: 'list',
-       name: 'sBDeployment',
-       message: 'Select the build process type',
-       choices: [
-         { name: 'Single Build', value: true },
-         { name: 'Normal Build', value: false },
-       ],
-       default: true,
-     })
-   }
+    sBDeployment = await readInput({
+      type: 'list',
+      name: 'sBDeployment',
+      message: 'Select the build process type',
+      choices: [
+        { name: 'Single Build', value: true },
+        { name: 'Normal Build', value: false },
+      ],
+      default: true,
+    })
  
-   if (sBDeployment && !opdEleDomain) {
+   if (sBDeployment && !opdEleDomain && blockType === 'view') {
      opdEleDomain = await readInput({
        name: 'domain',
        message: `Enter domain name of views elements deploy (single build)`,
