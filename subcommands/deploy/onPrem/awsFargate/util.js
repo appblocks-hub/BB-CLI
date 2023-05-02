@@ -118,8 +118,7 @@ const getAWSFargateConfig = async () => {
     securityGroupIds,
     memory,
     cpu,
-    autoScaleAllowed,
-    singleBuildDeployment: sBDeployment,
+    autoScaleAllowed
   }
 
   if (autoScaleAllowed) {
