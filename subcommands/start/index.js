@@ -126,7 +126,7 @@ const start = async (blockName, { usePnpm, multiInstance = false, blockType }) =
 
 async function startAllBlock({ singleInstance, startBlockType }) {
   // Build env for all blocks
-  const PORTS = await getFreePorts(appConfig)
+  const PORTS = await getFreePorts(appConfig, null, startBlockType)
 
   // IF FUNCTION BLOCK EXIST
   if (
@@ -146,12 +146,13 @@ async function startAllBlock({ singleInstance, startBlockType }) {
         break
     }
     if (emData.status === 'success') {
-      const pary = []
+      const installArray = []
 
       // install deps in sharedBlocks
       for (const { meta, directory } of appConfig.sharedFnBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
-
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
         const _ = await envToObj(path.resolve(directory, '.env'))
         await updateEnv('function', _)
 
@@ -169,7 +170,10 @@ async function startAllBlock({ singleInstance, startBlockType }) {
 
       // install deps in fnBlocks
       for (const { meta, directory } of appConfig.fnBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
+
         // if (i.status === 'failed') {
         //   throw new Error(i.msg)
         // }
@@ -190,7 +194,9 @@ async function startAllBlock({ singleInstance, startBlockType }) {
 
       // install deps in jobBlocks
       for (const { meta, directory } of appConfig.jobBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
         // if (i.status === 'failed') {
         //   throw new Error(i.msg)
         // }
@@ -211,7 +217,7 @@ async function startAllBlock({ singleInstance, startBlockType }) {
 
       if (!singleInstance) {
         console.log(' Installing dependencies for blocks ')
-        await Promise.allSettled(pary)
+        await Promise.allSettled(installArray)
       }
       // console.log(rep)
       if (emData.data.emulatorData) {
