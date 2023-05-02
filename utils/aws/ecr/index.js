@@ -87,8 +87,7 @@ class ECR_Handler {
         await execSync(`docker save ${containerName} > ${backupFolder}/${containerName}.tar`)
       }
 
-      await runBash('rm -rf ./._ab_em && rm ./Dockerfile && rm .dockerignore')
-      await runBash('rm ./package.json && rm ./package-lock.json')
+      await runBash('rm ./Dockerfile .dockerignore ./package.json ./package-lock.json')
       spinnies.succeed('upimg', { text: `Image uploads completed successfully` })
       return { uploaded: true }
     } catch (error) {
