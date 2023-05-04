@@ -11,12 +11,22 @@ const path = require('path')
 const fs = require('fs')
 const fsPromise = require('fs/promises')
 
-const convertToEnv = (object, existingValue) => {
-  return Object.entries(object).reduce((acc, [key, value]) => {
+const convertToEnv = (envObject, existingValue) => {
+  let existingObject = {}
+  if (existingValue && typeof existingValue === 'string') {
+    existingObject = existingValue.split('\n').reduce((a, eData) => {
+      const [key, value] = eData.split('=')
+      if (!key?.length) return a
+      return { ...a, [key]: value }
+    }, {})
+  }
+  const newEnvObject = { ...existingObject, ...envObject }
+
+  return Object.entries(newEnvObject).reduce((acc, [key, value]) => {
     // eslint-disable-next-line no-param-reassign
     acc += `${key}=${value}\n`
     return acc
-  }, existingValue || '')
+  }, '')
 }
 
 const upsertEnv = async (envPath, envData) => {

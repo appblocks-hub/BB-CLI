@@ -131,7 +131,7 @@ async function validateAndAssignPortProxy(p, pr) {
   return port
 }
 
-const getFreePorts = async (appConfig, blockName) => {
+const getFreePorts = async (appConfig, blockName, startBlockType) => {
   // if block name is passed return a port for that block
   if (blockName) {
     const blockConfig = appConfig.getBlockWithLive(blockName)
@@ -141,56 +141,76 @@ const getFreePorts = async (appConfig, blockName) => {
 
   const ports = {}
 
-  // Get ports for ui blocks
-  for (const block of appConfig.uiBlocks) {
-    let bName = block.meta.name
-    const blockToStart = appConfig.getBlockWithLive(bName)
-    if (blockToStart.isOn && blockToStart.port) {
-      if (block.meta.type === 'ui-dep-lib') {
-        bName = 'BLOCK_DEP_LIB_URL'
+  if (!startBlockType || startBlockType === 'ui') {
+    // Get ports for ui blocks
+    for (const block of appConfig.uiBlocks) {
+      let bName = block.meta.name
+      const blockToStart = appConfig.getBlockWithLive(bName)
+      if (blockToStart.isOn && blockToStart.port) {
+        if (block.meta.type === 'ui-dep-lib') {
+          bName = 'BLOCK_DEP_LIB_URL'
+        }
+        ports[bName] = await validateAndAssignPortProxy(blockToStart.port)
       }
-      ports[bName] = await validateAndAssignPortProxy(blockToStart.port)
     }
   }
 
-  // Get port for emulator
-  const emPortFavoured = parseInt(process.env.BB_EM_PORT || 5000)
-  ports.emulatorPorts = await validateAndAssignPortProxy(emPortFavoured, emPortFavoured + 5)
-  // ports.emulator = await validateAndAssignPortProxy(5000)
+  if (!startBlockType || startBlockType === 'function') {
+    // Get port for emulator
+    const emPortFavoured = parseInt(process.env.BB_EM_PORT || 5000)
+    ports.emulatorPorts = await validateAndAssignPortProxy(emPortFavoured, emPortFavoured + 5)
+    // ports.emulator = await validateAndAssignPortProxy(5000)
+  }
 
-  const emElePortFavoured = parseInt(process.env.AB_EM_ELEMENTS_PORT || 4200)
-  ports.emElements = await validateAndAssignPortProxy(emElePortFavoured, emElePortFavoured + 5)
+  if (!startBlockType || startBlockType === 'ui') {
+    const emElePortFavoured = parseInt(process.env.AB_EM_ELEMENTS_PORT || 4200)
+    ports.emElements = await validateAndAssignPortProxy(emElePortFavoured, emElePortFavoured + 5)
 
-  const containerFavoured = parseInt(process.env.AB_CONTAINER_PORT || 3000)
-  ports.container = await validateAndAssignPortProxy(containerFavoured, containerFavoured + 5)
+    const containerFavoured = parseInt(process.env.AB_CONTAINER_PORT || 3000)
+    ports.container = await validateAndAssignPortProxy(containerFavoured, containerFavoured + 5)
+  }
 
   // Update the ports to env
   const envPortValues = Object.entries(ports).reduce((acc, [bName, bPort]) => {
     if (!bPort || !bName) return acc
     const url = `http://localhost:${bPort[0] || bPort}`
-    switch (bName) {
-      case 'emulatorPorts':
-        acc.BLOCK_FUNCTION_URL = url
-        break
 
-      case 'emElements':
-        acc.BLOCK_ELEMENTS_URL = `${url}/remoteEntry.js`
-        acc.BLOCK_DEP_LIB_URL = `${url}/remoteEntry.js`
-        break
+    if (!startBlockType || startBlockType === 'ui') {
+      switch (bName) {
+        case 'emElements':
+          acc.BLOCK_ELEMENTS_URL = `${url}/remoteEntry.js`
+          acc.BLOCK_DEP_LIB_URL = `${url}/remoteEntry.js`
+          break
 
-      case 'container':
-        acc.BLOCK_CONTAINER_URL = url
-        break
+        case 'container':
+          acc.BLOCK_CONTAINER_URL = url
+          break
 
-      default:
-        acc[`BLOCK_ENV_URL_${bName}`] = url
-        break
+        default:
+          acc[`BLOCK_ENV_URL_${bName}`] = url
+          break
+      }
+    }
+    if (!startBlockType || startBlockType === 'function') {
+      switch (bName) {
+        case 'emulatorPorts':
+          acc.BLOCK_FUNCTION_URL = url
+          break
+
+        default:
+          acc[`BLOCK_ENV_URL_${bName}`] = url
+          break
+      }
     }
 
     return acc
   }, {})
+
   await updateEnv('view', envPortValues)
-  await updateEnv('function', { BLOCK_FUNCTION_URL: envPortValues.BLOCK_FUNCTION_URL })
+  await updateEnv(
+    'function',
+    envPortValues?.BLOCK_FUNCTION_URL ? { BLOCK_FUNCTION_URL: envPortValues.BLOCK_FUNCTION_URL } : {}
+  )
 
   return ports
 }

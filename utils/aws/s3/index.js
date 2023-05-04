@@ -5,13 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
- const {
+const {
   S3Client,
   CreateBucketCommand,
   PutBucketPolicyCommand,
   PutBucketWebsiteCommand,
   PutObjectCommand,
   PutBucketCorsCommand,
+  PutPublicAccessBlockCommand,
+  DeleteBucketCommand,
+  DeleteObjectCommand,
+  ListObjectsCommand,
 } = require('@aws-sdk/client-s3')
 const fs = require('fs')
 const path = require('path')
@@ -40,9 +44,62 @@ class S3_Handler {
   async createBucket(options) {
     const { bucket } = options
     const command = new CreateBucketCommand({
-      ACL: 'public-read',
       Bucket: bucket,
+      // ObjectOwnership: 'BucketOwnerPreferred',
+      // ACL: 'public-read',
     })
+    await this.S3Client.send(command)
+
+    await this.putPublicAccess(options)
+
+    return { bucket }
+  }
+
+  async deleteBucket(options) {
+    const { bucket } = options
+    // Create a command to list all objects in the bucket
+    const listObjectsCommand = new ListObjectsCommand({ Bucket: bucket })
+
+    // Send the command to list all objects in the bucket
+    this.S3Client.send(listObjectsCommand)
+      .then((data) => {
+        // Delete each object in the bucket
+
+        if (!data.Contents?.length) {
+          return []
+        }
+
+        const objectKeys = data.Contents.map((object) => ({ Key: object.Key }))
+        const deleteObjectPromises = objectKeys.map((objectKey) =>
+          this.S3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey.Key }))
+        )
+        return Promise.all(deleteObjectPromises)
+      })
+      .then(() =>
+        // Once all objects are deleted, delete the bucket
+        this.S3Client.send(new DeleteBucketCommand({ Bucket: bucket }))
+      )
+      .then(() => {
+        console.log(`Bucket ${bucket} deleted successfully`)
+      })
+      .catch((err) => {
+        console.log(`Bucket ${bucket}: ${err.message}`)
+        // console.error(err, err.stack)
+      })
+  }
+
+  async putPublicAccess(options) {
+    const { bucket } = options
+    const input = {
+      Bucket: bucket,
+      PublicAccessBlockConfiguration: {
+        BlockPublicAcls: false,
+        IgnorePublicAcls: false,
+        BlockPublicPolicy: false,
+        RestrictPublicBuckets: false,
+      },
+    }
+    const command = new PutPublicAccessBlockCommand(input)
     await this.S3Client.send(command)
     return { bucket }
   }

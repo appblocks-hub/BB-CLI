@@ -48,7 +48,8 @@ const onPremS3Upload = async (options) => {
     })
 
     if (config.singleBuildDeployment) {
-      await singleBuildDeployment({ deployConfigManager, deployedData, config, opdBackupFolder, env: envName })
+      const backendUrl = envData.on_premise?.backend?.aws_fargate?.[0]?.load_balancer_dns
+      await singleBuildDeployment({ deployConfigManager, config, opdBackupFolder, env: envName, backendUrl })
       return
     }
 

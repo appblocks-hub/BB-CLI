@@ -11,7 +11,7 @@ const { configstore } = require('../../../../configstore')
 const { spinnies } = require('../../../../loader')
 const { copyEmulatorCode } = require('../../../../utils/emulator-manager')
 const { pexec } = require('../../../../utils/execPromise')
-const { checkPnpm } = require('../../../../utils/pnpmUtils')
+const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { readInput } = require('../../../../utils/questionPrompts')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 
@@ -21,8 +21,12 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
 
   const envPath = existsSync(`.env.function.${env}`) ? `.env.function.${env}` : `.env.function`
 
-  const addPackageManager = `RUN npm install -g pnpm@7.9.0`
-  const runPackageManager = `RUN pnpm i`
+  const { installer, nodePackageManager, installPackage } = getNodePackageInstaller()
+
+  const updateNpm = `RUN npm install -g npm`
+  const addPackageManager = `RUN ${installPackage}`
+  const runPackageManager = `RUN ${installer}`
+
   const beforeDockerStartCommand = config.beforeDockerStartCommand?.length > 0 ? config.beforeDockerStartCommand : []
 
   const fileData = `
@@ -31,7 +35,7 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   
   RUN apk --no-cache add git
   
-  ${addPackageManager}
+  ${nodePackageManager !== 'npm' ? `${updateNpm}\n${addPackageManager}` : ''}
   
   ENV NODE_ENV production
   
@@ -95,11 +99,7 @@ const getAWSECRConfig = async (options) => {
 }
 
 const emPackageInstall = async (emulatorPath) => {
-  let installer = 'npm i'
-  const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager === 'pnpm' || (!nodePackageManager && checkPnpm())
-  if (global.usePnpm) installer = 'pnpm i'
-
+  const { installer } = getNodePackageInstaller()
   spinnies.add('singleBuild', { text: `Installing dependencies for emulator (${installer})` })
   const i = await pexec(installer, { cwd: emulatorPath })
   if (i.err) throw new Error(i.err)
@@ -142,8 +142,11 @@ const generateDockerFileSingleBuild = ({ ports, dependencies, version, env, conf
 
   const envPath = existsSync(`.env.function.${env}`) ? `.env.function.${env}` : `.env.function`
 
-  const addPackageManager = `RUN npm install -g pnpm@7.9.0`
-  const runPackageManager = `RUN pnpm i`
+  const { installer, nodePackageManager, installPackage } = getNodePackageInstaller()
+
+  const updateNpm = `RUN npm install -g npm`
+  const addPackageManager = `RUN ${installPackage}`
+  const runPackageManager = `RUN ${installer}`
 
   const beforeDockerStartCommand = config.beforeDockerStartCommand?.length > 0 ? config.beforeDockerStartCommand : []
 
@@ -153,7 +156,7 @@ FROM --platform=linux/amd64 node:${version}-alpine
 
 RUN apk --no-cache add git
 
-# ${addPackageManager}
+${nodePackageManager !== 'npm' ? `${updateNpm}\n${addPackageManager}` : ''}
 
 ENV NODE_ENV production
 
@@ -165,7 +168,7 @@ COPY ${envPath} .env.function
 COPY block.config.json .
 
 WORKDIR ./._ab_em/
-# ${runPackageManager}
+${runPackageManager}
 RUN node setSymlink.js
 WORKDIR ../
 
@@ -181,14 +184,11 @@ ${beforeDockerStartCommand.map((c) => c).join('\n')}
 CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
 
 `
-  writeFileSync('./Dockerfile', fileData)
+  writeFileSync('./Dockerfile', fileData.trim())
 }
 
-
-
-
 const setSymlinkCode = async (dependencies, emulatorPath) => {
-  const dependenciesDirectories = Object.values(dependencies).map(({directory}) => directory)
+  const dependenciesDirectories = Object.values(dependencies).map(({ directory }) => directory)
 
   const setSymlinkCodeData = `
 import { symlink } from 'fs/promises'
@@ -209,12 +209,14 @@ for (const dir of dependenciesDirectories) {
   writeFileSync(path.join(emulatorPath, 'setSymlink.js'), setSymlinkCodeData.trim())
 }
 
-const generateDockerIgnoreFileSingleBuild = (dependencies, config) => {
+const generateDockerIgnoreFile = (dependencies, config) => {
   let fileData = Object.values(dependencies).map((d) => path.join(d.directory, 'node_modules'))
 
   if (config.dockerIgnore?.length > 0) {
     fileData = fileData.concat(config.dockerIgnore)
   }
+
+  fileData.push(`._ab_em/node_modules`)
 
   writeFileSync('.dockerignore', fileData.join('\n'))
 }
@@ -224,8 +226,8 @@ const beSingleBuildDeployment = async ({ container_ports, dependencies, env, con
   await copyEmulatorCode(container_ports, dependencies)
   await setSymlinkCode(dependencies, emulatorPath)
   await updateEmulatorPackageSingleBuild({ dependencies, emulatorPath })
-  await emPackageInstall(emulatorPath)
-  generateDockerIgnoreFileSingleBuild(dependencies, config)
+  // await emPackageInstall(emulatorPath)
+  generateDockerIgnoreFile(dependencies, config)
   generateDockerFileSingleBuild({ ports: container_ports, dependencies, env, config })
 }
 
@@ -236,4 +238,5 @@ module.exports = {
   beSingleBuildDeployment,
   updateEmulatorPackageSingleBuild,
   emPackageInstall,
+  generateDockerIgnoreFile,
 }

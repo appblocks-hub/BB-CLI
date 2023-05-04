@@ -5,17 +5,42 @@
  * LICENSE file in the root directory of this source tree.
  */
 const path = require('path')
+const { existsSync, writeFileSync, readFileSync } = require('fs')
 const singleBuild = require('../../../start/singleBuild')
 const { appConfig } = require('../../../../utils/appconfigStore')
 const { s3Handler } = require('../../../../utils/aws/s3')
 const { spinnies } = require('../../../../loader')
 const { buildBlock } = require('../../../start/util')
 const { awsHandler } = require('../../../../utils/aws')
+const { convertToEnv } = require('../../../../utils/env')
 
-const singleBuildDeployment = async ({ deployConfigManager, deployedData, config, opdBackupFolder, env }) => {
-  const deployData = deployedData
+const singleBuildDeployment = async ({ deployConfigManager, config, opdBackupFolder, env, backendUrl }) => {
+  const deployData = config.deployed
   try {
     await appConfig.init()
+
+    let envPath = path.resolve(`.env.view.${env}`)
+
+    if (!existsSync(envPath)) {
+      const { region } = awsHandler.getAWSCredConfig
+      const s3Website = `s3-website-${region}.amazonaws.com`
+      const eleWebDomain =
+        deployData.elements_server_dns || `http://${deployData.elementsBucket}.${s3Website}/remoteEntry.js`
+
+      const envData = {
+        BLOCK_ELEMENTS_URL: eleWebDomain,
+        BLOCK_DEP_LIB_URL: eleWebDomain,
+        BLOCK_CONTAINER_URL: deployData.server_dns || `http://${deployData.bucket}.${s3Website}`,
+      }
+
+      if (backendUrl) envData.BLOCK_FUNCTION_URL = backendUrl
+
+      envPath = path.resolve(`.env.view`)
+      const existingEnvDataFile = await readFileSync(envPath, 'utf-8')
+      const updatedEnv = convertToEnv(envData, existingEnvDataFile)
+      await writeFileSync(envPath, updatedEnv)
+    }
+
     spinnies.add('ele', { text: `Preparing elements block to upload` })
 
     const { elementsBuildFolder, containerBlock } = await singleBuild({ appConfig, buildOnly: true, env })
@@ -40,18 +65,10 @@ const singleBuildDeployment = async ({ deployConfigManager, deployedData, config
     uploadKeys.elements = uploadedBlocks
     spinnies.succeed(`ele`, { text: `Uploaded elements successfully` })
 
-    const { region } = awsHandler.getAWSCredConfig
-
     spinnies.add(`cont`, { text: `Building container` })
 
     // Upload Container
-    const { blockBuildFolder, error } = await buildBlock(
-      containerBlock,
-      {
-        BLOCK_ELEMENTS_URL: `http://${deployData.elementsBucket}.s3-website-${region}.amazonaws.com/remoteEntry.js`,
-      },
-      env
-    )
+    const { blockBuildFolder, error } = await buildBlock(containerBlock, {}, env)
 
     if (!blockBuildFolder) throw new Error(`Error building container ${error}`)
 
