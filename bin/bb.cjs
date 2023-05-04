@@ -76,6 +76,8 @@ cmd('pull', 'to pull blocks')
 
 cmd('push', 'To commit and push blocks')
 
+cmd('push-v2', 'To commit and push blocks')
+
 cmd('push-config', 'to push package lock config')
 
 cmd('start', 'To start one or all blocks')
