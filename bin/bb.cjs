@@ -74,6 +74,8 @@ cmd('publish', 'Publish block or appblock')
 
 cmd('pull', 'to pull blocks')
 
+cmd('pull-v2', 'to pull blocks')
+
 cmd('push', 'To commit and push blocks')
 
 cmd('push-v2', 'To commit and push blocks')
