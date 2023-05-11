@@ -3,17 +3,18 @@ const chalk = require('chalk')
 const path = require('path')
 const { symlink } = require('fs/promises')
 const semver = require('semver')
+const { getModuleFederationPluginShared } = require('./util')
 
 const updatePackageVersionIfNeeded = (mergedPackages) => {
   const updatedDeps = {}
   for (const dependencies of Object.values(mergedPackages)) {
     for (const dep of Object.keys(dependencies)) {
       try {
-        const exVer = updatedDeps[dep] && updatedDeps[dep].replace('^', '')
-        const isGt = exVer && semver.gt(exVer, dependencies[dep].replace('^', ''))
+        const existingVersion = updatedDeps[dep]?.replace('^', '')
+        const isGreaterThan = existingVersion && semver.gt(existingVersion, dependencies[dep]?.replace('^', ''))
 
         // eslint-disable-next-line no-continue
-        if (isGt) continue
+        if (isGreaterThan) continue
 
         updatedDeps[dep] = dependencies[dep]
       } catch (e) {
@@ -55,7 +56,8 @@ const mergeFederationExpose = async (fedExData, dir) => {
 const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
   const mergedPackages = { dependencies: {}, devDependencies: {} }
   let mergedEnvs = {}
-  let mergedFeds = {}
+  let mergedFedExpos = {}
+  let mergedFedShared = {}
   const errorBlocks = []
 
   await Promise.all(
@@ -70,22 +72,32 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
         const src = path.join(directory, 'src', 'remote')
         if (existsSync(src)) {
           if (type !== 'ui-dep-lib') {
-            const dest = path.join(emEleFolder, 'src', dir)
-            await symlink(src, dest)
+            try {
+              const dest = path.join(emEleFolder, 'src', dir)
+              await symlink(src, dest)
+            } catch (error) {
+              if (error.code !== 'EEXIST') throw error
+            }
           }
         } else {
           throw new Error(`No src/remote found for block ${name}`)
         }
 
         if (!depLib) {
-          const packages = JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
-          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
-          mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+          const packages = JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf-8'))
+          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages?.dependencies || {} }
+          mergedPackages.devDependencies = {
+            ...mergedPackages.devDependencies,
+            [name]: packages?.devDependencies || {},
+          }
         }
 
         const fedExData = await import(path.join(directory, 'federation-expose.js'))
         const processedFeds = await mergeFederationExpose(fedExData, dir)
-        mergedFeds = { ...mergedFeds, ...processedFeds }
+        mergedFedExpos = { ...mergedFedExpos, ...processedFeds }
+
+        const fedSharedData = await getModuleFederationPluginShared(dir)
+        mergedFedShared = { ...mergedFedShared, ...fedSharedData }
 
         const processedEnvData = await mergeEnvs(path.join(directory, '.env'), name)
         mergedEnvs = { ...mergedEnvs, ...processedEnvData }
@@ -96,11 +108,11 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
     })
   )
 
-  return { mergedPackages, mergedEnvs, mergedFeds, errorBlocks }
+  return { mergedPackages, mergedEnvs, mergedFedExpos, errorBlocks, mergedFedShared }
 }
 
 const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
-  const { mergedPackages, mergedEnvs, mergedFeds, errorBlocks } = await mergeAllDatas(
+  const { mergedPackages, mergedEnvs, mergedFedExpos, mergedFedShared, errorBlocks } = await mergeAllDatas(
     elementBlocks,
     emEleFolder,
     depLib
@@ -108,7 +120,7 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
 
   let dependencies
   let devDependencies
-  let mergedFedExposes = mergedFeds
+  let mergedFedExposes = mergedFedExpos
 
   if (depLib) {
     const directory = path.resolve(depLib.directory)
@@ -154,6 +166,9 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
 
   const fedExpoData = `export default ${JSON.stringify(mergedFedExposes, null, 2)}`
   writeFileSync(path.join(emEleFolder, 'federation-expose.js'), fedExpoData)
+
+  const mergedFedSharedData = `export default ${JSON.stringify(mergedFedShared, null, 2)}`
+  writeFileSync(path.join(emEleFolder, 'federation-shared.js'), mergedFedSharedData)
 
   writeFileSync(path.join(emEleFolder, 'src', 'index.js'), '')
 

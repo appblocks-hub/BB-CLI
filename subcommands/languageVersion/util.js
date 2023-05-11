@@ -197,9 +197,10 @@ const langVersionsLinkedToAbVersion = async ({ appblockVersionIds, supportedAppb
   if (supportedAppblockVersions) reqBody.appblock_versions = supportedAppblockVersions
   else reqBody.appblock_version_ids = appblockVersionIds
 
-  const { data, error } = await post(listLanguageVersions, reqBody)
+  if (!reqBody.appblock_versions) throw new Error(`No supported appblock versions`)
 
-  if (error) throw new Error(error)
+  const { data, error } = await post(listLanguageVersions, reqBody)
+  if (error) throw error
 
   return data
 }
@@ -275,6 +276,11 @@ const languageVersionCheckCommand = {
 }
 
 const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, blockLanguages }) => {
+  if (!supportedAppblockVersions?.length) {
+    console.log(chalk.yellow(`No linked appblock versions found to check language support` ))
+    return []
+  }
+
   spinnies.add('langVersion', { text: `Getting language versions` })
   const langVersionData = await langVersionsLinkedToAbVersion({ supportedAppblockVersions })
   spinnies.remove('langVersion')

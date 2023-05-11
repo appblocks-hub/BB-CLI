@@ -191,8 +191,8 @@ class BuildNodeFnEmulator {
         const directory = path.resolve(dir)
         try {
           const packages = await JSON.parse(readFileSync(path.join(directory, 'package.json')).toString())
-          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages.dependencies }
-          mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages.devDependencies }
+          mergedPackages.dependencies = { ...mergedPackages.dependencies, [name]: packages?.dependencies || {} }
+          mergedPackages.devDependencies = { ...mergedPackages.devDependencies, [name]: packages?.devDependencies || {} }
         } catch (error) {
           console.error(`${error.message} on block ${name}`)
         }

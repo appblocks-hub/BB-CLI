@@ -15,6 +15,8 @@ const program = new Command()
 program
   .argument('[name...]', 'Name of block to stop')
   .option('-g, --global', 'execute globally')
+  .option('-h, --hard', 'to regenerate emulator')
+  .option('-bt, --block-type <block-type>', 'Block type to stop')
   .action(stop)
 
 program.parse(process.argv)

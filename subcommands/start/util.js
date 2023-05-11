@@ -112,9 +112,6 @@ async function startJsProgram(block, name, port) {
     const directory = getAbsPath(block.directory)
     spinnies.update(name, { text: `Installing dependencies in ${name}` })
 
-    const nodeModulePath = path.join(directory, 'node_modules')
-    removeSync([nodeModulePath])
-
     // const i = await runBash(block.meta.postPull, directory)
     const i = await runBash(global.usePnpm ? 'pnpm install' : block.meta.postPull, path.resolve(block.directory))
     if (i.status === 'failed') {

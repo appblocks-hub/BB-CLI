@@ -28,11 +28,11 @@ const { configstore } = require('../../configstore')
 
 global.rootDir = process.cwd()
 
-const start = async (blockName, { usePnpm, multiInstance = false }) => {
+const start = async (blockName, { usePnpm, multiInstance = false, blockType }) => {
   const singleInstance = !multiInstance
+  const startBlockType = blockType
 
   const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager !== 'pnpm'
 
   if (!usePnpm && nodePackageManager !== 'pnpm') {
     console.info('We recommend using pnpm for package management')
@@ -42,7 +42,7 @@ const start = async (blockName, { usePnpm, multiInstance = false }) => {
     console.info('Seems like pnpm is not installed')
     console.warn(`pnpm is recommended`)
     console.info(`Visit https://pnpm.io for more info`)
-  } else {
+  } else if (!nodePackageManager) {
     global.usePnpm = true
   }
 
@@ -52,7 +52,7 @@ const start = async (blockName, { usePnpm, multiInstance = false }) => {
     // eslint-disable-next-line no-param-reassign
     blockName = appConfig.allBlockNames.next().value
   }
-  const configData = appConfig.appConfig
+  const configData = appConfig.config
   await setupEnv(configData)
 
   const supportedAppblockVersions = appConfig.config?.supportedAppblockVersions
@@ -64,7 +64,7 @@ const start = async (blockName, { usePnpm, multiInstance = false }) => {
   try {
     await checkLanguageVersionExistInSystem({ supportedAppblockVersions, blockLanguages })
   } catch (error) {
-    console.log(chalk.red(error.message))
+    console.log(error)
     process.exit()
   }
 
@@ -111,25 +111,28 @@ const start = async (blockName, { usePnpm, multiInstance = false }) => {
    * If some blocks are already running, kill them before
    * starting them again to avoid unkilled processes
    */
-  for (const block of appConfig.liveBlocks) {
-    if (isRunning(block?.pid)) {
-      treeKill(block.pid, (err) => {
-        if (err) {
-          feedback({ type: 'muted', message: `${block.meta.name} was live with pid:${block.pid}, couldn't kill it` })
-        }
-      })
-    }
-  }
+  // for (const block of appConfig.liveBlocks) {
+  //   if (isRunning(block?.pid)) {
+  //     treeKill(block.pid, (err) => {
+  //       if (err) {
+  //         feedback({ type: 'muted', message: `${block.meta.name} was live with pid:${block.pid}, couldn't kill it` })
+  //       }
+  //     })
+  //   }
+  // }
 
-  await startAllBlock({ singleInstance })
+  await startAllBlock({ singleInstance, startBlockType })
 }
 
-async function startAllBlock({ singleInstance }) {
+async function startAllBlock({ singleInstance, startBlockType }) {
   // Build env for all blocks
-  const PORTS = await getFreePorts(appConfig)
+  const PORTS = await getFreePorts(appConfig, null, startBlockType)
 
   // IF FUNCTION BLOCK EXIST
-  if ([...appConfig.fnBlocks]?.length || [...appConfig.jobBlocks]?.length) {
+  if (
+    ([...appConfig.fnBlocks]?.length || [...appConfig.jobBlocks]?.length) &&
+    (!startBlockType || startBlockType === 'function')
+  ) {
     // let containerBlock = null
     const emulateLang = 'nodejs'
     let emData
@@ -143,12 +146,13 @@ async function startAllBlock({ singleInstance }) {
         break
     }
     if (emData.status === 'success') {
-      const pary = []
+      const installArray = []
 
       // install deps in sharedBlocks
       for (const { meta, directory } of appConfig.sharedFnBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
-
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
         const _ = await envToObj(path.resolve(directory, '.env'))
         await updateEnv('function', _)
 
@@ -166,7 +170,10 @@ async function startAllBlock({ singleInstance }) {
 
       // install deps in fnBlocks
       for (const { meta, directory } of appConfig.fnBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
+
         // if (i.status === 'failed') {
         //   throw new Error(i.msg)
         // }
@@ -187,7 +194,9 @@ async function startAllBlock({ singleInstance }) {
 
       // install deps in jobBlocks
       for (const { meta, directory } of appConfig.jobBlocks) {
-        pary.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        if (!singleInstance) {
+          installArray.push(runBash(global.usePnpm ? 'pnpm install' : meta.postPull, path.resolve(directory)))
+        }
         // if (i.status === 'failed') {
         //   throw new Error(i.msg)
         // }
@@ -206,7 +215,10 @@ async function startAllBlock({ singleInstance }) {
         }
       }
 
-      await Promise.allSettled(pary)
+      if (!singleInstance) {
+        console.log(' Installing dependencies for blocks ')
+        await Promise.allSettled(installArray)
+      }
       // console.log(rep)
       if (emData.data.emulatorData) {
         const dt = Object.entries(emData.data.emulatorData).reduce(
@@ -224,9 +236,8 @@ async function startAllBlock({ singleInstance }) {
 
   // IF VIEW BLOCK EXIST
   const viewBlocks = [...appConfig.uiBlocks]
-  if (viewBlocks?.length) {
+  if (viewBlocks?.length && (!startBlockType || startBlockType === 'ui')) {
     if (singleInstance) {
-      console.log("entering here")
       await singleBuild({ appConfig, ports: PORTS })
       return
     }
