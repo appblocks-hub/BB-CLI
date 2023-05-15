@@ -60,6 +60,8 @@ cmd('list-language-version', 'list block language version')
 
 cmd('log', 'Streams the logs of a live block')
 
+cmd('log-v2', 'Streams the logs of a live block')
+
 cmd('login', 'to log in to shield')
 
 cmd('logout', 'to logout of shield')
