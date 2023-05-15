@@ -24,7 +24,10 @@ const getPublishedVersion = (name, directory) => {
 const createZip = async ({ directory, version, excludePaths = [] }) => {
   const dir = `${directory}`
   const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
-  const EXCLUDE_IN_ZIP = ['node_modules', '.git', ...excludePaths].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')
+  const EXCLUDE_IN_ZIP = ['node_modules', '.git', '**/node_modules/*', '**/.git/*', ...excludePaths].reduce(
+    (acc, ele) => `${acc} -x '${ele}/*'`,
+    ''
+  )
 
   const zipFile = `${ZIP_TEMP_FOLDER}/${version}.zip`
   const zipDir = `${ZIP_TEMP_FOLDER}/${dir.substring(0, dir.lastIndexOf('/'))}`

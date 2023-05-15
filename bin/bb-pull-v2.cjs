@@ -13,7 +13,7 @@ const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConne
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
-const pull = require('../subcommands/pull')
+const pull = require('../subcommands/pullV2')
 
 const program = new Command().hook('preAction', async () => {
   if (!isGitInstalled()) {
@@ -27,7 +27,7 @@ const program = new Command().hook('preAction', async () => {
 })
 
 program
-  .argument('<component>', 'Name of component with version. block@0.0.1')
+  .argument('[component]', 'Name of component with version. (eg: @[spaceName]/[blockName]@[version])')
   .option('--add-variant', 'Add as variant')
   .option('--no-variant', 'No variant')
   .option('-t, --type <variantType>', 'Type of variant to create')
