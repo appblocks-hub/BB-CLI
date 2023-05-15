@@ -167,11 +167,11 @@ function findBlockWithNameIn(name, dirs) {
 /**
  *
  * @param {String} dir Path to dir
- * @param {String} blockname Name of block where fn is operating
+ * @param {String} blockName Name of block where fn is operating
  * @param {Boolean} showLogs To show internal messages
  * @returns Returns an array with path to readme in given dir
  */
-function ensureReadMeIsPresent(dir, blockname, showLogs) {
+function ensureReadMeIsPresent(dir, blockName, showLogs) {
   const files = fs.readdirSync(dir)
   const readmes = files.reduce((acc, v) => {
     if (v.toLocaleLowerCase() === 'readme.md') return acc.concat(path.resolve(dir, v))
@@ -184,9 +184,9 @@ function ensureReadMeIsPresent(dir, blockname, showLogs) {
       console.log(readmes)
       console.log('Please keep only one and try again..')
     }
-    throw new BlockPushError(dir, blockname, 'Found Multiple readmes to push')
+    throw new BlockPushError(dir, blockName, 'Found Multiple readmes to push', true, 1)
   } else if (readmes.length === 0) {
-    throw new BlockPushError(dir, blockname, 'No readme found..')
+    throw new BlockPushError(dir, blockName, 'No readme found', true, 1)
   } else {
     return readmes
   }

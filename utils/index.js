@@ -73,4 +73,14 @@ function pExec(cmd, options) {
   })
 }
 
-module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, findMyParentPackage, pExec }
+const logErr = (err) => {
+  let errMsg = err.response?.data?.msg || err.message || err
+
+  if (err.response?.status === 401 || err.response?.status === 403) {
+    errMsg += `: Access denied`
+  }
+
+  console.log(chalk.red(errMsg))
+}
+
+module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, findMyParentPackage, pExec, logErr }
