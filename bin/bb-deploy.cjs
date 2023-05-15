@@ -16,6 +16,7 @@ program
   .option('-rv, --release-version <release_version>', 'version number')
   .option('-rn, --release-note <release_note>', 'release note')
   .option('-env, --environment <environment>', 'environment')
+  .option('-cn, --config-name <config-name>', 'Name of the configuration')
   .action(deploy)
 
 program.parse(process.argv)

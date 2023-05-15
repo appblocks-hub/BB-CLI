@@ -27,7 +27,7 @@ class DeployblockConfigManager {
 
   async syncOnPremDeploymentConfig(options) {
     let onPremDeployConfig = await this.readOnPremDeployConfig
-    if (!isEmptyObject(onPremDeployConfig)) return onPremDeployConfig
+    if (!isEmptyObject(onPremDeployConfig) || options.configName) return onPremDeployConfig
 
     onPremDeployConfig = await getOnPremConfigDetails(options)
     this.writeOnPremDeployConfig({

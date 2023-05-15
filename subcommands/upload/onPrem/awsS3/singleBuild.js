@@ -65,12 +65,12 @@ const singleBuildDeployment = async ({ deployConfigManager, config, opdBackupFol
     uploadKeys.elements = uploadedBlocks
     spinnies.succeed(`ele`, { text: `Uploaded elements successfully` })
 
-    spinnies.add(`cont`, { text: `Building container` })
+    spinnies.add(`cont`, { text: `Building ui container` })
 
     // Upload Container
     const { blockBuildFolder, error } = await buildBlock(containerBlock, {}, env)
 
-    if (!blockBuildFolder) throw new Error(`Error building container ${error}`)
+    if (!blockBuildFolder) throw new Error(`Error building ui container ${error}`)
 
     spinnies.update('cont', { text: `Uploading container` })
     const uploadedContainer = await s3Handler.uploadDir({

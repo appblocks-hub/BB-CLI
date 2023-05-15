@@ -7,94 +7,58 @@
 
 /* eslint-disable no-continue */
 
-const { rm } = require('fs')
-const path = require('path')
 const chalk = require('chalk')
-const { default: axios } = require('axios')
-const { appRegistryCheckAppEnvExist } = require('../../utils/api')
-const { getShieldHeader } = require('../../utils/getHeaders')
 const deployConfig = require('../deploy/manager')
-const { spinnies } = require('../../loader')
 const { logFail } = require('../../utils')
 const { readInput } = require('../../utils/questionPrompts')
 const onPremUpload = require('./onPrem')
 const abPremUpload = require('./abPrem')
 const { appConfig } = require('../../utils/appconfigStore')
+const { checkIfAppAndEnvExist } = require('./util')
 
 const upload = async (blockName, options) => {
-  await appConfig.init()
-  deployConfig.init()
+  try {
+    await appConfig.init()
+    deployConfig.init()
 
-  const { environment } = options
-  const appData = deployConfig.deployAppConfig
-  const appId = appData.app_id
+    const { environment, configName } = options
 
-  if (!appId) {
-    logFail(`\nPlease create app before upload..`)
-    process.exit(1)
-  }
-
-  const envData = appData.environments[environment]
-  envData.environment_name = environment
-  if (!envData) {
-    logFail(`${environment} environment not exist. Please create-env and try again\n`)
-
-    const envs = Object.keys(appData.environments)
-    if (envs.length) {
-      console.log(chalk.gray(`Existing environments are ${envs}\n`))
+    if (!configName && !environment) {
+      logFail(`\nPlease pass the environment or configuration name..`)
+      process.exit(1)
     }
 
-    process.exit(1)
-  }
+    const appData = deployConfig.deployAppConfig
+    const appId = appData.app_id
 
-  spinnies.add('up', { text: `Checking app details` })
+    if (!appId) {
+      logFail(`\nPlease create app before upload..`)
+      process.exit(1)
+    }
 
-  // Check if app and env exist in server
-  try {
-    const { data } = await axios.post(
-      `${appRegistryCheckAppEnvExist}`,
-      {
-        app_id: appId,
-        environment_id: envData.environment_id,
-      },
-      {
-        headers: getShieldHeader(),
-      }
-    )
-
-    const resData = data.data
-
-    if (!resData) throw new Error(`Invalid response`)
-
-    if (!resData.app_exist || !resData.env_exist) {
-      const dpath = path.resolve(deployConfig.configName)
-      spinnies.fail('up', { text: ` ${!resData.app_exist ? 'App' : 'Environment'} does not exist` })
-      rm(dpath, () => {
-        process.exit(1)
+    let envData = {}
+    let uploadPremise = 0
+    if (!configName) {
+      envData = await checkIfAppAndEnvExist()
+      uploadPremise = await readInput({
+        type: 'list',
+        name: 'uploadPremise',
+        message: 'Select the upload server',
+        choices: [
+          { name: 'On-Premise', value: 0 },
+          { name: 'Appblocks-Premise (coming soon)', value: 1, disabled: true },
+        ],
+        default: 0,
       })
     }
+
+    if (uploadPremise === 0) {
+      await onPremUpload({ blockName, envData, appData, environment, appConfig, configName })
+    } else {
+      await abPremUpload({ blockName, envData, appData, environment, appConfig })
+    }
   } catch (error) {
-    console.log(error);
-    spinnies.fail('up', { text: 'Error checking app data' })
-    process.exit(1)
-  }
-  spinnies.remove('up')
-
-  const uploadPremise = await readInput({
-    type: 'list',
-    name: 'uploadPremise',
-    message: 'Select the upload server',
-    choices: [
-      { name: 'On-Premise', value: 0 },
-      { name: 'Appblocks-Premise (coming soon)', value: 1, disabled: true },
-    ],
-    default: 0,
-  })
-
-  if (uploadPremise === 0) {
-    await onPremUpload({ blockName, envData, appData, environment, appConfig })
-  } else {
-    await abPremUpload({ blockName, envData, appData, environment, appConfig })
+    console.log(chalk.red(error.message))
   }
 }
 

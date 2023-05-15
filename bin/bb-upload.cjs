@@ -14,7 +14,8 @@ const program = new Command()
 
 program
   .argument('[block]', 'name of block or block type')
-  .requiredOption('-env, --environment <environment>', 'environment')
+  .option('-env, --environment <environment>', 'environment')
+  .option('-cn, --config-name <config-name>', 'Name of the configuration')
   .action(upload)
 
 program.parse(process.argv)
