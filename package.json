@@ -24,6 +24,7 @@
       "npm run format"
     ]
   },
+  "types": "./index.d.ts",
   "author": "",
   "license": "ISC",
   "dependencies": {
