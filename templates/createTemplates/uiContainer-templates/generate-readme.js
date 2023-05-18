@@ -1,3 +1,3 @@
-const generateUiContainerReadme = (name) => `#${name}`
+const generateUiContainerReadme = (name) => `# ${name}`
 
 module.exports = { generateUiContainerReadme }
