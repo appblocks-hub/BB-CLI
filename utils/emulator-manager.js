@@ -12,7 +12,6 @@ const isRunning = require('is-running')
 const path = require('path')
 // const { readdirSync, readFileSync, existsSync } = require('fs')
 // const { execSync } = require('child_process')
-// const { compare } = require('compare-versions')
 
 const { runBash } = require('../subcommands/bash')
 
