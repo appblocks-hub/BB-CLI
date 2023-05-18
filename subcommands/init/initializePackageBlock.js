@@ -99,7 +99,7 @@ const initializePackageBlock = async (appblockName, options) => {
     blockId,
     source: blockSource,
     supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
-    repoType
+    repoType,
   })
 
   await checkAndSetGitConfigNameEmail(blockFinalName)
@@ -118,7 +118,7 @@ const initializePackageBlock = async (appblockName, options) => {
     blockId,
     name: blockFinalName,
     rootPath: path.resolve(blockFinalName),
-    repoType
+    repoType,
   }
 
   await initializeSpaceToPackageBlock(blockFinalName, blockId)

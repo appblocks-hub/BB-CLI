@@ -41,7 +41,7 @@ class HandleCheckPurchasedPull {
         if (!appData?.app_id) {
           throw new Error(`App does not exist to pull\n`)
         }
-        
+
         core.appData = appData
 
         core.spinnies.add('bp', { text: 'Checking if block is assigned with app' })
