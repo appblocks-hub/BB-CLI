@@ -8,14 +8,14 @@
  */
 
 const { Command } = require('commander')
-const upload = require('../subcommands/upload')
+const log = require('../subcommands/logV2')
 
 const program = new Command()
 
 program
-  .argument('[block]', 'name of block or block type')
-  .option('-env, --environment <environment>', 'environment')
-  .option('-cn, --config-name <config-name>', 'Name of the configuration')
-  .action(upload)
+  .argument('[block-name]', 'Name of a live block')
+  .option('-e,--err', 'Watch error logs')
+  .option('-o,--out', 'Watch out logs')
+  .action(log)
 
 program.parse(process.argv)

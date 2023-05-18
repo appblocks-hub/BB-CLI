@@ -60,6 +60,8 @@ cmd('list-language-version', 'list block language version')
 
 cmd('log', 'Streams the logs of a live block')
 
+cmd('log-v2', 'Streams the logs of a live block')
+
 cmd('login', 'to log in to shield')
 
 cmd('logout', 'to logout of shield')
@@ -74,7 +76,11 @@ cmd('publish', 'Publish block or appblock')
 
 cmd('pull', 'to pull blocks')
 
+cmd('pull-v2', 'to pull blocks')
+
 cmd('push', 'To commit and push blocks')
+
+cmd('push-v2', 'To commit and push blocks')
 
 cmd('push-config', 'to push package lock config')
 

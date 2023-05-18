@@ -5,12 +5,14 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { BBError } = require('./baseError')
 
 class BlockPushError extends BBError {
-  constructor(path, block, message, resetHead, exitCode) {
-    super(`${message} in ${path === '.' ? block : path}`)
-    this.blockPath = path
+  constructor(blockPath, block, message, resetHead, exitCode) {
+    const relPath = path.relative(path.resolve(), blockPath)
+    super(`${message} in ${blockPath === '.' || !relPath ? block : relPath}`)
+    this.blockPath = blockPath
     this.blockName = block
     this.resetHead = resetHead
     this.processExitCode = exitCode

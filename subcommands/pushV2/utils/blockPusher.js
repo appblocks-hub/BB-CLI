@@ -20,6 +20,8 @@ class BlockPusher {
     this.blockName = block.meta.name
     this.blockSource = block.meta.source
     this.blockType = block.meta.type
+    this.repoType = block.meta.repoType
+    this.gitAddIgnore = block.gitAddIgnore
     this.progress = noLogs
       ? null
       : bar.create(10, 0, {
@@ -50,7 +52,6 @@ class BlockPusher {
   }
 
   push(...args) {
-    // console.log('push args', args)
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (res, rej) => {
       const payload = { block: this.blockName }
@@ -114,6 +115,8 @@ class BlockPusher {
         blockPath: this.blockPath,
         blockName: this.blockName,
         blockSource: this.blockSource,
+        repoType: this.repoType,
+        gitAddIgnore: this.gitAddIgnore,
         ...args[0],
       })
     })

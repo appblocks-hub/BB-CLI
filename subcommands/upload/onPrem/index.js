@@ -17,24 +17,30 @@ const onPremUpload = async (options) => {
   await awsHandler.syncAWSConfig()
 
   const OPDConfig = await deployConfigManager.syncOnPremDeploymentConfig(options)
-  const OPDNames = Object.keys(OPDConfig)
+  let config
 
-  const choices = OPDNames.map((name) => ({ name, value: OPDConfig[name] }))
+  if (options.configName) {
+    config = OPDConfig?.[options.configName]
+    if (!config) throw new Error(`No on-premise configuration found with name ${options.configName}`)
+  } else {
+    const OPDNames = Object.keys(OPDConfig)
+    const choices = OPDNames.map((name) => ({ name, value: OPDConfig[name] }))
 
-  choices.unshift({
-    name: 'Create new deployment configuration',
-    value: null,
-  })
+    choices.unshift({
+      name: 'Create new deployment configuration',
+      value: null,
+    })
 
-  let config = await readInput({
-    type: 'list',
-    name: 'config',
-    message: 'Select upload to existing deploy config',
-    choices,
-  })
+    config = await readInput({
+      type: 'list',
+      name: 'config',
+      message: 'Select upload to existing deploy config',
+      choices,
+    })
 
-  if (!config) {
-    config = await deployConfigManager.createOnPremDeploymentConfig({ ...options, existingConfigNames: OPDNames })
+    if (!config) {
+      config = await deployConfigManager.createOnPremDeploymentConfig({ ...options, existingConfigNames: OPDNames })
+    }
   }
 
   config.deployed = await deployConfigManager.readOnPremDeployedConfig[config.name]

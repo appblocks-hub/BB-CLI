@@ -8,12 +8,9 @@
  */
 
 const { Command } = require('commander')
-
+const push = require('../subcommands/pushV2')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
-const pull = require('../subcommands/pull')
 
 const program = new Command().hook('preAction', async () => {
   if (!isGitInstalled()) {
@@ -21,17 +18,13 @@ const program = new Command().hook('preAction', async () => {
     process.exitCode = 1
     return
   }
-  await ensureUserLogins()
   await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference('pull')
 })
 
 program
-  .argument('<component>', 'Name of component with version. block@0.0.1')
-  .option('--add-variant', 'Add as variant')
-  .option('--no-variant', 'No variant')
-  .option('-t, --type <variantType>', 'Type of variant to create')
-  .option('--id', 'For passing Block ID')
-  .action(pull)
+  .argument('[block name]', 'Name of block to push')
+  .option('-f, --force', 'commit and push all blocks')
+  .option('-m, --message <message>', 'commit message')
+  .action(push)
 
 program.parse(process.argv)
