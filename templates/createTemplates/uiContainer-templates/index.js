@@ -24,5 +24,5 @@ module.exports = {
   generateUiContainerCommitlintRc,
   generateUiContainerEsLintRc,
   generateUiContainerPrettierRc,
-  generateUiContainerPackageJsonWithoutLint
+  generateUiContainerPackageJsonWithoutLint,
 }

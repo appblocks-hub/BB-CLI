@@ -119,14 +119,12 @@ const getDependencyIds = async (options) => {
   const noExistingDeps = {}
   const requestDeps = []
 
-
   if (depRes.existing_dependencies?.length) {
     if (!depIds) depIds = []
     depRes.existing_dependencies.forEach((exLang) => {
       const { name: langVersion, value: langId } =
         languageVersions.find(({ value }) => value === exLang[0].language_version_id) || {}
       dependencies.forEach((dep) => {
-        
         const isExist = exLang.find((d) => dep.name === d.name && dep.version === d.version && dep.type === d.type)
         if (!isExist) {
           let langVersionIds = [langId]
@@ -150,7 +148,7 @@ const getDependencyIds = async (options) => {
             ...dep,
             showVal: `${dep.name}@${dep.version} ${dep.type === 1 ? 'devDependency' : 'dependency'}`,
           })
-        }else{
+        } else {
           depIds.push(isExist.id)
         }
       })

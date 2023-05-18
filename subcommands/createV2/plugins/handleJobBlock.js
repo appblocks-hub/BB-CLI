@@ -29,7 +29,7 @@ class handleJobBlock {
         core
       ) => {
         const { type } = core.cmdOpts
-        if (type !==  7) return
+        if (type !== 7) return
 
         const { blockName } = core.cmdArgs
 

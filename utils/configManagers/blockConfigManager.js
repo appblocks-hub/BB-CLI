@@ -1,8 +1,9 @@
 const ConfigManager = require('./configManager')
 
 class BlockConfigManager extends ConfigManager {
-  constructor() {
-    super()
+  constructor(config, cwd) {
+    super(config, cwd)
+    this.isBlockConfigManager = true
   }
 }
 

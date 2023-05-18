@@ -15,7 +15,7 @@ const { GitError } = require('./errors/gitError')
  * @type {Object}
  * @property {("success" | "error")} status Status of command execution
  * @property {String} msg Message from stdout or stderr
- */   
+ */
 
 class GitManager {
   /**

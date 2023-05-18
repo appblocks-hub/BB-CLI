@@ -277,7 +277,7 @@ const languageVersionCheckCommand = {
 
 const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, blockLanguages }) => {
   if (!supportedAppblockVersions?.length) {
-    console.log(chalk.yellow(`No linked appblock versions found to check language support` ))
+    console.log(chalk.yellow(`No linked appblock versions found to check language support`))
     return []
   }
 

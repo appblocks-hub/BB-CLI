@@ -20,7 +20,7 @@ class handlePackageBlock {
         core
       ) => {
         const { type } = core.cmdOpts
-        if (type !==  1) return
+        if (type !== 1) return
 
         const { blockName } = core.cmdArgs
 
