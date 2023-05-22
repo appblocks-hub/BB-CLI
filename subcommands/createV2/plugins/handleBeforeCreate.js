@@ -26,17 +26,13 @@ class handleBeforeCreate {
         // eslint-disable-next-line prefer-const
         let { type, autoRepo } = core.cmdOpts
         let { blockName } = core.cmdArgs
-        const { logger, appConfig } = core
+        const { logger, packageConfigManager } = core
 
-        if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
-          throw new Error('Cannot create block inside another block')
-        }
-
-        if (!appConfig.config?.supportedAppblockVersions) {
-          throw new Error(
-            'No supported appblock version set for package block. Please use set-appblock-version command'
-          )
-        }
+        // if (!packageConfigManager.config?.supportedAppblockVersions) {
+        //   throw new Error(
+        //     'No supported appblock version set for package block. Please use set-appblock-version command'
+        //   )
+        // }
 
         core.logger.info(`Create called with ${blockName} and ${type || 'no type'}`)
         if (!isValidBlockName(blockName)) {
@@ -54,7 +50,7 @@ class handleBeforeCreate {
         }
 
         if (type === 8) {
-          const viewBlocks = [...appConfig.uiBlocks]
+          const viewBlocks = [...packageConfigManager.uiBlocks]
           const depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
           if (depLibBlocks) {
             console.log(

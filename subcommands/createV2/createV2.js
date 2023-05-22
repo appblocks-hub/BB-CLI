@@ -26,12 +26,13 @@ async function create(blockName, cmdOptions) {
     new handleUIDependency().apply(Create)
     new handleMultiRepo().apply(Create)
 
-    await Create.initializeAppConfig()
+    await Create.initializePackageConfigManager()
     await Create.createBlock()
   } catch (error) {
+    console.log(error)
     logger.error(error)
-    spinnies.add('err', { text: error.message })
-    spinnies.fail('err', { text: error.message })
+    spinnies.add('create', { text: error.message })
+    spinnies.fail('create', { text: error.message })
     spinnies.stopAll()
   }
 }
