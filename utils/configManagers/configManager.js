@@ -13,6 +13,13 @@ class ConfigManager {
     this.configname = ConfigManager.CONFIG_NAME
     this.liveConfigname = ConfigManager.LIVE_CONFIG_NAME
 
+    this._writeLiveSignal = null
+    this._writeController = new AbortController()
+    this._writeSignal = this._writeController.signal
+
+    this.configPath = configPath
+    this.config = config
+    this.directory = path.dirname(configPath)
     this.liveConfigPath = path.join(
       ConfigManager.LIVE_CONFIG_FILE_ROOT_PATH,
       path.resolve(this.directory),
@@ -22,22 +29,16 @@ class ConfigManager {
       isOn: false,
       port: null,
       log: {
-        out: `./logs/out/${config.meta.name}.log`,
-        err: `./logs/err/${config.meta.name}.log`,
+        out: `./logs/out/${config.name}.log`,
+        err: `./logs/err/${config.name}.log`,
       },
     }
 
-    this._writeLiveSignal = null
-    this._writeController = new AbortController()
-    this._writeSignal = this._writeController.signal
-
-    this.configPath = configPath
-    this.config = config
-    this.directory = path.basename(configPath)
-
-    this.events.on('write', this._write(this.configPath, this.config))
-    this.events.on('writelive', this._writeLiveConfig)
+    this.events.on('write', () => this._write.call(this, this.configPath, this.config))
+    this.events.on('writelive', () => {})
   }
+
+  static WRITE_COUNTER = 0
 
   static CONFIG_NAME = 'block.config.json'
 
@@ -58,6 +59,7 @@ class ConfigManager {
   }
 
   _write(configPath, data) {
+    ConfigManager.WRITE_COUNTER += 1
     if (this.writeLiveSignal && !this.writeLiveSignal.aborted) {
       this.writeController.abort()
     }
@@ -66,10 +68,15 @@ class ConfigManager {
     this.writeLiveSignal = this.writeController.signal
     writeFile(configPath, JSON.stringify(data, null, 2), { encoding: 'utf8', signal: this.writeLiveSignal }, (err) => {
       if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
+      if (err && err.name === 'AbortError') ConfigManager.WRITE_COUNTER -= 1
+      if (!err) ConfigManager.WRITE_COUNTER -= 1
     })
   }
 
-  findMyParentPackage = async (name, myPath, filename) => {
+  findMyParentPackage = async () => {
+    const filename = this.configname
+    const { name } = this.config
+
     let parentPackageFound = false
     /**
      * @type {import('./configManager').PackageConfig?}
@@ -100,7 +107,8 @@ class ConfigManager {
   }
 
   updateConfig(newConfig) {
-    this.config = Object.create(this.config, newConfig)
+    this.config = { ...this.config, ...newConfig }
+    this.events.emit('write')
     return this.config
   }
 }

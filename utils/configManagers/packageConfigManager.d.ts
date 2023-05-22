@@ -19,7 +19,7 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig>{
         picker?: (b: C) => { [P in K]: C[P] }
     ): Generator<{ [P in K]: C[P] }>
     public get liveBlocks(): any;
-    public get liveJobBlocks(): any;
+    // public get liveJobBlocks(): any;
     public get nonLiveBlocks(): any
     public get uiBlocks(): any
     public get fnBlocks(): any
@@ -27,6 +27,9 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig>{
     public get jobBlocks(): any
     public get allBlockNames(): string[]
     public get env(): any
+
+    public addBlock():Promise<any>
+    public removeBlock():Promise<any>
 
 }
 export = PackageConfigManager

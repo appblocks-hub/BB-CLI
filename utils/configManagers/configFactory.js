@@ -8,6 +8,15 @@ class ConfigFactory {
   static async create(configPath) {
     if (this.cache[configPath]) return this.cache[configPath]
     const { data, err: _err } = await readJsonAsync(configPath)
+    if (_err) {
+      return {
+        manager: null,
+        error: {
+          type: _err.name === 'ENOENT' ? 'OUTOFCONTEXT' : _err.name,
+          msg: _err.message,
+        },
+      }
+    }
     /**
      * @type {import('../../types/configs.js').BlockConfig | import('../../types/configs.js').PackageConfig}
      */
@@ -15,11 +24,12 @@ class ConfigFactory {
     let manager = null
     if (config.type === 'package') {
       manager = new PackageConfigManager(config, configPath)
+    } else {
+      manager = new BlockConfigManager(config, configPath)
     }
-    manager = new BlockConfigManager(config, configPath)
     await manager.init()
 
-    return manager
+    return { manager, error: null }
   }
 }
 

@@ -7,6 +7,8 @@
 
 const chalk = require('chalk')
 const { exec } = require('child_process')
+const { existsSync, readSync, statSync, readFileSync } = require('fs')
+const path = require('path')
 const { appConfig } = require('../utils/appconfigStore')
 
 function pexec(cmd, options, name) {
@@ -37,6 +39,25 @@ const bbexec = async (command, options) => {
   // }
   await appConfig.init()
   const blocks = options.inside || []
+  const group = options.group || ''
+  if (blocks.length > 0 && group) throw new Error('Cant use both -i & -g')
+
+  if (!existsSync(path.resolve(group))) {
+    console.log(`no ${group} folder found`)
+  }
+
+  const groupPath = path.resolve(group)
+
+  const folders = readSync(groupPath)
+
+  for (let i = 0; i < folders.length; i += 1) {
+    const block = folders[i]
+    if (statSync(block).isDirectory()) {
+      const config = readFileSync(path.join(block, 'block.config.json'))
+      blocks.push(config.name)
+    }
+  }
+
   const missingBlocks = []
   const promiseArray = []
   if (blocks.length === 0) {

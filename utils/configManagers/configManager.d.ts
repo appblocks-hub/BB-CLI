@@ -80,9 +80,9 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   static LIVE_CONFIG_NAME: string
   static LIVE_CONFIG_FILE_ROOT_PATH: string
   readonly id: number
-  readonly events: EventEmitter
   readonly configname: string
   readonly isWriting: boolean
+  events: EventEmitter
   liveConfigname: string
   _writeSignal: string
   configPath: string
