@@ -1,8 +1,6 @@
+const path = require('path')
 const ConfigManager = require('./configManager')
 
-/**
- * @type {}
- */
 class PackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
     super(config, cwd)
@@ -10,48 +8,48 @@ class PackageConfigManager extends ConfigManager {
   }
 
   get liveBlocks() {
-    const filter = (block) => block.isOn
-    return this.getDependencies(true, filter)
+    const filter = ({ liveDetails }) => liveDetails.isOn
+    return this.getDependencies(filter)
   }
 
-  get liveJobBlocks() {
-    const filter = (block) => block.isJobOn
-    return this.getDependencies(true, filter)
-  }
+  // get liveJobBlocks() {
+  //   const filter = (block) => block.isJobOn
+  //   return this.getDependencies(true, filter)
+  // }
 
   get nonLiveBlocks() {
-    const filter = (block) => !block.isOn
-    return this.getDependencies(true, filter)
+    const filter = (liveDetails) => !liveDetails.isOn
+    return this.getDependencies(filter)
   }
 
   get uiBlocks() {
-    const filter = (block) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(block.meta.type)
-    return this.getDependencies(false, filter)
+    const filter = ({ config }) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(config.type)
+    return this.getDependencies(filter)
   }
 
   get fnBlocks() {
-    const filter = (block) => ['function'].includes(block.meta.type)
+    const filter = ({ config }) => ['function'].includes(config.type)
     return this.getDependencies(false, filter)
   }
 
   get sharedFnBlocks() {
-    const filter = (block) => ['shared-fn'].includes(block.meta.type)
-    return this.getDependencies(false, filter)
+    const filter = ({ config }) => ['shared-fn'].includes({ config }.type)
+    return this.getDependencies(filter)
   }
 
   get jobBlocks() {
-    const filter = (block) => ['job'].includes(block.meta.type)
-    return this.getDependencies(false, filter)
+    const filter = ({ config }) => ['job'].includes(config.type)
+    return this.getDependencies(filter)
   }
 
   get allBlockNames() {
-    const picker = (block) => block.meta.name
-    return this.getDependencies(false, null, picker)
+    const picker = ({ config }) => config.name
+    return this.getDependencies(null, picker)
   }
 
   get getAllBlockLanguages() {
-    const picker = (block) => block.meta.language
-    return this.getDependencies(false, null, picker)
+    const picker = ({ config }) => config.language
+    return this.getDependencies(null, picker)
   }
 
   get env() {
@@ -59,14 +57,44 @@ class PackageConfigManager extends ConfigManager {
     return null
   }
 
-  *getDependencies(includeLive, filter, picker) {
+  async addBlock(configPath) {
+    // Dynamic import to avoid circular dependecy error
+    // eslint-disable-next-line import/extensions
+    const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
+    const { error, manager } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+    if (error) {
+      const addBlockError = new Error(error.err.message)
+      addBlockError.name = error.err.name
+      return { manager: null, err: error }
+    }
+    this.config.dependencies[manager.config.name] = {
+      directory: path.relative(this.directory, path.resolve(path.dirname(configPath))),
+    }
+    this.events.emit('write')
+    return { manager, err: null }
+  }
+
+  async removeBlock(name) {
+    if (!this.config.dependenciesname[name]) {
+      return
+    }
+    delete this.config.dependencies[name]
+    this.events.emit('write')
+  }
+
+  async *_getDependencies(filter, picker) {
     if (!this.config?.dependencies) return []
+    // Dynamic import to avoid circular dependecy error
+    // eslint-disable-next-line import/extensions
+    const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
-        const d = includeLive ? this.getBlockWithLive(block) : this.getBlock(block)
+        const { manager: c } = await _DYNAMIC_CONFIG_FACTORY.create(
+          path.join(this.config.dependencies[block].directory, 'block.config.json')
+        )
         const f = filter || (() => true)
         const p = picker || ((b) => b)
-        if (f(d(block))) yield p(d(block))
+        if (f(c)) yield p(c)
       }
     }
     return []

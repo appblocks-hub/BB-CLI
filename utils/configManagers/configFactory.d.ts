@@ -5,12 +5,20 @@ import { PathLike } from 'fs'
 import BlockConfigManager from './blockConfigManager'
 import PackageConfigManager from './packageConfigManager'
 
+export type FactoryCreateResult = {
+  manager:BlockConfigManager | PackageConfigManager,
+  error:{
+    data:object,
+    err:Error
+  }
+} 
+
 declare class ConfigFactory {
   readonly static cache: Record<string,object>
   /**
    * Creates a instance
    */
-  public static create(dir: PathLike, configName: string): Promise<BlockConfigManager | PackageConfigManager | null>
+  public static create(configPath: PathLike,): Promise<FactoryCreateResult>
 }
 
 export = ConfigFactory
