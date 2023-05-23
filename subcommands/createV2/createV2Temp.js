@@ -24,7 +24,7 @@ async function create(blockName, cmdOptions) {
     new handleUIContainer().apply(Create)
     new handleUIDependency().apply(Create)
 
-    await Create.initializeAppConfig()
+    await Create.initializePackageConfigManager()
     await Create.createBlock()
   } catch (error) {
     logger.error(error)

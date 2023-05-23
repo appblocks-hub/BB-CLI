@@ -58,15 +58,19 @@ class PackageConfigManager extends ConfigManager {
   }
 
   async addBlock(configPath) {
-    // Dynamic import to avoid circular dependecy error
+    // Dynamic import to avoid circular dependency error
     // eslint-disable-next-line import/extensions
     const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     const { error, manager } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+    
     if (error) {
-      const addBlockError = new Error(error.err.message)
-      addBlockError.name = error.err.name
+      const addBlockError = new Error(error.message)
+      addBlockError.name = error.name || error.type
       return { manager: null, err: error }
     }
+
+    if (!this.config.dependencies) this.config.dependencies = {}
+
     this.config.dependencies[manager.config.name] = {
       directory: path.relative(this.directory, path.resolve(path.dirname(configPath))),
     }
@@ -75,7 +79,7 @@ class PackageConfigManager extends ConfigManager {
   }
 
   async removeBlock(name) {
-    if (!this.config.dependenciesname[name]) {
+    if (!this.config.dependencies[name]) {
       return
     }
     delete this.config.dependencies[name]
@@ -84,7 +88,7 @@ class PackageConfigManager extends ConfigManager {
 
   async *_getDependencies(filter, picker) {
     if (!this.config?.dependencies) return []
-    // Dynamic import to avoid circular dependecy error
+    // Dynamic import to avoid circular dependency error
     // eslint-disable-next-line import/extensions
     const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     for (const block in this.config.dependencies) {

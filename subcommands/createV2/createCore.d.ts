@@ -11,14 +11,14 @@ declare class CreateCore{
 
 
   cwd : string?;
-  parentPackagePath:string?;
   blockDetails:object?;
+  packageConfigManager: packageConfigManagerManager;
   
   hooks : {
     beforeCreate : AsyncSeriesHook,
     beforeConfigUpdate:AsyncSeriesHook,
     afterCreate:AsyncSeriesHook
   }
- public initializeAppConfig:Promise<void>
+ public initializePsackageConfigManager:Promise<void>
  public createBlock: Promise<string>
 }
