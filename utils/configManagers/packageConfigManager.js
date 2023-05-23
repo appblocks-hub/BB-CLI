@@ -62,7 +62,7 @@ class PackageConfigManager extends ConfigManager {
     // eslint-disable-next-line import/extensions
     const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     const { error, manager } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
-    
+
     if (error) {
       const addBlockError = new Error(error.message)
       addBlockError.name = error.name || error.type
@@ -80,10 +80,11 @@ class PackageConfigManager extends ConfigManager {
 
   async removeBlock(name) {
     if (!this.config.dependencies[name]) {
-      return
+      return this.config
     }
     delete this.config.dependencies[name]
     this.events.emit('write')
+    return this.config
   }
 
   async *_getDependencies(filter, picker) {

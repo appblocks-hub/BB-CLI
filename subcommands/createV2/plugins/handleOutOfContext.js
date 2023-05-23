@@ -61,9 +61,9 @@ class HandleOutOfContext {
         // const configPath = path.resolve(packageDirPath, 'block.config.json')
         // const { config, err } = await configFact.create(configPath)
         // if (err) throw err
-        
+
         // core.packageConfigManager = config
-        
+
         // feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
       }
     )
