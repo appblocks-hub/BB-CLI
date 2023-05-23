@@ -5,7 +5,7 @@ const decompress = require('decompress')
 const { createWriteStream } = require('fs')
 const { tmpdir } = require('os')
 const path = require('path')
-const configstore = require('../../../configstore')
+const { configstore } = require('../../../configstore')
 const { getSourceCodeSignedUrl } = require('../../../utils/api')
 const { post, axiosGet } = require('../../../utils/axios')
 

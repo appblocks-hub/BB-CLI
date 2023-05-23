@@ -84,7 +84,6 @@ const onPremECRUpload = async (options) => {
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployedData, name: config.name })
     spinnies.succeed(`ecrup`, { text: `Uploaded ${config.name} successfully` })
   } catch (error) {
-    console.log(error)
     deployedData.newUploads = false
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployedData, name: config.name })
     spinnies.add('ecrup')

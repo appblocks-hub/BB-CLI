@@ -1,14 +1,13 @@
 /* eslint-disable no-continue */
 const { mkdir, writeFile } = require('fs/promises')
 const path = require('path')
-const { dim } = require('chalk')
 const { AsyncSeriesHook } = require('tapable')
-const { appConfig } = require('../../utils/appconfigStore')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 
 // eslint-disable-next-line no-unused-vars
 const { spinnies } = require('../../loader')
-const { findMyParentPackage } = require('../../utils')
+const ConfigFactory = require('../../utils/configManagers/configFactory')
+const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 
 //
 class CreateCore {
@@ -23,8 +22,9 @@ class CreateCore {
     this.spinnies = options.spinnies
 
     this.cwd = process.cwd()
-    this.parentPackagePath = null
     this.blockDetails = {}
+    this.packageConfigManager = {}
+    this.isOutOfContext = false
 
     this.hooks = {
       beforeCreate: new AsyncSeriesHook(['core']),
@@ -33,14 +33,23 @@ class CreateCore {
     }
   }
 
-  async initializeAppConfig() {
-    await appConfig.initV2(this.cwd, null, 'create')
-    this.appConfig = appConfig || {}
+  async initializePackageConfigManager() {
+    const configPath = path.resolve('block.config.json')
+    const { manager: configManager, error } = await ConfigFactory.create(configPath)
+    if (error) {
+      if (error.type !== 'OUT_OF_CONTEXT') throw error
+      this.isOutOfContext = true
+    } else if (configManager instanceof PackageConfigManager) {
+      this.packageConfigManager = configManager
+      this.packageConfig = this.packageConfigManager.config
+    } else throw new Error('Cannot use create command inside another block')
   }
 
   async createBlock() {
     // beforeCreate hook
     await this.hooks.beforeCreate?.promise(this)
+
+    this.spinnies.add('create', { text: `creating block` })
 
     this.blockFolderPath = path.join(this.cwd, this.cmdArgs.blockName)
     this.blockConfigPath = path.join(this.blockFolderPath, 'block.config.json')
@@ -49,42 +58,34 @@ class CreateCore {
       await mkdir(this.blockFolderPath)
     } catch (error) {
       if (error.code !== 'EEXIST') throw error
-
       throw new Error(`${this.cmdArgs.blockName} folder already exist`)
     }
 
-    let parentPackageConfig = this.appConfig?.config
-    if (this.parentPackagePath) {
-      const { data, err } = await findMyParentPackage(this.cmdArgs.blockName, this.blockConfigPath, 'block.config.json')
-      if (err) throw err
-      parentPackageConfig = data.parentPackageConfig
-      await appConfig.initV2(data.parent, null, 'create', { reConfig: true })
-      this.appConfig = appConfig
-    }
-
-    this.repoType = parentPackageConfig.repoType
+    this.repoType = this.packageConfig.repoType
 
     this.blockDetails = {
       name: this.cmdArgs.blockName,
       type: blockTypeInverter(this.cmdOpts.type),
       source: {
-        ...parentPackageConfig.source,
+        ...this.packageConfig.source,
         branch: `orphan-${this.cmdArgs.blockName}`,
       },
       repoType: this.repoType,
       language: this.cmdOpts.language,
-      supportedAppblockVersions: parentPackageConfig.supportedAppblockVersions,
+      supportedAppblockVersions: this.packageConfig.supportedAppblockVersions,
     }
 
     await this.hooks.beforeConfigUpdate?.promise(this)
     // template setup hooks
+
     await writeFile(this.blockConfigPath, JSON.stringify(this.blockDetails, null, 2))
-    appConfig.addBlock({ directory: this.cmdArgs.blockName, meta: this.blockDetails })
+    const { error } = await this.packageConfigManager.addBlock(this.blockConfigPath)
+    if (error) throw error
 
     // afterCreate hook
     await this.hooks.afterCreate?.promise(this)
 
-    console.log(dim(`Successfully created ${this.cmdArgs.blockName} block`))
+    this.spinnies.succeed('create', { text: `Successfully created ${this.cmdArgs.blockName} block` })
   }
 }
 

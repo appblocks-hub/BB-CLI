@@ -12,11 +12,12 @@ class ConfigFactory {
       return {
         manager: null,
         error: {
-          type: _err.name === 'ENOENT' ? 'OUTOFCONTEXT' : _err.name,
-          msg: _err.message,
+          ..._err,
+          type: _err.code === 'ENOENT' ? 'OUT_OF_CONTEXT' : _err.code,
         },
       }
     }
+
     /**
      * @type {import('../../types/configs.js').BlockConfig | import('../../types/configs.js').PackageConfig}
      */

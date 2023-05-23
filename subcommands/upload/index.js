@@ -39,7 +39,7 @@ const upload = async (blockName, options) => {
     let envData = {}
     let uploadPremise = 0
     if (!configName) {
-      envData = await checkIfAppAndEnvExist()
+      envData = await checkIfAppAndEnvExist({ appData, environment })
       uploadPremise = await readInput({
         type: 'list',
         name: 'uploadPremise',
