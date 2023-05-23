@@ -11,6 +11,7 @@ class ConfigManager {
     this.id = Math.floor(Math.random() * 10 ** 18 + (1 << (Math.random() * 90)))
     this.events = new EventEmitter()
     this.configname = ConfigManager.CONFIG_NAME
+    this.isWriting = false
     this.liveConfigname = ConfigManager.LIVE_CONFIG_NAME
 
     this._writeLiveSignal = null
@@ -28,6 +29,7 @@ class ConfigManager {
     this.liveDetails = {
       isOn: false,
       port: null,
+      pid: null,
       log: {
         out: `./logs/out/${config.name}.log`,
         err: `./logs/err/${config.name}.log`,

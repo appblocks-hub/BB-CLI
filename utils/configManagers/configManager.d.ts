@@ -7,11 +7,11 @@ type Block_Author = {
 }
 
 export type BlockLiveDetails = {
-  isOn: boolean
-  port: number
-  pid?: number
+  isOn: boolean,
+  port: number,
+  pid: number?,
   log: {
-    out: PathLike
+    out: PathLike,
     err: PathLike
   }
 }
@@ -75,20 +75,29 @@ export interface PackageConfig {
 type newConfig<T> = T extends PackageConfig ? Partial<PackageConfig> : Partial<BlockConfig>
 
 declare class ConfigManager<C extends BlockConfig | PackageConfig> {
-  constructor(config: C)
-  static CONFIG_NAME: string
-  static LIVE_CONFIG_NAME: string
-  static LIVE_CONFIG_FILE_ROOT_PATH: string
+  constructor(config: C,configPath:string)
+
   readonly id: number
   readonly configname: string
   readonly isWriting: boolean
+  readonly liveConfigname: string
   events: EventEmitter
-  liveConfigname: string
-  _writeSignal: string
+  
+  _writeSignal: AbortSignal?;
+  _writeController:AbortController
+  _writeLiveSignal:AbortSignal?;
+
   configPath: string
-  directory: string
   config: C
-  private _write(): void
+  directory: string
+  liveConfigPath:string
+  liveDetails:BlockLiveDetails
+  
+  static WRITE_COUNTER:number
+  static CONFIG_NAME: string
+  static LIVE_CONFIG_NAME: string
+  static LIVE_CONFIG_FILE_ROOT_PATH: string
+  private _write(configPath:string,data:object): void
   /**
    * Recursively moves up the current path,
    * reading block.config.json, checking for type package,
@@ -102,5 +111,5 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
    * Returns the updated config, also emits a write event
    * @param newConfig Updated config, only updated fields are necessary
    */
-  public updateConfig(newConfig: newConfig<C>): void
+  public updateConfig(newConfig: newConfig<C>): C
 }

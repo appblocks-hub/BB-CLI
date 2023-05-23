@@ -76,10 +76,11 @@ class PackageConfigManager extends ConfigManager {
 
   async removeBlock(name) {
     if (!this.config.dependenciesname[name]) {
-      return
+      return this.config
     }
     delete this.config.dependencies[name]
     this.events.emit('write')
+    return this.config
   }
 
   async *_getDependencies(filter, picker) {
