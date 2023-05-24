@@ -14,49 +14,50 @@ type BlockDetails = {
 
 declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   constructor(config: PackageConfig, cwd: PathLike)
+  
   liveDetails: blockLiveDetails
+  
   readonly isPackageConfigManager: true
-  public getDependencies<
-    C extends PackageConfigManager | BlockConfigManager,
-  >( filter?: (b: C) => boolean, picker?: (b: C) => Partial<C>): Generator<PackageConfigManager|BlockConfigManager>|[]
+  
+  public getDependencies<C extends PackageConfigManager | BlockConfigManager>(
+    filter?: (b: C) => boolean,
+    picker?: (b: C) => Partial<C>
+  ): Generator<PackageConfigManager | BlockConfigManager> | []
 
   /**
    *  To iterate and get all live blocks' config manager
    */
-  public get liveBlocks(): any
-  // public get liveJobBlocks(): any;
+  public liveBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all function block managers
    */
-  public get nonLiveBlocks(): Generator<BlockConfigManager>
+  public nonLiveBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all ui block managers
    */
-  public get uiBlocks(): Generator<BlockConfigManager>
+  public uiBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all function block managers
    */
-  public get fnBlocks(): Generator<BlockConfigManager>
+  public fnBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all shared-fn block managers
    */
-  public get shareFnBlocks(): Generator<BlockConfigManager>
-
-  /**
-   * To iterate and get all job block managers
-   */
-  public get jobBlocks(): Generator<BlockConfigManager>
+  public shareFnBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all block names
    */
-  public get allBlockNames(): Generator<string>
+  public allBlockNames(): Array<string>
 
-  public get env(): any
+  /**
+   * To iterate and get all block languages
+   */
+  public getAllBlockLanguages(): Array<string>
 
   /**
    * Adds the block which the argument points, to the package current package
@@ -72,4 +73,5 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
    */
   public removeBlock(name: string): Promise<PackageConfig>
 }
+
 export = PackageConfigManager
