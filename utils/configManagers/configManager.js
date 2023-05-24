@@ -10,9 +10,9 @@ class ConfigManager {
     // eslint-disable-next-line no-bitwise
     this.id = Math.floor(Math.random() * 10 ** 18 + (1 << (Math.random() * 90)))
     this.events = new EventEmitter()
-    this.configname = ConfigManager.CONFIG_NAME
+    this.configName = ConfigManager.CONFIG_NAME
     this.isWriting = false
-    this.liveConfigname = ConfigManager.LIVE_CONFIG_NAME
+    this.liveConfigName = ConfigManager.LIVE_CONFIG_NAME
 
     this._writeLiveSignal = null
     this._writeController = new AbortController()
@@ -46,7 +46,7 @@ class ConfigManager {
 
   static LIVE_CONFIG_NAME = '.block.live.json'
 
-  static LIVE_CONFIG_FILE_ROOT_PATH = path.join(os.tmpdir(), 'applocks')
+  static LIVE_CONFIG_FILE_ROOT_PATH = path.join(os.tmpdir(), 'appblocks')
 
   async init() {
     try {
@@ -76,7 +76,7 @@ class ConfigManager {
   }
 
   findMyParentPackage = async () => {
-    const filename = this.configname
+    const filename = this.configName
     const { name } = this.config
 
     let parentPackageFound = false
@@ -87,7 +87,7 @@ class ConfigManager {
     /**
      * @type {string}
      */
-    let currentPath = path.join(this.cwd, this.configname)
+    let currentPath = path.join(this.cwd, this.configName)
     /**
      * @type {string} dir name of parent
      */

@@ -12,49 +12,46 @@ class PackageConfigManager extends ConfigManager {
     return this.getDependencies(filter)
   }
 
-  // get liveJobBlocks() {
-  //   const filter = (block) => block.isJobOn
-  //   return this.getDependencies(true, filter)
-  // }
-
-  get nonLiveBlocks() {
-    const filter = (liveDetails) => !liveDetails.isOn
-    return this.getDependencies(filter)
+  async nonLiveBlocks() {
+    const filter = ({ liveDetails }) => !liveDetails.isOn
+    const res = []
+    for await (const name of this.getDependencies(filter)) res.push(name)
+    return res
   }
 
-  get uiBlocks() {
+  async uiBlocks() {
     const filter = ({ config }) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(config.type)
-    return this.getDependencies(filter)
+    const res = []
+    for await (const name of this.getDependencies(filter)) res.push(name)
+    return res
   }
 
-  get fnBlocks() {
+  async fnBlocks() {
     const filter = ({ config }) => ['function'].includes(config.type)
-    return this.getDependencies(false, filter)
+    const res = []
+    for await (const name of this.getDependencies(filter)) res.push(name)
+    return res
   }
 
-  get sharedFnBlocks() {
+  async sharedFnBlocks() {
     const filter = ({ config }) => ['shared-fn'].includes({ config }.type)
-    return this.getDependencies(filter)
+    const res = []
+    for await (const name of this.getDependencies(filter)) res.push(name)
+    return res
   }
 
-  get jobBlocks() {
-    const filter = ({ config }) => ['job'].includes(config.type)
-    return this.getDependencies(filter)
-  }
-
-  get allBlockNames() {
+  async allBlockNames() {
     const picker = ({ config }) => config.name
-    return this.getDependencies(null, picker)
+    const res = []
+    for await (const name of this.getDependencies(null, picker)) res.push(name)
+    return res
   }
 
-  get getAllBlockLanguages() {
+  async getAllBlockLanguages() {
     const picker = ({ config }) => config.language
-    return this.getDependencies(null, picker)
-  }
-
-  get env() {
-    if (this.config.env) return this.config.env
-    return null
+    const res = []
+    for await (const name of this.getDependencies(null, picker)) res.push(name)
+    return res
   }
 
   async addBlock(configPath) {
@@ -87,16 +84,26 @@ class PackageConfigManager extends ConfigManager {
     return this.config
   }
 
-  async *_getDependencies(filter, picker) {
+  /**
+   * To check if App has a block registered in given name
+   * @param {String} block A block name
+   * @returns {Boolean} True if block exists, else False
+   */
+  has(block) {
+    return !!this.config.dependencies?.[block]
+  }
+
+  async *getDependencies(filter, picker) {
     if (!this.config?.dependencies) return []
     // Dynamic import to avoid circular dependency error
     // eslint-disable-next-line import/extensions
     const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
-        const { manager: c } = await _DYNAMIC_CONFIG_FACTORY.create(
+        const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(
           path.join(this.config.dependencies[block].directory, 'block.config.json')
         )
+        console.log(error)
         const f = filter || (() => true)
         const p = picker || ((b) => b)
         if (f(c)) yield p(c)
