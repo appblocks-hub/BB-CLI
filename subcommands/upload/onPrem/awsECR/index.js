@@ -9,7 +9,12 @@ const { spinnies } = require('../../../../loader')
 const { ecrHandler } = require('../../../../utils/aws/ecr')
 const { getBBConfig } = require('../../../../utils/config-manager')
 const { copyEmulatorCode } = require('../../../../utils/emulator-manager')
-const { generateRootPackageJsonFile, generateDockerFile, beSingleBuildDeployment, generateDockerIgnoreFile } = require('./util')
+const {
+  generateRootPackageJsonFile,
+  generateDockerFile,
+  beSingleBuildDeployment,
+  generateDockerIgnoreFile,
+} = require('./util')
 
 const onPremECRUpload = async (options) => {
   const { appData, envData, config, deployConfigManager } = options
@@ -79,7 +84,6 @@ const onPremECRUpload = async (options) => {
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployedData, name: config.name })
     spinnies.succeed(`ecrup`, { text: `Uploaded ${config.name} successfully` })
   } catch (error) {
-    console.log(error)
     deployedData.newUploads = false
     await deployConfigManager.writeOnPremDeployedConfig({ config: deployedData, name: config.name })
     spinnies.add('ecrup')

@@ -31,6 +31,7 @@ program
   .option('--add-variant', 'Add as variant')
   .option('--no-variant', 'No variant')
   .option('-t, --type <variantType>', 'Type of variant to create')
+  .option('--id', 'For passing Block ID')
   .action(pull)
 
 program.parse(process.argv)

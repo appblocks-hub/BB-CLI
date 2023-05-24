@@ -9,19 +9,34 @@
 const { AxiosResponse } = require('axios')
 
 /**
- * @typedef QueryTransformReturn
- * @type {Object}
- * @property hasNextPage {boolean}
- * @property hasPreviousPage {boolean}
- * @property startCursor {string}
- * @property endCursor {string}
- * @property list {[string]} List of names
+ * @template K,D
+ * @typedef {Record<K,D>} graphData
+ */
+/**
+ * @template E
+ * @typedef {Array<E>} graphErrors
+ */
+/**
+ * @template T,I
+ * @typedef {object} gitGraphResponseData
+ * @property {graphData<'user'|'search',T>} data
+ * @property {graphErrors<I>} errors
+ */
+/**
+ * @template N
+ * @typedef {Array<N>} edges
+ */
+/**
+ * @typedef {object} pageInfo
+ * @property {boolean} hasNextPage
+ * @property { boolean} hasPreviousPage
+ * @property {string} startCursor
+ * @property {string} endCursor
  */
 
 /**
  *
  * @param {AxiosResponse} response
- * @returns {QueryTransformReturn}
  */
 const userReposTr = ({ data: { data } }, sieve) => {
   const list = data.user.repositories.edges
@@ -39,6 +54,14 @@ const userReposTrURL = ({ data: { data } }) => {
   return { list, ...data.user.repositories.pageInfo }
 }
 
+/**
+ * @typedef {object} userReposNode
+ * @property {*} id
+ * @property {*} isTemplate
+ * @property {*} name
+ * @property {*} description
+ * @property {*} url
+ */
 const userRepos = `
 query($user:String!,$first:Int,$last:Int,$before:String,$after:String){
     user(login: $user) {
@@ -65,7 +88,7 @@ query($user:String!,$first:Int,$last:Int,$before:String,$after:String){
 `
 /**
  *
- * @param {AxiosResponse} response
+ * @param {AxiosResponse<gitGraphResponseData<>>} response
  * @returns {QueryTransformReturn}
  */
 const searchGitTr = ({ data: { data } }) => {
@@ -73,6 +96,11 @@ const searchGitTr = ({ data: { data } }) => {
   return { list, ...data.search.pageInfo }
 }
 
+/**
+ * @typedef {object} searchGitNode
+ * @property {string} name
+ * @property {string} description
+ */
 const searchGit = `
 query($first:Int,$last:Int,$before:String,$after:String,$query:String!){
     search(query:$query, type: REPOSITORY, first:$first,last:$last,before:$before,after:$after) {
@@ -110,6 +138,12 @@ const userOrgsTR = ({ data: { data } }) => {
   }))
   return { list, ...data.user.organizations.pageInfo }
 }
+
+/**
+ * @typedef {object} userOrgsNode
+ * @property {string} id
+ * @property {string} name
+ */
 const userOrgs = `
 query($first:Int,$last:Int,$before:String,$after:String,$user:String!){
     user(login: $user) {
@@ -227,6 +261,11 @@ query($first:Int,$last:Int,$before:String,$after:String,$owner:String!,$name:Str
     }
 }
 `
+/**
+ *
+ * @param {AxiosResponse} param0
+ * @returns
+ */
 const listTeamsTr = ({ data: { data } }) => {
   const list = data.organization.teams.edges.map((r) => ({
     name: r.node.name,
@@ -254,15 +293,15 @@ query ($first:Int,$last:Int,$before:String,$after:String,) {
   }
 }`
 
-const existingRepoData =( { data: { data } }) => {
-  const isInorg = data?.user?.repository?.isInOrganization||data?.user?.organization?.id
+const existingRepoData = ({ data: { data } }) => {
+  const isInorg = data?.user?.repository?.isInOrganization || data?.user?.organization?.id
   return {
     isInorg,
-    ownerId:isInorg?data?.user?.organization?.id:data?.user?.id,
-    visibility:data?.user?.repository?.visibility,
-    description:data?.user?.repository?.description
-  }}
-
+    ownerId: isInorg ? data?.user?.organization?.id : data?.user?.id,
+    visibility: data?.user?.repository?.visibility,
+    description: data?.user?.repository?.description,
+  }
+}
 
 const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
   user(login: $user) {
@@ -281,35 +320,17 @@ const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
 }`
 
 /**
- * @template K,D
- * @typedef {Record<K,D>} graphData
+ *
+ * @param {AxiosResponse<gitGraphResponseData<_xxc_,''>>} param0
+ * @returns
  */
+const isRepoNameAvailableTr = ({ data: { data } }) => !data.user.repository
 /**
- * @template E
- * @typedef {Array<E>} graphErrors
- */
-/**
- * @template T,I
- * @typedef {object} gitGraphResponseData
- * @property {graphData<'user',T>} data
- * @property {graphErrors<I>} errors
- */
-
-/**
- * @typedef {object} user
+ * @typedef {object} _xxc_
  * @property {string} id ID of user
  * @property {string} name Name of user (same as the name passed)
  * @property {{id:string}?} repository Will be null, if repository with the passed name doesn't exist. Else returns ID
  */
-/**
- * @typedef {gitGraphResponseData<user,''>} isRepoNameAvailableReturn
- */
-/**
- *
- * @param {AxiosResponse<isRepoNameAvailableReturn>} param0
- * @returns
- */
-const isRepoNameAvailableTr = ({ data: { data } }) => !data.user.repository
 const isRepoNameAvailable = ` query ($user:String!,$search:String!) {
   user(login: $user) {
     id

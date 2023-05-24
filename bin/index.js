@@ -64,7 +64,7 @@ const tempMigrate = require('../subcommands/tempMigrate')
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
 inquirer.registerPrompt('customList', customList)
-process.global = { cwd: process.cwd() } 
+process.global = { cwd: process.cwd() }
 
 // eslint-disable-next-line no-unused-vars
 function configSetOptionParse(value, _) {
@@ -150,8 +150,7 @@ async function init() {
 
   program.command('ls').description(desc.ls).option('-g, --global', 'execute globally').action(ls)
 
-  program.command('temp-migrate').description("").option('-g, --global', 'execute globally').action(tempMigrate)
-
+  program.command('temp-migrate').description('').option('-g, --global', 'execute globally').action(tempMigrate)
 
   program
     .command('create-version')

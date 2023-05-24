@@ -14,13 +14,13 @@ const { readFileSync } = require('fs')
 const traverse = require('@babel/traverse').default
 
 class BlockPusher {
-  constructor(block, bar, nologs) {
+  constructor(block, bar, noLogs) {
     this.blockMeta = block
     this.blockPath = block.directory
     this.blockName = block.meta.name
     this.blockSource = block.meta.source
     this.blockType = block.meta.type
-    this.progress = nologs
+    this.progress = noLogs
       ? null
       : bar.create(10, 0, {
           // TODO -- change this to a dynamic bar, so no need to give the length(10) here

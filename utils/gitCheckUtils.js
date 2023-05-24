@@ -174,11 +174,13 @@ function tryStageRestore(dir) {
   }
 }
 
-function gitStageAllIn(dir) {
+function gitStageAllIn(dir, repoType, gitAddIgnore) {
   return new Promise((res, rej) => {
-    if (isGitRepo(dir)) {
+    const isMonoRepo = repoType === 'mono'
+    if (isGitRepo(dir) || isMonoRepo) {
       tryStageRestore(dir)
-      exec(`cd ${dir} && git add -A --verbose`, (err, stdout) => {
+      const cmd = `cd ${dir} && git add ${isMonoRepo ? '.' : '-A'}  --verbose ${gitAddIgnore || ''}`
+      exec(cmd, (err, stdout) => {
         if (err === null) {
           if (stdout.trim() === '') {
             // const status = execSync(`cd ${dir} && git status`).toString().trim()
@@ -202,9 +204,10 @@ function gitStageAllIn(dir) {
   })
 }
 
-function gitCommitWithMsg(dir, msg) {
+function gitCommitWithMsg(dir, msg, repoType) {
   return new Promise((res, rej) => {
-    if (isGitRepo(dir)) {
+    const isMonoRepo = repoType === 'mono'
+    if (isGitRepo(dir) || isMonoRepo) {
       exec(`cd ${dir} && git commit -m "${msg}" --verbose`, (err, stdout) => {
         if (err === null) {
           res('')

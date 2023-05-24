@@ -12,9 +12,9 @@ const { readInput } = require('../../../utils/questionPrompts')
 
 const { spinnies } = require('../../../loader')
 
-const abPremDeploy = async ({ argOpitons, deployConfigManager }) => {
+const abPremDeploy = async ({ argOptions, deployConfigManager }) => {
   const appData = deployConfigManager.deployAppConfig
-  const { releaseVersion, releaseNote } = argOpitons
+  const { releaseVersion, releaseNote } = argOptions
 
   const deployableData = Object.values(appData.environments).reduce((acc, envData) => {
     if (envData.uploads) {

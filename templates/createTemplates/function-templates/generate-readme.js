@@ -1,3 +1,3 @@
-const generateFunctionReadme = (name) => `#${name}`
+const generateFunctionReadme = (name) => `# ${name}`
 
 module.exports = { generateFunctionReadme }

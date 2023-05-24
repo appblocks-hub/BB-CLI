@@ -13,6 +13,5 @@ const spinnies = {
   succeed: jest.fn(),
   remove: jest.fn(),
 }
-const spinner = jest.fn()
 
-module.exports = { spinner, spinnies }
+module.exports = { spinnies }

@@ -11,40 +11,51 @@ const awsFargateDeploy = require('./awsFargate')
 const awsStaticWebDeploy = require('./awsStaticWeb')
 
 const onPremDeploy = async (options) => {
-  const { appData, deployConfigManager } = options
+  const { appData, deployConfigManager, argOptions } = options
 
   await awsHandler.syncAWSConfig()
 
   const deployedData = deployConfigManager.readOnPremDeployedConfig
 
-  const choices = Object.values(deployedData)
-    .filter((d) => d.newUploads)
-    .map((d) => ({ name: d.name, value: d }))
+  let config
+  let deployed
 
-  if (!choices.length) {
-    logFail(`No uploads for deploy. Please upload and try again\n`)
-    process.exit(1)
+  if (argOptions.configName) {
+    config = await deployConfigManager.readOnPremDeployConfig[argOptions.configName]
+    if (!config?.name) throw new Error(`No on-premise configuration found with name ${argOptions.configName}`)
+    deployed = deployedData[argOptions.configName]
+    config.deployed = deployed
+    if (!config.deployed.newUploads) throw new Error(`No new uploads found for deployment`)
+  } else {
+    const choices = Object.values(deployedData)
+      .filter((d) => d.newUploads)
+      .map((d) => ({ name: d.name, value: d }))
+
+    if (!choices.length) {
+      logFail(`No uploads for deploy. Please upload and try again\n`)
+      process.exit(1)
+    }
+
+    deployed = await readInput({
+      type: 'list',
+      name: 'config',
+      message: 'Select deployment configuration name to deploy',
+      choices,
+    })
+    config = await deployConfigManager.readOnPremDeployConfig[deployed.name]
+
+    if (!config?.name) {
+      throw new Error(`Error getting configuration for ${deployed.name}\n`)
+    }
+
+    config.deployed = deployed
   }
-
-  const deployed = await readInput({
-    type: 'list',
-    name: 'config',
-    message: 'Select deployment configuration name to deploy',
-    choices,
-  })
-  const config = await deployConfigManager.readOnPremDeployConfig[deployed.name]
-  config.deployed = deployed
 
   const envData = appData.environments[config.envName]
   envData.environment_name = config.envName
 
   if (!envData.environment_id) {
     logFail(`No environment not exist with id ${config.environment_id}\n`)
-    process.exit(1)
-  }
-
-  if (!config) {
-    logFail(`Error getting configuration for ${deployed.name}\n`)
     process.exit(1)
   }
 

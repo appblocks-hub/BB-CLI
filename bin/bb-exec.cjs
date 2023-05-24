@@ -15,6 +15,7 @@ const program = new Command()
 program
   .argument('<command>', 'command to run in quotes.eg:"ls"')
   .option('-in,--inside <blocks...>', 'inside which block?')
+  .option('-g,--group', 'in a folder')
   .action(exec)
 
 program.parse(process.argv)

@@ -14,6 +14,11 @@ const isEmptyObject = (obj) => obj == null || typeof obj !== 'object' || Object.
 
 const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-.]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/
 
+/**
+ *
+ * @param {import('fs').PathLike} s
+ * @returns {Promise<{data:object,err:Error}>}
+ */
 async function readJsonAsync(s) {
   if (typeof s !== 'string') return { data: null, err: true }
   try {
@@ -73,4 +78,14 @@ function pExec(cmd, options) {
   })
 }
 
-module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, findMyParentPackage, pExec }
+const logErr = (err) => {
+  let errMsg = err.response?.data?.msg || err.message || err
+
+  if (err.response?.status === 401 || err.response?.status === 403) {
+    errMsg += `: Access denied`
+  }
+
+  console.log(chalk.red(errMsg))
+}
+
+module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, findMyParentPackage, pExec, logErr }

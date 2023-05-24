@@ -1,9 +1,11 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
-const { isValidBlockName } = require('../../../utils/blocknameValidator')
-const { feedback } = require('../../../utils/cli-feedback')
-const { confirmationPrompt, readInput } = require('../../../utils/questionPrompts')
-const initializePackageBlock = require('../../init/initializePackageBlock')
+// const path = require('path')
+// const { isValidBlockName } = require('../../../utils/blocknameValidator')
+// const { feedback } = require('../../../utils/cli-feedback')
+// const ConfigFactory = require('../../../utils/configManagers/configFactory')
+// const { confirmationPrompt, readInput } = require('../../../utils/questionPrompts')
+// const initializePackageBlock = require('../../init/initializePackageBlock')
 // eslint-disable-next-line no-unused-vars
 const CreateCore = require('../createCore')
 
@@ -21,41 +23,48 @@ class HandleOutOfContext {
          */
         core
       ) => {
-        const { autoRepo } = core.cmdOpts
-        const { blockName } = core.cmdArgs
+        if (!core.isOutOfContext) return
 
-        if (core.appConfig.isOutOfContext) {
-          const goAhead = await confirmationPrompt({
-            message: `You are trying to create a block outside appblock package context. Want to create new package context ?`,
-            name: 'separateBlockCreate',
-          })
+        throw new Error(`Cannot use create command outside package context.`)
 
-          if (!goAhead) {
-            feedback({ type: 'error', message: `Block should be created under package context` })
-            return
-          }
+        // const { autoRepo } = core.cmdOpts
+        // const { blockName } = core.cmdArgs
 
-          /** **************** */
-          const validate = (input) => {
-            if (!isValidBlockName(input)) return ` ${input} is not valid name (Only snake case with numbers is valid)`
-            return true
-          }
-          const packageBlockName = await readInput({
-            name: 'appName',
-            message: 'Enter the package name',
-            validate,
-          })
-          /** **************** */
+        // const goAhead = await confirmationPrompt({
+        //   message: `You are trying to create a block outside appblock package context. Want to create new package context ?`,
+        //   name: 'separateBlockCreate',
+        // })
 
-          const { DIRPATH: packageDirPath } = await initializePackageBlock(packageBlockName, { autoRepo })
+        // if (!goAhead) {
+        //   feedback({ type: 'error', message: `Block should be created under package context` })
+        //   return
+        // }
 
-          core.parentPackagePath = packageDirPath
+        // /** **************** */
+        // const validate = (input) => {
+        //   if (!isValidBlockName(input)) return ` ${input} is not valid name (Only snake case with numbers is valid)`
+        //   return true
+        // }
+        // const packageBlockName = await readInput({
+        //   name: 'appName',
+        //   message: 'Enter the package name',
+        //   validate,
+        // })
+        // /** **************** */
 
-          // Init for new package dir path
-          await core.appConfig.init(packageDirPath, null, 'create', { reConfig: true })
+        // const { DIRPATH: packageDirPath } = await initializePackageBlock(packageBlockName, { autoRepo })
 
-          feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
-        }
+        // // Init for new package dir path
+        // // await core.packageConfigManager.init(packageDirPath, null, 'create', { reConfig: true })
+
+        // const configFact = new ConfigFactory()
+        // const configPath = path.resolve(packageDirPath, 'block.config.json')
+        // const { config, err } = await configFact.create(configPath)
+        // if (err) throw err
+
+        // core.packageConfigManager = config
+
+        // feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
       }
     )
   }

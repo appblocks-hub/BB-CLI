@@ -60,7 +60,6 @@ const generateUiElementPackageJson = (name) => `{
 }
 `
 
-
 const generateUiElementPackageJsonWithoutLint = (name) => `
   {
     "name": "${name}",

@@ -87,28 +87,6 @@
  */
 
 /**
- * @typedef {Object} blockDetailsdataFromRegistry
- * @property {String}  id
- * @property {Number} block_type
- * @property {String} block_name
- * @property {String} block_short_name
- * @property {String} block_desc
- * @property {Number} block_visibility
- * @property {String} git_url
- * @property {Number} status
- * @property {String} updated_at
- * @property {String} created_at
- * @property {Boolean} verified
- * @property {String} block_version_id
- * @property {String} block_version_number
- * @property {String} appblock_version_id
- * @property {String} appblock_version
- * @property {String} appblock_version_name
- * @property {Array<block_author>} block_authors
- * @property {Array|null} child_blocks
- */
-
-/**
  * @typedef {Object} blockLiveDetails
  * @property {Boolean} isOn Status of block ( true if started )
  * @property {Number} port Port number for ui blocks, emulator port for Fns
@@ -157,3 +135,7 @@
  */
 
 module.exports = {}
+
+/**
+ * @type {import('../../types/configs').PackageConfig}
+ */

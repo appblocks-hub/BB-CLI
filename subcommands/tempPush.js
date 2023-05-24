@@ -5,12 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const chalk = require('chalk')
-const Table = require('cli-table3')
 const { appConfig } = require('../utils/appconfigStore')
 const { GitManager } = require('../utils/gitmanager')
 const { readInput } = require('../utils/questionPrompts')
-
 
 const tempPush = async (options) => {
   try {
@@ -28,11 +25,12 @@ const tempPush = async (options) => {
 
     let currentBranch = await Git.currentBranch()
 
+    // eslint-disable-next-line prefer-destructuring
     currentBranch = currentBranch.msg.split('\n')[0]
 
     await Git.stageAll()
 
-    let changedFiles = (await Git.diff()).msg.split('\n').filter((item) => item)
+    const changedFiles = (await Git.diff()).msg.split('\n').filter((item) => item)
 
     if (changedFiles.length > 0) {
       const commitMessage = await readInput({
@@ -47,9 +45,8 @@ const tempPush = async (options) => {
       await Git.commit(commitMessage)
       await Git.push(currentBranch)
       console.log('PUSHED SUCCESSFULLY')
-    }
-    else{
-      console.log("No Files changed to push")
+    } else {
+      console.log('No Files changed to push')
     }
   } catch (e) {
     console.log(e)
