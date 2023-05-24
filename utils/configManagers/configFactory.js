@@ -28,6 +28,7 @@ class ConfigFactory {
     } else {
       manager = new BlockConfigManager(config, configPath)
     }
+
     await manager.init()
 
     return { manager, error: null }
