@@ -27,22 +27,42 @@ class HandleBlockGrouping {
         /**
          * @type {StartCore}
          */
-        core,
-        /**
-         * @type {PackageConfigManager}
-         */
-        packageConfigManager
+        core
       ) => {
         const { blockName } = core.cmdArgs
         core.blocksToStart = {}
 
         if (blockName) {
-          const blockData = packageConfigManager.getBlock(blockName)
-          core.blocksToStart[blockName] = blockData
-          return
+          const blockData = await core.packageConfigManager.getBlock(blockName)
+
+          if (blockData.config.type !== 'package') {
+            core.blocksToStart = {
+              [blockName]: blockData,
+              *[Symbol.iterator]() {
+                for (const block in this) {
+                  if (Object.hasOwnProperty.call(this, block)) {
+                    yield { block, blockManager: this[block] }
+                  }
+                }
+              },
+            }
+            core.blockStartGroups = {
+              [blockData.config.type]: [blockData],
+              *[Symbol.iterator]() {
+                for (const type in this) {
+                  if (Object.hasOwnProperty.call(this, type)) {
+                    yield { type, blocks: this[type] }
+                  }
+                }
+              },
+            }
+            return
+          }
+
+          core.packageConfigManager = blockData
         }
 
-        await this.getAllBlocksToStart(core, packageConfigManager)
+        await this.getAllBlocksToStart(core, core.packageConfigManager)
 
         core.blocksToStart = {
           ...core.blocksToStart,

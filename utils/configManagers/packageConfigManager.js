@@ -97,10 +97,10 @@ class PackageConfigManager extends ConfigManager {
   }
 
   async getBlock(name) {
-    const filter = ({ config }) => config.type === name
+    const filter = ({ config }) => config.name === name
     const res = []
     for await (const block of this.getDependencies(filter)) res.push(block)
-    return res
+    return res[0]
   }
 
   async *getDependencies(filter, picker) {

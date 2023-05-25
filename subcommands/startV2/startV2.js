@@ -35,8 +35,11 @@ async function start(blockName, options) {
     await Start.start()
     // await Start.cleanUp()
   } catch (error) {
+    spinnies.add('start', { text: error.message })
+    spinnies.fail('start', { text: error.message })
+    spinnies.stopAll()
+    console.log(error);
     logger.error(error)
-    console.log({ error })
     await Start.cleanUp()
   }
 }

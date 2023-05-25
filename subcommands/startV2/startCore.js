@@ -28,18 +28,18 @@ class StartCore {
     this.cmdOpts = { ...options }
     this.cwd = process.cwd()
 
-     /**
+    /**
      * @type {Logger}
      */
-     this.logger = options.logger
-     /**
-      * @type {feedback}
-      */
-     this.feedback = options.feedback
-     /**
-      * @type {spinnies}
-      */
-     this.spinnies = options.spinnies
+    this.logger = options.logger
+    /**
+     * @type {feedback}
+     */
+    this.feedback = options.feedback
+    /**
+     * @type {spinnies}
+     */
+    this.spinnies = options.spinnies
 
     /**
      * @type {Array<string>}
@@ -50,20 +50,8 @@ class StartCore {
      */
     this.blockStartGroups = {}
     this.hooks = {
-      beforeStart: new AsyncSeriesHook(['core', 'packageConfigManager']),
-      afterStart: new AsyncSeriesHook(['core', 'packageConfigManager']),
-      /**
-       * Find free ports for each block in group here,
-       * preferably consecutive numbers for blocks in one group
-       */
-      buildEmulator: '',
-      buildFnEmulator: new AsyncSeriesHook(['core', 'config']),
-      buildJobEmulator: new AsyncSeriesHook(['core', 'config']),
-      buildSharedFnEmulator: new AsyncSeriesHook(['core', 'config']),
-      singleBuildForView: new AsyncSeriesHook(['core', 'config']),
-      /**
-       * Building emulator is totally in hands of user of this class
-       */
+      beforeStart: new AsyncSeriesHook(['core']),
+      afterStart: new AsyncSeriesHook(['core']),
     }
   }
 
@@ -93,10 +81,11 @@ class StartCore {
    * Frees the used locked ports
    */
   async cleanUp() {
+    process.exitCode = 0
+    if (JSON.stringify(this.blockStartGroups) === '{}') return
     for (const { blocks } of this.blockStartGroups) {
       blocks.forEach((v) => v.key?.abort())
     }
-    process.exitCode = 0
   }
 }
 
