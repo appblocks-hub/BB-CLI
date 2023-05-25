@@ -91,7 +91,7 @@ class ConfigManager {
     /**
      * @type {string}
      */
-    let currentPath = path.join(this.cwd, this.configName)
+    let currentPath = path.join(this.directory, this.configName)
     /**
      * @type {string} dir name of parent
      */

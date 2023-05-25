@@ -12,13 +12,12 @@ const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
 const { mergeDatas } = require('./mergeDatas')
 const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
-const { spinnies } = require('../../../../../loader')
 
 const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
   const relativePath = path.resolve()
 
   try {
-    spinnies.add('singleBuild', { text: `Preparing blocks for single build` })
+    core.spinnies.add('singleBuild', { text: `Preparing blocks for single build` })
 
     let { elementsBlocks, containerBlocks, depLibBlocks } = blocks || {}
 
@@ -32,14 +31,21 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     if (!elementsBlocks?.length) return { error: `No element blocks found` }
     if (!containerBlocks) return { error: `No container block found` }
 
-    const containerBlock = containerBlocks[0]
-    if (containerBlocks.length > 1) {
-      console.log(
-        chalk.yellow(`Found multiple container blocks, Continuing with ${containerBlock.config.name} container`)
-      )
+    let containerBlock = containerBlocks[0]
+    for (const block of containerBlocks) {
+      if (path.dirname(block.directory) !== path.resolve()) continue
+      containerBlock = block
     }
 
-    const depLib = depLibBlocks[0]
+    if (containerBlocks.length > 1) {
+      console.log(chalk.yellow(`Found multiple container blocks, Continuing with ${containerBlock.config.name} block`))
+    }
+
+    let depLib = depLibBlocks[0]
+    for (const block of depLibBlocks) {
+      if (path.dirname(block.directory) !== path.resolve()) continue
+      depLib = block
+    }
     if (depLibBlocks.length > 1) {
       console.log(
         chalk.yellow(`Found multiple dependency library blocks, Continuing with ${depLib.config.name} container`)
@@ -52,10 +58,10 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     const emEleFolderName = '._ab_em_elements'
     const emEleFolder = path.join(relativePath, emEleFolderName)
 
-    spinnies.update('singleBuild', { text: `Generating elements emulator` })
+    core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
-    spinnies.update('singleBuild', { text: `Merging elements` })
+    core.spinnies.update('singleBuild', { text: `Merging elements` })
     const errorBlocks = await mergeDatas(elementsBlocks, emEleFolder, depLib, env)
 
     await packageInstall(emEleFolder, elementsBlocks)
@@ -63,11 +69,11 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     if (buildOnly) {
       const bashRes = await runBash(`npm run build`, emEleFolder)
       if (bashRes.status !== 'success') {
-        spinnies.succeed('singleBuild', { text: `Error in build: ${bashRes.msg}` })
+        core.spinnies.succeed('singleBuild', { text: `Error in build: ${bashRes.msg}` })
         return { error: bashRes.msg }
       }
 
-      spinnies.succeed('singleBuild', { text: `Elements build success` })
+      core.spinnies.succeed('singleBuild', { text: `Elements build success` })
       return {
         elementsBuildFolder: path.join(emEleFolder, 'dist'),
         emEleFolder,
@@ -75,7 +81,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       }
     }
 
-    spinnies.update('singleBuild', { text: `Starting elements emulator` })
+    core.spinnies.update('singleBuild', { text: `Starting elements emulator` })
     const emData = await emulateElements(emEleFolder, emElPort)
 
     if (emData.exitCode === null) {
@@ -86,29 +92,26 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
           isOn: true,
           singleBuild: true,
           port: emElPort || null,
-          log: {
-            out: `./logs/out/elements.log`,
-            err: `./logs/err/elements.log`,
-          },
+          log: emData.logPaths,
         })
       })
     } else {
-      spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
-      process.exit(1)
+      core.spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
+      throw new Error('Error in single build process. Please check logs')
     }
 
     let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
     if (errorBlocks?.length > 0) sMsg += ` with above errors`
 
-    spinnies.succeed('singleBuild', { text: sMsg })
+    core.spinnies.succeed('singleBuild', { text: sMsg })
 
     const containerProcessData = await startJsProgram(core, containerBlock, containerPort)
     return { emData, containerProcessData, errorBlocks }
   } catch (error) {
     await stopEmulatedElements({ rootPath: relativePath })
 
-    spinnies.add('singleBuild', { text: error.message })
-    spinnies.fail('singleBuild', { text: error.message })
+    core.spinnies.add('singleBuild', { text: error.message })
+    core.spinnies.fail('singleBuild', { text: error.message })
 
     throw error
   }

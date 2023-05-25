@@ -24,12 +24,13 @@ const emulateElements = async (emEleFolder, port) => {
     createFileSync(logOutPath, '')
   }
 
-  const child = runBashLongRunning(`npm start -- --port=${port}`, { out: logOutPath, err: logErrPath }, emEleFolder)
+  const logPaths = { out: logOutPath, err: logErrPath }
+  const child = runBashLongRunning(`npm start -- --port=${port}`, logPaths, emEleFolder)
 
   const emConfigPath = path.join(emEleFolder, '.emconfig.json')
   writeFileSync(emConfigPath, JSON.stringify(child))
 
-  return child
+  return { ...child, logPaths }
 }
 
 async function stopEmulatedElements(options) {

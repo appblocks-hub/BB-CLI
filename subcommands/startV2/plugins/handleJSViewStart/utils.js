@@ -1,11 +1,12 @@
+/* eslint-disable no-param-reassign */
 const path = require('path')
 const chalk = require('chalk')
 const readline = require('readline')
 const { Stream } = require('stream')
-const { createReadStream, watchFile } = require('fs')
-const { getAbsPath } = require('../../../../utils/path-helper')
+const { createReadStream, watchFile, existsSync, mkdirSync } = require('fs')
 const { runBash, runBashLongRunning } = require('../../../bash')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
+const { createFileSync } = require('../../../../utils/fileAndFolderHelpers')
 
 /**
  * @typedef watchCompilationReport
@@ -89,9 +90,22 @@ const watchCompilation = (logPath, errPath) =>
 async function startJsProgram(core, blockManager, port) {
   const { name } = blockManager.config
   core.spinnies.add(name, { text: `Starting ${name}` })
+
+  const logOutPath = path.join('logs', 'out', `${name}.log`)
+  const logErrPath = path.join('logs', 'err', `${name}.log`)
+
+  if (!existsSync(path.dirname(logErrPath))) {
+    mkdirSync(path.join('logs', 'err'), { recursive: true })
+    createFileSync(logErrPath, '')
+  }
+  if (!existsSync(path.dirname(logOutPath))) {
+    mkdirSync(path.join('logs', 'out'), { recursive: true })
+    createFileSync(logOutPath, '')
+  }
+
+  blockManager.log = { err: logErrPath, out: logOutPath }
+
   try {
-    const directory = getAbsPath(blockManager.directory)
-    
     core.spinnies.update(name, { text: `Installing dependencies in ${name}` })
     const { installer } = getNodePackageInstaller()
     const i = await runBash(installer, path.resolve(blockManager.directory))
@@ -100,7 +114,8 @@ async function startJsProgram(core, blockManager, port) {
 
     core.spinnies.update(name, { text: `Assigned port ${chalk.whiteBright(port)} for ${name}` })
     const startCommand = `${blockManager.config.start} --port=${port}`
-    const childProcess = runBashLongRunning(startCommand, blockManager.log, directory)
+
+    const childProcess = runBashLongRunning(startCommand, blockManager.log, blockManager.directory)
 
     core.spinnies.update(name, { text: `Compiling ${name} ` })
     const updatedBlock = { name, pid: childProcess.pid, port, isOn: true }
@@ -136,4 +151,42 @@ async function startJsProgram(core, blockManager, port) {
   }
 }
 
-module.exports = { startJsProgram }
+const handleReportLog = (reportData) => {
+  const reducedReport = reportData.reduce(
+    (acc, curr) => {
+      const { data } = curr.value
+      const { name } = data
+      switch (curr.value.status) {
+        case 'success':
+          acc.success.push({ name, reason: [] })
+          break
+        case 'failed':
+          acc.failed.push({ name, reason: [curr.value.msg] })
+          break
+        case 'compiledWithError':
+          acc.startedWithError.push({ name, reason: curr.value.compilationReport.errors })
+          break
+
+        default:
+          break
+      }
+      return acc
+    },
+    { success: [], failed: [], startedWithError: [], startedWithWarning: [] }
+  )
+
+  for (const key in reducedReport) {
+    if (Object.hasOwnProperty.call(reducedReport, key)) {
+      const status = reducedReport[key]
+      if (status.length > 0) {
+        console.log(`${chalk.whiteBright(key)}`)
+        status.forEach((b) => {
+          console.log(`-${b.name}`)
+          b.reason.forEach((r) => console.log(`--${r}`))
+        })
+      }
+    }
+  }
+}
+
+module.exports = { startJsProgram, handleReportLog }

@@ -65,9 +65,7 @@ class HandleBeforeStart {
          * starting them again to avoid not killed processes
          */
         for (const block of await packageConfigManager.liveBlocks()) {
-          console.log('live', { block })
           if (!isRunning(block?.pid)) continue
-
           treeKill(block.pid, (err) => {
             if (err) {
               core.feedback({

@@ -1,12 +1,11 @@
-const chalk = require('chalk')
-const { startJsProgram } = require('./utils')
+const { startJsProgram, handleReportLog } = require('./utils')
 const singleBuild = require('./singleBuild')
 // eslint-disable-next-line no-unused-vars
 const PackageConfigManager = require('../../../../utils/configManagers/packageConfigManager')
 // eslint-disable-next-line no-unused-vars
 const StartCore = require('../../startCore')
 
-class handleJSViewStart {
+class HandleJSViewStart {
   constructor() {
     this.elementsBlocks = []
     this.containerBlocks = []
@@ -22,7 +21,7 @@ class handleJSViewStart {
    */
   apply(startCore) {
     startCore.hooks.beforeStart.tapPromise(
-      'SingleBuild',
+      'HandleJSViewStart',
       async (/** @type {StartCore} */ core, /** @type {PackageConfigManager} */ packageConfigManager) => {
         /**
          * Filter js view blocks
@@ -68,51 +67,28 @@ class handleJSViewStart {
         /**
          * separate instance for block level start
          */
-        const promiseArray = []
-        for (const block of this.elementsBlocks) {
-          promiseArray.push(startJsProgram(block.config.name, block.availablePort))
-          // handle env
+        let promiseArray = []
+        if (this.elementsBlocks.length > 0) {
+          for (const block of this.elementsBlocks) {
+            promiseArray.push(startJsProgram(block.config.name, block.availablePort))
+            // handle env
+          }
+          const eleReportRaw = await Promise.allSettled(promiseArray)
+          handleReportLog(eleReportRaw)
         }
 
-        const reportRaw = await Promise.allSettled(promiseArray)
-        const reducedReport = reportRaw.reduce(
-          (acc, curr) => {
-            const { data } = curr.value
-            const { name } = data
-            switch (curr.value.status) {
-              case 'success':
-                acc.success.push({ name, reason: [] })
-                break
-              case 'failed':
-                acc.failed.push({ name, reason: [curr.value.msg] })
-                break
-              case 'compiledWithError':
-                acc.startedWithError.push({ name, reason: curr.value.compilationReport.errors })
-                break
-
-              default:
-                break
-            }
-            return acc
-          },
-          { success: [], failed: [], startedWithError: [], startedWithWarning: [] }
-        )
-
-        for (const key in reducedReport) {
-          if (Object.hasOwnProperty.call(reducedReport, key)) {
-            const status = reducedReport[key]
-            if (status.length > 0) {
-              console.log(`${chalk.whiteBright(key)}`)
-              status.forEach((b) => {
-                console.log(`-${b.name}`)
-                b.reason.forEach((r) => console.log(`--${r}`))
-              })
-            }
+        if (this.containerBlocks > 0) {
+          promiseArray = []
+          for (const block of this.containerBlocks) {
+            promiseArray.push(startJsProgram(block.config.name, block.availablePort))
+            // handle env
           }
+          const reportRaw = await Promise.allSettled(promiseArray)
+          handleReportLog(reportRaw)
         }
       }
     )
   }
 }
 
-module.exports = handleJSViewStart
+module.exports = HandleJSViewStart
