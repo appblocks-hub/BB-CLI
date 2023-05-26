@@ -25,23 +25,6 @@ const updatePackageVersionIfNeeded = (mergedPackages) => {
   return updatedDeps
 }
 
-const mergeEnvs = async (envPath) => {
-  const data = {}
-
-  if (!existsSync(envPath)) return data
-
-  const envData = readFileSync(envPath).toString().split('\n')
-  for (let i = 0; i < envData.length; i += 1) {
-    // eslint-disable-next-line no-continue
-    if (!envData[i]) continue
-    const [key, val] = envData[i].split('=')
-    // if (!key.includes(`AB_${bName}`)) key = `AB_${bName}_${key}`
-    data[key] = val
-  }
-
-  return data
-}
-
 const mergeFederationExpose = async (fedExData, dir) => {
   const exposedJs = fedExData.default || {}
   for (const key in exposedJs) {
@@ -55,7 +38,7 @@ const mergeFederationExpose = async (fedExData, dir) => {
 
 const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
   const mergedPackages = { dependencies: {}, devDependencies: {} }
-  let mergedEnvs = {}
+  const mergedEnvs = {}
   let mergedFedExpos = {}
   let mergedFedShared = {}
   const errorBlocks = []
@@ -100,8 +83,8 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
         const fedSharedData = await getModuleFederationPluginShared(directory)
         mergedFedShared = { ...mergedFedShared, ...fedSharedData }
 
-        const processedEnvData = await mergeEnvs(path.join(directory, '.env'), name)
-        mergedEnvs = { ...mergedEnvs, ...processedEnvData }
+        // const processedEnvData = await mergeEnvs(path.join(directory, '.env'), name)
+        // mergedEnvs = { ...mergedEnvs, ...processedEnvData }
       } catch (err) {
         errorBlocks.push(name)
         console.log(chalk.red(`Error on ${name}: ${err.message}`))
@@ -112,8 +95,8 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
   return { mergedPackages, mergedEnvs, mergedFedExpos, errorBlocks, mergedFedShared }
 }
 
-const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
-  const { mergedPackages, mergedEnvs, mergedFedExpos, mergedFedShared, errorBlocks } = await mergeAllDatas(
+const mergeDatas = async (elementBlocks, emEleFolder, depLib) => {
+  const { mergedPackages, mergedFedExpos, mergedFedShared, errorBlocks } = await mergeAllDatas(
     elementBlocks,
     emEleFolder,
     depLib
@@ -152,18 +135,6 @@ const mergeDatas = async (elementBlocks, emEleFolder, depLib, env) => {
     devDependencies,
   }
   writeFileSync(path.join(emEleFolder, 'package.json'), JSON.stringify(packageJson, null, 2))
-
-  let envPath = path.resolve(`.env.view.${env}`)
-  let mergedEnvsFromDotEnv = mergedEnvs
-  if (!existsSync(envPath)) {
-    envPath = path.resolve('.env.view')
-  } else {
-    mergedEnvsFromDotEnv = {}
-  }
-  const processedEnvData = await mergeEnvs(envPath)
-  const mergedEnvsData = { ...mergedEnvsFromDotEnv, ...processedEnvData }
-  const envData = Object.entries(mergedEnvsData).reduce((acc, [key, val]) => `${acc}${key}=${val}\n`, '')
-  writeFileSync(path.join(emEleFolder, '.env'), envData)
 
   const fedExpoData = `export default ${JSON.stringify(mergedFedExposes, null, 2)}`
   writeFileSync(path.join(emEleFolder, 'federation-expose.js'), fedExpoData)

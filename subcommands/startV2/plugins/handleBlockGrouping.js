@@ -13,6 +13,7 @@ class HandleBlockGrouping {
       const { name, type } = blockManager.config
       if (type === 'package') {
         await this.getAllBlocksToStart(core, blockManager)
+        core.subPackages[name] = blockManager
         continue
       }
       if (blockType && blockType !== type) continue

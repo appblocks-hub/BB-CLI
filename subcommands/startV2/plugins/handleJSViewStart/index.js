@@ -57,6 +57,7 @@ class HandleJSViewStart {
             emElements: [this.elementsPort],
             container: [this.containerPort],
           },
+          env: core.cmdOpts.environment,
         })
         return
       }

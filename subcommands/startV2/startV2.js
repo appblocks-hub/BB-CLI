@@ -33,7 +33,7 @@ async function start(blockName, options) {
   try {
     await Start.initializeConfigManager()
     await Start.start()
-    // await Start.cleanUp()
+    await Start.cleanUp()
   } catch (error) {
     spinnies.add('start', { text: error.message })
     spinnies.fail('start', { text: error.message })

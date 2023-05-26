@@ -7,11 +7,13 @@
 
 const path = require('path')
 const chalk = require('chalk')
+const { writeFileSync } = require('fs')
 const { runBash } = require('../../../../bash')
 const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
 const { mergeDatas } = require('./mergeDatas')
 const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
+const { upsertEnv } = require('../../../../../utils/envManager')
 
 const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
   const relativePath = path.resolve()
@@ -22,7 +24,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     let { elementsBlocks, containerBlocks, depLibBlocks } = blocks || {}
 
     if (!blocks) {
-      const viewBlocks = [...(await core.packageConfigManger.uiBlocks())]
+      const viewBlocks = [...(await core.packageConfigManager.uiBlocks())]
       elementsBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
       depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
@@ -52,11 +54,24 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       )
     }
 
-    const emElPort = ports?.emElements[0] || 4200
-    const containerPort = ports?.container[0] || 3000
+    const emElPort = ports?.emElements[0]
+    const containerPort = ports?.container[0]
+
+    const rootPackageName = core.packageConfig.name.toUpperCase()
+    const updatedEnv = await upsertEnv(
+      'view',
+      {
+        [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        [`BB_${rootPackageName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+      },
+      env,
+      rootPackageName
+    )
 
     const emEleFolderName = '._ab_em_elements'
     const emEleFolder = path.join(relativePath, emEleFolderName)
+
+    if (updatedEnv?.envString) writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
 
     core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })

@@ -19,6 +19,7 @@ program
   .argument('[name]', 'Name of block to start')
   .option('--use-pnpm', 'use pnpm to install dependencies')
   .option('--multi-instance', 'multi instance')
+  .option('-env, --environment <environment>', 'environment')
   .option('-bt, --block-type <block-type>', 'Block type to start')
   .action(start)
 

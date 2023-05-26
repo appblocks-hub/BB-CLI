@@ -5,14 +5,13 @@ const { openSync, existsSync } = require('fs')
 const { mkdir, writeFile } = require('fs/promises')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
-// const { updateEnv } = require('../../../../utils/env')
-// const { envToObj } = require('../../../../utils/env')
 const { generateEmFolder } = require('./generateEmulator')
 // eslint-disable-next-line no-unused-vars
 const PackageConfigManager = require('../../../../utils/configManagers/packageConfigManager')
 const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = require('./mergeData')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
+const { upsertEnv } = require('../../../../utils/envManager')
 
 class HandleNodeFunctionStart {
   constructor() {
@@ -104,10 +103,17 @@ class HandleNodeFunctionStart {
         await mkdir(path.join(core.cwd, './logs', 'err'), { recursive: true })
         await mkdir(path.join(core.cwd, './logs', 'out'), { recursive: true })
 
-        /**
-         * Release port before server start
-         */
+        // Release port before server start
         this.fnBlocks[0].key.abort()
+
+        // handle environments
+        const rootPackageName = core.packageConfig.name.toUpperCase()
+        const { environment } = core.cmdOpts
+        await upsertEnv('function', {}, environment, rootPackageName)
+        const updateEnvValue = { [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${this.port}` }
+        await upsertEnv('view', updateEnvValue, environment, rootPackageName)  
+
+        // start node
         const child = spawn('node', ['index.js'], {
           cwd: emPath,
           detached: true,
@@ -119,13 +125,6 @@ class HandleNodeFunctionStart {
         await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
 
         for (const blockManager of this.fnBlocks) {
-          /**
-           * If dependencies were properly installed,
-           * Load the env's from block to global function.env
-           */
-          // const _ = await envToObj(path.resolve(blockManager.directory, '.env'))
-          // await updateEnv('function', _)
-
           blockManager.updateLiveConfig({
             isOn: true,
             pid: this.pid || null,
@@ -139,7 +138,7 @@ class HandleNodeFunctionStart {
 
         spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
       } catch (err) {
-        spinnies.fail('emBuild', { text: 'Failed to start emulator' })
+        spinnies.fail('emBuild', { text: `Failed to start emulator: ${err.message}` })
         return
       }
 

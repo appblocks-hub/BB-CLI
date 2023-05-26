@@ -28,6 +28,8 @@ class StartCore {
     this.cmdOpts = { ...options }
     this.cwd = process.cwd()
 
+    this.subPackages = {}
+
     /**
      * @type {Logger}
      */
@@ -81,11 +83,11 @@ class StartCore {
    * Frees the used locked ports
    */
   async cleanUp() {
-    process.exitCode = 0
     if (JSON.stringify(this.blockStartGroups) === '{}') return
     for (const { blocks } of this.blockStartGroups) {
       blocks.forEach((v) => v.key?.abort())
     }
+    process.exitCode = 0
   }
 }
 
