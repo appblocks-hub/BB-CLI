@@ -16,10 +16,9 @@ class BlockConfigManager extends ConfigManager {
     return this.liveDetails
   }
 
-  updatePortConfig(newConfig) {
-    Object.entries(newConfig).forEach(([name, value]) => {
-      this[name] = value
-    })
+  updatePortConfig(portConfig) {
+    this.availablePort = portConfig.availablePort
+    this.portKey = portConfig.key
   }
 }
 

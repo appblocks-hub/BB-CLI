@@ -85,7 +85,7 @@ class StartCore {
   async cleanUp() {
     if (JSON.stringify(this.blockStartGroups) === '{}') return
     for (const { blocks } of this.blockStartGroups) {
-      blocks.forEach((v) => v.key?.abort())
+      blocks.forEach((v) => v.portKey?.abort())
     }
     process.exitCode = 0
   }
