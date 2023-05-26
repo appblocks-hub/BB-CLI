@@ -156,6 +156,7 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
+
   currentBranch() {
     return this._run('branch', ['--show-current'])
   }

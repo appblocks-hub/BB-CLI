@@ -87,7 +87,9 @@ class ConfigManager {
     /**
      * @type {string}
      */
-    let currentPath = path.join(this.cwd, this.configName)
+    let currentPath = path.join(this.directory, this.configName)
+
+    console.log("currentPath is",currentPath)
     /**
      * @type {string} dir name of parent
      */
@@ -102,7 +104,7 @@ class ConfigManager {
       parentPackageConfig = { ...data }
     }
     return {
-      data: { parent, parentPackageConfig },
+      data: { parent, parentPackageConfig,parentPackageFound },
       err:
         currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
     }

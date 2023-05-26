@@ -68,6 +68,10 @@ class GitManager {
     return this._run('checkout', [name])
   }
 
+  getCommits(branchName,n){
+    return this._run(`log --oneline -${n}`, [branchName || 'main'])
+  }
+
   checkoutTag(tag, branch = 'main') {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
@@ -138,6 +142,11 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
+
+  pullBranch(upstreamBranch) {
+    this._run('pull', [this.remote, upstreamBranch || 'main'])
+  }
+  
   currentBranch() {
     return this._run('branch', ['--show-current'])
   }

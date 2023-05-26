@@ -294,12 +294,14 @@ query ($first:Int,$last:Int,$before:String,$after:String,) {
 }`
 
 const existingRepoData = ({ data: { data } }) => {
+  console.log("data is",data)
   const isInorg = data?.user?.repository?.isInOrganization || data?.user?.organization?.id
   return {
     isInorg,
     ownerId: isInorg ? data?.user?.organization?.id : data?.user?.id,
     visibility: data?.user?.repository?.visibility,
     description: data?.user?.repository?.description,
+    defaultBranchName:data?.user?.repository?.defaultBranchRef?.name
   }
 }
 
@@ -312,6 +314,9 @@ const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
       isInOrganization
       visibility
       description
+      defaultBranchRef{
+        name
+        }
     }
     organization(login: $orgname){
       id

@@ -103,13 +103,14 @@ class PackageConfigManager extends ConfigManager {
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(
           path.join(this.config.dependencies[block].directory, 'block.config.json')
         )
-        console.log(error)
+        console.log("path is \n",path.join(this.config.dependencies[block].directory, 'block.config.json'))
         const f = filter || (() => true)
         const p = picker || ((b) => b)
         if (f(c)) yield p(c)
       }
     }
     return []
+  
   }
 }
 module.exports = PackageConfigManager
