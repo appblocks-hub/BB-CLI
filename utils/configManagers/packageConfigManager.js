@@ -1,4 +1,5 @@
 const path = require('path')
+const chalk = require('chalk')
 const ConfigManager = require('./configManager')
 
 class PackageConfigManager extends ConfigManager {
@@ -7,9 +8,11 @@ class PackageConfigManager extends ConfigManager {
     this.isPackageConfigManager = true
   }
 
-  get liveBlocks() {
+  async liveBlocks() {
     const filter = ({ liveDetails }) => liveDetails.isOn
-    return this.getDependencies(filter)
+    const res = []
+    for await (const name of this.getDependencies(filter)) res.push(name)
+    return res
   }
 
   async nonLiveBlocks() {
@@ -93,6 +96,13 @@ class PackageConfigManager extends ConfigManager {
     return !!this.config.dependencies?.[block]
   }
 
+  async getBlock(name) {
+    const filter = ({ config }) => config.name === name
+    const res = []
+    for await (const block of this.getDependencies(filter)) res.push(block)
+    return res[0]
+  }
+
   async *getDependencies(filter, picker) {
     if (!this.config?.dependencies) return []
     // Dynamic import to avoid circular dependency error
@@ -100,10 +110,10 @@ class PackageConfigManager extends ConfigManager {
     const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
-        const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(
-          path.join(this.config.dependencies[block].directory, 'block.config.json')
-        )
-        console.log(error)
+        const relativeDirectory = this.config.dependencies[block].directory
+        const configPath = path.join(this.directory, relativeDirectory, 'block.config.json')
+        const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+        if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
         const f = filter || (() => true)
         const p = picker || ((b) => b)
         if (f(c)) yield p(c)

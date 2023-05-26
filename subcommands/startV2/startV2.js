@@ -1,39 +1,45 @@
 /* eslint-disable */
 const { Logger } = require('../../utils/loggerV2')
-const XYZ = require('./plugins/afterEnvPlugin')
-const FilterBlocksToStart = require('./plugins/afterGroupingPlugin')
-const BuildFnEmulator = require('./plugins/fnEmulatorPlugins')
-const ViewSingleBuild = require('./plugins/viewEmulatorPlugins')
-const { LockAndAssignPorts } = require('./plugins/LockAndAssignPortsPlugin')
 const StartCore = require('./startCore')
+const { spinnies } = require('../../loader')
+const { feedback } = require('../../utils/cli-feedback')
 
-async function start(blockName, { usePnpm, multiInstance }) {
+const HandleNodeFunctionStart = require('./plugins/handleNodeFunctionStart')
+const HandleJSViewStart = require('./plugins/handleJSViewStart')
+const LockAndAssignPorts = require('./plugins/lockAndAssignPortsPlugin.js')
+const HandleOutOfContext = require('./plugins/handleOutOfContext')
+const HandleBeforeStart = require('./plugins/handleBeforeStart')
+const HandleBlockGrouping = require('./plugins/handleBlockGrouping')
+
+async function start(blockName, options) {
   const { logger } = new Logger('start')
-  const Start = new StartCore(blockName, { usePnpm, multiInstance, singleInstance: !multiInstance })
-  new XYZ().apply(Start)
-  new FilterBlocksToStart().apply(Start)
+
+  const Start = new StartCore(blockName, {
+    singleInstance: !options.multiInstance,
+    ...options,
+    logger,
+    feedback,
+    spinnies,
+  })
+
+  new HandleBeforeStart().apply(Start)
+  new HandleOutOfContext().apply(Start)
+  new HandleBlockGrouping().apply(Start)
   new LockAndAssignPorts().apply(Start)
 
-  new BuildFnEmulator().apply(Start)
-  new ViewSingleBuild().apply(Start)
-
-  logger.info('Plugins applied')
-  const { _, err } = await Start.setEnvironment()
-  logger.info('env set')
-  if (err) {
-    logger.error('error in setting up environment' + err)
-    process.exitCode = 1
-    return
-  }
+  new HandleNodeFunctionStart().apply(Start)
+  new HandleJSViewStart().apply(Start)
 
   try {
-    await Start.groupBlocks()
-    await Start.buildEmulators()
-    await Start.singleBuildForView()
-
+    await Start.initializeConfigManager()
+    await Start.start()
     await Start.cleanUp()
   } catch (error) {
-    console.log(error)
+    spinnies.add('start', { text: error.message })
+    spinnies.fail('start', { text: error.message })
+    spinnies.stopAll()
+    console.log(error);
+    logger.error(error)
     await Start.cleanUp()
   }
 }

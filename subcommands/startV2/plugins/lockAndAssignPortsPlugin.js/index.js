@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 // eslint-disable-next-line max-classes-per-file
 const { Server } = require('http')
 const { clearInterval } = require('timers')
@@ -24,7 +25,7 @@ class LockAndAssignPorts {
       'ui-container': this.elePortFromEnv ? [this.elePortFromEnv, this.elePortFromEnv + 10] : [3000, 3999],
       'ui-elements': this.containerPortFromEnv
         ? [this.containerPortFromEnv, this.containerPortFromEnv + 10]
-        : [3000, 3999],
+        : [4000, 4999],
       function: this.emPortFromEnv ? [this.emPortFromEnv, this.emPortFromEnv + 10] : [5000, 6000],
     }
   }
@@ -87,9 +88,8 @@ class LockAndAssignPorts {
   }
 
   async getLockedPorts(blocksList, type) {
-    const res = []
     /**
-     * If block type is function, we dont need ports for all functions,
+     * If block type is function, we don't need ports for all functions,
      * only one for emulator & add that to all fn block data & early return
      */
     if (type === 'function') {
@@ -97,30 +97,32 @@ class LockAndAssignPorts {
       // add a plugin before this plugin, and convert function from array to object,
       // and check if object here..if yes, lock ports for diff langs
       const g = await this.getPorts({ port: portNumbers(...this.map[type]) })
-      for (let i = 0; i < blocksList.length; i += 1) {
-        res.push({ ...blocksList[i], ...g })
+      for (const block of blocksList) {
+        block.updatePortConfig(g)
       }
-      return res
     }
-    for (let i = 0; i < blocksList.length; i += 1) {
-      const g = await this.getPorts({ port: blocksList[i].meta.port || portNumbers(...this.map[type]) })
-      res.push({ ...blocksList[i], ...g })
+    for (const block of blocksList) {
+      const g = await this.getPorts({ port: block.config.port || portNumbers(...this.map[type]) })
+      block.updatePortConfig(g)
     }
-    return res
   }
 
   apply(StartCore) {
-    StartCore.hooks.afterGroupingBlocks.tapPromise('LockAndAssignPorts', async (passedValues) => {
-      const { core, config, blockGroups } = passedValues
-      for (const { type, blocks } of blockGroups) {
-        // eslint-disable-next-line no-continue
-        if (!this.map[type]) continue
-        core.blockGroups[type] = await this.getLockedPorts(blocks, type)
-        // console.log(core.blockGroups)
+    StartCore.hooks.beforeStart.tapPromise(
+      'LockAndAssignPorts',
+      async (
+        /**
+         * @type {StartCore}
+         */
+        core
+      ) => {
+        for (const { type, blocks } of core.blockStartGroups) {
+          if (!this.map[type]) continue
+          await this.getLockedPorts(blocks, type)
+        }
+        clearInterval(this.interval)
       }
-      clearInterval(this.interval)
-      return { core, config, blockGroups: core.blockGroups }
-    })
+    )
   }
 }
 
