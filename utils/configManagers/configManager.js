@@ -1,7 +1,7 @@
 const { EventEmitter } = require('stream')
 const path = require('path')
 const os = require('os')
-const { writeFile } = require('fs')
+const { writeFile, existsSync, mkdirSync } = require('fs')
 const { readFile } = require('fs/promises')
 const { readJsonAsync } = require('..')
 
@@ -37,7 +37,7 @@ class ConfigManager {
     }
 
     this.events.on('write', () => this._write.call(this, this.configPath, this.config))
-    this.events.on('writelive', () => {})
+    this.events.on('writeLive', () => this._write.call(this, this.liveConfigPath, this.liveDetails))
   }
 
   static WRITE_COUNTER = 0
@@ -68,8 +68,12 @@ class ConfigManager {
     // eslint-disable-next-line no-undef
     this.writeController = new AbortController()
     this.writeLiveSignal = this.writeController.signal
+
+    const parentDir = path.dirname(configPath)
+    if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true })
+
     writeFile(configPath, JSON.stringify(data, null, 2), { encoding: 'utf8', signal: this.writeLiveSignal }, (err) => {
-      if (err && err.code !== 'ABORT_ERR') console.log('Error writing live data ', err)
+      if (err && err.code !== 'ABORT_ERR') console.log(`Error writing live data \n ${err} \n`)
       if (err && err.name === 'AbortError') ConfigManager.WRITE_COUNTER -= 1
       if (!err) ConfigManager.WRITE_COUNTER -= 1
     })
@@ -88,13 +92,11 @@ class ConfigManager {
      * @type {string}
      */
     let currentPath = path.join(this.directory, this.configName)
-
-    console.log("currentPath is",currentPath)
     /**
      * @type {string} dir name of parent
      */
     let parent = path.dirname(currentPath)
-    // Loop untill path exhaustion or package block type hit
+    // Loop until path exhaustion or package block type hit
     for (; parent !== currentPath && !parentPackageFound; currentPath = parent, parent = path.dirname(parent)) {
       const { data, err } = await readJsonAsync(path.join(parent, filename))
       if (err) continue

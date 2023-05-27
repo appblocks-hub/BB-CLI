@@ -14,10 +14,6 @@ const OTPVerify = require('./OTPConfirmation')
 const parseGitResponse = require('./parseResponse')
 
 async function handleGithubAuth(data) {
-  // INFO -- since the below code is not in try block,
-  // if any part errors, process.exit in the outer catch might not kill
-  // the timerThread.. "OTPExpired!!" might appear randomly
-  // TODO -- kill unkilled thread
   const OTPresponse = parseGitResponse(data)
   const userCode = OTPresponse.user_code
   const expiresIn = OTPresponse.expires_in
@@ -27,7 +23,6 @@ async function handleGithubAuth(data) {
   console.log('\n')
   await clipcopy(userCode)
   console.log('\n')
-  // const timerThread={killed:true} -- for token expired testing.
   console.log(`Code expires in ${chalk.bold(expiresIn)} seconds `)
   console.log('\n\n')
   await open(githubDeviceLogin)
