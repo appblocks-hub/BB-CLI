@@ -21,6 +21,10 @@ class HandleJSViewStart {
    */
   apply(startCore) {
     startCore.hooks.beforeStart.tapPromise('HandleJSViewStart', async (/** @type {StartCore} */ core) => {
+      
+      if (core.cmdOpts.blockType && core.cmdOpts.blockType !== 'ui') return
+      
+
       /**
        * Filter js view blocks
        */
@@ -59,6 +63,7 @@ class HandleJSViewStart {
           },
           env: core.cmdOpts.environment,
         })
+
         return
       }
 
