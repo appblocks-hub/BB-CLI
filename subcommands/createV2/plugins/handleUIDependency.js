@@ -69,13 +69,13 @@ class handleUIDependency {
           `export default ${JSON.stringify(fedExpose, null, 2)}`
         )
 
-        const viewBlocks = [...core.packageConfigManager.uiBlocks]
+        const viewBlocks = [...core.packageManager.uiBlocks]
         const elementBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
         elementBlocks.forEach((b) => {
           const bName = b.meta.name
           const bDep = b.meta.blockDependencies || []
           const blockDependencies = [...bDep, { block_name: blockName }]
-          core.packageConfigManager.updateBlock(bName, { blockDependencies })
+          core.packageManager.updateBlock(bName, { blockDependencies })
         })
       }
     )
