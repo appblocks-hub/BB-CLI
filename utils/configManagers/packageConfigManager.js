@@ -8,53 +8,46 @@ class PackageConfigManager extends ConfigManager {
     this.isPackageConfigManager = true
   }
 
-  async liveBlocks() {
+  async liveBlocks(tLevel) {
     const filter = ({ liveDetails }) => liveDetails.isOn
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async nonLiveBlocks() {
+  async nonLiveBlocks(tLevel) {
     const filter = ({ liveDetails }) => !liveDetails.isOn
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async uiBlocks() {
+  async uiBlocks(tLevel) {
     const filter = ({ config }) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(config.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async fnBlocks() {
+  async fnBlocks(tLevel) {
     const filter = ({ config }) => ['function'].includes(config.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async sharedFnBlocks() {
+  async sharedFnBlocks(tLevel) {
     const filter = ({ config }) => ['shared-fn'].includes({ config }.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async allBlockNames() {
+  async allBlockNames(tLevel) {
     const picker = ({ config }) => config.name
-    const res = []
-    for await (const name of this.getDependencies(null, picker)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.map(picker)
   }
 
-  async getAllBlockLanguages() {
+  async getAllBlockLanguages(tLevel) {
     const picker = ({ config }) => config.language
-    const res = []
-    for await (const name of this.getDependencies(null, picker)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.map(picker)
   }
 
   async addBlock(configPath) {
@@ -87,11 +80,6 @@ class PackageConfigManager extends ConfigManager {
     return this.config
   }
 
-  /**
-   * To check if App has a block registered in given name
-   * @param {String} block A block name
-   * @returns {Boolean} True if block exists, else False
-   */
   has(block) {
     return !!this.config.dependencies?.[block]
   }
@@ -101,6 +89,23 @@ class PackageConfigManager extends ConfigManager {
     const res = []
     for await (const block of this.getDependencies(filter)) res.push(block)
     return res[0]
+  }
+
+  async _traverseManager(tLevel) {
+    let res = []
+    for await (const manager of this.getDependencies()) {
+      const shouldTraverse = tLevel == null || tLevel > 0
+      if (manager instanceof PackageConfigManager) {
+        if (!shouldTraverse) continue
+        const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
+        if (!manager._traverseManager) {
+          console.log('in =>', manager.config.name)
+        }
+        const children = await manager._traverseManager(nextTraverseLevel)
+        res = res.concat(children)
+      } else res.push(manager)
+    }
+    return res
   }
 
   async *getDependencies(filter, picker) {
