@@ -21,55 +21,82 @@ const { getLatestCommits } = require('../createBBModules/util')
 const { createFileSync } = require('../../../utils/fileAndFolderHelpers')
 
 const generateOrphanBranch = async (options) => {
-    const { bbModulesPath, latestWorkSpaceCommitHash, block, repoUrl } = options
+  const { bbModulesPath, latestWorkSpaceCommitHash, block, repoUrl } = options
 
-    const orphanBranchName = 'block_' + block.name
-    const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
-    const orphanBranchExists = existsSync(orphanBranchPath)
-    let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs']
+  const orphanBranchName = 'block_' + block.name
+  const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
+  const orphanBranchFolderExists = existsSync(orphanBranchPath)
+  let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs']
 
-    if (block.type === 'package') {
-      block?.dependencies?.map((item) => {
-        const directoryPathArray = item?.directory?.split('/')
-        const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
-        exclusions.push(directoryRelativePath)
-      })
+  if (block.type === 'package') {
+    block?.dependencies?.map((item) => {
+      const directoryPathArray = item?.directory?.split('/')
+      const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
+      exclusions.push(directoryRelativePath)
+    })
+  }
+
+  const Git = new GitManager(orphanBranchPath, repoUrl)
+
+  if (!orphanBranchFolderExists) {
+    try {
+      mkdirSync(orphanBranchPath)
+
+      await Git.init()
+
+      const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+      await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
+      // console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
+
+      await Git.addRemote('origin', repoUrl)
+
+      await Git.fetch()
+
+      // await Git.checkoutBranch(defaultBranch)
+    } catch (err) {
+      console.log('error is', err)
+      rmdirSync(orphanBranchPath, { recursive: true, force: true })
+      throw err
     }
+  }
 
-    const Git = new GitManager(orphanBranchPath, repoUrl)
+  const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName, 'origin')
 
-    if (!orphanBranchExists) {
-      try {
-        mkdirSync(orphanBranchPath)
+  const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
 
-        await Git.init()
+  if (!remoteBranchExists) {
+    console.log('entered if case orphan branch doesnt exists\n')
 
-        const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
-        await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
-        // console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
+    await Git.newOrphanBranch(orphanBranchName)
 
-        await Git.addRemote('origin', repoUrl)
+    // copyDirectory(block.directory, orphanBranchPath, exclusions)
 
-        await Git.fetch()
+    await Git.stageAll()
 
-        // await Git.checkoutBranch(defaultBranch)
-      } catch (err) {
-        console.log('error is', err)
-        rmdirSync(orphanBranchPath, { recursive: true, force: true })
-        throw err
-      }
-    }
+    await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
 
-    const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName, 'origin')
+    await Git.setUpstreamAndPush(orphanBranchName)
+  } else {
+    await Git.fetch()
 
-    const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
+    await Git.checkoutBranch(orphanBranchName)
 
-    if (!remoteBranchExists) {
-      console.log('entered if case orphan branch doesnt exists\n')
+   console.log( await Git.pullBranch(orphanBranchName, 'origin'))
 
-      await Git.newOrphanBranch(orphanBranchName)
+    let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
 
-      createFileSync(path.join(orphanBranchPath, `testFile${Date.now()}.json`), { argsgasdf: 'asfasdfsadfasdf' })
+    const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
+
+    const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
+
+    console.log(
+      'commit hashes for orphan and workspace are\n',
+      orphanBranchCommitHash,
+      latestWorkSpaceCommitHash,
+      orphanBranchCommitHash !== latestWorkSpaceCommitHash
+    )
+
+    if (orphanBranchCommitHash !== latestWorkSpaceCommitHash) {
 
       // copyDirectory(block.directory, orphanBranchPath, exclusions)
 
@@ -77,41 +104,16 @@ const generateOrphanBranch = async (options) => {
 
       await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
 
-      await Git.setUpstreamAndPush(orphanBranchName)
-    } else {
-      let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
-
-      const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
-
-      const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
-
-      console.log('commit hashes for orphan and workspace are\n', orphanBranchCommitHash, latestWorkSpaceCommitHash,orphanBranchCommitHash!==latestWorkSpaceCommitHash)
-
-
-      if (orphanBranchCommitHash !== latestWorkSpaceCommitHash) {
-
-
-        await Git.checkoutBranch(orphanBranchName)
-
-        createFileSync(path.join(orphanBranchPath, `testFile${Date.now()}.json`), { argsgasdf: 'asfasdfsadfasdf' })
-
-        // copyDirectory(block.directory, orphanBranchPath, exclusions)
-
-        await Git.stageAll()
-
-        await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
-
-        await Git.push(orphanBranchName)
-      }
+      await Git.push(orphanBranchName)
     }
-  
+  }
 }
 
 const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {
   const copyCommandWithExclusions = `rsync -av --exclude={${excludedDirs.join(',')}} ${sourceDir}/ ${destinationDir}/`
 
   console.log('copy command with exclusions is', copyCommandWithExclusions)
-  execSync(copyCommandWithExclusions)
+  // execSync(copyCommandWithExclusions)
 }
 const buildCommitMessage = (commitHash, commitMesage) => {
   return `[commitHash:${commitHash}] ${commitMesage}`

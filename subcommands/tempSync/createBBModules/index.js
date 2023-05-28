@@ -24,7 +24,7 @@ const createBBModules = async (options) => {
     let workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
     let repoUrl = rootConfig.source.https
 
-    const Git = new GitManager(workspaceDirectoryPath,repoUrl)
+    const Git = new GitManager(workspaceDirectoryPath, repoUrl)
 
     if (!bbModulesExists) {
       try {
@@ -39,15 +39,13 @@ const createBBModules = async (options) => {
         console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
 
         await Git.addRemote('origin', repoUrl)
-
-        await Git.fetch()
-
-        await Git.checkoutBranch(defaultBranch)
       } catch (err) {
         rmdirSync(bbModulesPath, { recursive: true, force: true })
         throw err
       }
     }
+
+    await Git.fetch()
 
     let currentBranch = (await Git.currentBranch())?.out
 
@@ -55,9 +53,9 @@ const createBBModules = async (options) => {
       await Git.checkoutBranch(defaultBranch)
     }
 
-    await Git.pullBranch(defaultBranch)
+    const pullResult = await Git.pullBranch(defaultBranch, 'origin')
 
-   const commits=await getLatestCommits(defaultBranch,1,Git)
+    const commits = await getLatestCommits(defaultBranch, 1, Git)
 
     if (commits.length === 0) {
       throw new Error(`No commits found for the default branch ${defaultBranch}`)
@@ -66,10 +64,7 @@ const createBBModules = async (options) => {
     const [latestWorkSpaceCommitHash, latestworkSpaceCommitMessage] = commits[0].split(' ', 2)
 
     // building initial package config manager inside bb_modules/workspace directory
-    const workSpaceConfigPath=searchFile(workspaceDirectoryPath,'block.config.json')
-
-    // console.log("workSpaceConfigPath is \n",workSpaceConfigPath)
-
+    const workSpaceConfigPath = searchFile(workspaceDirectoryPath, 'block.config.json')
 
     let configFactory = await ConfigFactory.create(workSpaceConfigPath)
 
@@ -77,18 +72,13 @@ const createBBModules = async (options) => {
 
     await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap, latestWorkSpaceCommitHash })
 
-    // Object.keys(blockMetaDataMap).forEach((item) => {
-    //   if (blockMetaDataMap[item].type === 'package') {
-    //     console.log('block metadata map item for package block is', blockMetaDataMap[item].dependencies.length)
-    //   }
-    // })
-
     return {
       latestWorkSpaceCommitHash,
       latestworkSpaceCommitMessage,
       blockMetaDataMap,
       workspaceDirectoryPath,
-      repoUrl
+      repoUrl,
+      isChanged: true,
     }
   } catch (error) {
     spinnies.add(`ups3`)

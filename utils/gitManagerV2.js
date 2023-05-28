@@ -157,8 +157,8 @@ class GitManager {
   }
 
 
-  pullBranch(upstreamBranch) {
-    this._run('pull', [this.remote, upstreamBranch || 'main'])
+  pullBranch(upstreamBranch,remoteName) {
+    return this._run(`pull ${remoteName}`, [upstreamBranch || 'main'])
   }
   
   currentBranch() {

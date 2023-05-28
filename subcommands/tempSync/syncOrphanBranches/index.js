@@ -18,13 +18,11 @@ const {
 } = require('./util')
 
 const syncOrphanBranch = async (options) => {
-  const { latestWorkSpaceCommitHash, latestworkSpaceCommitMessage, blockMetaDataMap, bbModulesPath, repoUrl } =
-    options
+  const { latestWorkSpaceCommitHash, latestworkSpaceCommitMessage, blockMetaDataMap, bbModulesPath, repoUrl } = options
 
   const blocksArray = Object.keys(blockMetaDataMap)
   for (const item of blocksArray) {
     const block = blockMetaDataMap[item]
-
 
     await generateOrphanBranch({ bbModulesPath, latestWorkSpaceCommitHash, block, repoUrl })
   }

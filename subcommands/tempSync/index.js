@@ -109,6 +109,11 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
+    if (!(bbModulesData?.isChanged)){
+      console.log("No changes to sync")
+      return
+    }
+
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
 
     // if (!configName && !environment) {
