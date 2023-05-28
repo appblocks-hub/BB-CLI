@@ -75,8 +75,6 @@ const generateOrphanBranch = async (options) => {
 
       copyDirectory(block.directory, orphanBranchPath, exclusions)
 
-      return
-
       await Git.stageAll()
 
       await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
