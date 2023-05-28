@@ -11,9 +11,10 @@ const { rmdirSync, fstat, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { buildBlockConfig } = require('./util')
+const { buildBlockConfig, searchFile, getLatestCommits } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
+const { get } = require('http')
 
 const createBBModules = async (options) => {
   try {
@@ -23,7 +24,7 @@ const createBBModules = async (options) => {
     let workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
     let repoUrl = rootConfig.source.https
 
-    const Git = new GitManager(workspaceDirectoryPath, 'Git Instance for bb modules', repoUrl, false)
+    const Git = new GitManager(workspaceDirectoryPath,repoUrl)
 
     if (!bbModulesExists) {
       try {
@@ -56,8 +57,7 @@ const createBBModules = async (options) => {
 
     await Git.pullBranch(defaultBranch)
 
-    let latestWorkSpaceCommit = await Git.getCommits(defaultBranch, 1)
-    let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
+   const commits=await getLatestCommits(defaultBranch,1,Git)
 
     if (commits.length === 0) {
       throw new Error(`No commits found for the default branch ${defaultBranch}`)
@@ -66,7 +66,10 @@ const createBBModules = async (options) => {
     const [latestWorkSpaceCommitHash, latestworkSpaceCommitMessage] = commits[0].split(' ', 2)
 
     // building initial package config manager inside bb_modules/workspace directory
-    const workSpaceConfigPath = path.resolve(workspaceDirectoryPath, 'block.config.json')
+    const workSpaceConfigPath=searchFile(workspaceDirectoryPath,'block.config.json')
+
+    // console.log("workSpaceConfigPath is \n",workSpaceConfigPath)
+
 
     let configFactory = await ConfigFactory.create(workSpaceConfigPath)
 
@@ -74,15 +77,18 @@ const createBBModules = async (options) => {
 
     await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap, latestWorkSpaceCommitHash })
 
-    Object.keys(blockMetaDataMap).forEach((item) => {
-      if (blockMetaDataMap[item].type === 'package') {
-        console.log('block metadata map item for package block is', blockMetaDataMap[item].dependencies.length)
-      }
-    })
+    // Object.keys(blockMetaDataMap).forEach((item) => {
+    //   if (blockMetaDataMap[item].type === 'package') {
+    //     console.log('block metadata map item for package block is', blockMetaDataMap[item].dependencies.length)
+    //   }
+    // })
 
     return {
       latestWorkSpaceCommitHash,
       latestworkSpaceCommitMessage,
+      blockMetaDataMap,
+      workspaceDirectoryPath,
+      repoUrl
     }
   } catch (error) {
     spinnies.add(`ups3`)

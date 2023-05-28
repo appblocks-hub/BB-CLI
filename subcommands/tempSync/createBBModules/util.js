@@ -6,9 +6,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { existsSync, rmSync } = require('fs')
+const { existsSync, rmSync, readdirSync, statSync } = require('fs')
 const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
+const path = require('path')
 
 const buildBlockConfig = async (options) => {
   let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, latestWorkSpaceCommitHash } = options
@@ -25,23 +26,22 @@ const buildBlockConfig = async (options) => {
     ...workSpaceConfigManager.config,
     workSpaceCommitID: latestWorkSpaceCommitHash,
     isPublic: repoVisibility === 'PUBLIC' ? true : false,
+    directory:workSpaceConfigManager.directory
   }
+
 
 
   for await (const blockManager of workSpaceConfigManager.getDependencies()) {
 
-    // console.log("blockManager is\n",blockManager)
-    // if (!blockManager?.config) continue
+    if (!blockManager?.config) continue
 
     const currentConfig = {
       ...blockManager.config,
       workSpaceCommitID: latestWorkSpaceCommitHash,
       isPublic: repoVisibility === 'PUBLIC' ? true : false,
+      directory:blockManager.directory
     }
     currentPackageDependencies.push(currentConfig)
-
-    console.log(`currentConfig name ${currentConfig.name},type ${currentConfig.type} and root ${packageConfig.name}\n`)
-
     if (currentConfig.type === 'package') {
       await buildBlockConfig({
         workSpaceConfigManager:blockManager,
@@ -72,4 +72,32 @@ const removeSync = async (paths) => {
   )
 }
 
-module.exports = { buildBlockConfig, removeSync }
+const getLatestCommits=async (branchName,n,Git)=>{
+   let latestWorkSpaceCommit = await Git.getCommits(branchName,n)
+    let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
+
+    return commits
+}
+
+
+const searchFile=(directory, filename)=>{
+  const files = readdirSync(directory);
+
+  for (const file of files) {
+    const filePath = path.join(directory, file);
+    const fileStat = statSync(filePath);
+
+    if (fileStat.isDirectory()) {
+      const foundPath = searchFile(filePath, filename);
+      if (foundPath) {
+        return foundPath;
+      }
+    } else if (file === filename) {
+      return filePath;
+    }
+  }
+
+  return null;
+}
+
+module.exports = { buildBlockConfig, removeSync,searchFile,getLatestCommits}

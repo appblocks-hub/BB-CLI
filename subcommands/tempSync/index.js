@@ -20,6 +20,7 @@ const { configstore } = require('../../configstore')
 const { default: axios } = require('axios')
 const { githubGraphQl } = require('../../utils/api')
 const { getGitHeader } = require('../../utils/getHeaders')
+const syncOrphanBranch = require('./syncOrphanBranches')
 
 const tempSync = async (blockName, options) => {
   try {
@@ -65,30 +66,29 @@ const tempSync = async (blockName, options) => {
 
     const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
-    defaultBranch = existingRepoData?.defaultBranchName??""
-    repoVisibility = existingRepoData?.visibility??""
+    defaultBranch = existingRepoData?.defaultBranchName ?? ''
+    repoVisibility = existingRepoData?.visibility ?? ''
 
     if (repoVisibility.length === 0) {
-      console.log("entered repovisibility unavailable\n")
+      console.log('entered repovisibility unavailable\n')
       // console.log("Error getting Repository visibility and main branch from git\n")
 
       const inputRepoVisibility = await readInput({
         name: 'inputRepoVisibility',
         type: 'checkbox',
         message: 'Select the repo visibility',
-        choices: ["PUBLIC","PRIVATE"].map((visibility) => (visibility)),
+        choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
         validate: (input) => {
           if (!input || input?.length < 1) return `Please enter either public or private`
           return true
         },
       })
 
-
       repoVisibility = inputRepoVisibility
     }
 
     if (defaultBranch.length === 0) {
-      console.log("entered repo main branch unavailable\n")
+      console.log('entered repo main branch unavailable\n')
       const inputRepoMainBranch = await readInput({
         name: 'inputRepoMainBranch',
         message: 'Enter the default branch name for the repository',
@@ -101,10 +101,16 @@ const tempSync = async (blockName, options) => {
       defaultBranch = inputRepoMainBranch
     }
 
-  const bbModulesData=  await createBBModules({ bbModulesPath:bbModulesPath,rootConfig:configManager.config,bbModulesExists:bbModulesExists,defaultBranch,repoVisibility})
+    const bbModulesData = await createBBModules({
+      bbModulesPath: bbModulesPath,
+      rootConfig: configManager.config,
+      bbModulesExists: bbModulesExists,
+      defaultBranch,
+      repoVisibility,
+    })
 
+    const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
 
-  console.log("bb modules data is \n",bbModulesData)
     // if (!configName && !environment) {
     //   logFail(`\nPlease pass the environment or configuration name..`)
     //   process.exit(1)

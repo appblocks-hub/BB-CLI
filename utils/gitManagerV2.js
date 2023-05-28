@@ -72,6 +72,15 @@ class GitManager {
     return this._run(`log --oneline -${n}`, [branchName || 'main'])
   }
 
+  checkRemoteBranch(branchName,remoteName){
+    return this._run(`ls-remote --heads ${remoteName} ${branchName}`, [])
+  }
+
+  
+  getCommits(branchName,n){
+    return this._run(`log --oneline -${n}`, [branchName || 'main'])
+  }
+
   checkoutTag(tag, branch = 'main') {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
@@ -123,6 +132,10 @@ class GitManager {
    */
   newBranch(branchName) {
     return this._run('checkout', ['-b', branchName])
+  }
+
+  newOrphanBranch(branchName) {
+    return this._run('checkout', ['--orphan', branchName])
   }
 
   /**
