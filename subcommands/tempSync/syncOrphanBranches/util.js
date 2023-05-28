@@ -18,9 +18,9 @@ const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { execSync } = require('child_process')
 const { getLatestCommits } = require('../createBBModules/util')
+const { createFileSync } = require('../../../utils/fileAndFolderHelpers')
 
 const generateOrphanBranch = async (options) => {
-  try {
     const { bbModulesPath, latestWorkSpaceCommitHash, block, repoUrl } = options
 
     const orphanBranchName = 'block_' + block.name
@@ -67,13 +67,11 @@ const generateOrphanBranch = async (options) => {
     if (!remoteBranchExists) {
       console.log('entered if case orphan branch doesnt exists\n')
 
-      console.log('remote branch exists is\n', remoteBranchExists)
-
-      console.log('remote branch data is\n', remoteBranchData)
-
       await Git.newOrphanBranch(orphanBranchName)
 
-      copyDirectory(block.directory, orphanBranchPath, exclusions)
+      createFileSync(path.join(orphanBranchPath, `testFile${Date.now()}.json`), { argsgasdf: 'asfasdfsadfasdf' })
+
+      // copyDirectory(block.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
 
@@ -81,21 +79,32 @@ const generateOrphanBranch = async (options) => {
 
       await Git.setUpstreamAndPush(orphanBranchName)
     } else {
-      console.log('entered else case orphan branch exists\n')
+      let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
 
-      let commits = await getLatestCommits(orphanBranchName, 1)
+      const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
-      const [latestWorkSpaceCommitHash, latestworkSpaceCommitMessage] = commits[0].split(' ', 2)
+      const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
 
-      const orphanBranchCommitHash = retrieveCommitHash(latestworkSpaceCommitMessage)
+      console.log('commit hashes for orphan and workspace are\n', orphanBranchCommitHash, latestWorkSpaceCommitHash,orphanBranchCommitHash!==latestWorkSpaceCommitHash)
 
-      console.log('orphan branch commit hash is \n', orphanBranchCommitHash)
 
-      console.log('latest workspace commit hash is\n', latestWorkSpaceCommitHash)
+      if (orphanBranchCommitHash !== latestWorkSpaceCommitHash) {
+
+
+        await Git.checkoutBranch(orphanBranchName)
+
+        createFileSync(path.join(orphanBranchPath, `testFile${Date.now()}.json`), { argsgasdf: 'asfasdfsadfasdf' })
+
+        // copyDirectory(block.directory, orphanBranchPath, exclusions)
+
+        await Git.stageAll()
+
+        await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
+
+        await Git.push(orphanBranchName)
+      }
     }
-  } catch (err) {
-    console.log('error in orphan branch creation is', err)
-  }
+  
 }
 
 const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {

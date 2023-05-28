@@ -27,7 +27,8 @@ class GitManager {
     this.cwd = path.resolve(cwd)
     this.ssh = configstore.get('prefersSsh')
     this.username = configstore.get('githubUserName')
-    this.token = configstore.get('gitPersonalAccessToken')
+    // this.token = configstore.get('gitPersonalAccessToken')
+    this.token="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"
     this.url = url
     this._createRemote(url)
   }
