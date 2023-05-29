@@ -10,10 +10,9 @@ const { rmdirSync, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits } = require('./util')
+const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore } = require('../../../configstore')
-
 
 const createBBModules = async (options) => {
   const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
@@ -52,6 +51,13 @@ const createBBModules = async (options) => {
     await Git.checkoutBranch(defaultBranch)
   }
 
+  //set the appropriate space for the repository
+  const currentSpaceID = await getAndSetSpace(headLessConfigStore)
+
+  console.log("current space ID is",currentSpaceID)
+
+  return
+
   const pullResult = await Git.pullBranch(defaultBranch, workSpaceRemoteName)
 
   // building initial package config manager inside bb_modules/workspace directory
@@ -63,10 +69,8 @@ const createBBModules = async (options) => {
 
   await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap })
 
-  await addBlockWorkSpaceCommits(blockMetaDataMap,Git)
+  await addBlockWorkSpaceCommits(blockMetaDataMap, Git)
 
-
- 
   return {
     blockMetaDataMap,
     workspaceDirectoryPath,

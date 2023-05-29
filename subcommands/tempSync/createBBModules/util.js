@@ -11,9 +11,13 @@ const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 const path = require('path')
 const { getLatestCommits } = require('../syncOrphanBranches/util')
+const chalk = require('chalk')
+const { listSpaces } = require('../../../utils/spacesUtils')
+const { feedback } = require('../../../utils/cli-feedback')
+const { prompt } = require('inquirer')
 
 const buildBlockConfig = async (options) => {
-  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, } = options
+  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility } = options
 
   if (!workSpaceConfigManager instanceof PackageConfigManager) {
     throw new Error('Error parsing package block')
@@ -55,22 +59,18 @@ const buildBlockConfig = async (options) => {
   }
 }
 
-const addBlockWorkSpaceCommits=async(blockMetaDataMap,Git)=>{
-
+const addBlockWorkSpaceCommits = async (blockMetaDataMap, Git) => {
   const blocksArray = Object.keys(blockMetaDataMap)
   for (const item of blocksArray) {
     let block = blockMetaDataMap[item]
 
     const workSpaceCommits = await getLatestCommits(block.directory, 1, Git)
-  
+
     const latestWorkSpaceCommitHash = workSpaceCommits[0].split(' ')[0]
 
-    blockMetaDataMap[item]={...block,workSpaceCommitID:latestWorkSpaceCommitHash}
-
+    blockMetaDataMap[item] = { ...block, workSpaceCommitID: latestWorkSpaceCommitHash }
   }
 }
- 
-
 
 const removeSync = async (paths) => {
   if (!paths?.length) return
@@ -102,4 +102,44 @@ const searchFile = (directory, filename) => {
   return null
 }
 
-module.exports = { buildBlockConfig, removeSync, searchFile,addBlockWorkSpaceCommits}
+const getAndSetSpace = async (configstore) => {
+  const currentSpaceName = configstore.get('currentSpaceName')
+  const currentSpaceId = configstore.get('currentSpaceId')
+
+  if (currentSpaceId) {
+    return currentSpaceId
+  } else {
+    const res = await listSpaces()
+    if (res.data.err) {
+      throw new Error('Unable to get space details')
+    }
+    const Data = res.data.data
+
+    /**
+     * @type {import('../utils/jsDoc/types').spaceDetails}
+     */
+    await promptAndSetSpace(Data, configstore)
+    return configstore.get('currentSpaceId')
+  }
+}
+
+const promptAndSetSpace = async (Data, configstore) => {
+  const question = [
+    {
+      type: 'list',
+      message: 'Choose a space to continue',
+      choices: Data.map((v) => ({ name: v.space_name, value: { id: v.space_id, name: v.space_name } })),
+      name: 'spaceSelect',
+    },
+  ]
+  const {
+    spaceSelect: { name, id },
+  } = await prompt(question)
+
+  configstore.set('currentSpaceName', name)
+  configstore.set('currentSpaceId', id)
+
+  feedback({ type: 'success', message: `${name} set` })
+}
+
+module.exports = { buildBlockConfig, removeSync, searchFile, addBlockWorkSpaceCommits, getAndSetSpace }
