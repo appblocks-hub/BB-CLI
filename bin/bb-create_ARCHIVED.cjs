@@ -10,24 +10,30 @@
 const { Command, Option } = require('commander')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { blockTypes } = require('../utils/blockTypes')
-const tempPull = require('../subcommands/tempPull')
+const create = require('../subcommands/create')
 
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 
-const program = new Command().hook('preAction', async (_, actionCommand) => {
-  const noRepo = !actionCommand._optionValues?.repo
+const program = new Command().hook('preAction', async () => {
+  // const noRepo = !actionCommand._optionValues?.repo
   if (!isGitInstalled()) {
     console.log('Git not installed')
     process.exitCode = 1
     return
   }
-  await ensureUserLogins(noRepo)
   await checkAndSetGitConnectionPreference()
 })
 
-program.action(tempPull)
+program
+  .argument('<component>', 'name of component')
+  .allowExcessArguments(false)
+  .addOption(
+    new Option('-t, --type <component-type>', 'type  of comp')
+      .choices(blockTypes.map((t) => t[0]).filter((d) => d !== 'package'))
+      .argParser((s) => blockTypeInverter(s))
+  )
+  .option('--no-autoRepo')
+  .action(create)
 
 program.parse(process.argv)

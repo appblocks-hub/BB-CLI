@@ -7,27 +7,28 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { Command, Option } = require('commander')
-const { blockTypeInverter } = require('../utils/blockTypeInverter')
-const { blockTypes } = require('../utils/blockTypes')
-const tempPush = require('../subcommands/tempPush')
-
+const { Command } = require('commander')
+const push = require('../subcommands/push')
+const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 
-const program = new Command().hook('preAction', async (_, actionCommand) => {
-  const noRepo = !actionCommand._optionValues?.repo
+const program = new Command().hook('preAction', async () => {
   if (!isGitInstalled()) {
     console.log('Git not installed')
     process.exitCode = 1
     return
   }
-  await ensureUserLogins(noRepo)
+  await ensureUserLogins()
   await checkAndSetGitConnectionPreference()
+  await checkAndSetUserSpacePreference()
 })
 
-program.action(tempPush)
+program
+  .argument('[block name]', 'Name of block to push')
+  .option('-f, --force', 'commit and push all blocks')
+  .option('-m, --message <message>', 'commit message')
+  .action(push)
 
 program.parse(process.argv)
