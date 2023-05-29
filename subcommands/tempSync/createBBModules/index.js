@@ -54,10 +54,6 @@ const createBBModules = async (options) => {
   //set the appropriate space for the repository
   const currentSpaceID = await getAndSetSpace(headLessConfigStore)
 
-  console.log("current space ID is",currentSpaceID)
-
-  return
-
   const pullResult = await Git.pullBranch(defaultBranch, workSpaceRemoteName)
 
   // building initial package config manager inside bb_modules/workspace directory

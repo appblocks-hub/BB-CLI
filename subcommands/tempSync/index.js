@@ -14,7 +14,7 @@ const createBBModules = require('./createBBModules')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const path = require('path')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
-const { existsSync } = require('fs')
+const { existsSync, writeFileSync } = require('fs')
 const { isInRepo } = require('../../utils/Queries')
 const { configstore } = require('../../configstore')
 const { default: axios } = require('axios')
@@ -106,6 +106,9 @@ const tempSync = async (blockName, options) => {
       defaultBranch,
       repoVisibility,
     })
+
+  
+
 
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
 
