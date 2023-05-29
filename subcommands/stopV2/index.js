@@ -1,3 +1,3 @@
-const stop = require('./stop')
+const stop = require('./stopV2')
 
 module.exports = stop

@@ -21,6 +21,8 @@ class HandleJSViewStart {
    */
   apply(startCore) {
     startCore.hooks.beforeStart.tapPromise('HandleJSViewStart', async (/** @type {StartCore} */ core) => {
+      if (core.cmdOpts.blockType && core.cmdOpts.blockType !== 'ui') return
+
       /**
        * Filter js view blocks
        */
@@ -34,17 +36,21 @@ class HandleJSViewStart {
         }
       }
 
+      if (!this.elementsBlocks?.length && !this.containerBlocks?.length) {
+        return
+      }
+
       /**
        * singe instance start
        */
       if (core.cmdOpts.singleInstance && !core.cmdArgs.blockName) {
         // setup port
-        this.elementsPort = this.elementsBlocks[0].availablePort
-        this.containerPort = this.containerBlocks[0].availablePort
+        this.elementsPort = this.elementsBlocks[0]?.availablePort
+        this.containerPort = this.containerBlocks[0]?.availablePort
 
         // Release port before server start
-        this.elementsBlocks[0].portKey.abort()
-        this.containerBlocks[0].portKey.abort()
+        this.elementsBlocks[0].portKey?.abort()
+        this.containerBlocks[0].portKey?.abort()
 
         await singleBuild({
           core,
@@ -59,6 +65,7 @@ class HandleJSViewStart {
           },
           env: core.cmdOpts.environment,
         })
+
         return
       }
 

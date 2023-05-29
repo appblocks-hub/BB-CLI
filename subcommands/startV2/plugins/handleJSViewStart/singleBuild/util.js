@@ -2,8 +2,7 @@ const path = require('path')
 const { promisify } = require('util')
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
-const { symlink } = require('fs/promises')
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync } = require('fs')
 const { createFileSync } = require('../../../../../utils/fileAndFolderHelpers')
 const { runBashLongRunning, runBash } = require('../../../../bash')
 const { checkPnpm } = require('../../../../../utils/pnpmUtils')
@@ -72,12 +71,20 @@ const packageInstall = async (emEleFolder, elementBlocks) => {
     if (res.err) throw new Error(res.err)
 
     for (const block of elementBlocks) {
-      const dest = path.resolve(block.directory, 'node_modules')
       try {
-        // rmSync(dest, { recursive: true, force: true })
-        await symlink(src, dest)
+        const dest = path.resolve(block.directory, 'node_modules')
+        lstat(dest, (err, stats) => {
+          if (err && err.code !== 'ENOENT') throw err
+
+          if (stats?.isSymbolicLink()) unlinkSync(dest)
+          if (stats?.isDirectory()) rmSync(dest, { recursive: true })
+
+          symlinkSync(src, dest)
+        })
       } catch (e) {
-        // nothing
+        if (e.code !== 'ENOENT' && e.code !== 'EEXIST') {
+          console.error(e.message, '\n')
+        }
       }
     }
   } catch (e) {

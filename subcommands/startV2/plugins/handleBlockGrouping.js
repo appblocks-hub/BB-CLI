@@ -6,9 +6,9 @@ const PackageConfigManager = require('../../../utils/configManagers/packageConfi
 const StartCore = require('../startCore')
 
 class HandleBlockGrouping {
-  async getAllBlocksToStart(core, packageConfigManager) {
+  async getAllBlocksToStart(core, packageManager) {
     const { blockType } = core.cmdArgs
-    for await (const blockManager of packageConfigManager.getDependencies()) {
+    for await (const blockManager of packageManager.getDependencies()) {
       if (!blockManager?.config) continue
       const { name, type } = blockManager.config
       if (type === 'package') {
@@ -34,11 +34,11 @@ class HandleBlockGrouping {
         core.blocksToStart = {}
 
         if (blockName) {
-          const blockData = await core.packageConfigManager.getBlock(blockName)
+          const blockManager = await core.packageManager.getBlock(blockName)
 
-          if (blockData.config.type !== 'package') {
+          if (blockManager.config.type !== 'package') {
             core.blocksToStart = {
-              [blockName]: blockData,
+              [blockName]: blockManager,
               *[Symbol.iterator]() {
                 for (const block in this) {
                   if (Object.hasOwnProperty.call(this, block)) {
@@ -48,7 +48,7 @@ class HandleBlockGrouping {
               },
             }
             core.blockStartGroups = {
-              [blockData.config.type]: [blockData],
+              [blockManager.config.type]: [blockManager],
               *[Symbol.iterator]() {
                 for (const type in this) {
                   if (Object.hasOwnProperty.call(this, type)) {
@@ -60,10 +60,10 @@ class HandleBlockGrouping {
             return
           }
 
-          core.packageConfigManager = blockData
+          core.packageManager = blockManager
         }
 
-        await this.getAllBlocksToStart(core, core.packageConfigManager)
+        await this.getAllBlocksToStart(core, core.packageManager)
 
         core.blocksToStart = {
           ...core.blocksToStart,

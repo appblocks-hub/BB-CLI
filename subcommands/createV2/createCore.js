@@ -23,7 +23,7 @@ class CreateCore {
 
     this.cwd = process.cwd()
     this.blockDetails = {}
-    this.packageConfigManager = {}
+    this.packageManager = {}
     this.isOutOfContext = false
 
     this.hooks = {
@@ -40,8 +40,8 @@ class CreateCore {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       this.isOutOfContext = true
     } else if (configManager instanceof PackageConfigManager) {
-      this.packageConfigManager = configManager
-      this.packageConfig = this.packageConfigManager.config
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
     } else throw new Error('Cannot use create command inside another block')
   }
 
@@ -79,7 +79,7 @@ class CreateCore {
     // template setup hooks
 
     await writeFile(this.blockConfigPath, JSON.stringify(this.blockDetails, null, 2))
-    const { error } = await this.packageConfigManager.addBlock(this.blockConfigPath)
+    const { error } = await this.packageManager.addBlock(this.blockConfigPath)
     if (error) throw error
 
     // afterCreate hook

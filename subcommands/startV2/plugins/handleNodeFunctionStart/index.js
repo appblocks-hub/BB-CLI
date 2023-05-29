@@ -28,6 +28,9 @@ class HandleNodeFunctionStart {
    */
   apply(StartCore) {
     StartCore.hooks.beforeStart.tapPromise('HandleNodeFunctionStart', async (/** @type {StartCore} */ core) => {
+      
+      if (core.cmdOpts.blockType && core.cmdOpts.blockType !== 'function') return
+      
       /**
        * Filter node fn blocks
        */
@@ -110,8 +113,8 @@ class HandleNodeFunctionStart {
         const rootPackageName = core.packageConfig.name.toUpperCase()
         const { environment } = core.cmdOpts
         await upsertEnv('function', {}, environment, rootPackageName)
-        const updateEnvValue = { [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${this.port}` }
-        await upsertEnv('view', updateEnvValue, environment, rootPackageName)  
+        const updateEnvValue = { [`BB_${rootPackageName}_FUNCTION_URL`]: `http://localhost:${this.port}` }
+        await upsertEnv('view', updateEnvValue, environment, rootPackageName)
 
         // start node
         const child = spawn('node', ['index.js'], {
@@ -127,6 +130,7 @@ class HandleNodeFunctionStart {
         for (const blockManager of this.fnBlocks) {
           blockManager.updateLiveConfig({
             isOn: true,
+            singleInstance: true,
             pid: this.pid || null,
             port: this.port || null,
             log: {

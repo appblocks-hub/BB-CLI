@@ -55,14 +55,14 @@ class HandleOutOfContext {
         // const { DIRPATH: packageDirPath } = await initializePackageBlock(packageBlockName, { autoRepo })
 
         // // Init for new package dir path
-        // // await core.packageConfigManager.init(packageDirPath, null, 'create', { reConfig: true })
+        // // await core.packageManager.init(packageDirPath, null, 'create', { reConfig: true })
 
         // const configFact = new ConfigFactory()
         // const configPath = path.resolve(packageDirPath, 'block.config.json')
         // const { config, err } = await configFact.create(configPath)
         // if (err) throw err
 
-        // core.packageConfigManager = config
+        // core.packageManager = config
 
         // feedback({ type: 'info', message: `\nContinuing ${blockName} block creation \n` })
       }

@@ -92,6 +92,8 @@ cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
 
+cmd('stop-v2', 'To stop one or all blocks')
+
 cmd('temp-create', 'to create a new block')
 
 cmd('temp-init', 'temporary init command')
