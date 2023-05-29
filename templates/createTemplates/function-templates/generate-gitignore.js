@@ -1,4 +1,9 @@
 const generateGitIgnore = () => `
+#
+._ab_*
+.deploy
+.deployed.config.json
+
 # Logs
 logs
 *.log

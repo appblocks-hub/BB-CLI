@@ -114,6 +114,8 @@ cmd('use', 'to select space')
 
 cmd('set-appblock-version', 'To add supported version of appblock to block')
 
+cmd('connect-remote', 'To add remote for package block')
+
 /**
  * PRIVATE FEATURES
  */
