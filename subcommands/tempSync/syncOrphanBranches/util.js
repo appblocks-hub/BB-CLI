@@ -5,38 +5,22 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const {
-  writeFileSync,
-  readFileSync,
-  existsSync,
-  mkdirSync,
-  rmdirSync,
-  readdirSync,
-  lstatSync,
-  statSync,
-  copyFileSync,
-} = require('fs')
+const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync } = require('fs')
 const path = require('path')
-const { configstore } = require('../../../configstore')
-const { spinnies } = require('../../../loader')
-const { copyEmulatorCode } = require('../../../utils/emulator-manager')
-const { pexec } = require('../../../utils/execPromise')
-const { getNodePackageInstaller } = require('../../../utils/nodePackageManager')
-const { readInput, getGitConfigNameEmail } = require('../../../utils/questionPrompts')
-const { updatePackageVersionIfNeeded } = require('../../start/singleBuild/mergeDatas')
+
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { execSync } = require('child_process')
-const { getLatestCommits } = require('../createBBModules/util')
-const { createFileSync } = require('../../../utils/fileAndFolderHelpers')
+const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
 
 const generateOrphanBranch = async (options) => {
-  const { bbModulesPath, latestWorkSpaceCommitHash, block, repoUrl } = options
+  const { bbModulesPath, block, repoUrl } = options
 
   const orphanBranchName = 'block_' + block.name
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
   let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs']
+  const orphanRemoteName = 'origin'
+  const orphanCommitMessage = ''
 
   if (block.type === 'package') {
     block?.dependencies?.map((item) => {
@@ -44,6 +28,11 @@ const generateOrphanBranch = async (options) => {
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
       exclusions.push(directoryRelativePath)
     })
+  }
+
+  if (!(block?.workSpaceCommitID?.length > 0)) {
+    console.log(`Error syncing ${block.name}`)
+    return
   }
 
   const Git = new GitManager(orphanBranchPath, repoUrl)
@@ -55,10 +44,11 @@ const generateOrphanBranch = async (options) => {
       await Git.init()
 
       const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
       // console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
 
-      await Git.addRemote('origin', repoUrl)
+      await Git.addRemote(orphanRemoteName, repoUrl)
 
       await Git.fetch()
 
@@ -70,12 +60,12 @@ const generateOrphanBranch = async (options) => {
     }
   }
 
-  const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName, 'origin')
+  const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName, orphanRemoteName)
 
   const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
 
   if (!remoteBranchExists) {
-    console.log('entered if case orphan branch doesnt exists\n')
+    console.log('entered if case orphan branch doesnt exists on Remote \n')
 
     await Git.newOrphanBranch(orphanBranchName)
 
@@ -83,15 +73,18 @@ const generateOrphanBranch = async (options) => {
 
     await Git.stageAll()
 
-    await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
+    await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
 
     await Git.setUpstreamAndPush(orphanBranchName)
   } else {
+    console.log('entered if case orphan branch already exists on Remote \n')
     await Git.fetch()
 
     await Git.checkoutBranch(orphanBranchName)
 
-    await Git.pullBranch(orphanBranchName, 'origin')
+    await Git.pullBranch(orphanBranchName, orphanRemoteName)
+
+    //compare code from the existing workspace folder and the orphan branch folder
 
     let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
 
@@ -100,18 +93,19 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
 
     console.log(
-      'commit hashes for orphan and workspace are\n',
+      `commit hashes for orphan and workspace for block ${block.name} are\n`,
       orphanBranchCommitHash,
-      latestWorkSpaceCommitHash,
-      orphanBranchCommitHash !== latestWorkSpaceCommitHash
+      block.workSpaceCommitID,
+      orphanBranchCommitHash !== block.workSpaceCommitID
     )
 
-    if (orphanBranchCommitHash !== latestWorkSpaceCommitHash) {
+
+    if (orphanBranchCommitHash !== block.workSpaceCommitID) {
       copyDirectory(block.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
 
-      await Git.commit(buildCommitMessage(latestWorkSpaceCommitHash, ''))
+      await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanBranchCommitMessage))
 
       await Git.push(orphanBranchName)
     }
@@ -124,6 +118,14 @@ const generateOrphanBranch = async (options) => {
 //   console.log('copy command with exclusions is', copyCommandWithExclusions)
 //   // execSync(copyCommandWithExclusions)
 // }
+
+const getLatestCommits = async (branchName, n, Git) => {
+  let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
+
+  let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
+
+  return commits
+}
 
 function copyDirectory(sourceDir, destinationDir, exclusions) {
   // Create destination directory if it doesn't exist
@@ -151,7 +153,6 @@ function copyDirectory(sourceDir, destinationDir, exclusions) {
       }
     }
   })
-
 }
 const buildCommitMessage = (commitHash, commitMesage) => {
   return `[commitHash:${commitHash}] ${commitMesage}`
@@ -167,4 +168,5 @@ const retrieveCommitHash = (commitMessage) => {
 }
 module.exports = {
   generateOrphanBranch,
+  getLatestCommits,
 }

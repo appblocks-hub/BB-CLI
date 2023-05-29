@@ -27,8 +27,7 @@ class GitManager {
     this.cwd = path.resolve(cwd)
     this.ssh = configstore.get('prefersSsh')
     this.username = configstore.get('githubUserName')
-    // this.token = configstore.get('gitPersonalAccessToken')
-    this.token="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"
+    this.token = configstore.get('gitPersonalAccessToken')
     this.url = url
     this._createRemote(url)
   }
@@ -69,16 +68,15 @@ class GitManager {
     return this._run('checkout', [name])
   }
 
-  getCommits(branchName,n){
+  getCommits(branchName, n) {
     return this._run(`log --oneline -${n}`, [branchName || 'main'])
   }
 
-  checkRemoteBranch(branchName,remoteName){
+  checkRemoteBranch(branchName, remoteName) {
     return this._run(`ls-remote --heads ${remoteName} ${branchName}`, [])
   }
 
-  
-  getCommits(branchName,n){
+  getCommits(branchName, n) {
     return this._run(`log --oneline -${n}`, [branchName || 'main'])
   }
 
@@ -156,11 +154,10 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
-
-  pullBranch(upstreamBranch,remoteName) {
+  pullBranch(upstreamBranch, remoteName) {
     return this._run(`pull ${remoteName}`, [upstreamBranch || 'main'])
   }
-  
+
   currentBranch() {
     return this._run('branch', ['--show-current'])
   }
@@ -232,6 +229,8 @@ class GitManager {
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
     if (r.status === 'error') {
+      console.log('git action is \n', r)
+
       throw new GitError(this.cwd, r.msg, false, operation, opts)
     }
     return r

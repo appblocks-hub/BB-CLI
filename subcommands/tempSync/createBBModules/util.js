@@ -10,9 +10,10 @@ const { existsSync, rmSync, readdirSync, statSync } = require('fs')
 const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 const path = require('path')
+const { getLatestCommits } = require('../syncOrphanBranches/util')
 
 const buildBlockConfig = async (options) => {
-  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, latestWorkSpaceCommitHash } = options
+  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, } = options
 
   if (!workSpaceConfigManager instanceof PackageConfigManager) {
     throw new Error('Error parsing package block')
@@ -22,7 +23,6 @@ const buildBlockConfig = async (options) => {
 
   let packageConfig = {
     ...workSpaceConfigManager.config,
-    workSpaceCommitID: latestWorkSpaceCommitHash,
     isPublic: repoVisibility === 'PUBLIC' ? true : false,
     directory: workSpaceConfigManager.directory,
   }
@@ -32,7 +32,6 @@ const buildBlockConfig = async (options) => {
 
     const currentConfig = {
       ...blockManager.config,
-      workSpaceCommitID: latestWorkSpaceCommitHash,
       isPublic: repoVisibility === 'PUBLIC' ? true : false,
       directory: blockManager.directory,
     }
@@ -42,7 +41,6 @@ const buildBlockConfig = async (options) => {
         workSpaceConfigManager: blockManager,
         blockMetaDataMap,
         repoVisibility,
-        latestWorkSpaceCommitHash,
       })
     } else {
       if (!blockMetaDataMap[currentConfig.name]) {
@@ -57,6 +55,23 @@ const buildBlockConfig = async (options) => {
   }
 }
 
+const addBlockWorkSpaceCommits=async(blockMetaDataMap,Git)=>{
+
+  const blocksArray = Object.keys(blockMetaDataMap)
+  for (const item of blocksArray) {
+    let block = blockMetaDataMap[item]
+
+    const workSpaceCommits = await getLatestCommits(block.directory, 1, Git)
+  
+    const latestWorkSpaceCommitHash = workSpaceCommits[0].split(' ')[0]
+
+    blockMetaDataMap[item]={...block,workSpaceCommitID:latestWorkSpaceCommitHash}
+
+  }
+}
+ 
+
+
 const removeSync = async (paths) => {
   if (!paths?.length) return
   await Promise.all(
@@ -65,14 +80,6 @@ const removeSync = async (paths) => {
       return true
     })
   )
-}
-
-const getLatestCommits = async (branchName, n, Git) => {
-  let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
-
-  let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
-
-  return commits
 }
 
 const searchFile = (directory, filename) => {
@@ -95,4 +102,4 @@ const searchFile = (directory, filename) => {
   return null
 }
 
-module.exports = { buildBlockConfig, removeSync, searchFile, getLatestCommits }
+module.exports = { buildBlockConfig, removeSync, searchFile,addBlockWorkSpaceCommits}

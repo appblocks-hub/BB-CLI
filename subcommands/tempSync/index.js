@@ -35,7 +35,6 @@ const tempSync = async (blockName, options) => {
 
     let parent = await configManager.findMyParentPackage()
 
-    console.log('parent is', !configManager.manager instanceof PackageConfigManager)
 
     if (!configManager.manager instanceof PackageConfigManager || parent.data.parentPackageFound !== false) {
       logFail(`\nPlease call sync from the root package block..`)
@@ -70,7 +69,6 @@ const tempSync = async (blockName, options) => {
     repoVisibility = existingRepoData?.visibility ?? ''
 
     if (repoVisibility.length === 0) {
-      console.log('entered repovisibility unavailable\n')
       // console.log("Error getting Repository visibility and main branch from git\n")
 
       const inputRepoVisibility = await readInput({
@@ -109,19 +107,12 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    if (!(bbModulesData?.isChanged)){
-      console.log("No changes to sync")
-      return
-    }
-
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
 
-    // if (!configName && !environment) {
-    //   logFail(`\nPlease pass the environment or configuration name..`)
-    //   process.exit(1)
-    // }
   } catch (error) {
+    console.log("error inside sync is \n",error)
     console.log(chalk.red(error.message))
+
   }
 }
 
