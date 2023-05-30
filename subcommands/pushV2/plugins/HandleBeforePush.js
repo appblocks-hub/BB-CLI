@@ -14,6 +14,18 @@ const { getCommitMessage, getGitConfigNameEmail } = require('../../../utils/ques
 const PushCore = require('../pushCore')
 
 class HandleBeforePush {
+  async getAllBlocksToPush(manger, blocks) {
+    for await (const blockManager of manger.getDependencies()) {
+      if (!blockManager?.config) continue
+      const { type } = blockManager.config
+      blocks.push(manger)
+      if (type === 'package') {
+        await this.getAllBlocksToPush(blockManager, blocks)
+      }
+    }
+    return blocks
+  }
+
   /**
    *
    * @param {PushCore} pushCore
@@ -29,20 +41,14 @@ class HandleBeforePush {
       ) => {
         const { blockName } = core.cmdArgs
 
+        // eslint-disable-next-line prefer-const
         let { message, force } = core.cmdOpts
-
-        if (core.appConfig.isInBlockContext && !core.appConfig.isInAppblockContext) {
-          // There will only be one block in temp config which is the enclosing block
-          force = true
-        }
 
         if (!force && !blockName) {
           throw new Error(`Please provide a block name or use -f to push all..`)
         }
 
-        if (!message) {
-          message = await getCommitMessage()
-        }
+        if (!message) message = await getCommitMessage()
 
         console.log('Please enter git username and email')
         console.log(
@@ -51,20 +57,45 @@ class HandleBeforePush {
           )
         )
 
-        // TODO-- store these values in config and don't ask every time, can be used in pull as well
-        const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+        let gitUserEmail
+        let gitUserName
 
-        let blocksToPush = force ? [...core.appConfig.dependencies] : [core.appConfig.getBlock(blockName)]
+        if (global.HEADLESS_CONFIGS) {
+          gitUserEmail = global.HEADLESS_CONFIGS.gitUserEmail
+          gitUserName = global.HEADLESS_CONFIGS.gitUserName
+        }
+
+        if (!gitUserEmail || gitUserName) {
+          const { gitUserName: gn, gitUserEmail: ge } = await getGitConfigNameEmail()
+          gitUserName = gn
+          gitUserEmail = ge
+        }
+
+        let blocksToPush = []
+
+        if (blockName) {
+          // If name exist check with config and dependencies
+          if (!core.packageManager.has(blockName)) {
+            throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
+          }
+          blocksToPush = [await core.packageManager.getBlock(blockName)]
+        } else {
+          blocksToPush = await this.getAllBlocksToPush(core.packageManager, [])
+        }
 
         const nonSourceBlock = []
         blocksToPush = blocksToPush.filter((block) => {
-          if (Object.keys(block.meta.source || {}).length) return true
+          if (block.config.source && Object.keys(block.config.source).length) return true
           nonSourceBlock.push(blockName)
           return false
         })
 
         if (nonSourceBlock.length) {
           console.log(chalk.yellow(`No git source found for ${nonSourceBlock}.`))
+        }
+
+        if (!blocksToPush.length) {
+          throw new Error(`No blocks to push`)
         }
 
         core.blocksToPush = blocksToPush

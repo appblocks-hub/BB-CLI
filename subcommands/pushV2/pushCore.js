@@ -3,10 +3,10 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
- */
+*/
 
+const path = require('path')
 const { AsyncSeriesHook } = require('tapable')
-const { appConfig } = require('../../utils/appconfigStore')
 // eslint-disable-next-line no-unused-vars
 const { feedback } = require('../../utils/cli-feedback')
 // eslint-disable-next-line no-unused-vars
@@ -15,6 +15,8 @@ const { Logger } = require('../../utils/loggerV2')
 const { spinnies } = require('../../loader')
 const { BlockPusher } = require('./utils/blockPusher')
 const { multiBar } = require('./utils/multiBar')
+const ConfigFactory = require('../../utils/configManagers/configFactory')
+const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 
 class PushCore {
   constructor(blockName, cmdOptions, options) {
@@ -43,9 +45,16 @@ class PushCore {
     }
   }
 
-  async initializeAppConfig() {
-    await appConfig.initV2(this.cwd, null, 'push')
-    this.appConfig = appConfig || {}
+  async initializeConfig() {
+    const configPath = path.resolve('block.config.json')
+    const { manager: configManager, error } = await ConfigFactory.create(configPath)
+    if (error) {
+      if (error.type !== 'OUT_OF_CONTEXT') throw error
+      this.isOutOfContext = true
+    } else if (configManager instanceof PackageConfigManager) {
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
+    } else throw new Error('Not inside a package context')
   }
 
   async pushBlocks() {
