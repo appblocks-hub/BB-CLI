@@ -118,6 +118,7 @@ class PackageConfigManager extends ConfigManager {
         const relativeDirectory = this.config.dependencies[block].directory
         const configPath = path.join(this.directory, relativeDirectory, 'block.config.json')
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+        c.pathRelativeToParent = relativeDirectory
         if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
         const f = filter || (() => true)
         const p = picker || ((b) => b)
