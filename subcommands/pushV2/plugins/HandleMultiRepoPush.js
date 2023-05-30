@@ -25,26 +25,17 @@ class HandleMultiRepoPush {
          */
         core
       ) => {
-        if (core.appConfig.config?.repoType !== 'multi') return
+        if (core.packageConfig?.repoType !== 'multi') return
 
+        const { blockName } = core.cmdArgs
         const { force } = core.cmdOpts
-        if (!force) return
+        
+        if (!force || blockName) return
 
-        const memberBlocks = [...core.appConfig.dependencies]
+        const memberBlocks = [...(await core.packageManager.getDependencies())]
+        core.packageManager.gitAddIgnore = `-- ${memberBlocks.map(({ directory }) => `':!${directory}'`).join(' ')}`
 
-        core.blocksToPush = [
-          ...core.blocksToPush,
-          {
-            directory: core.cwd,
-            gitAddIgnore: `-- ${memberBlocks.map(({ directory }) => `':!${directory}'`).join(' ')}`,
-            meta: {
-              source: core.appConfig.config?.source,
-              name: core.appConfig.config?.name,
-              type: 'package',
-              repoType: 'mono',
-            },
-          },
-        ]
+        core.blocksToPush = [...core.blocksToPush, core.packageManager]
       }
     )
   }

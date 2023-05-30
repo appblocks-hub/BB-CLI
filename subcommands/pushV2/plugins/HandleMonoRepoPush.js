@@ -25,22 +25,13 @@ class HandleMonoRepoPush {
          */
         core
       ) => {
-        if (core.appConfig.config?.repoType !== 'mono') return
+        if (core.packageConfig?.repoType !== 'mono') return
 
+        const { blockName } = core.cmdArgs
         const { force } = core.cmdOpts
-        if (!force) return
+        if (!force || blockName) return
 
-        core.blocksToPush = [
-          {
-            directory: core.cwd,
-            meta: {
-              source: core.appConfig.config?.source,
-              name: core.appConfig.config?.name,
-              type: 'package',
-              repoType: 'mono',
-            },
-          },
-        ]
+        core.blocksToPush = [core.packageManager]
       }
     )
   }
