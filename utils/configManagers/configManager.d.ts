@@ -7,11 +7,11 @@ type Block_Author = {
 }
 
 export type BlockLiveDetails = {
-  isOn: boolean,
-  port: number,
-  pid: number?,
+  isOn: boolean
+  port: number
+  pid: ?number
   log: {
-    out: PathLike,
+    out: PathLike
     err: PathLike
   }
 }
@@ -75,29 +75,30 @@ export interface PackageConfig {
 type newConfig<T> = T extends PackageConfig ? Partial<PackageConfig> : Partial<BlockConfig>
 
 declare class ConfigManager<C extends BlockConfig | PackageConfig> {
-  constructor(config: C,configPath:string)
+  constructor(config: C, configPath: string)
 
   readonly id: number
   readonly configname: string
   readonly isWriting: boolean
   readonly liveConfigname: string
   events: EventEmitter
-  
-  _writeSignal: AbortSignal?;
-  _writeController:AbortController
-  _writeLiveSignal:AbortSignal?;
+
+  _writeSignal: ?AbortSignal
+  _writeController: AbortController
+  _writeLiveSignal: ?AbortSignal
 
   configPath: string
   config: C
   directory: string
-  liveConfigPath:string
-  liveDetails:BlockLiveDetails
-  
-  static WRITE_COUNTER:number
+  pathRelativeToParent: string
+  liveConfigPath: string
+  liveDetails: BlockLiveDetails
+
+  static WRITE_COUNTER: number
   static CONFIG_NAME: string
   static LIVE_CONFIG_NAME: string
   static LIVE_CONFIG_FILE_ROOT_PATH: string
-  private _write(configPath:string,data:object): void
+  private _write(configPath: string, data: object): void
   /**
    * Recursively moves up the current path,
    * reading block.config.json, checking for type package,
@@ -105,7 +106,7 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
    */
   public findMyParentPackage(): Promise<string>
   public isPackage(): config is PackageConfig
-  public init():Promise<void>
+  public init(): Promise<void>
 
   /**
    * Returns the updated config, also emits a write event

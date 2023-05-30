@@ -20,6 +20,7 @@ class ConfigManager {
 
     this.configPath = configPath
     this.config = config
+    this.pathRelativeToParent = ''
     this.directory = path.dirname(configPath)
     this.liveConfigPath = path.join(
       ConfigManager.LIVE_CONFIG_FILE_ROOT_PATH,
