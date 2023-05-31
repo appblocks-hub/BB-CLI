@@ -10,12 +10,9 @@
 const { Command, Option } = require('commander')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { blockTypes } = require('../utils/blockTypes')
-// const create = require('../subcommands/create')
-const create = require('../subcommands/createV2/createV2Temp')
+const create = require('../subcommands/createV2')
 
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-// const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
-// const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 
 const program = new Command().hook('preAction', async () => {
@@ -25,9 +22,7 @@ const program = new Command().hook('preAction', async () => {
     process.exitCode = 1
     return
   }
-  // await ensureUserLogins(noRepo)
   await checkAndSetGitConnectionPreference()
-  // await checkAndSetUserSpacePreference()
 })
 
 program
@@ -35,17 +30,12 @@ program
   .allowExcessArguments(false)
   .addOption(
     new Option('-t, --type <component-type>', 'type  of comp')
-      .choices(
-        blockTypes.reduce((acc, v) => {
-          if (v[0] !== 'package') return acc.concat(v[0])
-          return acc
-        }, [])
-      )
+      .choices(blockTypes.map((t) => t[0]))
       .argParser((s) => blockTypeInverter(s))
   )
   .option('--no-autoRepo')
   .option('-rt, --repo-type <repo-type>', 'repository type')
-  // .option('-l, --language <language>', 'language')
+  .option('-l, --language <language>', 'language')
   .action(create)
 
 program.parse(process.argv)

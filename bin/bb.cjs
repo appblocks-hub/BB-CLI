@@ -7,11 +7,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// const inquirer = require('inquirer')
-// const inquirerFileTree = require('inquirer-file-tree-selection-prompt')
-// inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
-// inquirer.registerPrompt('customList', customList)
-
 const { Command } = require('commander')
 
 const packageJson = require('../package.json')
@@ -23,8 +18,6 @@ const program = new Command('bb')
 program.version(packageJson.version)
 
 const cmd = program.command.bind(program)
-
-// cmd('test', 'to tests')
 
 cmd('add-categories', 'block assign categories to blocks')
 
@@ -39,8 +32,6 @@ cmd('config', 'to access cli configs')
 cmd('connect', 'to connect github')
 
 cmd('create', 'to create a new block')
-
-cmd('create-v2', 'to create a new block v2')
 
 cmd('create-app', 'register app for deploy')
 
@@ -76,33 +67,15 @@ cmd('publish', 'Publish block or appblock')
 
 cmd('pull', 'to pull blocks')
 
-cmd('pull-v2', 'to pull blocks')
-
 cmd('push', 'To commit and push blocks')
-
-cmd('push-v2', 'To commit and push blocks')
 
 cmd('push-config', 'to push package lock config')
 
 cmd('start', 'To start one or all blocks')
 
-cmd('start-v2', 'To start one or all blocks')
-
 cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
-
-cmd('stop-v2', 'To stop one or all blocks')
-
-cmd('temp-create', 'to create a new block')
-
-cmd('temp-init', 'temporary init command')
-
-cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
-
-cmd('temp-push', 'Temporary Push command')
-
-cmd('temp-pull', 'Temporary Pull command')
 
 cmd('stop-job', 'Stop the job')
 
@@ -115,10 +88,6 @@ cmd('use', 'to select space')
 cmd('set-appblock-version', 'To add supported version of appblock to block')
 
 cmd('connect-remote', 'To add remote for package block')
-
-/**
- * PRIVATE FEATURES
- */
 
 cmd('deploy', 'deploy app')
 
