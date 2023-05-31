@@ -75,7 +75,7 @@ async function bbexecV2(command, options) {
   }
 
   /**
-   * @type {Set<string>}
+   * @type {Array<string>}
    */
   const pathList = []
   /**
@@ -128,8 +128,7 @@ async function bbexecV2(command, options) {
     res.forEach((v) => {
       const colour = v.value.err ? chalk.red : chalk.green
       console.log(colour(v.value.name))
-      console.log(v.value.out)
-      console.log('\n')
+      console.log(`${v.value.out}\n`)
     })
   })
 }
