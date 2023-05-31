@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const exec = require('../subcommands/exec-v2')
+const exec = require('../subcommands/exec')
 
 const program = new Command()
 
@@ -17,7 +17,7 @@ program
   .option('-in,--inside <blocks...>', 'inside which block?', [])
   .option('-t,--types <types...>', 'inside specific types', [])
   .option('-g,--groups <groups...>', 'in a folder', [])
-  .option('-l,--limit <limit>', 'level', -1)
+  // .option('-l,--limit <limit>', 'level', -1)
   .action(exec)
 
 program.parse(process.argv)
