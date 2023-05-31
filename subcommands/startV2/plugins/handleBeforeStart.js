@@ -1,7 +1,6 @@
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
 const { checkLanguageVersionExistInSystem } = require('../../languageVersion/util')
-const { getNodePackageInstaller } = require('../../../utils/nodePackageManager')
 // eslint-disable-next-line no-unused-vars
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 // eslint-disable-next-line no-unused-vars
@@ -19,11 +18,10 @@ class HandleBeforeStart {
         core
       ) => {
         global.rootDir = this.cwd
-        getNodePackageInstaller()
 
         const { blockName } = core.cmdArgs
         // If name exist check with config and dependencies
-        if (blockName && !core.packageManager.has(blockName)) {
+        if (blockName && !await core.packageManager.has(blockName)) {
           throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
         }
 
@@ -38,7 +36,7 @@ class HandleBeforeStart {
         if ([...(await core.packageManager.nonLiveBlocks())].length === 0) {
           throw new Error(`All blocks are already live!`)
         }
-
+        
         // check if function or job exist when blockType passed as function
         if (core.cmdOpts.blockType === 'function' && ![...(await core.packageManager.fnBlocks())]?.length) {
           throw new Error(`No function blocks to start!`)

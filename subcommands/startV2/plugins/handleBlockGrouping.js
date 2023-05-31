@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
+
 // eslint-disable-next-line no-unused-vars
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 // eslint-disable-next-line no-unused-vars
@@ -90,6 +91,63 @@ class HandleBlockGrouping {
               }
             }
           },
+        }
+
+        // grouping middleware for blocks
+        this.middlewares = []
+        for (const { type, blocks } of core.blockStartGroups) {
+          if (type !== 'function') continue
+
+          const packageConfigMiddlewares = core.packageConfig.middlewares || []
+
+          const blockLevelPack = {}
+          for (const { middlewaresList, executeOnBlocks } of packageConfigMiddlewares) {
+            if (Array.isArray(middlewaresList)) {
+              this.middlewares = [...new Set(this.middlewares.concat(middlewaresList))]
+            }
+
+            for (const blockManager of blocks) {
+              const bName = blockManager.config.name
+              if (middlewaresList?.length <= 0) continue
+              if (!blockLevelPack[bName]) blockLevelPack[bName] = []
+              if (Array.isArray(executeOnBlocks) && executeOnBlocks.length > 0 && !executeOnBlocks.includes(bName)) {
+                continue
+              }
+              blockLevelPack[bName] = blockLevelPack[bName].concat(middlewaresList)
+            }
+          }
+
+          for (const blockManager of blocks) {
+            const blockMiddlewaresList = blockManager.config.middlewares
+            const bName = blockManager.config.name
+
+            let newMiddlewares = blockLevelPack[bName] || []
+            if (Array.isArray(blockMiddlewaresList) && blockMiddlewaresList.length) {
+              this.middlewares = [...new Set(this.middlewares.concat(blockMiddlewaresList))]
+              newMiddlewares = newMiddlewares.concat(blockMiddlewaresList)
+            }
+
+            blockManager.config.middlewares = newMiddlewares
+          }
+        }
+
+        // filter middleware  blocks
+        if (this.middlewares.length <= 0) return
+
+        const filteredFnBlocks = []
+        for (const { type, blocks } of core.blockStartGroups) {
+          if (type !== 'function') continue
+
+          for (const blockManager of blocks) {
+            if (this.middlewares.includes(blockManager.config.name)) {
+              core.middlewareBlockList.push(blockManager)
+              continue
+            }
+
+            filteredFnBlocks.push(blockManager)
+          }
+
+          core.blockStartGroups[type] = filteredFnBlocks
         }
       }
     )

@@ -51,6 +51,9 @@ class StartCore {
      * @type {Iterable<{type:string,blocks:Array}>}>}
      */
     this.blockStartGroups = {}
+
+    this.middlewareBlockList = []
+
     this.hooks = {
       beforeStart: new AsyncSeriesHook(['core']),
       afterStart: new AsyncSeriesHook(['core']),
@@ -85,9 +88,10 @@ class StartCore {
   async cleanUp() {
     if (JSON.stringify(this.blockStartGroups) === '{}') return
     for (const { blocks } of this.blockStartGroups) {
-      blocks.forEach((v) => v.portKey?.abort())
+      for (const { portKey } of blocks) {
+        if (portKey) portKey.abort()
+      }
     }
-    process.exitCode = 0
   }
 }
 

@@ -4,11 +4,13 @@ const { spinnies } = require('../../loader')
 const { feedback } = require('../../utils/cli-feedback')
 const HandleBeforeStop = require('./plugins/handleBeforeStop')
 const StopCore = require('./stopCore')
+const HandleOutOfContext = require('./plugins/handleOutOfContext')
 
 async function stop(blockName, options) {
   const { logger } = new Logger('start')
   try {
     const core = new StopCore(blockName, { ...options, logger, feedback, spinnies })
+    new HandleOutOfContext().apply(core)
     new HandleBeforeStop().apply(core)
 
     await core.initializeConfigManager()

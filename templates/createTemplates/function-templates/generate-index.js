@@ -8,6 +8,7 @@ const handler = async (event) => {
   if (req.params.health === "health") {
     res.write(JSON.stringify({success: true, msg: "Health check success"}))
     res.end()
+    return
   }
 
   // Add your code here
