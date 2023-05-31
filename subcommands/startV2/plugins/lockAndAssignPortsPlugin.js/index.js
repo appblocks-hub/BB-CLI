@@ -6,7 +6,7 @@ const { portNumbers } = require('../../../../utils/portFindHelper')
 const { Locked, getLocalHosts, getAvailablePort } = require('./utils')
 
 class LockAndAssignPorts {
-  constructor() {
+  setUpPort() {
     this.emPortFromEnv = parseInt(process.env.BB_EM_PORT, 10) || null
     this.elePortFromEnv = parseInt(process.env.BB_ELEMENTS_PORT, 10) || null
     this.containerPortFromEnv = parseInt(process.env.BB_CONTAINER_PORT, 10) || null
@@ -100,6 +100,8 @@ class LockAndAssignPorts {
       for (const block of blocksList) {
         block.updatePortConfig(g)
       }
+
+      return
     }
     for (const block of blocksList) {
       const g = await this.getPorts({ port: block.config.port || portNumbers(...this.map[type]) })
@@ -116,6 +118,7 @@ class LockAndAssignPorts {
          */
         core
       ) => {
+        this.setUpPort()
         for (const { type, blocks } of core.blockStartGroups) {
           if (!this.map[type]) continue
           await this.getLockedPorts(blocks, type)

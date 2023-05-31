@@ -22,7 +22,8 @@ class HandleBeforeStop {
         }
         const blockManager = await core.packageManager.getBlock(blockName)
         core.blocksToStop = [blockManager]
-        if (!blockManager.liveDetails.singleInstance) throw new Error(`Block is started as single instance, Run bb stop`)
+        if (!blockManager.liveDetails.singleInstance)
+          throw new Error(`Block is started as single instance, Run bb stop`)
         if (!blockManager.liveDetails.isOn) throw new Error(`Block ${blockName} not live`)
         return
       }

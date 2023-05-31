@@ -10,10 +10,10 @@ const LockAndAssignPorts = require('./plugins/lockAndAssignPortsPlugin.js')
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
 const HandleBeforeStart = require('./plugins/handleBeforeStart')
 const HandleBlockGrouping = require('./plugins/handleBlockGrouping')
+const chalk = require('chalk')
 
 async function start(blockName, options) {
   const { logger } = new Logger('start')
-
   const Start = new StartCore(blockName, {
     singleInstance: !options.multiInstance,
     ...options,
@@ -22,25 +22,24 @@ async function start(blockName, options) {
     spinnies,
   })
 
-  new HandleBeforeStart().apply(Start)
-  new HandleOutOfContext().apply(Start)
-  new HandleBlockGrouping().apply(Start)
-  new LockAndAssignPorts().apply(Start)
-
-  new HandleNodeFunctionStart().apply(Start)
-  new HandleJSViewStart().apply(Start)
-
   try {
+    new HandleOutOfContext().apply(Start)
+    new HandleBeforeStart().apply(Start)
+    new HandleBlockGrouping().apply(Start)
+    new LockAndAssignPorts().apply(Start)
+
+    new HandleNodeFunctionStart().apply(Start)
+    new HandleJSViewStart().apply(Start)
+
     await Start.initializeConfigManager()
     await Start.start()
     await Start.cleanUp()
   } catch (error) {
-    spinnies.add('start', { text: error.message })
-    spinnies.fail('start', { text: error.message })
-    spinnies.stopAll()
-    console.log(error);
-    logger.error(error)
     await Start.cleanUp()
+    logger.error(error)
+    spinnies.stopAll()
+    spinnies.add('start', { text: error.message })
+    spinnies.fail('start', { text: chalk.red(error.message) })
   }
 }
 
