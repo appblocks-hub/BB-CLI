@@ -6,7 +6,7 @@
  */
 const path = require('path')
 
-const { rmdirSync, mkdirSync, existsSync } = require('fs')
+const { rmdirSync, mkdirSync, existsSync, writeFileSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
@@ -15,9 +15,11 @@ const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore } = require('../../../configstore')
 
 const createBBModules = async (options) => {
-  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
+  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
 
   let blockMetaDataMap = {}
+  let blockNameArray = []
+  let parentBlockNames = []
   let workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
   let repoUrl = rootConfig.source.https
   const workSpaceRemoteName = 'origin'
@@ -63,14 +65,18 @@ const createBBModules = async (options) => {
 
   let { manager: workSpaceConfigManager } = configFactory
 
-  await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap })
+  await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, parentBlockNames,rootPath:workspaceDirectoryPath})
 
   await addBlockWorkSpaceCommits(blockMetaDataMap, Git)
+
+  writeFileSync('test.json', JSON.stringify(blockMetaDataMap))
+  console.log('block name array is \n', blockNameArray)
 
   return {
     blockMetaDataMap,
     workspaceDirectoryPath,
     repoUrl,
+    blockNameArray,
   }
 }
 
