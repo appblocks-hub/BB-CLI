@@ -23,6 +23,7 @@ const { githubGraphQl } = require('../../utils/api')
 const { getGitHeader } = require('../../utils/getHeaders')
 const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
+const createBlocks = require('../../utils/createBlocks')
 
 const tempSync = async (blockName, options) => {
   try {
@@ -42,13 +43,14 @@ const tempSync = async (blockName, options) => {
       process.exit(1)
     }
 
-    const {defaultBranch,repoVisibility}=await setVisibilityAndDefaultBranch({configstore,repoUrl,headLessConfigStore})
-
-    
+    const { defaultBranch, repoVisibility } = await setVisibilityAndDefaultBranch({
+      configstore,
+      repoUrl,
+      headLessConfigStore,
+    })
 
     const bbModulesExists = existsSync(bbModulesPath)
 
-    
     const bbModulesData = await createBBModules({
       bbModulesPath: bbModulesPath,
       rootConfig: configManager.config,
@@ -57,9 +59,14 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    writeFileSync("test.json",JSON.stringify(bbModulesData.blockMetaDataMap))
+    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap),{encoding:'utf8',flag:'w'})
 
-    return
+    writeFileSync('testApiPayload.json', JSON.stringify(bbModulesData.createApiPayload),{encoding:'utf8',flag:'w'})
+
+
+    // const blocksCreateData = await createBlocks(bbModulesData.blockNameArray,bbModulesData.createApiPayload,bbModulesData.currentSpaceID)
+
+    // return
 
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
   } catch (error) {

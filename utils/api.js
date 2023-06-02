@@ -77,6 +77,7 @@ api.appRegistryCreateDiployHistory = `${api.appBlockAppRegistryOrigin}/api/app-r
 api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-app-env-exist/invoke`
 api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-deploy-signed-url/invoke`
 api.appRegistryCopyObject = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/copy-s3-object/invoke`
+api.blocksCreate = `${api.appBlockRegistryOrigin}/api/registry/v0.1/create-blocks/invoke`
 
 // SPACES
 api.appBlockSpacesOrigin = SPACES_API_BASE_URL

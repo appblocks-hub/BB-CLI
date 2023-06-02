@@ -13,9 +13,18 @@ const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils'
 const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
 
 const generateOrphanBranch = async (options) => {
-  const { bbModulesPath, block, repoUrl } = options
+  const { bbModulesPath, block, repoUrl,blockManager } = options
 
-  const orphanBranchName = 'block_' + block.name
+  let orphanBranchName 
+
+  if (!(block?.source?.branch)){
+    orphanBranchName = 'block_' + block.name
+    block.source.branch=orphanBranchName
+    console.log("new config for block manager is",blockManager.updateConfig({source:block.source}))
+  }else{
+    orphanBranchName=block.source.branch
+  }
+
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
   let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs']
@@ -23,8 +32,10 @@ const generateOrphanBranch = async (options) => {
   const orphanCommitMessage = ''
 
   if (block.type === 'package') {
-    block?.dependencies?.map((item) => {
-      const directoryPathArray = item?.directory?.split('/')
+    const memberBlocks=block?.memberBlocks??{}
+    Object.keys(memberBlocks)?.map((item) => {
+      const memberBlock=memberBlocks[item]
+      const directoryPathArray = memberBlock?.directory?.split('/')
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
       exclusions.push(directoryRelativePath)
     })
@@ -69,7 +80,7 @@ const generateOrphanBranch = async (options) => {
 
     await Git.newOrphanBranch(orphanBranchName)
 
-    copyDirectory(block.directory, orphanBranchPath, exclusions)
+    copyDirectory(blockManager.directory, orphanBranchPath, exclusions)
 
     await Git.stageAll()
 
@@ -101,7 +112,7 @@ const generateOrphanBranch = async (options) => {
 
 
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
-      copyDirectory(block.directory, orphanBranchPath, exclusions)
+      copyDirectory(blockManager.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
 

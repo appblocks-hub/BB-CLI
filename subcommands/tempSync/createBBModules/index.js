@@ -17,6 +17,7 @@ const { headLessConfigStore } = require('../../../configstore')
 const createBBModules = async (options) => {
   const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
 
+  let createApiPayload = {}
   let blockMetaDataMap = {}
   let blockNameArray = []
   let parentBlockNames = []
@@ -59,24 +60,33 @@ const createBBModules = async (options) => {
   const pullResult = await Git.pullBranch(defaultBranch, workSpaceRemoteName)
 
   // building initial package config manager inside bb_modules/workspace directory
-  const workSpaceConfigPath = searchFile(workspaceDirectoryPath, 'block.config.json')
+  const {filePath:workSpaceConfigPath,directory:workSpaceConfigDirectoryPath} = searchFile(workspaceDirectoryPath, 'block.config.json')
 
   let configFactory = await ConfigFactory.create(workSpaceConfigPath)
 
   let { manager: workSpaceConfigManager } = configFactory
 
-  await buildBlockConfig({ workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, parentBlockNames,rootPath:workspaceDirectoryPath})
+  workSpaceConfigManager.config.parentBlockNames = []
 
-  await addBlockWorkSpaceCommits(blockMetaDataMap, Git)
+  await buildBlockConfig({
+    workSpaceConfigManager,
+    blockMetaDataMap,
+    repoVisibility,
+    blockNameArray,
+    parentBlockNames,
+    rootPath:workSpaceConfigDirectoryPath,
+    createApiPayload,
+  })
 
-  writeFileSync('test.json', JSON.stringify(blockMetaDataMap))
-  console.log('block name array is \n', blockNameArray)
+  await addBlockWorkSpaceCommits(blockMetaDataMap, Git, createApiPayload,workspaceDirectoryPath)
 
   return {
     blockMetaDataMap,
-    workspaceDirectoryPath,
+    workspaceDirectoryPath:workSpaceConfigDirectoryPath,
     repoUrl,
     blockNameArray,
+    createApiPayload,
+    currentSpaceID,
   }
 }
 
