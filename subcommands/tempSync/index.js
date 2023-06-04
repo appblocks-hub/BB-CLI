@@ -59,10 +59,9 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap),{encoding:'utf8',flag:'w'})
+    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
 
-    writeFileSync('testApiPayload.json', JSON.stringify(bbModulesData.createApiPayload),{encoding:'utf8',flag:'w'})
-
+    writeFileSync('testApiPayload.json', JSON.stringify(bbModulesData.apiPayload), { encoding: 'utf8', flag: 'w' })
 
     // const blocksCreateData = await createBlocks(bbModulesData.blockNameArray,bbModulesData.createApiPayload,bbModulesData.currentSpaceID)
 

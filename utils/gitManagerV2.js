@@ -202,6 +202,10 @@ class GitManager {
     return this._run('status', [])
   }
 
+  statusWithOptions(...opts) {
+    return this._run('status', [...opts])
+  }
+
   setUpstreamAndPush(upstreamBranch) {
     return this._run('push -u', [this.remote, upstreamBranch || 'main'])
   }
@@ -228,6 +232,7 @@ class GitManager {
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
+
     if (r.status === 'error') {
       console.log('git action is \n', r)
 

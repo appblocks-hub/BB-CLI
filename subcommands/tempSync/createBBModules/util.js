@@ -19,107 +19,149 @@ const { axios } = require('../../../utils/axiosInstances')
 const { githubGraphQl } = require('../../../utils/api')
 const { isInRepo } = require('../../../utils/Queries')
 const { getGitHeader } = require('../../../utils/getHeaders')
+const { nanoid } = require('nanoid')
 
 const buildBlockConfig = async (options) => {
-  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, rootPath, createApiPayload } = options
+  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, rootPath, apiPayload } = options
 
   let currentPackageMemberBlocks = {}
 
-  const packageConfig = { blockManager: workSpaceConfigManager}
+  let packageMetaData = { blockManager: workSpaceConfigManager }
+
+  updatePackageConfig(workSpaceConfigManager.config, workSpaceConfigManager, repoVisibility)
+
+  let packageConfig = workSpaceConfigManager.config
 
   if (!workSpaceConfigManager instanceof PackageConfigManager) {
     throw new Error('Error parsing package block')
   }
 
-  let metaData = {
-    ...workSpaceConfigManager.config,
-    isPublic: repoVisibility === 'PUBLIC' ? true : false,
-    directory: calculateDirectoryDifference(rootPath, workSpaceConfigManager.directory),
-  }
-
-  blockNameArray.push(metaData.name)
-
-  //removing dependencies deprecated later
-  if (metaData.hasOwnProperty('dependencies')) {
-    delete metaData['dependencies']
-  }
+  blockNameArray.push(packageConfig.name)
 
   for await (const blockManager of workSpaceConfigManager.getDependencies()) {
     if (!blockManager?.config) continue
 
     //copying package config parent block name for transferring to the next package block
-    blockManager.config.parentBlockNames = metaData.parentBlockNames.slice()
-    blockManager.config.parentBlockNames.push(metaData.name)
-    let currentConfig = {
+    blockManager.config.parentBlockIDs = packageConfig.parentBlockIDs.slice()
+    blockManager.config.parentBlockIDs.push(packageConfig.id)
+    let currentMetaData = {
       blockManager: blockManager,
     }
 
-    const currentMeta = {
-      ...blockManager.config,
-      isPublic: repoVisibility === 'PUBLIC' ? true : false,
-      directory: calculateDirectoryDifference(rootPath, blockManager.directory),
-      memberBlocks: [],
+    updatePackageConfig(blockManager.config, blockManager, repoVisibility)
+
+    let currentConfig = blockManager.config
+
+    currentMetaData.memberBlocks = []
+
+    if (!currentPackageMemberBlocks[currentConfig.name]) {
+      currentPackageMemberBlocks[currentConfig.name] = { blockID: currentConfig.id, directory: currentConfig.directory }
     }
 
-    if (!currentPackageMemberBlocks[currentMeta.name]) {
-      currentPackageMemberBlocks[currentMeta.name] = { blockID: '',directory:currentMeta.directory }
-    }
-
-    currentConfig.metaData = currentMeta
-
-    if (currentMeta.type === 'package') {
+    if (currentConfig.type === 'package') {
       await buildBlockConfig({
         workSpaceConfigManager: blockManager,
         blockMetaDataMap,
         repoVisibility,
         blockNameArray,
         rootPath,
-        createApiPayload,
+        apiPayload,
       })
     } else {
-      if (!blockMetaDataMap[currentMeta.name]) {
-        blockMetaDataMap[currentMeta.name] = currentConfig
-        blockNameArray.push(currentMeta.name)
-        if (!currentMeta?.blockID) {
-          //removing dependencies deprecated later
-          if (currentMeta.hasOwnProperty('dependencies')) {
-            delete currentMeta['dependencies']
-          }
-          createApiPayload[currentMeta.name] = { ...currentMeta }
-        }
+      if (!blockMetaDataMap[currentConfig.name]) {
+        blockMetaDataMap[currentConfig.name] = currentMetaData
+        blockNameArray.push(currentConfig.name)
+        apiPayload[currentConfig.name] = { id: currentConfig.id }
       }
     }
   }
-  metaData.memberBlocks = currentPackageMemberBlocks
+  packageMetaData.memberBlocks = currentPackageMemberBlocks
 
-  if (!metaData?.blockID) {
-    createApiPayload[metaData.name] = { ...metaData }
-  }
-
-  packageConfig.metaData = metaData
+  apiPayload[packageConfig.name] = { id: packageConfig.id }
 
   //building metadata map for general purposes
-  if (!blockMetaDataMap[metaData.name]) {
-    blockMetaDataMap[metaData.name] = packageConfig
+  if (!blockMetaDataMap[packageConfig.name]) {
+    blockMetaDataMap[packageConfig.name] = packageMetaData
   }
 }
 
-const addBlockWorkSpaceCommits = async (blockMetaDataMap, Git, createApiPayload) => {
+const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
+  let packageConfigToUpdate = {},
+    updatePackage = false
+
+  if (!packageConfig?.id) {
+    packageConfigToUpdate.id = nanoid()
+    updatePackage = true
+  }
+
+  if (!packageConfig?.source?.branch) {
+    orphanBranchName = 'block_' + packageConfig.name
+    packageConfigToUpdate.source = { ...packageConfig.source, branch: orphanBranchName }
+    updatePackage = true
+  }
+
+  if (!packageConfig?.isPublic) {
+    let isPublic
+    if (repoVisibility === 'PUBLIC') isPublic = true
+    else isPublic = false
+
+    packageConfigToUpdate.isPublic = isPublic
+
+    updatePackage = true
+  }
+  if (updatePackage) {
+    blockManager.updateConfig(packageConfigToUpdate)
+  }
+}
+
+const addBlockWorkSpaceCommits = async (blockMetaDataMap, Git) => {
   const blocksArray = Object.keys(blockMetaDataMap)
   for (const item of blocksArray) {
-    let metaData = blockMetaDataMap[item].metaData
-    let blockWorksSpaceDirectory=blockMetaDataMap[item].blockManager.directory
-
-
+    let block = blockMetaDataMap[item]
+    let blockWorksSpaceDirectory = block.blockManager.directory
 
     const workSpaceCommits = await getLatestCommits(blockWorksSpaceDirectory, 1, Git)
 
     const latestWorkSpaceCommitHash = workSpaceCommits[0].split(' ')[0]
 
-    metaData.workSpaceCommitID = latestWorkSpaceCommitHash
+    block.workSpaceCommitID = latestWorkSpaceCommitHash
 
-    blockMetaDataMap[item].metaData = metaData
-    createApiPayload[item].workSpaceCommitID = latestWorkSpaceCommitHash
+    blockMetaDataMap[item] = block
+  }
+}
+
+const checkAndPushChanges = async (Git, upstreamBranch, remoteName) => {
+  let retryCount = 0
+  const maxRetries = 5
+
+  while (retryCount <= maxRetries) {
+    try {
+      const statusOutput=(await Git.statusWithOptions('--porcelain'))?.out
+      if (statusOutput?.trim() !== '') {
+        await Git.stageAll()
+
+        await Git.commit('Config updation')
+
+        await Git.push(upstreamBranch)
+
+        console.log('Config updation Successful!')
+        return // Exit the loop if push is successful
+      } else {
+        console.log('No config changes to push.')
+        return // Exit the loop if no changes to push
+      }
+    } catch (error) {
+      console.error('Config updation failed:', error)
+
+      if (retryCount === maxRetries) {
+        console.error('Max retries reached. Exiting.')
+        return // Exit the loop if max retries reached
+      }
+
+      retryCount++
+      console.log('Retrying...')
+      await Git.pullBranch(upstreamBranch, remoteName)
+    }
   }
 }
 
@@ -146,7 +188,7 @@ const searchFile = (directory, filename) => {
         return foundPath
       }
     } else if (file === filename) {
-      return {filePath,directory}
+      return { filePath, directory }
     }
   }
 
@@ -278,4 +320,5 @@ module.exports = {
   getAndSetSpace,
   calculateDirectoryDifference,
   setVisibilityAndDefaultBranch,
+  checkAndPushChanges
 }

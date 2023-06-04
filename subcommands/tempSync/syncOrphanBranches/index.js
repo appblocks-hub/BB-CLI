@@ -8,19 +8,18 @@
 const { generateOrphanBranch } = require('./util')
 
 const syncOrphanBranch = async (options) => {
-  const {blockMetaDataMap, bbModulesPath, repoUrl } = options
+  const { blockMetaDataMap, bbModulesPath, repoUrl } = options
 
   const blocksArray = Object.keys(blockMetaDataMap)
   for (const item of blocksArray) {
-    const block = blockMetaDataMap[item].metaData
-    const blockManager=blockMetaDataMap[item].blockManager
+    const block = blockMetaDataMap[item]
 
-    try{
-    await generateOrphanBranch({ bbModulesPath, block, repoUrl,blockManager })
-    }catch(err){
-      console.log("error is \n",err)
-      console.log(`error creating orphan branch for ${block.name}`)
-    }  
+    try {
+      await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
+    } catch (err) {
+      console.log('error is \n', err)
+      console.log(`error creating orphan branch for ${block.blockManager.config.name}`)
+    }
   }
 }
 

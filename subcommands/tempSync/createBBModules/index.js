@@ -8,19 +8,19 @@ const path = require('path')
 
 const { rmdirSync, mkdirSync, existsSync, writeFileSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
-const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
+const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
+const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace, checkAndPushChanges } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore } = require('../../../configstore')
 
 const createBBModules = async (options) => {
   const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
 
-  let createApiPayload = {}
+  let apiPayload = {}
   let blockMetaDataMap = {}
   let blockNameArray = []
-  let parentBlockNames = []
+
   let workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
   let repoUrl = rootConfig.source.https
   const workSpaceRemoteName = 'origin'
@@ -35,7 +35,7 @@ const createBBModules = async (options) => {
 
       await Git.init()
 
-      const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore)
 
       await checkAndSetGitConfigNameEmail(workspaceDirectoryPath, { gitUserEmail, gitUserName })
 
@@ -60,32 +60,36 @@ const createBBModules = async (options) => {
   const pullResult = await Git.pullBranch(defaultBranch, workSpaceRemoteName)
 
   // building initial package config manager inside bb_modules/workspace directory
-  const {filePath:workSpaceConfigPath,directory:workSpaceConfigDirectoryPath} = searchFile(workspaceDirectoryPath, 'block.config.json')
+  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
+    workspaceDirectoryPath,
+    'block.config.json'
+  )
 
   let configFactory = await ConfigFactory.create(workSpaceConfigPath)
 
   let { manager: workSpaceConfigManager } = configFactory
 
-  workSpaceConfigManager.config.parentBlockNames = []
+  workSpaceConfigManager.config.parentBlockIDs = []
 
   await buildBlockConfig({
     workSpaceConfigManager,
     blockMetaDataMap,
     repoVisibility,
     blockNameArray,
-    parentBlockNames,
-    rootPath:workSpaceConfigDirectoryPath,
-    createApiPayload,
+    rootPath: workSpaceConfigDirectoryPath,
+    apiPayload,
   })
 
-  await addBlockWorkSpaceCommits(blockMetaDataMap, Git, createApiPayload,workspaceDirectoryPath)
+  await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
+
+  await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
 
   return {
     blockMetaDataMap,
-    workspaceDirectoryPath:workSpaceConfigDirectoryPath,
+    workspaceDirectoryPath: workSpaceConfigDirectoryPath,
     repoUrl,
     blockNameArray,
-    createApiPayload,
+    apiPayload,
     currentSpaceID,
   }
 }

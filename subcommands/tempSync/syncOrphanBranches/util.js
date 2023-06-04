@@ -5,44 +5,51 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync } = require('fs')
+const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync, unlinkSync } = require('fs')
 const path = require('path')
 
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { getGitConfigNameEmail } = require('../../../utils/questionPrompts')
+const { getGitConfigNameEmail, getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
+const { headLessConfigStore } = require('../../../configstore')
 
 const generateOrphanBranch = async (options) => {
-  const { bbModulesPath, block, repoUrl,blockManager } = options
+  const { bbModulesPath, block, repoUrl, blockMetaDataMap } = options
+  let blockConfig = block.blockManager.config
 
-  let orphanBranchName 
-
-  if (!(block?.source?.branch)){
-    orphanBranchName = 'block_' + block.name
-    block.source.branch=orphanBranchName
-    console.log("new config for block manager is",blockManager.updateConfig({source:block.source}))
-  }else{
-    orphanBranchName=block.source.branch
-  }
+  let orphanBranchName = blockConfig.source.branch
 
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
-  let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs']
+  let exclusions = [
+    '.git',
+    '._ab_em',
+    '._ab_em_elements',
+    'cliruntimelogs',
+    'logs',
+    'headless-config.json',
+    'metaDataMap.json',
+    'testApiPayload.json',
+  ]
   const orphanRemoteName = 'origin'
   const orphanCommitMessage = ''
 
-  if (block.type === 'package') {
-    const memberBlocks=block?.memberBlocks??{}
+  if (blockConfig.type === 'package') {
+    const memberBlocks = block?.memberBlocks ?? {}
     Object.keys(memberBlocks)?.map((item) => {
-      const memberBlock=memberBlocks[item]
-      const directoryPathArray = memberBlock?.directory?.split('/')
+      const memberBlockDirectory = blockMetaDataMap[item].blockManager.directory
+      const directoryPathArray = memberBlockDirectory.split('/')
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
+      console.log(
+        `directory relative path for block ${blockMetaDataMap[item].blockManager.config.name} is\n`,
+        directoryRelativePath
+      )
       exclusions.push(directoryRelativePath)
     })
   }
 
   if (!(block?.workSpaceCommitID?.length > 0)) {
-    console.log(`Error syncing ${block.name}`)
+    console.log(`Error syncing ${blockConfig.name}`)
     return
   }
 
@@ -54,7 +61,7 @@ const generateOrphanBranch = async (options) => {
 
       await Git.init()
 
-      const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
+      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore)
 
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
       // console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
@@ -80,7 +87,7 @@ const generateOrphanBranch = async (options) => {
 
     await Git.newOrphanBranch(orphanBranchName)
 
-    copyDirectory(blockManager.directory, orphanBranchPath, exclusions)
+    copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
 
     await Git.stageAll()
 
@@ -104,15 +111,16 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
 
     console.log(
-      `commit hashes for orphan and workspace for block ${block.name} are\n`,
+      `commit hashes for orphan and workspace for block ${blockConfig.name} are\n`,
       orphanBranchCommitHash,
       block.workSpaceCommitID,
       orphanBranchCommitHash !== block.workSpaceCommitID
     )
 
-
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
-      copyDirectory(blockManager.directory, orphanBranchPath, exclusions)
+      clearDirectory(orphanBranchPath, exclusions)
+
+      copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
 
@@ -139,32 +147,81 @@ const getLatestCommits = async (branchName, n, Git) => {
 }
 
 function copyDirectory(sourceDir, destinationDir, exclusions) {
-  // Create destination directory if it doesn't exist
-  if (!existsSync(destinationDir)) {
-    mkdirSync(destinationDir, { recursive: true })
-  }
+  const stack = [
+    {
+      source: sourceDir,
+      destination: destinationDir,
+    },
+  ]
 
-  // Get the list of files and directories in the source directory
-  const files = readdirSync(sourceDir)
+  while (stack.length > 0) {
+    const { source, destination } = stack.pop()
 
-  // Iterate over each file/directory
-  files.forEach((file) => {
-    // Check if the file/directory should be excluded
-    if (!exclusions.includes(file)) {
-      const sourcePath = path.join(sourceDir, file)
-      const destinationPath = path.join(destinationDir, file)
+    if (!existsSync(destination)) {
+      mkdirSync(destination, { recursive: true })
+    }
 
-      // Check if the item is a file or directory
-      if (statSync(sourcePath).isFile()) {
-        // Copy the file to the destination directory
-        copyFileSync(sourcePath, destinationPath)
-      } else {
-        // Recursively copy the directory to the destination directory
-        copyDirectory(sourcePath, destinationPath, exclusions)
+    const files = readdirSync(source)
+
+    files.forEach((file) => {
+      const sourcePath = path.join(source, file)
+      const destinationPath = path.join(destination, file)
+
+      const fileStats = statSync(sourcePath)
+
+      if (!isExcluded(file, fileStats, exclusions)) {
+        if (fileStats.isFile()) {
+          copyFileSync(sourcePath, destinationPath)
+        } else {
+          stack.push({
+            source: sourcePath,
+            destination: destinationPath,
+          })
+        }
       }
+    })
+  }
+}
+
+function clearDirectory(directoryPath, exclusions) {
+  const stack = [directoryPath]
+
+  while (stack.length > 0) {
+    const currentPath = stack.pop()
+
+    if (!existsSync(currentPath)) {
+      continue
+    }
+
+    const files = readdirSync(currentPath)
+
+    for (const file of files) {
+      const filePath = path.join(currentPath, file)
+      const fileStats = statSync(filePath)
+
+      if (!isExcluded(file, fileStats, exclusions)) {
+        if (fileStats.isFile()) {
+          unlinkSync(filePath)
+        } else {
+          stack.push(filePath)
+        }
+      }
+    }
+
+    rmdirSync(currentPath)
+  }
+}
+
+function isExcluded(name, stats, exclusions) {
+  return exclusions.some((exclusion) => {
+    if (stats.isDirectory()) {
+      return name.startsWith(exclusion)
+    } else {
+      return name === exclusion
     }
   })
 }
+
 const buildCommitMessage = (commitHash, commitMesage) => {
   return `[commitHash:${commitHash}] ${commitMesage}`
 }
