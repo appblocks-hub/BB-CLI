@@ -23,7 +23,7 @@ const { githubGraphQl } = require('../../utils/api')
 const { getGitHeader } = require('../../utils/getHeaders')
 const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
-const createBlocks = require('../../utils/createBlocks')
+const syncBlocks = require('../../utils/syncBlocks')
 
 const tempSync = async (blockName, options) => {
   try {
@@ -59,18 +59,16 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
+    // writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
 
-    writeFileSync('testApiPayload.json', JSON.stringify(bbModulesData.apiPayload), { encoding: 'utf8', flag: 'w' })
-
-    // const blocksCreateData = await createBlocks(bbModulesData.blockNameArray,bbModulesData.createApiPayload,bbModulesData.currentSpaceID)
+    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID)
 
     // return
 
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
   } catch (error) {
-    console.log('error inside sync is \n', error)
-    console.log(chalk.red(error.message))
+    // console.log('error inside sync is \n', error)
+    // console.log(chalk.red(error.message))
   }
 }
 

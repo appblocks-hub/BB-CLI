@@ -42,13 +42,11 @@ const buildBlockConfig = async (options) => {
     if (!blockManager?.config) continue
 
     //copying package config parent block name for transferring to the next package block
-    blockManager.config.parentBlockIDs = packageConfig.parentBlockIDs.slice()
-    blockManager.config.parentBlockIDs.push(packageConfig.id)
+    blockManager.newParentBlockIDs = workSpaceConfigManager.newParentBlockIDs.slice()
+    blockManager.newParentBlockIDs.push(packageConfig.id)
     let currentMetaData = {
       blockManager: blockManager,
     }
-
-    updatePackageConfig(blockManager.config, blockManager, repoVisibility)
 
     let currentConfig = blockManager.config
 
@@ -68,16 +66,19 @@ const buildBlockConfig = async (options) => {
         apiPayload,
       })
     } else {
+      updatePackageConfig(blockManager.config, blockManager, repoVisibility)
+
       if (!blockMetaDataMap[currentConfig.name]) {
         blockMetaDataMap[currentConfig.name] = currentMetaData
         blockNameArray.push(currentConfig.name)
-        apiPayload[currentConfig.name] = { id: currentConfig.id }
       }
+
+      buildApiPayload(blockManager.config, apiPayload)
     }
   }
   packageMetaData.memberBlocks = currentPackageMemberBlocks
 
-  apiPayload[packageConfig.name] = { id: packageConfig.id }
+  buildApiPayload(workSpaceConfigManager.config, apiPayload)
 
   //building metadata map for general purposes
   if (!blockMetaDataMap[packageConfig.name]) {
@@ -85,9 +86,31 @@ const buildBlockConfig = async (options) => {
   }
 }
 
+const buildApiPayload = (currentConfig, apiPayload) => {
+
+  if (currentConfig?.id && currentConfig?.type && currentConfig?.source) {
+    apiPayload[currentConfig.name] = {
+      id: currentConfig.id,
+      type: currentConfig.type,
+      source: currentConfig.source,
+      language: currentConfig?.language ?? '',
+      start: currentConfig?.start ?? '',
+      build: currentConfig?.build ?? '',
+      postPull: currentConfig?.postPull ?? '',
+      parentBlockIDs: currentConfig?.parentBlockIDs ?? [],
+      isPublic: currentConfig?.isPublic ?? false,
+      description: currentConfig?.description ?? '',
+    }
+  }
+}
+
 const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
   let packageConfigToUpdate = {},
     updatePackage = false
+
+  let isPublic
+  if (repoVisibility === 'PUBLIC') isPublic = true
+  else isPublic = false
 
   if (!packageConfig?.id) {
     packageConfigToUpdate.id = nanoid()
@@ -100,15 +123,16 @@ const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
     updatePackage = true
   }
 
-  if (!packageConfig?.isPublic) {
-    let isPublic
-    if (repoVisibility === 'PUBLIC') isPublic = true
-    else isPublic = false
-
+  if (!packageConfig?.isPublic || packageConfig.isPublic !== isPublic) {
     packageConfigToUpdate.isPublic = isPublic
+    updatePackage = true
+  }
+  if (!packageConfig?.parentBlockIDs || !areArraysEqual(packageConfig.parentBlockIDs, blockManager.newParentBlockIDs)) {
+    packageConfigToUpdate.parentBlockIDs = blockManager.newParentBlockIDs
 
     updatePackage = true
   }
+
   if (updatePackage) {
     blockManager.updateConfig(packageConfigToUpdate)
   }
@@ -136,7 +160,7 @@ const checkAndPushChanges = async (Git, upstreamBranch, remoteName) => {
 
   while (retryCount <= maxRetries) {
     try {
-      const statusOutput=(await Git.statusWithOptions('--porcelain'))?.out
+      const statusOutput = (await Git.statusWithOptions('--porcelain'))?.out
       if (statusOutput?.trim() !== '') {
         await Git.stageAll()
 
@@ -307,7 +331,21 @@ const setVisibilityAndDefaultBranch = async (options) => {
   }
 }
 
-function calculateDirectoryDifference(path1, path2) {
+const areArraysEqual = (array1, array2) => {
+  if (array1.length !== array2.length) {
+    return false
+  }
+
+  for (let i = 0; i < array1.length; i++) {
+    if (array1[i] !== array2[i]) {
+      return false
+    }
+  }
+
+  return true
+}
+
+const calculateDirectoryDifference = (path1, path2) => {
   const relativePath = path.relative(path1, path2)
   return relativePath.replace(/\\/g, '/') // Normalize path separators
 }
@@ -320,5 +358,5 @@ module.exports = {
   getAndSetSpace,
   calculateDirectoryDifference,
   setVisibilityAndDefaultBranch,
-  checkAndPushChanges
+  checkAndPushChanges,
 }

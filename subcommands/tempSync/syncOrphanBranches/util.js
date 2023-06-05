@@ -5,7 +5,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync, unlinkSync } = require('fs')
+const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync, unlinkSync, rmSync } = require('fs')
 const path = require('path')
 
 const { GitManager } = require('../../../utils/gitManagerV2')
@@ -185,6 +185,7 @@ function copyDirectory(sourceDir, destinationDir, exclusions) {
 
 function clearDirectory(directoryPath, exclusions) {
   const stack = [directoryPath]
+  let isFirstDirectory = true;
 
   while (stack.length > 0) {
     const currentPath = stack.pop()
@@ -207,8 +208,9 @@ function clearDirectory(directoryPath, exclusions) {
         }
       }
     }
-
-    rmdirSync(currentPath)
+ if (!isFirstDirectory) {
+      rmSync(currentPath);
+    }
   }
 }
 

@@ -98,7 +98,7 @@ cmd('temp-init', 'temporary init command')
 
 cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
 
-cmd('temp-sync', 'Sync blocks architecture with registry')
+cmd('sync', 'Sync blocks architecture with registry')
 
 cmd('temp-push', 'Temporary Push command')
 
@@ -106,7 +106,7 @@ cmd('temp-pull', 'Temporary Pull command')
 
 cmd('stop-job', 'Stop the job')
 
-cmd('sync', 'To sync all blocks')
+// cmd('sync', 'To sync all blocks')
 
 cmd('update-language-version', 'update block language version')
 

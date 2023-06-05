@@ -69,7 +69,7 @@ const createBBModules = async (options) => {
 
   let { manager: workSpaceConfigManager } = configFactory
 
-  workSpaceConfigManager.config.parentBlockIDs = []
+  workSpaceConfigManager.newParentBlockIDs = []
 
   await buildBlockConfig({
     workSpaceConfigManager,
