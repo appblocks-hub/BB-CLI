@@ -101,7 +101,7 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   private _write(configPath: string, data: object): void
   /**
    * Recursively moves up the current path,
-   * reading block.config.json, checking for type package,
+   * reading <BB_CONFIG_NAME>, checking for type package,
    * if found, returns the absolute path
    */
   public findMyParentPackage(): Promise<string>

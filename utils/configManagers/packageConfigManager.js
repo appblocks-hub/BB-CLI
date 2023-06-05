@@ -1,6 +1,7 @@
 const path = require('path')
 const chalk = require('chalk')
 const ConfigManager = require('./configManager')
+const { BB_CONFIG_NAME } = require('../constants')
 
 class PackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
@@ -116,7 +117,7 @@ class PackageConfigManager extends ConfigManager {
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
         const relativeDirectory = this.config.dependencies[block].directory
-        const configPath = path.join(this.directory, relativeDirectory, 'block.config.json')
+        const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
         c.pathRelativeToParent = relativeDirectory
         if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))

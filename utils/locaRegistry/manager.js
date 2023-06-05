@@ -13,6 +13,7 @@ const { EventEmitter } = require('stream')
 const { configstore } = require('../../configstore')
 const { getSpaceLinkedToBlock } = require('../api')
 const { post } = require('../axios')
+const { BB_CONFIG_NAME } = require('../constants')
 
 class LocalRegistryManager {
   constructor() {
@@ -23,7 +24,7 @@ class LocalRegistryManager {
     this.appblockGlobalDir = path.join(this.home, '.appblocks')
     this.localRegistryDir = path.join(this.appblockGlobalDir, 'registry')
     this.localRegistryFile = path.join(this.localRegistryDir, 'registry.json')
-    this.blockConfigFileName = 'block.config.json'
+    this.blockConfigFileName = BB_CONFIG_NAME
 
     this.events = new EventEmitter()
     this.events.on('write', () => {

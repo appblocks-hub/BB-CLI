@@ -3,7 +3,7 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
-*/
+ */
 
 const path = require('path')
 const { AsyncSeriesHook } = require('tapable')
@@ -17,6 +17,7 @@ const { BlockPusher } = require('./utils/blockPusher')
 const { multiBar } = require('./utils/multiBar')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 class PushCore {
   constructor(blockName, cmdOptions, options) {
@@ -46,7 +47,7 @@ class PushCore {
   }
 
   async initializeConfig() {
-    const configPath = path.resolve('block.config.json')
+    const configPath = path.resolve(BB_CONFIG_NAME)
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error

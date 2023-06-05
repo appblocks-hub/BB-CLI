@@ -7,6 +7,7 @@
 
 const path = require('path')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 async function updateAllMemberConfig(manger, source) {
   for await (const blockManager of manger.getDependencies()) {
@@ -24,7 +25,7 @@ async function updateAllMemberConfig(manger, source) {
 }
 
 async function initializeConfig() {
-  const configPath = path.resolve('block.config.json')
+  const configPath = path.resolve(BB_CONFIG_NAME)
   const { manager: configManager, error } = await ConfigFactory.create(configPath)
   if (error) {
     if (error.type !== 'OUT_OF_CONTEXT') throw error

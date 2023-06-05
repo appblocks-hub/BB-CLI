@@ -21,6 +21,7 @@ const {
 const deployConfigManager = require('../deploy/manager')
 const { isValidBlockName } = require('../../utils/blocknameValidator')
 const { GitManager } = require('../../utils/gitmanager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const checkIsBlockAppAssigned = async (options) => {
   const { metaData, appData: ap } = options
@@ -185,7 +186,7 @@ async function purchasedPull(options) {
 
   if (error) throw error
 
-  const blockConfigPath = path.resolve(blockFolderPath, 'block.config.json')
+  const blockConfigPath = path.resolve(blockFolderPath, BB_CONFIG_NAME)
 
   let blockConfig
   try {

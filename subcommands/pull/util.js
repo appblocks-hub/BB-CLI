@@ -32,6 +32,7 @@ const { purchasedPull, checkIsBlockAppAssigned } = require('./purchasedPull')
 const { post } = require('../../utils/axios')
 const { getBlockPermissionsApi } = require('../../utils/api')
 const { getAllAppblockVersions } = require('../publish/util')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const handleOutOfContextCreation = async () => {
   const goAhead = await confirmationPrompt({
@@ -378,7 +379,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
           cloneDirName = createBlockRes.cloneDirName
           blockFinalName = createBlockRes.blockFinalName
 
-          const bcPath = path.resolve(clonePath, cloneDirName, 'block.config.json')
+          const bcPath = path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME)
           const bc = JSON.parse(readFileSync(bcPath))
           bc.blockId = createBlockRes.blockId
           writeFileSync(bcPath, JSON.stringify(bc, null, 2))
@@ -390,7 +391,7 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       // Maybe update config from createBlock itself
       appConfig.addBlock({
         directory: path.relative(cwd, path.resolve(clonePath, cloneDirName)),
-        meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
+        meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME))),
       })
 
       // Inform registry about the new variant
@@ -481,13 +482,13 @@ async function pullBlock(da, appConfig, cwdValue, componentName, options) {
       // })
 
       // -------------------------------------------------
-      const blockConfigPath = path.resolve(blockFolderPath, 'block.config.json')
+      const blockConfigPath = path.resolve(blockFolderPath, BB_CONFIG_NAME)
 
       await updateBlockConfig({ blockConfigPath, metaData, createCustomVariant })
 
       appConfig.addBlock({
         directory: path.relative(cwd, path.resolve(clonePath, localDirName)),
-        meta: JSON.parse(readFileSync(path.resolve(clonePath, localDirName, 'block.config.json'))),
+        meta: JSON.parse(readFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME))),
       })
 
       console.log(chalk.green(`${metaData.block_name} pulled Successfully!`))
