@@ -14,6 +14,7 @@ const { pexec } = require('../../../../utils/execPromise')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { readInput } = require('../../../../utils/questionPrompts')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
+const { BB_CONFIG_NAME } = require('../../../../utils/constants')
 
 const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   // eslint-disable-next-line no-param-reassign
@@ -45,7 +46,7 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   COPY package.json .
   ${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
   COPY ${envPath} .env.function
-  COPY block.config.json .
+  COPY ${BB_CONFIG_NAME} .
   
   ${runPackageManager}
   # RUN npm ci --only=production
@@ -165,7 +166,7 @@ WORKDIR .
 COPY ._ab_em ./._ab_em/
 ${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
 COPY ${envPath} .env.function
-COPY block.config.json .
+COPY ${BB_CONFIG_NAME} .
 
 WORKDIR ./._ab_em/
 ${runPackageManager}

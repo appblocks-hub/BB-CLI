@@ -27,15 +27,16 @@ const {
 const { getShieldHeader } = require('../../utils/getHeaders')
 const { spinnies } = require('../../loader')
 const deployblockConfigManager = require('./manager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const getBlockConfig = () => {
   // if no appblock config file found, throw
 
   try {
-    return JSON.parse(readFileSync('block.config.json'))
+    return JSON.parse(readFileSync(BB_CONFIG_NAME))
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.log(chalk.red(`block.config.json missing`))
+      console.log(chalk.red(`${BB_CONFIG_NAME} missing`))
       process.exit(1)
     }
     console.log('Something went wrong\n')

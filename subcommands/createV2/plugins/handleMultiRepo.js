@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 // eslint-disable-next-line no-unused-vars
+const { BB_CONFIG_NAME } = require('../../../utils/constants')
 const CreateCore = require('../createCore')
 
 class handleMultiRepo {
@@ -29,7 +30,7 @@ class handleMultiRepo {
         //   const newFolderPath = path.join(core.cwd, blockFinalName)
         //   await renameSync(core.blockFolderPath, newFolderPath)
         //   core.blockFolderPath = newFolderPath
-        //   core.blockConfigPath = path.join(core.blockFolderPath, 'block.config.json')
+        //   core.blockConfigPath = path.join(core.blockFolderPath, BB_CONFIG_NAME)
         // }
         // core.blockDetails = {
         //   ...core.blockDetails,

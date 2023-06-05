@@ -8,6 +8,7 @@ const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 const { spinnies } = require('../../loader')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 //
 class CreateCore {
@@ -34,7 +35,7 @@ class CreateCore {
   }
 
   async initializePackageConfigManager() {
-    const configPath = path.resolve('block.config.json')
+    const configPath = path.resolve(BB_CONFIG_NAME)
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
@@ -52,7 +53,7 @@ class CreateCore {
     this.spinnies.add('create', { text: `creating block` })
 
     this.blockFolderPath = path.join(this.cwd, this.cmdArgs.blockName)
-    this.blockConfigPath = path.join(this.blockFolderPath, 'block.config.json')
+    this.blockConfigPath = path.join(this.blockFolderPath, BB_CONFIG_NAME)
 
     try {
       await mkdir(this.blockFolderPath)

@@ -15,6 +15,7 @@ const { appBlockGetPresignedUrlForReadMe } = require('./api')
 const { feedback } = require('./cli-feedback')
 const { BlockPushError } = require('./errors/blockPushError')
 const { getShieldHeader } = require('./getHeaders')
+const { BB_CONFIG_NAME } = require('./constants')
 
 /**
  * Creates dir if not present
@@ -73,7 +74,7 @@ function getBlockDirsIn(array) {
       if (Fstat.isDirectory()) {
         const files = fs.readdirSync(v)
         // console.log('files in ' + v + ' are:\n', files)
-        if (files.indexOf('block.config.json') > -1) {
+        if (files.indexOf(BB_CONFIG_NAME) > -1) {
           return acc.concat(v)
         }
       }
@@ -88,9 +89,9 @@ function getBlockDirsIn(array) {
 
 function findBlockWithNameIn(name, dirs) {
   const res = dirs.reduce((acc, v) => {
-    console.log('path name', path.resolve(v, 'block.config.json'))
+    console.log('path name', path.resolve(v, BB_CONFIG_NAME))
     try {
-      const config = JSON.parse(fs.readFileSync(path.resolve(v, 'block.config.json')))
+      const config = JSON.parse(fs.readFileSync(path.resolve(v, BB_CONFIG_NAME)))
       console.log(config, name)
       if (config.name === name) return acc.concat(v)
     } catch (err) {

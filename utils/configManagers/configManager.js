@@ -4,6 +4,7 @@ const os = require('os')
 const { writeFile, existsSync, mkdirSync } = require('fs')
 const { readFile } = require('fs/promises')
 const { readJsonAsync } = require('..')
+const { BB_CONFIG_NAME } = require('../constants')
 
 class ConfigManager {
   constructor(config, configPath) {
@@ -43,7 +44,7 @@ class ConfigManager {
 
   static WRITE_COUNTER = 0
 
-  static CONFIG_NAME = 'block.config.json'
+  static CONFIG_NAME = BB_CONFIG_NAME
 
   static LIVE_CONFIG_NAME = '.block.live.json'
 

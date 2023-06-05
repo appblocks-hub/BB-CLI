@@ -18,6 +18,7 @@ const { GitManager } = require('./gitmanager')
 // const { tryGitInit } = require('./gitCheckUtils')
 const { getGitConfigNameEmail } = require('./questionPrompts')
 const registerBlock = require('./registerBlock')
+const { BB_CONFIG_NAME } = require('./constants')
 
 /**
  * @typedef returnObject
@@ -54,24 +55,6 @@ async function createBlock(
   package_block_id
 ) {
   if (arguments.length < 6) throw new Error('NotEnoughArguments in CreateBlock')
-
-  /**
-   * PREFIX IS NO LONGER NECESSARY
-   * 
-  const presentPrefix = appConfig.prefix
-  if (!presentPrefix && blockTypeNo > 1) {
-    // If we are here from init, then block.config.json would not have been
-    // created yet, so trying to set will cause problem,
-    // to avoid that prompt only if blockType is other than 1 i.e 'package'
-    const prefix = await getPrefix(appConfig.getName())
-    appConfig.prefix = prefix
-  }
-  *
-  */
-
-  // if (!tryGitInit()) {
-  //   throw new Error('Git not initialized')
-  // }
 
   const clonePath = isAStandAloneBlock ? '.' : createDirForType(blockTypeNo, cwd || '.')
   // console.log('clone path return from createDirForType', clonePath)
@@ -167,7 +150,7 @@ async function createBlock(
       // if not present add a new one
       let blockConfig
       try {
-        blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json')))
+        blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME)))
       } catch (err) {
         if (err.code === 'ENOENT') {
           console.log(chalk.dim('Pulled block has no config file, adding a new one'))
@@ -182,7 +165,7 @@ async function createBlock(
       }
       blockConfig.name = blockFinalName
       blockConfig.source = { https: url, ssh: sshUrl }
-      writeFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'), JSON.stringify(blockConfig))
+      writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
 
       console.log(chalk.dim('Succesfully updated block config..'))
 

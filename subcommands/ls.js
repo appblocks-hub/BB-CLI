@@ -11,6 +11,7 @@ const Table = require('cli-table3')
 const { appConfig } = require('../utils/appconfigStore')
 const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
 const ConfigFactory = require('../utils/configManagers/configFactory')
+const { BB_CONFIG_NAME } = require('../utils/constants')
 
 /**
  * @typedef {object} _p1
@@ -83,7 +84,7 @@ const ls = async (options) => {
   //   return
   // }
 
-  const configPath = path.resolve('block.config.json')
+  const configPath = path.resolve(BB_CONFIG_NAME)
   const { manager: configManager } = await ConfigFactory.create(configPath)
   if (configManager instanceof PackageConfigManager) {
     for await (const blockManager of configManager.getDependencies()) {

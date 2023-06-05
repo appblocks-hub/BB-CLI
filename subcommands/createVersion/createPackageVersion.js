@@ -12,6 +12,7 @@ const { pushBlocks } = require('../../utils/pushBlocks')
 const { readInput, confirmationPrompt, getGitConfigNameEmail } = require('../../utils/questionPrompts')
 const { getAllBlockVersions, updateReadme } = require('../../utils/registryUtils')
 const { uploadReadMe, ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -137,7 +138,7 @@ const createPackageVersion = async ({ appConfig, args }) => {
   appConfigData.blockVersion = version
 
   // update gitignore with block_names
-  const blockConfigPath = path.join('.', 'block.config.json')
+  const blockConfigPath = path.join('.', BB_CONFIG_NAME)
   // const oldBlockConfigData = readFileSync(blockConfigPath).toString()
   writeFileSync(blockConfigPath, JSON.stringify(appConfigData, null, 2))
 

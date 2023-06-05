@@ -7,6 +7,7 @@
 // const { confirmationPrompt, readInput } = require('../../../utils/questionPrompts')
 // const initializePackageBlock = require('../../init/initializePackageBlock')
 // eslint-disable-next-line no-unused-vars
+const { BB_CONFIG_NAME } = require('../../../utils/constants')
 const CreateCore = require('../createCore')
 
 class HandleOutOfContext {
@@ -58,7 +59,7 @@ class HandleOutOfContext {
         // // await core.packageManager.init(packageDirPath, null, 'create', { reConfig: true })
 
         // const configFact = new ConfigFactory()
-        // const configPath = path.resolve(packageDirPath, 'block.config.json')
+        // const configPath = path.resolve(packageDirPath, BB_CONFIG_NAME)
         // const { config, err } = await configFact.create(configPath)
         // if (err) throw err
 
