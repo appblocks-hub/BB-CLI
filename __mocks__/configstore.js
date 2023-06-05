@@ -43,4 +43,4 @@ const config = {
   },
 }
 
-module.exports = { configstore: config }
+module.exports = { configstore: config, headLessConfigStore: {} }

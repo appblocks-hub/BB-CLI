@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+name: release-please
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: node
+          package-name: release-please-action
+          # token: ${{ secrets.ACTION_SECRET}}
+          bump-minor-pre-major: true
+          bootstrap-sha: ab5a31179d598f165ae990ce129f06d9e7186bf6
+          pull-request-header: ''
