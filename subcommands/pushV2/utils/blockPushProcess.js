@@ -7,13 +7,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { transports } = require('winston')
 const { BlockPushError } = require('../../../utils/errors/blockPushError')
 const { GitError } = require('../../../utils/errors/gitError')
 const { ensureReadMeIsPresent } = require('../../../utils/fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, gitCommitWithMsg, gitStageAllIn } = require('../../../utils/gitCheckUtils')
 const { GitManager } = require('../../../utils/gitManagerV2')
-const { logger } = require('../../../utils/logger')
+const { Logger } = require('../../../utils/loggerV2')
 
 const blockPushProcess = async (options) => {
   const {
@@ -30,8 +29,7 @@ const blockPushProcess = async (options) => {
 
   try {
     process.send({ failed: false, message: 'Starting to push..' })
-    logger.add(new transports.File({ filename: `./pushLogs/${blockName}.log` }))
-
+    const { logger } = new Logger('pushProcess')
     if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
 
     // setup GitManager
