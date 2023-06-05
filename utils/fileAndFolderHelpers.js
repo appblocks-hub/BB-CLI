@@ -17,69 +17,6 @@ const { BlockPushError } = require('./errors/blockPushError')
 const { getShieldHeader } = require('./getHeaders')
 
 /**
- * Deletes files in a folder
- * @param {PathLike} dir Path to directory
- */
-function wipeAllFilesIn(dir) {
-  console.log('wiping in ', dir)
-  const files = fs.readdirSync(dir)
-  try {
-    for (let i = 0; i < files.length; i += 1) {
-      console.log('Removing ', path.join(dir, files[i]))
-      fs.rmSync(path.join(dir, files[i]), { recursive: true, force: true })
-    }
-  } catch (e) {
-    console.log('error deleting files')
-  }
-}
-
-function isDirClean(dir) {
-  try {
-    const files = fs.readdirSync(dir)
-    // console.log(files.length, 'klasdlaksd')
-    if (files.length === 0) return true
-    return false
-  } catch (e) {
-    if (e.code === 'ENOENT') return true
-  }
-  return false
-}
-/**
- * @param {PathLike} dir
- * @returns {String|Number} Path string if env is found, else object with number of directories and files
- */
-function isDirCleanOLD(dir) {
-  // const dir = process.cwd()
-  try {
-    const files = fs.readdirSync(dir)
-    if (files.includes('block.config.json')) {
-      return dir
-    }
-    return files.reduce(
-      (acc, file) => {
-        if (fs.statSync(path.resolve(file)).isDirectory()) return { ...acc, dirs: acc.dirs + 1 }
-        return { ...acc, files: acc.files + 1 }
-      },
-      { dirs: 0, files: 0 }
-    )
-  } catch (e) {
-    if (e.code === 'ENOENT') return { dirs: 0, files: 0 }
-  }
-  return { dirs: 0, files: 0 }
-  // console.log(dir);
-  // console.log(process.cwd());
-  // if(dir===path.parse(process.cwd()).root) return
-  // if(dir===path.parse(process.cwd()).root) return
-  // try {
-  //   const arrayOfFiles = fs.readdirSync(dir)
-  //   console.log(arrayOfFiles)
-  //   isDirClean(path.join(dir,"../"))
-  // } catch(e) {
-  //   console.log(e)
-  // }
-}
-
-/**
  * Creates dir if not present
  * @param {PathLike} dir Path of directory
  * @returns
@@ -378,10 +315,7 @@ async function scan(root) {
 
 module.exports = {
   ensureDirSync,
-  wipeAllFilesIn,
   createFileSync,
-  isDirClean,
-  isDirCleanOLD,
   getBlockDirsIn,
   findBlockWithNameIn,
   ensureReadMeIsPresent,
