@@ -1,12 +1,6 @@
-/* eslint-disable */
 const { AsyncSeriesHook } = require('tapable')
 
-const { log } = require('console')
-const createBlock = require('../../utils/createBlock')
-const { Logger } = require('../../utils/loggerV2')
-const createComponent = require('../../utils/createComponentV2')
 const { createRepo } = require('../../utils/createRepoV2')
-const { CreateRepoError } = require('../../utils/errors/createRepoError')
 
 /**
  * @class
