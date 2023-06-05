@@ -109,6 +109,8 @@ const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
     updatePackage = false
 
   let isPublic
+  let orphanBranchName = 'block_' + packageConfig.name
+
   if (repoVisibility === 'PUBLIC') isPublic = true
   else isPublic = false
 
@@ -117,8 +119,7 @@ const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
     updatePackage = true
   }
 
-  if (!packageConfig?.source?.branch) {
-    orphanBranchName = 'block_' + packageConfig.name
+  if (!packageConfig?.source?.branch || packageConfig.source.branch!==orphanBranchName) {
     packageConfigToUpdate.source = { ...packageConfig.source, branch: orphanBranchName }
     updatePackage = true
   }

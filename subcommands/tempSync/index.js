@@ -59,7 +59,7 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    // writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
+    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
 
     syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID)
 
