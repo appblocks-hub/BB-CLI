@@ -17,8 +17,8 @@ const syncOrphanBranch = async (options) => {
     try {
       await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
     } catch (err) {
-      console.log('error is \n', err)
       console.log(`error creating orphan branch for ${block.blockManager.config.name}`)
+      throw err
     }
   }
 }

@@ -38,8 +38,6 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID)
 
     shieldHeader.space_id = currentSpaceID
 
-    writeFileSync('testApiPayload.json', JSON.stringify(postData), { encoding: 'utf8', flag: 'w' })
-
     const res = await axios.post(blocksSync, postData, {
       headers: shieldHeader,
     })
@@ -51,7 +49,6 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID)
 
     const resData = res.data.data
 
-    console.log("response from the api is \n",resData)
 
     const logOutRoot=path.resolve('logs', 'out')
     const syncLogDirectory = path.join(logOutRoot,'sync-logs' )

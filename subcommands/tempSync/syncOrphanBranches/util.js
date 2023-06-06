@@ -40,10 +40,7 @@ const generateOrphanBranch = async (options) => {
       const memberBlockDirectory = blockMetaDataMap[item].blockManager.directory
       const directoryPathArray = memberBlockDirectory.split('/')
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
-      console.log(
-        `directory relative path for block ${blockMetaDataMap[item].blockManager.config.name} is\n`,
-        directoryRelativePath
-      )
+    
       exclusions.push(directoryRelativePath)
     })
   }
@@ -72,7 +69,6 @@ const generateOrphanBranch = async (options) => {
 
       // await Git.checkoutBranch(defaultBranch)
     } catch (err) {
-      console.log('error is', err)
       rmdirSync(orphanBranchPath, { recursive: true, force: true })
       throw err
     }
@@ -83,7 +79,6 @@ const generateOrphanBranch = async (options) => {
   const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
 
   if (!remoteBranchExists) {
-    console.log('entered if case orphan branch doesnt exists on Remote \n')
 
     await Git.newOrphanBranch(orphanBranchName)
 
@@ -95,7 +90,6 @@ const generateOrphanBranch = async (options) => {
 
     await Git.setUpstreamAndPush(orphanBranchName)
   } else {
-    console.log('entered if case orphan branch already exists on Remote \n')
     await Git.fetch()
 
     await Git.checkoutBranch(orphanBranchName)
@@ -109,13 +103,6 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
-
-    console.log(
-      `commit hashes for orphan and workspace for block ${blockConfig.name} are\n`,
-      orphanBranchCommitHash,
-      block.workSpaceCommitID,
-      orphanBranchCommitHash !== block.workSpaceCommitID
-    )
 
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
       clearDirectory(orphanBranchPath, exclusions)

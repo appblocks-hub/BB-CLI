@@ -59,7 +59,6 @@ const tempSync = async (blockName, options) => {
       repoVisibility,
     })
 
-    writeFileSync('metaDataMap.json', JSON.stringify(bbModulesData.blockMetaDataMap), { encoding: 'utf8', flag: 'w' })
 
     syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID)
 
@@ -67,8 +66,7 @@ const tempSync = async (blockName, options) => {
 
     const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
   } catch (error) {
-    // console.log('error inside sync is \n', error)
-    // console.log(chalk.red(error.message))
+    console.log(chalk.red(error.message))
   }
 }
 

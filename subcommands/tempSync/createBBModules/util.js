@@ -294,7 +294,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
     repoVisibility = existingRepoData?.visibility ?? ''
 
     if (repoVisibility.length === 0) {
-      // console.log("Error getting Repository visibility and main branch from git\n")
+      console.log("Error getting Repository visibility and main branch from git\n")
 
       const inputRepoVisibility = await readInput({
         name: 'inputRepoVisibility',
