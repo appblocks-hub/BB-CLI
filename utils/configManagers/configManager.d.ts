@@ -90,7 +90,7 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   configPath: string
   config: C
   directory: string
-  pathRelativeToParent: string
+  pathRelativeToParent: string // This will not always be filled, be cautious 
   liveConfigPath: string
   liveDetails: BlockLiveDetails
 
@@ -107,6 +107,7 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   public findMyParentPackage(): Promise<string>
   public isPackage(): config is PackageConfig
   public init(): Promise<void>
+  public getBlockId(): Promise<string>
 
   /**
    * Returns the updated config, also emits a write event
