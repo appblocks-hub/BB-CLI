@@ -9,18 +9,17 @@ const chalk = require('chalk')
 
 const path = require('path')
 const { existsSync, readFileSync } = require('fs')
-const { transports } = require('winston')
 const { appConfig } = require('../../utils/appconfigStore')
 const { pullPackage } = require('./pullPackage')
 const { spinnies } = require('../../loader')
 const { getBlockDetails, getBlockMetaData } = require('../../utils/registryUtils')
 const { feedback } = require('../../utils/cli-feedback')
 const { pullBlock, handleOutOfContextCreation } = require('./util')
-const { logger } = require('../../utils/logger')
+const { Logger } = require('../../utils/loggerV2')
 const { confirmationPrompt } = require('../../utils/questionPrompts')
 
 const pull = async (pullBlockData, options, { cwd = '.' }) => {
-  logger.add(new transports.File({ filename: `./pull.log` }))
+  const { logger } = new Logger('pull')
 
   const cwdValue = pullBlockData ? cwd : '../'
 
@@ -66,7 +65,6 @@ const pull = async (pullBlockData, options, { cwd = '.' }) => {
       metaData.pull_by_config_folder_name = path.basename(path.resolve())
     }
 
-    logger.add(new transports.File({ filename: 'pull.log' }))
     logger.info(`pull ${componentName} in cwd:${cwdValue}`)
     /**
      * @type {import('../../utils/jsDoc/types').blockDetailsdataFromRegistry}

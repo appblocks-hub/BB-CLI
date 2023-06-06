@@ -8,23 +8,21 @@
  */
 
 const { Command } = require('commander')
-const push = require('../subcommands/pushV2')
-const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
+const connectRemote = require('../subcommands/connectRemote')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
+const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 
 const program = new Command().hook('preAction', async () => {
   if (!isGitInstalled()) {
     console.log('Git not installed')
     process.exitCode = 1
-    return
   }
   await checkAndSetGitConnectionPreference()
 })
 
 program
-  .argument('[block name]', 'Name of block to push')
-  .option('-f, --force', 'commit and push all blocks')
-  .option('-m, --message <message>', 'commit message')
-  .action(push)
+  .option('-f, --force', 'Force with new repository')
+  .option('-ssh, --ssh-url <ssh-url>', 'Git ssh url of the repository')
+  .action(connectRemote)
 
 program.parse(process.argv)

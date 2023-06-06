@@ -1,100 +1,136 @@
-/**
- * Copyright (c) Appblocks. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-const chalk = require('chalk')
-const { exec } = require('child_process')
-const { existsSync, readSync, statSync, readFileSync } = require('fs')
 const path = require('path')
-const { appConfig } = require('../utils/appconfigStore')
+const { exec } = require('child_process')
+const chalk = require('chalk')
+const ConfigFactory = require('../utils/configManagers/configFactory')
+const { Logger } = require('../utils/loggerV2')
+const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
+const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
+const { BB_CONFIG_NAME } = require('../utils/constants')
 
 function pexec(cmd, options, name) {
   return new Promise((resolve) => {
     exec(cmd, options, (error, stdout, stderr) => {
       if (error) {
-        resolve({ name, out: stderr.toString() })
+        // eslint-disable-next-line prefer-promise-reject-errors
+        resolve({ name, out: stderr.toString(), err: true })
         return
       }
-      resolve({ name, out: stdout.toString() })
+      resolve({ name, out: stdout.toString(), err: false })
     })
   })
 }
-const bbexec = async (command, options) => {
-  // const supportedCommands = ['git', 'ls', 'l']
-  // const supportedArguments = { git: ['clone', 'pull', 'branch', 'push', 'fetch', 'status'], ls: ['-a'], l: ['-a'] }
-  // const [cmd, args] = command.split(' ')
-  // if (supportedCommands.findIndex((v) => v === cmd) === -1) {
-  //   console.log(`Command ${chalk.whiteBright(cmd)} not supported..`)
-  //   process.exit(1)
-  // }
-  // if (args && supportedArguments[cmd].findIndex((v) => v === args) === -1) {
-  //   console.log(`Command argument ${chalk.whiteBright(args)} is not supported`)
-  //   console.log(`Supported arguments for command ${chalk.whiteBright(cmd)} are:`)
-  //   supportedArguments[cmd].forEach((v) => console.log(`- ${v}`))
-  //   console.log('\n')
-  //   process.exit(-1)
-  // }
-  await appConfig.init()
-  const blocks = options.inside || []
-  const group = options.group || ''
-  if (blocks.length > 0 && group) throw new Error('Cant use both -i & -g')
+async function bbexecV2(command, options) {
+  const CONFIGNAME = BB_CONFIG_NAME
 
-  if (!existsSync(path.resolve(group))) {
-    console.log(`no ${group} folder found`)
+  const { logger } = new Logger('exec')
+  logger.info('EXEC COMMAND STARTED')
+
+  const { groups, inside, types, limit } = options
+
+  /**
+   *
+   * @param {PackageConfigManager | BlockConfigManager} c a manager
+   * @returns {boolean}
+   */
+  const typeSatisfies = (c) => {
+    if (types.length === 0) return true
+    return types.includes(c.config.type)
   }
 
-  const groupPath = path.resolve(group)
+  /**
+   * Checks if passed manager name is in the names list given by the user
+   * @param {PackageConfigManager | BlockConfigManager} c a manager
+   * @returns {boolean}
+   */
+  const nameSatisfies = (c) => {
+    if (inside.length === 0) return true
+    return inside.includes(c.config.name)
+  }
 
-  const folders = readSync(groupPath)
+  /**
+   *
+   * @param {PackageConfigManager | BlockConfigManager} c a manager
+   * @returns {boolean}
+   */
+  const groupSatisfies = (c) => {
+    if (groups.length === 0) return true
+    const pathBits = c.pathRelativeToParent.split(path.sep)
+    return pathBits.some((b) => groups.includes(b))
+  }
 
-  for (let i = 0; i < folders.length; i += 1) {
-    const block = folders[i]
-    if (statSync(block).isDirectory()) {
-      const config = readFileSync(path.join(block, 'block.config.json'))
-      blocks.push(config.name)
+  /**
+   * For debug alone
+   */
+  logger.debug(`groupList-${groups.join(',')}`)
+  logger.debug(`insideList-${inside.join(',')}`)
+  logger.debug(`typelist-${types.join(',')}`)
+  logger.debug(`limit-${limit}`)
+
+  const { manager, e } = await ConfigFactory.create(path.resolve(CONFIGNAME))
+
+  if (e?.err) {
+    logger.error(e.err.message)
+    console.log(e.err.message)
+    process.exitCode = 1
+    return
+  }
+
+  /**
+   * @type {Array<string>}
+   */
+  const pathList = []
+  /**
+   * @type {Array<string>}
+   */
+  const roots = []
+
+  // If inside a package, traverse the tree and build pathList
+  if (manager instanceof PackageConfigManager) {
+    logger.info('User is inside a package')
+    roots.push(manager)
+    for (; roots.length > 0; ) {
+      const root = roots.pop()
+      for await (const m of root.getDependencies()) {
+        if (m instanceof PackageConfigManager) {
+          roots.push(m)
+        }
+        if (!groupSatisfies(m)) continue
+        if (!nameSatisfies(m)) continue
+        if (!typeSatisfies(m)) continue
+        pathList.push(m)
+      }
     }
   }
 
-  const missingBlocks = []
-  const promiseArray = []
-  if (blocks.length === 0) {
-    console.log(chalk.cyan(`No blocke names given, trying to run ${command} in all blocks..`))
-    for (const blockname of appConfig.allBlockNames) {
-      blocks.push(blockname)
+  if (manager instanceof BlockConfigManager) {
+    logger.info('User is inside a block')
+    // If inside a block, Check if conditions satisfy
+    if (!groupSatisfies(manager)) {
+      console.log(`You are inside a block (${manager.config.name}) & is not inside any of the given groups`)
     }
-  }
-  if (blocks.length === 0) {
-    console.log(chalk.red('No blocks found...'))
-  } else {
-    console.log(chalk.cyan('Running command in :'))
-    console.log(chalk.dim(blocks))
-    console.log('\n')
-  }
-  for (let i = 0; i < blocks.length; i += 1) {
-    const blockName = blocks[i]
-    if (appConfig.has(blockName)) {
-      promiseArray.push(pexec(command, { cwd: appConfig.getBlock(blockName).directory }, blockName))
-    } else {
-      missingBlocks.push(blockName)
+    if (!nameSatisfies(manager)) {
+      console.log(`You are inside a block (${manager.config.name}) & it does not match any of the given block names`)
     }
-  }
-  Promise.allSettled(promiseArray).then((res) => {
-    if (missingBlocks.length !== 0) {
-      console.log('\n')
-      console.log(`${chalk.red(`Couldn't find following blocks..`)}`)
-      missingBlocks.forEach((v) => console.log(chalk.dim(v)))
-      console.log('\n')
+    if (!typeSatisfies(manager)) {
+      console.log(`You are inside a block (${manager.config.name}) & it does not match any of the given block types`)
     }
+    // if all conditions satisfy, add current block directory to pathList
+
+    pathList.push(manager)
+  }
+
+  console.log(`\n${chalk.whiteBright(command)} will be run in the following blocks\n`)
+  pathList.forEach((v) => {
+    console.log(`${chalk.blue(v.config.name)} : ${chalk.italic(v.directory)}`)
+    logger.info(v.directory)
+  })
+  console.log('\n')
+  Promise.allSettled(pathList.map((l) => pexec(command, { cwd: l.directory }, l.config.name))).then((res) => {
     res.forEach((v) => {
-      const colour = v.status === 'fulfilled' ? chalk.green : chalk.red
+      const colour = v.value.err ? chalk.red : chalk.green
       console.log(colour(v.value.name))
-      console.log(v.value.out)
-      console.log('\n')
+      console.log(`${v.value.out}\n`)
     })
   })
 }
-
-module.exports = bbexec
+module.exports = bbexecV2

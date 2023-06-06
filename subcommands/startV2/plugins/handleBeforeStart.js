@@ -1,7 +1,6 @@
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
 const { checkLanguageVersionExistInSystem } = require('../../languageVersion/util')
-const { getNodePackageInstaller } = require('../../../utils/nodePackageManager')
 // eslint-disable-next-line no-unused-vars
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 // eslint-disable-next-line no-unused-vars
@@ -19,48 +18,47 @@ class HandleBeforeStart {
         core
       ) => {
         global.rootDir = this.cwd
-        getNodePackageInstaller()
 
         const { blockName } = core.cmdArgs
         // If name exist check with config and dependencies
-        if (blockName && !core.packageConfigManager.has(blockName)) {
+        if (blockName && !await core.packageManager.has(blockName)) {
           throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
         }
 
         // If no block name is given, all blocks has to be started.
         // Make sure there are one or more blocks present
 
-        if ([...(await core.packageConfigManager.allBlockNames())].length <= 0) {
+        if ([...(await core.packageManager.allBlockNames())].length <= 0) {
           throw new Error(`No blocks to start!`)
         }
 
         // TODO: add a --restart flag. and do a check here. if cmdArgs.restart===false
-        if ([...(await core.packageConfigManager.nonLiveBlocks())].length === 0) {
+        if ([...(await core.packageManager.nonLiveBlocks())].length === 0) {
           throw new Error(`All blocks are already live!`)
         }
-
+        
         // check if function or job exist when blockType passed as function
-        if (core.cmdOpts.blockType === 'function' && ![...(await core.packageConfigManager.jobBlocks())]?.length) {
+        if (core.cmdOpts.blockType === 'function' && ![...(await core.packageManager.fnBlocks())]?.length) {
           throw new Error(`No function blocks to start!`)
         }
 
         // check if ui blocks exist when blockType passed as ui
-        if (core.cmdOpts.blockType === 'ui' && ![...(await core.packageConfigManager.uiBlocks())]?.length) {
+        if (core.cmdOpts.blockType === 'ui' && ![...(await core.packageManager.uiBlocks())]?.length) {
           throw new Error(`No ui blocks to start!`)
         }
 
         // Check if block runtime languages are in system
         const blockLanguages = blockName
-          ? [await core.packageConfigManager.getBlock(blockName).config?.language]
-          : [...new Set([...(await core.packageConfigManager.getAllBlockLanguages())])]
-        const supportedAppblockVersions = core.packageConfigManager.config?.supportedAppblockVersions
+          ? [await core.packageManager.getBlock(blockName).config?.language]
+          : [...new Set([...(await core.packageManager.getAllBlockLanguages())])]
+        const supportedAppblockVersions = core.packageManager.config?.supportedAppblockVersions
         await checkLanguageVersionExistInSystem({ supportedAppblockVersions, blockLanguages })
 
         /**
          * If some blocks are already running, kill them before
          * starting them again to avoid not killed processes
          */
-        for (const block of await core.packageConfigManager.liveBlocks()) {
+        for (const block of await core.packageManager.liveBlocks()) {
           if (!isRunning(block?.pid)) continue
           treeKill(block.pid, (err) => {
             if (err) {

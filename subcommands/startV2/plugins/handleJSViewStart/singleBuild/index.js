@@ -24,7 +24,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     let { elementsBlocks, containerBlocks, depLibBlocks } = blocks || {}
 
     if (!blocks) {
-      const viewBlocks = [...(await core.packageConfigManager.uiBlocks())]
+      const viewBlocks = [...(await core.packageManager.uiBlocks())]
       elementsBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
       depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
@@ -61,6 +61,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     const updatedEnv = await upsertEnv(
       'view',
       {
+        [`BB_${rootPackageName}_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
         [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
         [`BB_${rootPackageName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
       },
@@ -71,7 +72,10 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     const emEleFolderName = '._ab_em_elements'
     const emEleFolder = path.join(relativePath, emEleFolderName)
 
-    if (updatedEnv?.envString) writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
+    if (updatedEnv?.envString) {
+      writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
+      writeFileSync(path.join(containerBlock.directory, '.env'), updatedEnv.envString)
+    }
 
     core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
@@ -103,9 +107,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       elementsBlocks.forEach((blockManager) => {
         if (errorBlocks.includes(blockManager.config.name)) return
         blockManager.updateLiveConfig({
-          pid: emData.pid || null,
           isOn: true,
-          singleBuild: true,
+          singleInstance: true,
+          pid: emData.pid || null,
           port: emElPort || null,
           log: emData.logPaths,
         })

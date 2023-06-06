@@ -20,7 +20,6 @@ const Paginator = require('inquirer/lib/utils/paginator')
 const runAsync = require('run-async')
 const { takeWhile } = require('rxjs/operators')
 // const fs = require("fs")
-// const { logger } = require('./logger')
 // const { ReadLine } = require("readline")
 
 const isSelectable = (choice) => choice.type !== 'separator' && !choice.disabled

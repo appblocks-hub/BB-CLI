@@ -17,6 +17,7 @@ class HandleNodeFunctionStart {
   constructor() {
     this.fnBlocks = []
     this.blockEmulateData = {}
+    this.middlewareBlockListData = {}
     this.depsInstallReport = []
     this.port = 5000
     this.pid = 0
@@ -28,6 +29,8 @@ class HandleNodeFunctionStart {
    */
   apply(StartCore) {
     StartCore.hooks.beforeStart.tapPromise('HandleNodeFunctionStart', async (/** @type {StartCore} */ core) => {
+      if (core.cmdOpts.blockType && core.cmdOpts.blockType !== 'function') return
+
       /**
        * Filter node fn blocks
        */
@@ -50,7 +53,18 @@ class HandleNodeFunctionStart {
           name: block.config.name,
           type: block.config.type,
           directory: block.directory,
-          relativeDirectory: block.directory,
+          middlewares: block.config.middlewares,
+          relativeDirectory: dir,
+        }
+      })
+
+      core.middlewareBlockList.forEach((block) => {
+        const dir = path.relative(path.resolve(), block.directory)
+        this.middlewareBlockListData[block.config.name] = {
+          name: block.config.name,
+          type: block.config.type,
+          directory: block.directory,
+          relativeDirectory: dir,
         }
       })
 
@@ -59,7 +73,12 @@ class HandleNodeFunctionStart {
        */
       this.port = this.fnBlocks[0].availablePort
 
-      const _emFolderGen = await generateEmFolder(emPath, this.blockEmulateData, this.port)
+      const _emFolderGen = await generateEmFolder(
+        emPath,
+        this.blockEmulateData,
+        this.port,
+        this.middlewareBlockListData
+      )
       if (_emFolderGen.err) {
         spinnies.fail('emBuild', { text: 'Function emulator build failed' })
         return
@@ -110,8 +129,8 @@ class HandleNodeFunctionStart {
         const rootPackageName = core.packageConfig.name.toUpperCase()
         const { environment } = core.cmdOpts
         await upsertEnv('function', {}, environment, rootPackageName)
-        const updateEnvValue = { [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${this.port}` }
-        await upsertEnv('view', updateEnvValue, environment, rootPackageName)  
+        const updateEnvValue = { [`BB_${rootPackageName}_FUNCTION_URL`]: `http://localhost:${this.port}` }
+        await upsertEnv('view', updateEnvValue, environment, rootPackageName)
 
         // start node
         const child = spawn('node', ['index.js'], {
@@ -124,16 +143,32 @@ class HandleNodeFunctionStart {
         this.pid = child.pid
         await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
 
+        const updateConfig = {
+          isOn: true,
+          singleInstance: true,
+          pid: this.pid || null,
+          port: this.port || null,
+          log: {
+            out: logOutPath,
+            err: logErrPath,
+          },
+        }
+
         for (const blockManager of this.fnBlocks) {
-          blockManager.updateLiveConfig({
-            isOn: true,
-            pid: this.pid || null,
-            port: this.port || null,
-            log: {
-              out: logOutPath,
-              err: logErrPath,
-            },
-          })
+          blockManager.updateLiveConfig(updateConfig)
+        }
+
+        // update middleware block as live to avoid issues of some blocks are not start
+        for (const blockManager of core.middlewareBlockList) {
+          blockManager.updateLiveConfig(updateConfig)
+        }
+
+        // update middleware block as live to avoid issues of some blocks are not start
+        for (const { type, blocks } of core.blockStartGroups) {
+          if (type !== 'shared-fn') continue
+          for (const blockManager of blocks) {
+            blockManager.updateLiveConfig(updateConfig)
+          }
         }
 
         spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })

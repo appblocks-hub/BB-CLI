@@ -14,15 +14,26 @@ type BlockDetails = {
 
 declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   constructor(config: PackageConfig, cwd: PathLike)
-  
+
   liveDetails: blockLiveDetails
-  
+
   readonly isPackageConfigManager: true
-  
+
+  /**
+   * Function to traverse on nested packages with given level or till the end
+   */
+  private _traverseManager(tLevel: Number | null): Promise<Array<BlockConfigManager>>
+
   public getDependencies<C extends PackageConfigManager | BlockConfigManager>(
     filter?: (b: C) => boolean,
     picker?: (b: C) => Partial<C>
   ): Generator<PackageConfigManager | BlockConfigManager> | []
+
+  /**
+   * 
+   * @param block Name of block to check
+   */
+  public has(block: string): boolean
 
   /**
    *  To iterate and get all live blocks' config manager

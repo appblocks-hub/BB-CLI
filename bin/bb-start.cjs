@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const start = require('../subcommands/start')
+const start = require('../subcommands/startV2')
 const { checkLogDirs } = require('../utils/preActionMethods/preAction-start')
 
 const program = new Command().hook('preAction', async () => {
@@ -19,6 +19,7 @@ program
   .argument('[name]', 'Name of block to start')
   .option('--use-pnpm', 'use pnpm to install dependencies')
   .option('--multi-instance', 'multi instance')
+  .option('-env, --environment <environment>', 'environment')
   .option('-bt, --block-type <block-type>', 'Block type to start')
   .action(start)
 

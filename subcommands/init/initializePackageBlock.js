@@ -22,6 +22,7 @@ const { lrManager } = require('../../utils/locaRegistry/manager')
 const getRepoUrl = require('../../utils/noRepo')
 const initializeSpaceToPackageBlock = require('./initializeSpaceToPackageBlock')
 const { getAppblockVersionData } = require('../publish/util')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const initializePackageBlock = async (appblockName, options) => {
   const { autoRepo, repositoryType } = options
@@ -92,7 +93,7 @@ const initializePackageBlock = async (appblockName, options) => {
     }
   }
 
-  const CONFIGPATH = path.join(DIRPATH, 'block.config.json')
+  const CONFIGPATH = path.join(DIRPATH, BB_CONFIG_NAME)
   createFileSync(CONFIGPATH, {
     name: blockFinalName,
     type: 'package',

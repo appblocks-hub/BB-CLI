@@ -12,6 +12,7 @@ const { feedback } = require('../../utils/cli-feedback')
 const { Logger } = require('../../utils/loggerV2')
 // eslint-disable-next-line no-unused-vars
 const { spinnies } = require('../../loader')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 /**
  * What does start do?
@@ -51,6 +52,9 @@ class StartCore {
      * @type {Iterable<{type:string,blocks:Array}>}>}
      */
     this.blockStartGroups = {}
+
+    this.middlewareBlockList = []
+
     this.hooks = {
       beforeStart: new AsyncSeriesHook(['core']),
       afterStart: new AsyncSeriesHook(['core']),
@@ -58,25 +62,25 @@ class StartCore {
   }
 
   async initializeConfigManager() {
-    const configPath = path.resolve('block.config.json')
+    const configPath = path.resolve(BB_CONFIG_NAME)
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       this.isOutOfContext = true
     } else if (configManager instanceof PackageConfigManager) {
-      this.packageConfigManager = configManager
-      this.packageConfig = this.packageConfigManager.config
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
     } else throw new Error('Not inside a package context')
   }
 
   async start() {
     // beforeCreate hook
-    await this.hooks.beforeStart?.promise(this, this.packageConfigManager)
+    await this.hooks.beforeStart?.promise(this, this.packageManager)
 
     // common core functionality if any
 
     // beforeCreate hook
-    await this.hooks.afterStart?.promise(this, this.packageConfigManager)
+    await this.hooks.afterStart?.promise(this, this.packageManager)
   }
 
   /**
@@ -85,9 +89,10 @@ class StartCore {
   async cleanUp() {
     if (JSON.stringify(this.blockStartGroups) === '{}') return
     for (const { blocks } of this.blockStartGroups) {
-      blocks.forEach((v) => v.portKey?.abort())
+      for (const { portKey } of blocks) {
+        if (portKey) portKey.abort()
+      }
     }
-    process.exitCode = 0
   }
 }
 

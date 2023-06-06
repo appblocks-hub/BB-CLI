@@ -22,6 +22,7 @@ const { updateRepository } = require('../../utils/Mutations')
 const { getOrgId } = require('../../utils/questionPrompts')
 const registerBlock = require('../../utils/registerBlock')
 const { spinnies } = require('../../loader')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 /**
  *
@@ -168,7 +169,7 @@ const updateBlockConfig = async (options) => {
   const { clonePath, cloneDirName, blockType, blockFinalName, url, sshUrl, blockId } = options
   let blockConfig
   try {
-    blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json')))
+    blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME)))
   } catch (err) {
     const type = blockTypeInverter(blockType)
     const isViewType = [2, 3].includes(blockType)
@@ -187,7 +188,7 @@ const updateBlockConfig = async (options) => {
   blockConfig.blockId = blockId
   blockConfig.source = { https: url, ssh: sshUrl }
   blockConfig.isFork = true
-  writeFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'), JSON.stringify(blockConfig))
+  writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
   spinnies.update('fork', { text: `Updated block config` })
   return true
 }

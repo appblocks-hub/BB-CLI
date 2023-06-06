@@ -14,8 +14,10 @@ const program = new Command()
 
 program
   .argument('<command>', 'command to run in quotes.eg:"ls"')
-  .option('-in,--inside <blocks...>', 'inside which block?')
-  .option('-g,--group', 'in a folder')
+  .option('-in,--inside <blocks...>', 'inside which block?', [])
+  .option('-t,--types <types...>', 'inside specific types', [])
+  .option('-g,--groups <groups...>', 'in a folder', [])
+  // .option('-l,--limit <limit>', 'level', -1)
   .action(exec)
 
 program.parse(process.argv)

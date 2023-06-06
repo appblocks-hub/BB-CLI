@@ -1,6 +1,7 @@
 const path = require('path')
 const chalk = require('chalk')
 const ConfigManager = require('./configManager')
+const { BB_CONFIG_NAME } = require('../constants')
 
 class PackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
@@ -8,53 +9,46 @@ class PackageConfigManager extends ConfigManager {
     this.isPackageConfigManager = true
   }
 
-  async liveBlocks() {
+  async liveBlocks(tLevel) {
     const filter = ({ liveDetails }) => liveDetails.isOn
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async nonLiveBlocks() {
+  async nonLiveBlocks(tLevel) {
     const filter = ({ liveDetails }) => !liveDetails.isOn
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async uiBlocks() {
+  async uiBlocks(tLevel) {
     const filter = ({ config }) => ['ui-container', 'ui-elements', 'ui-dep-lib'].includes(config.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async fnBlocks() {
+  async fnBlocks(tLevel) {
     const filter = ({ config }) => ['function'].includes(config.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async sharedFnBlocks() {
+  async sharedFnBlocks(tLevel) {
     const filter = ({ config }) => ['shared-fn'].includes({ config }.type)
-    const res = []
-    for await (const name of this.getDependencies(filter)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.filter(filter)
   }
 
-  async allBlockNames() {
+  async allBlockNames(tLevel) {
     const picker = ({ config }) => config.name
-    const res = []
-    for await (const name of this.getDependencies(null, picker)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.map(picker)
   }
 
-  async getAllBlockLanguages() {
+  async getAllBlockLanguages(tLevel) {
     const picker = ({ config }) => config.language
-    const res = []
-    for await (const name of this.getDependencies(null, picker)) res.push(name)
-    return res
+    const res = await this._traverseManager(tLevel)
+    return res.map(picker)
   }
 
   async addBlock(configPath) {
@@ -87,11 +81,6 @@ class PackageConfigManager extends ConfigManager {
     return this.config
   }
 
-  /**
-   * To check if App has a block registered in given name
-   * @param {String} block A block name
-   * @returns {Boolean} True if block exists, else False
-   */
   has(block) {
     return !!this.config.dependencies?.[block]
   }
@@ -103,6 +92,23 @@ class PackageConfigManager extends ConfigManager {
     return res[0]
   }
 
+  async _traverseManager(tLevel) {
+    let res = []
+    for await (const manager of this.getDependencies()) {
+      const shouldTraverse = tLevel == null || tLevel > 0
+      if (manager instanceof PackageConfigManager) {
+        if (!shouldTraverse) continue
+        const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
+        if (!manager._traverseManager) {
+          console.log('in =>', manager.config.name)
+        }
+        const children = await manager._traverseManager(nextTraverseLevel)
+        res = res.concat(children)
+      } else res.push(manager)
+    }
+    return res
+  }
+
   async *getDependencies(filter, picker) {
     if (!this.config?.dependencies) return []
     // Dynamic import to avoid circular dependency error
@@ -111,8 +117,9 @@ class PackageConfigManager extends ConfigManager {
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
         const relativeDirectory = this.config.dependencies[block].directory
-        const configPath = path.join(this.directory, relativeDirectory, 'block.config.json')
+        const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+        c.pathRelativeToParent = relativeDirectory
         if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
         const f = filter || (() => true)
         const p = picker || ((b) => b)

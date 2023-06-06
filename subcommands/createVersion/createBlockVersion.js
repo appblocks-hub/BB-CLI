@@ -19,39 +19,46 @@ const { pushBlocks } = require('../../utils/pushBlocks')
 const { readInput, confirmationPrompt, getGitConfigNameEmail } = require('../../utils/questionPrompts')
 const { updateReadme } = require('../../utils/registryUtils')
 const { getLanguageVersionData } = require('../languageVersion/util')
-const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
+const { getDependenciesV2, getDependencyIds } = require('../publish/dependencyUtil')
 
-const createBlockVersion = async ({ blockName, appConfig }) => {
-  if (!appConfig.has(blockName)) {
-    console.log('Block not found!')
-    process.exit(1)
-  }
+/**
+ *
+ * @param {BlockConfigManager} manager
+ * @returns
+ */
+const createBlockVersion = async (manager, blockName) => {
+  // if (!manager.has(blockName)) {
+  //   console.log('Block not found!')
+  //   process.exit(1)
+  // }
 
-  if (appConfig.isLive(blockName)) {
+  if (manager.isLive()) {
     console.log('Block is live, please stop before operation')
     process.exit(1)
   }
 
   // TODO - Check if there are any .sync files in the block and warn
-  const blockDetails = appConfig.getBlock(blockName)
+  // const blockDetails = appConfig.getBlock(blockName)
 
-  const latestVersion = getLatestVersion(blockDetails.directory)
+  // const latestVersion = getLatestVersion(blockDetails.directory)
+  const latestVersion = getLatestVersion(manager.directory)
+
   if (latestVersion) console.log(`Last published version is ${latestVersion}`)
 
-  if (!isClean(blockDetails.directory)) {
+  if (!isClean(manager.directory)) {
     console.log('Git directory is not clean, Please push before publish')
     process.exit(1)
   }
 
   // ------------------------------------------ //
-  const [readmePath] = ensureReadMeIsPresent(blockDetails.directory, blockName, false)
+  const [readmePath] = ensureReadMeIsPresent(manager.directory, blockName, false)
   if (!readmePath) {
     console.log('Make sure to add a README.md ')
     process.exit(1)
   }
 
   spinnies.add('p1', { text: `Getting blocks details` })
-  const blockId = await appConfig.getBlockId(blockName)
+  const blockId = await manager.getBlockId()
   spinnies.remove('p1')
   spinnies.stopAll()
 
@@ -76,7 +83,7 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
   })
 
   // check for abVersion langVersion Dependencies support for block
-  const { supportedAppblockVersions } = blockDetails.meta
+  const { supportedAppblockVersions } = manager.config
   let appblockVersionIds
 
   if (!supportedAppblockVersions) {
@@ -85,7 +92,7 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
 
   // ========= languageVersion ========================
   const { languageVersionIds, languageVersions, allSupported } = await getLanguageVersionData({
-    blockDetails,
+    blockDetails: manager.config,
     appblockVersionIds,
     supportedAppblockVersions,
   })
@@ -102,7 +109,7 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
 
   // ========= dependencies ========================
   // Check if the dependencies exit to link with block
-  const { dependencies, depExist } = await getDependencies({ blockDetails })
+  const { dependencies, depExist } = await getDependenciesV2({ blockDetails: manager.config })
   if (!depExist) {
     const noDep = await readInput({
       type: 'confirm',
@@ -119,7 +126,7 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
       dependencies,
       languageVersions,
       noRequest: true,
-      blockName: blockDetails.meta.name,
+      blockName: manager.config.name,
     })
     if (!isAllDepExist) {
       const goAhead = await confirmationPrompt({
@@ -132,18 +139,19 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
     }
   }
 
-  appConfig.updateBlock(blockName, { blockVersion: version })
+  manager.updateConfig({ blockVersion: version })
+  // appConfig.updateBlock(blockName, { blockVersion: version })
   const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
 
   spinnies.add('p1', { text: `Creating new version ${version}` })
-  await pushBlocks(gitUserName, gitUserEmail, `refactor: version ${version}`, [appConfig.getBlock(blockName)], true)
+  await pushBlocks(gitUserName, gitUserEmail, `refactor: version ${version}`, [manager], true)
 
   spinnies.update('p1', { text: `Tagging new version ${version}` })
 
-  const blockSource = blockDetails.meta.source
+  const blockSource = manager.config.source
   const prefersSsh = configstore.get('prefersSsh')
   const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
-  const Git = new GitManager(blockDetails.directory, 'Not very imp', repoUrl, prefersSsh)
+  const Git = new GitManager(manager.directory, 'Not very imp', repoUrl, prefersSsh)
   // await pushTags(blockDetails.directory)
   await Git.addTag(version, message)
   await Git.pushTags()

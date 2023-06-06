@@ -26,6 +26,7 @@ const {
 const { checkPnpm } = require('../../utils/pnpmUtils')
 // eslint-disable-next-line no-unused-vars
 const { AppblockConfigManager } = require('../../utils/appconfig-manager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const handleOutOfContextCreation = async () => {
   const goAhead = await confirmationPrompt({
@@ -158,7 +159,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
       if (appConfig.isOutOfContext) {
         appConfig.addBlock({
           directory: path.relative(cwd, path.resolve(clonePath, cloneDirName)),
-          meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, 'block.config.json'))),
+          meta: JSON.parse(readFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME))),
         })
       }
 
@@ -221,7 +222,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
       // This is code also present on createBlock
       let blockConfig
       try {
-        blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, localDirName, 'block.config.json')))
+        blockConfig = JSON.parse(readFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME)))
       } catch (err) {
         if (err.code === 'ENOENT') {
           console.log(chalk.dim('Pulled block has no config file, adding a new one'))
@@ -236,7 +237,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
       }
       blockConfig.name = metaData.BlockName
       blockConfig.source = { https: convertGitSshUrlToHttps(metaData.GitUrl), ssh: metaData.GitUrl }
-      writeFileSync(path.resolve(clonePath, localDirName, 'block.config.json'), JSON.stringify(blockConfig))
+      writeFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
 
       console.log(chalk.dim('Succesfully updated block config..'))
 
@@ -249,7 +250,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
 
       appConfig.addBlock({
         directory: path.relative(cwd, path.resolve(clonePath, localDirName)),
-        meta: JSON.parse(readFileSync(path.resolve(clonePath, localDirName, 'block.config.json'))),
+        meta: JSON.parse(readFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME))),
       })
 
       console.log(chalk.green(`${metaData.BlockName} pulled Successfully!`))

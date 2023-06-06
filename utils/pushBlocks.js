@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { BlockPusher } = require('./blockPusher')
+const { BlockPusher } = require('../subcommands/pushV2/utils/blockPusher')
 const { feedback } = require('./cli-feedback')
 const { multibar } = require('./multibar')
 

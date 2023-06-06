@@ -12,6 +12,8 @@ const spinnies = {
   add: jest.fn(),
   succeed: jest.fn(),
   remove: jest.fn(),
+  update: jest.fn(),
+  hasActiveSpinners: jest.fn(),
 }
 
 module.exports = { spinnies }

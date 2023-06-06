@@ -21,6 +21,7 @@ const checkBlockNameAvailability = require('../../utils/checkBlockNameAvailabili
 const createBlock = require('../../utils/createBlock')
 const { appConfig } = require('../../utils/appconfigStore')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 const cloneBlock = async ({ block_name, git_url, rootPath }) => {
   spinnies.add(block_name, { text: `Pulling ${block_name}` })
@@ -84,7 +85,7 @@ const createCustomVariant = async ({ metaData, packageConfigData, blockTypes }) 
   )
 
   const pbPath = path.join(clonePath, cloneDirName)
-  const pbcPath = path.join(pbPath, 'block.config.json')
+  const pbcPath = path.join(pbPath, BB_CONFIG_NAME)
   const pbc = JSON.parse(readFileSync(pbcPath))
   pbc.blockId = newPBlockId
   pbc.dependencies = {}
@@ -128,7 +129,7 @@ const createCustomVariant = async ({ metaData, packageConfigData, blockTypes }) 
     )
 
     const bPath = path.join(cPath, cDir)
-    const bcPath = path.join(bPath, 'block.config.json')
+    const bcPath = path.join(bPath, BB_CONFIG_NAME)
     const bc = JSON.parse(readFileSync(bcPath))
     bc.blockId = memberBlockId
     writeFileSync(bcPath, JSON.stringify(bc, null, 2))
