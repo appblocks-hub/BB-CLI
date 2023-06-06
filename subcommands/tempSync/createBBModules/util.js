@@ -7,19 +7,19 @@
  */
 
 const { existsSync, rmSync, readdirSync, statSync } = require('fs')
+const path = require('path')
+const chalk = require('chalk')
+const { prompt } = require('inquirer')
+const { nanoid } = require('nanoid')
 const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const path = require('path')
 const { getLatestCommits } = require('../syncOrphanBranches/util')
-const chalk = require('chalk')
 const { listSpaces } = require('../../../utils/spacesUtils')
 const { feedback } = require('../../../utils/cli-feedback')
-const { prompt } = require('inquirer')
 const { axios } = require('../../../utils/axiosInstances')
 const { githubGraphQl } = require('../../../utils/api')
 const { isInRepo } = require('../../../utils/Queries')
 const { getGitHeader } = require('../../../utils/getHeaders')
-const { nanoid } = require('nanoid')
 
 const buildBlockConfig = async (options) => {
   let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, rootPath, apiPayload } = options
@@ -41,11 +41,11 @@ const buildBlockConfig = async (options) => {
   for await (const blockManager of workSpaceConfigManager.getDependencies()) {
     if (!blockManager?.config) continue
 
-    //copying package config parent block name for transferring to the next package block
+    // copying package config parent block name for transferring to the next package block
     blockManager.newParentBlockIDs = workSpaceConfigManager.newParentBlockIDs.slice()
     blockManager.newParentBlockIDs.push(packageConfig.id)
     let currentMetaData = {
-      blockManager: blockManager,
+      blockManager,
     }
 
     let currentConfig = blockManager.config
@@ -80,14 +80,13 @@ const buildBlockConfig = async (options) => {
 
   buildApiPayload(workSpaceConfigManager.config, apiPayload)
 
-  //building metadata map for general purposes
+  // building metadata map for general purposes
   if (!blockMetaDataMap[packageConfig.name]) {
     blockMetaDataMap[packageConfig.name] = packageMetaData
   }
 }
 
 const buildApiPayload = (currentConfig, apiPayload) => {
-
   if (currentConfig?.id && currentConfig?.type && currentConfig?.source) {
     apiPayload[currentConfig.name] = {
       id: currentConfig.id,
@@ -105,11 +104,11 @@ const buildApiPayload = (currentConfig, apiPayload) => {
 }
 
 const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
-  let packageConfigToUpdate = {},
-    updatePackage = false
+  let packageConfigToUpdate = {}
+  let updatePackage = false
 
   let isPublic
-  let orphanBranchName = 'block_' + packageConfig.name
+  let orphanBranchName = `block_${packageConfig.name}`
 
   if (repoVisibility === 'PUBLIC') isPublic = true
   else isPublic = false
@@ -119,7 +118,7 @@ const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
     updatePackage = true
   }
 
-  if (!packageConfig?.source?.branch || packageConfig.source.branch!==orphanBranchName) {
+  if (!packageConfig?.source?.branch || packageConfig.source.branch !== orphanBranchName) {
     packageConfigToUpdate.source = { ...packageConfig.source, branch: orphanBranchName }
     updatePackage = true
   }
@@ -171,10 +170,9 @@ const checkAndPushChanges = async (Git, upstreamBranch, remoteName) => {
 
         console.log('Config updation Successful!')
         return // Exit the loop if push is successful
-      } else {
-        console.log('No config changes to push.')
-        return // Exit the loop if no changes to push
       }
+      console.log('No config changes to push.')
+      return // Exit the loop if no changes to push
     } catch (error) {
       console.error('Config updation failed:', error)
 
@@ -185,7 +183,7 @@ const checkAndPushChanges = async (Git, upstreamBranch, remoteName) => {
 
       retryCount++
       console.log('Retrying...')
-      await Git.pullBranch(upstreamBranch, remoteName)
+      await Git.pull()
     }
   }
 }
@@ -201,19 +199,21 @@ const removeSync = async (paths) => {
 }
 
 const searchFile = (directory, filename) => {
+  console.log('SEARCHFILES')
+  console.log({ directory, filename })
   const files = readdirSync(directory)
 
   for (const file of files) {
     const filePath = path.join(directory, file)
     const fileStat = statSync(filePath)
-
+    if (file === filename) {
+      return { filePath, directory }
+    }
     if (fileStat.isDirectory()) {
       const foundPath = searchFile(filePath, filename)
       if (foundPath) {
         return foundPath
       }
-    } else if (file === filename) {
-      return { filePath, directory }
     }
   }
 
@@ -225,19 +225,18 @@ const getAndSetSpace = async (configstore) => {
 
   if (currentSpaceId) {
     return currentSpaceId
-  } else {
-    const res = await listSpaces()
-    if (res.data.err) {
-      throw new Error('Unable to get space details')
-    }
-    const Data = res.data.data
-
-    /**
-     * @type {import('../utils/jsDoc/types').spaceDetails}
-     */
-    await promptAndSetSpace(Data, configstore)
-    return configstore.get('currentSpaceId')
   }
+  const res = await listSpaces()
+  if (res.data.err) {
+    throw new Error('Unable to get space details')
+  }
+  const Data = res.data.data
+
+  /**
+   * @type {import('../utils/jsDoc/types').spaceDetails}
+   */
+  await promptAndSetSpace(Data, configstore)
+  return configstore.get('currentSpaceId')
 }
 
 const promptAndSetSpace = async (Data, configstore) => {
@@ -294,7 +293,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
     repoVisibility = existingRepoData?.visibility ?? ''
 
     if (repoVisibility.length === 0) {
-      console.log("Error getting Repository visibility and main branch from git\n")
+      console.log('Error getting Repository visibility and main branch from git\n')
 
       const inputRepoVisibility = await readInput({
         name: 'inputRepoVisibility',

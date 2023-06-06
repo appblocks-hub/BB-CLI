@@ -40,7 +40,7 @@ const generateOrphanBranch = async (options) => {
       const memberBlockDirectory = blockMetaDataMap[item].blockManager.directory
       const directoryPathArray = memberBlockDirectory.split('/')
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
-    
+
       exclusions.push(directoryRelativePath)
     })
   }
@@ -63,7 +63,7 @@ const generateOrphanBranch = async (options) => {
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
       // console.log(`Git local config updated with ${gitUserName} & ${gitUserEmail}`)
 
-      await Git.addRemote(orphanRemoteName, repoUrl)
+      // await Git.addRemote(orphanRemoteName, Git.remote)
 
       await Git.fetch()
 
@@ -74,12 +74,11 @@ const generateOrphanBranch = async (options) => {
     }
   }
 
-  const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName, orphanRemoteName)
+  const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName)
 
   const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
 
   if (!remoteBranchExists) {
-
     await Git.newOrphanBranch(orphanBranchName)
 
     copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
@@ -94,9 +93,9 @@ const generateOrphanBranch = async (options) => {
 
     await Git.checkoutBranch(orphanBranchName)
 
-    await Git.pullBranch(orphanBranchName, orphanRemoteName)
+    await Git.pull()
 
-    //compare code from the existing workspace folder and the orphan branch folder
+    // compare code from the existing workspace folder and the orphan branch folder
 
     let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
 
@@ -172,7 +171,7 @@ function copyDirectory(sourceDir, destinationDir, exclusions) {
 
 function clearDirectory(directoryPath, exclusions) {
   const stack = [directoryPath]
-  let isFirstDirectory = true;
+  let isFirstDirectory = true
 
   while (stack.length > 0) {
     const currentPath = stack.pop()
@@ -195,8 +194,8 @@ function clearDirectory(directoryPath, exclusions) {
         }
       }
     }
- if (!isFirstDirectory) {
-      rmSync(currentPath);
+    if (!isFirstDirectory) {
+      rmSync(currentPath)
     }
   }
 }
@@ -205,15 +204,12 @@ function isExcluded(name, stats, exclusions) {
   return exclusions.some((exclusion) => {
     if (stats.isDirectory()) {
       return name.startsWith(exclusion)
-    } else {
-      return name === exclusion
     }
+    return name === exclusion
   })
 }
 
-const buildCommitMessage = (commitHash, commitMesage) => {
-  return `[commitHash:${commitHash}] ${commitMesage}`
-}
+const buildCommitMessage = (commitHash, commitMesage) => `[commitHash:${commitHash}] ${commitMesage}`
 
 const retrieveCommitHash = (commitMessage) => {
   const pattern = /\[commitHash:(\w+)\]/
