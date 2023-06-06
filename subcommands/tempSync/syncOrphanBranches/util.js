@@ -76,7 +76,7 @@ const generateOrphanBranch = async (options) => {
 
   const remoteBranchData = await Git.checkRemoteBranch(orphanBranchName)
 
-  const remoteBranchExists = remoteBranchData?.out ?? ''.includes(orphanBranchName)
+  const remoteBranchExists = (remoteBranchData?.out ?? '').includes(orphanBranchName)
 
   if (!remoteBranchExists) {
     await Git.newOrphanBranch(orphanBranchName)

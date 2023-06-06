@@ -199,26 +199,26 @@ const removeSync = async (paths) => {
 }
 
 const searchFile = (directory, filename) => {
-  console.log('SEARCHFILES')
-  console.log({ directory, filename })
-  const files = readdirSync(directory)
+  const files = readdirSync(directory);
+
+  if (files.includes(filename)) {
+    return { filePath: path.join(directory, filename), directory };
+  }
 
   for (const file of files) {
-    const filePath = path.join(directory, file)
-    const fileStat = statSync(filePath)
-    if (file === filename) {
-      return { filePath, directory }
-    }
+    const filePath = path.join(directory, file);
+    const fileStat = statSync(filePath);
+
     if (fileStat.isDirectory()) {
-      const foundPath = searchFile(filePath, filename)
+      const foundPath = searchFile(filePath, filename);
       if (foundPath) {
-        return foundPath
+        return foundPath;
       }
     }
   }
 
-  return null
-}
+  return null;
+};
 
 const getAndSetSpace = async (configstore) => {
   const currentSpaceId = configstore.get('currentSpaceId')

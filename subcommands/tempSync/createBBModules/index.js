@@ -68,13 +68,10 @@ const createBBModules = async (options) => {
   const pullResult = await Git.pull()
 
   // building initial package config manager inside bb_modules/workspace directory
-  // const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
-  //   workspaceDirectoryPath,
-  //   'block.config.json'
-  // )
-
-  const workSpaceConfigPath = path.join(workspaceDirectoryPath, 'block.config.json')
-  const workSpaceConfigDirectoryPath = workspaceDirectoryPath
+  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
+    workspaceDirectoryPath,
+    'block.config.json'
+  )
 
   const { manager: workSpaceConfigManager } = await ConfigFactory.create(workSpaceConfigPath)
 

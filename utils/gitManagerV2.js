@@ -38,7 +38,6 @@ class GitManager {
    */
   _createRemote(url) {
     this.remote = this.ssh ? url : url.replace('//github.com', `//${this.token}:x-oauth-basic@github.com`)
-    console.log(this.remote)
   }
 
   /* ********************************
@@ -233,7 +232,6 @@ class GitManager {
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
-    console.log(r)
     if (r.status === 'error') {
       console.log('git action is \n', r)
 
