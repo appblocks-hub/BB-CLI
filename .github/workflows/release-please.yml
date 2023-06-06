@@ -20,4 +20,3 @@ jobs:
           token: ${{ secrets.ACTION_SECRET}}
           bump-minor-pre-major: true
           bootstrap-sha: ab5a31179d598f165ae990ce129f06d9e7186bf6
-          pull-request-header: ''
