@@ -127,7 +127,7 @@ class ConfigManager {
       parentPackageConfig = { ...data }
     }
     return {
-      data: { parent, parentPackageConfig },
+      data: { parent, parentPackageConfig,parentPackageFound },
       err:
         currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
     }

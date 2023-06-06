@@ -77,9 +77,21 @@ cmd('start-job', 'Schedule the job')
 
 cmd('stop', 'To stop one or all blocks')
 
+cmd('temp-create', 'to create a new block')
+
+cmd('temp-init', 'temporary init command')
+
+cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
+
+cmd('sync', 'Sync blocks architecture with registry')
+
+cmd('temp-push', 'Temporary Push command')
+
+cmd('temp-pull', 'Temporary Pull command')
+
 cmd('stop-job', 'Stop the job')
 
-cmd('sync', 'To sync all blocks')
+// cmd('sync', 'To sync all blocks')
 
 cmd('update-language-version', 'update block language version')
 
