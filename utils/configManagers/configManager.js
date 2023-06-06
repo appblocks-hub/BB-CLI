@@ -5,6 +5,7 @@ const { writeFile, existsSync, mkdirSync } = require('fs')
 const { readFile } = require('fs/promises')
 const { readJsonAsync } = require('..')
 const { BB_CONFIG_NAME } = require('../constants')
+const { getBlockDetails } = require('../registryUtils')
 
 class ConfigManager {
   constructor(config, configPath) {
@@ -59,6 +60,24 @@ class ConfigManager {
       }
     } catch (err) {
       Promise.resolve()
+    }
+  }
+
+  async getBlockId() {
+    try {
+      if (this.config.blockId) {
+        return this.config.blockId
+      }
+      const resp = await getBlockDetails(this.config.name)
+      if (resp.status === 204) throw new Error(`${this.config.name} doesn't exists in block repository`).message
+      const { data } = resp
+      if (data.err) {
+        throw new Error('Something went wrong from our side\n', data.msg).message
+      }
+      return data.data.id
+    } catch (err) {
+      console.log(`Something went wrong while getting details of block:${this.config.name} -- ${err} `)
+      return null
     }
   }
 

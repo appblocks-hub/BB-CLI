@@ -30,6 +30,12 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Generator<PackageConfigManager | BlockConfigManager> | []
 
   /**
+   * 
+   * @param block Name of block to check
+   */
+  public has(block: string): boolean
+
+  /**
    *  To iterate and get all live blocks' config manager
    */
   public liveBlocks(): Array<BlockConfigManager>
