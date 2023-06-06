@@ -72,8 +72,8 @@ class GitManager {
     return this._run(`log --oneline -${n}`, [branchName || 'main'])
   }
 
-  checkRemoteBranch(branchName, remoteName) {
-    return this._run(`ls-remote --heads ${remoteName} ${branchName}`, [])
+  checkRemoteBranch(branchName) {
+    return this._run(`ls-remote --heads ${this.remote} ${branchName}`, [])
   }
 
   getCommits(branchName, n) {
@@ -100,8 +100,8 @@ class GitManager {
    *************** F ****************
    ******************************** */
 
-  fetch(from) {
-    return this._run('fetch', [from])
+  fetch(opts) {
+    return this._run('fetch', [opts, this.remote])
   }
 
   /* ********************************
@@ -159,7 +159,7 @@ class GitManager {
   }
 
   currentBranch() {
-    return this._run('branch', ['--show-current'])
+    return this._run('branch', [this.remote, '--show-current'])
   }
 
   diff() {
@@ -232,7 +232,6 @@ class GitManager {
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
-
     if (r.status === 'error') {
       console.log('git action is \n', r)
 
