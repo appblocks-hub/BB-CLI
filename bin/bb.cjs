@@ -111,4 +111,6 @@ cmd('create-env', 'create env for deploy')
 
 cmd('upload', 'upload block for deploy')
 
+cmd('get', 'get the newest version of a purchased block')
+
 program.parseAsync(process.argv)
