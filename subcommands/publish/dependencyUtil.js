@@ -196,7 +196,7 @@ const getDependencyIds = async (options) => {
     Object.entries(noExistingDeps).forEach(([lang, deps]) => {
       console.log(
         chalk.yellow(
-          `${lang} does not support listed dependencies for ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
+          `${lang} in appblocks does not have support for listed dependencies of ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
         )
       )
     })

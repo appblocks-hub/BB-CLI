@@ -92,17 +92,31 @@ class PackageConfigManager extends ConfigManager {
     return res[0]
   }
 
-  async _traverseManager(tLevel) {
+  async getAnyBlock(name, tLevel) {
+    const filter = ({ config }) => config.name === name
+    const res = await this._traverseManager(tLevel, true)
+    return res.filter(filter)[0]
+  }
+
+  async getAllLevelAnyBlock() {
+    const res = await this._traverseManager(null, true)
+    return res
+  }
+
+  async getAllLevelMemberBlock() {
+    const res = await this._traverseManager(null)
+    return res
+  }
+
+  async _traverseManager(tLevel, includeSubPack) {
     let res = []
     for await (const manager of this.getDependencies()) {
       const shouldTraverse = tLevel == null || tLevel > 0
       if (manager instanceof PackageConfigManager) {
         if (!shouldTraverse) continue
         const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
-        if (!manager._traverseManager) {
-          console.log('in =>', manager.config.name)
-        }
-        const children = await manager._traverseManager(nextTraverseLevel)
+        if (includeSubPack) res.push(manager)
+        const children = await manager._traverseManager(nextTraverseLevel, includeSubPack)
         res = res.concat(children)
       } else res.push(manager)
     }

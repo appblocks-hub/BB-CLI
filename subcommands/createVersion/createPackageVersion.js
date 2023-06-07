@@ -7,13 +7,11 @@ const { spinnies } = require('../../loader')
 const { getAllBlocksVersions, appBlockAddVersion } = require('../../utils/api')
 const { post } = require('../../utils/axios')
 const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
-const { GitManager } = require('../../utils/gitmanager')
-const { pushBlocks } = require('../../utils/pushBlocks')
-const { readInput, confirmationPrompt, getGitConfigNameEmail } = require('../../utils/questionPrompts')
-const { getAllBlockVersions, updateReadme } = require('../../utils/registryUtils')
-const { uploadReadMe, ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
-// const { BB_CONFIG_NAME } = require('../../utils/constants')
-const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const { GitManager } = require('../../utils/gitManagerV2')
+const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
+const { getAllBlockVersions } = require('../../utils/registryUtils')
+const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
+const { uploadBlockReadme } = require('./utils')
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -21,9 +19,13 @@ const PackageConfigManager = require('../../utils/configManagers/packageConfigMa
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const createPackageVersion = async (manager, opts) => {
-  const { latest } = opts || {}
+const createPackageVersion = async ({ packageManager, cmdOptions }) => {
+  const { latest, force } = cmdOptions || {}
 
+  const packageConfig = packageManager.config
+  const { repoType, name: packageName, blockId: pkBlockId, orphanBranchFolder } = packageConfig
+
+  //  NOTE: if user want to pass specific blocks with version
   //   const givenBlockVersion =
   //     blockVersions?.split(',').reduce((a, v) => {
   //       const [b, ver] = v.split('@')
@@ -31,37 +33,19 @@ const createPackageVersion = async (manager, opts) => {
   //     }, {}) || {}
   //   const givenBlockVersionNames = Object.keys(givenBlockVersion)
 
-  const pkBlockId = manager.config.blockId
-  const [readmePath] = ensureReadMeIsPresent('.', manager.config.name, false)
-  if (!readmePath) {
-    console.log('Make sure to add a README.md ')
-    process.exit(1)
-  }
+  const [readmePath] = ensureReadMeIsPresent(packageManager.directory, packageName, false)
+  if (!readmePath) throw new Error('Make sure to add a README.md ')
 
-  const dependencies = []
-  const updatedDependencies = {}
+  const memberBlocks = await packageManager.getAllLevelAnyBlock()
+  const memberBlockIds = memberBlocks.map((m) => m.config.blockId)
 
-  for await (const m of manager.getDependencies()) {
-    if (m instanceof PackageConfigManager) {
-      // TODO: Deal with recursion later
-      continue
-    }
-    updatedDependencies[m.config.name] = m
-    if (!m.config.blockId) {
-      console.log(`${m.config.name} is missing block id`)
-    }
-    dependencies.push(m)
-  }
-
-  const blockIds = dependencies.map((m) => m.config.blockId)
-
-  spinnies.add('cBv', { text: 'Getting all block versions' })
+  spinnies.add('cv', { text: 'Getting all block versions' })
   const { data, error } = await post(getAllBlocksVersions, {
     latest_only: latest,
-    block_ids: blockIds,
+    block_ids: memberBlockIds,
     status: [2, 4, 7],
   })
-  spinnies.remove('cBv')
+  spinnies.remove('cv')
 
   if (error) throw error
 
@@ -70,16 +54,16 @@ const createPackageVersion = async (manager, opts) => {
 
   if (bVersions.length === 0) {
     console.log(chalk.yellow(`\nNo release-ready/approved versions found for any member blocks`))
-    console.log(chalk.red(`Please create and publish version for all member blocks and try again.`))
-    process.exit(0)
+    throw new Error(chalk.red(`Please create and publish version for all member blocks and try again.`))
   }
-  if (bVersions.length !== dependencies.length) {
+
+  if (bVersions.length !== memberBlocks.length) {
     const bVersionBlocks = bVersions.map((bv) => bv.block_id)
 
-    const noVersionBlocks = dependencies
-      .map((m) => {
-        if (bVersionBlocks.includes(m.config.blockId)) return null
-        return m.config.name
+    const noVersionBlocks = memberBlocks
+      .map((bManger) => {
+        if (bVersionBlocks.includes(bManger.config.blockId)) return null
+        return bManger.config.name
       })
       .filter((n) => n !== null)
       .join(', ')
@@ -87,9 +71,10 @@ const createPackageVersion = async (manager, opts) => {
     console.log(
       chalk.yellow(`\nNo release ready/approved versions found for ${chalk.gray(noVersionBlocks)} member blocks`)
     )
-    console.log(chalk.red(`Please create and publish version for all member blocks and try again.`))
-    process.exit(0)
+    throw new Error(`Please create and publish version for all member blocks and try again.`)
   }
+
+  const updatedDependencies = packageConfig.dependencies
 
   for await (const bkVer of bVersions) {
     const choices = bkVer.block_versions.map((b) => ({ name: b.version_number, value: b }))
@@ -106,130 +91,124 @@ const createPackageVersion = async (manager, opts) => {
       selectedBlockVersions[bkVer.block_id] = { ...choices[0]?.value, block_name: bkVer.block_name }
     }
 
-    updatedDependencies[bkVer.block_name].updateConfig({ blockVersionId: selectedBlockVersions[bkVer.block_id].id })
-    updatedDependencies[bkVer.block_name].updateConfig({
-      blockVersion: selectedBlockVersions[bkVer.block_id].version_number,
-    })
+    updatedDependencies[bkVer.block_name].versionId = selectedBlockVersions[bkVer.block_id].id
+    updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
   }
 
   const { data: pkBlockVersion } = await getAllBlockVersions(pkBlockId)
 
   const latestVersion = pkBlockVersion.data?.[0]?.version_number
 
-  const version = await readInput({
-    name: 'version',
-    message: 'Enter the package version',
-    validate: (ans) => {
-      if (!semver.valid(ans)) return 'Invalid version'
-      if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
-        return `New version should be greater than last published version ${latestVersion}`
-      }
-      return true
-    },
-    default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
-  })
+  const version =
+    cmdOptions.version ||
+    (await readInput({
+      name: 'version',
+      message: 'Enter the package version',
+      validate: (ans) => {
+        if (!semver.valid(ans)) return 'Invalid version'
+        if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
+          return `New version should be greater than last published version ${latestVersion}`
+        }
+        return true
+      },
+      default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
+    }))
 
-  const message = await readInput({
-    name: 'msg',
-    message: 'Enter a message for new package version',
-  })
+  const versionNote =
+    cmdOptions.versionNote ||
+    (await readInput({
+      name: 'versionNote',
+      message: 'Enter version note for package (default to empty)',
+    }))
 
-  const goAhead = await confirmationPrompt({
-    message: `${chalk.gray(
-      `Continue create package version ${
-        manager.config.name
-      }@${version} with below member blocks\n      ${Object.values(updatedDependencies)
-        .map((bDetails) => `${bDetails.meta.name}@${bDetails.meta.blockVersion}`)
-        .join(', ')}?`
-    )}`,
-    name: 'goAhead',
-    default: true,
-  })
+  if (!force && latest) {
+    const goAhead = await confirmationPrompt({
+      message: `${`Continue ${
+        packageConfig.name
+      }@${version} version creation with below member blocks \n  ${Object.entries(updatedDependencies)
+        .map(([bName, bDetails]) => `  ${bName}@${bDetails.version}`)
+        .join('\n')}?`}`,
+      name: 'goAhead',
+      default: true,
+    })
 
-  if (!goAhead) throw new Error('Process cancelled')
+    if (!goAhead) throw new Error('Process cancelled')
+  }
 
-  // const appConfigData = { ...appConfig.config }
-  // appConfigData.dependencies = updatedDependencies
-  // appConfigData.blockVersion = version
-
-  manager.updateConfig({ blockVersion: version })
-
-  // update gitignore with block_names
-  // const blockConfigPath = path.join('.', BB_CONFIG_NAME)
-  // const oldBlockConfigData = readFileSync(blockConfigPath).toString()
-  // writeFileSync(blockConfigPath, JSON.stringify(appConfigData, null, 2))
-
-  const ignoresApCreated = [
-    '._ab_em/*',
-    '._ab_em_elements/*',
-    '.env.function',
-    '.env.view',
-    '.tmp/*',
-    '.deploy/*',
-    '.deploy.config.json/*',
-    'cliruntimelogs/*',
-    'logs/*',
-    'pushlogs/*',
-  ]
-
-  const gitignorePath = path.join('.', '.gitignore')
-  const gitignoreData = existsSync(gitignorePath) ? readFileSync(gitignorePath).toString() : ''
-
-  const ignoreDependencies = Object.values(manager.config).map((v) => `${v.directory}/`)
-  const newGitIgnore = ignoresApCreated.concat(ignoreDependencies).reduce((acc, ig) => {
-    if (acc.split('\n').includes(ig)) return acc
-    return `${acc}\n${ig}`
-  }, gitignoreData)
-  writeFileSync(gitignorePath, newGitIgnore)
-
-  const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
-  await pushBlocks(
-    gitUserName,
-    gitUserEmail,
-    `refactor: version ${version}`,
-    [{ directory: '.', meta: { name: manager.config.name, source: manager.config.source, type: 'package' } }],
-    true
-  )
-
-  spinnies.add('cBv', { text: `Tagging new version ${version}` })
-
-  const blockSource = { ...manager.config.source }
-  const prefersSsh = configstore.get('prefersSsh')
-  const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
-  const Git = new GitManager('.', 'Not very imp', repoUrl, prefersSsh)
-  await Git.addTag(version, message)
-  await Git.pushTags()
+  const packageConfigData = { ...packageConfig, dependencies: updatedDependencies }
+  delete packageConfigData.orphanBranchFolder
+  delete packageConfigData.workSpaceFolder
 
   const reqBody = {
     block_id: pkBlockId,
     version_no: semver.parse(version).version,
     status: 1,
-    release_notes: message,
-    appblock_versions: manager.config.supportedAppblockVersions,
-    app_config: manager.config,
+    release_notes: versionNote,
+    appblock_versions: packageConfigData.supportedAppblockVersions,
+    app_config: packageConfigData,
+    parent_block_ids: packageConfigData.parentBlockIDs || [],
   }
 
-  spinnies.update('cBv', { text: 'Creating package versions' })
+  spinnies.add('cv', { text: 'Creating package versions' })
   const { data: addRes, error: addErr } = await post(appBlockAddVersion, reqBody)
 
   if (addErr) throw addErr
 
   const versionId = addRes?.data?.id
+  await uploadBlockReadme({ readmePath, blockId: pkBlockId, versionId })
 
-  spinnies.update('cBv', { text: `Uploading readme` })
-  const res = await uploadReadMe(readmePath, pkBlockId, versionId)
-  if (res.status !== 200) {
-    throw new Error('Something went wrong while uploading readme.')
+  packageConfigData.version = version
+  packageConfigData.versionId = versionId
+
+  if (repoType === 'mono') {
+    // handle mono repo git flow
+    const parentBranch = packageConfig.source.branch
+    const releaseBranch = `block_${packageName}@${version}`
+
+    const Git = new GitManager(orphanBranchFolder, packageConfig.source.ssh)
+    Git.createReleaseBranch(releaseBranch, parentBranch)
+
+    writeFileSync(path.join(orphanBranchFolder, packageManager.configName), JSON.stringify(packageConfigData, null, 2))
+
+    Git.stageAll()
+    Git.commit(`release branch for block for version ${version}`)
+    Git.push(releaseBranch)
+    Git.checkoutBranch(parentBranch)
+  } else if (repoType === 'multi') {
+    const ignoresApCreated = [
+      '._ab_em/*',
+      '._ab_em_elements/*',
+      '.env.function',
+      '.env.view',
+      '.tmp/*',
+      '.deploy/*',
+      '.deploy.config.json/*',
+      'cliruntimelogs/*',
+      'logs/*',
+      'pushlogs/*',
+    ]
+
+    const gitignorePath = path.join('.', '.gitignore')
+    const gitignoreData = existsSync(gitignorePath) ? readFileSync(gitignorePath).toString() : ''
+
+    const ignoreDependencies = Object.values(packageConfigData.dependencies).map((v) => `${v.directory}/`)
+    const newGitIgnore = ignoresApCreated.concat(ignoreDependencies).reduce((acc, ig) => {
+      if (acc.split('\n').includes(ig)) return acc
+      return `${acc}\n${ig}`
+    }, gitignoreData)
+    writeFileSync(gitignorePath, newGitIgnore)
+
+    spinnies.update('cv', { text: `Tagging new version ${version}` })
+
+    const blockSource = { ...packageConfigData.source }
+    const prefersSsh = configstore.get('prefersSsh')
+    const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
+    const Git = new GitManager('.', 'Not very imp', repoUrl, prefersSsh)
+    await Git.addTag(version, versionNote)
+    await Git.pushTags()
   }
 
-  spinnies.update('cBv', { text: `Updating readme` })
-  const upResp = await updateReadme(pkBlockId, versionId, res.key)
-  if (upResp.status !== 200) {
-    throw new Error('Something went wrong while updating readme.')
-  }
-  spinnies.update('cBv', { text: `ReadMe updated successfully` })
-
-  spinnies.succeed('cBv', { text: 'Created package version successfully' })
+  spinnies.succeed('cv', { text: 'Created package version successfully' })
 
   return versionId
 }

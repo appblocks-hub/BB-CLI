@@ -13,12 +13,12 @@ async function updateAllMemberConfig(manger, source) {
   for await (const blockManager of manger.getDependencies()) {
     if (!blockManager?.config) continue
 
-    const { type } = blockManager.config
-    // eslint-disable-next-line no-param-reassign
-    source.branch = `orphan-${manger.config.name}`
     blockManager.updateConfig({ source })
 
+    const { type } = blockManager.config
+
     if (type === 'package') {
+      // eslint-disable-next-line no-param-reassign
       await updateAllMemberConfig(blockManager, source)
     }
   }
