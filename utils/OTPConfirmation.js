@@ -41,8 +41,6 @@ function Abort(msg) {
   // process.exit(0)
 }
 
-// TODO -- killing thread, is it a good choice? could use .kill ??
-
 const stream = new Observable((obs) => {
   Emitter = obs
   obs.next({
@@ -76,11 +74,9 @@ const stream = new Observable((obs) => {
  * @param {number} count
  */
 function handleTokenError(msg, count) {
-  // console.log('count', count);
   switch (msg) {
     case 'access_denied':
       // complete stream, exit and restart process
-      // thread.send('KILLTIMER') // just to be safe since detached is not given it should get killed with parent..
       Abort('Such a wicked game..Access denied!!')
       break
     case 'authorization_pending':
@@ -95,7 +91,6 @@ function handleTokenError(msg, count) {
       if (count === 4) console.log('Last chance!! You can do it..')
       if (count === 5) {
         console.log('Whew..whatever.')
-        // thread.send('KILLTIMER') // just to be safe
         Abort('Not authorized.')
       }
       // goto authConfirm step
@@ -107,14 +102,10 @@ function handleTokenError(msg, count) {
       })
       break
     case 'expired_token':
-      // Most probably wont happen, as timer would have killed the process already
-      // if happens, abort and restart process
-      // if (!thread.killed) thread.send('KILLTIMER') // just to be safe
       Abort('Token expired')
       break
     default:
       console.log('Something went terribly wrong..I am Aborting!!')
-      // thread.send('KILLTIMER') // just to be safe
       process.exit(1)
   }
 }
@@ -203,7 +194,6 @@ async function OTPVerify(data, url) {
           case 'abortConfirmation':
             abortYesNoCount += 1
             if (answer) {
-              // if (!thread.killed) thread.send('KILLTIMER')
               Emitter.complete()
               Abort('User aborted!')
             } else {
@@ -211,7 +201,6 @@ async function OTPVerify(data, url) {
               if (abortYesNoCount === 5) {
                 console.log('I have better things to do with my life!!')
                 console.log('Aborting')
-                // if (!thread.killed) thread.send('KILLTIMER')
                 Abort('Make up your mind!!')
               }
               // TODO -- add more comments
@@ -225,7 +214,6 @@ async function OTPVerify(data, url) {
             break
           case 'confirmUser':
             if (answer) {
-              // thread.send('KILLTIMER')
               // TODO--causes error- not access to TokenData
               // TODO -- change from storing in env to a global variable
               // const configData = {

@@ -5,158 +5,85 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { default: axios } = require('axios')
+const path = require('path')
 const semver = require('semver')
-const { configstore } = require('../../configstore')
+const { writeFileSync } = require('fs')
+
 const { spinnies } = require('../../loader')
 const { appBlockAddVersion } = require('../../utils/api')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
-const { ensureReadMeIsPresent, uploadReadMe } = require('../../utils/fileAndFolderHelpers')
+const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { getShieldHeader } = require('../../utils/getHeaders')
-const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
-const { GitManager } = require('../../utils/gitmanager')
-const { pushBlocks } = require('../../utils/pushBlocks')
-const { readInput, confirmationPrompt, getGitConfigNameEmail } = require('../../utils/questionPrompts')
-const { updateReadme } = require('../../utils/registryUtils')
-const { getLanguageVersionData } = require('../languageVersion/util')
-const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
+const { getLatestVersion, isCleanBlock } = require('../../utils/gitCheckUtils')
+const { GitManager } = require('../../utils/gitManagerV2')
+const { readInput } = require('../../utils/questionPrompts')
+const { checkLangDepSupport, uploadBlockReadme } = require('./utils')
+const { post } = require('../../utils/axios')
 
-const createBlockVersion = async ({ blockName, appConfig }) => {
-  if (!appConfig.has(blockName)) {
-    console.log('Block not found!')
-    process.exit(1)
-  }
+const createBlockVersion = async ({ blockManager, cmdOptions }) => {
+  const blockConfig = blockManager.config
 
-  if (appConfig.isLive(blockName)) {
-    console.log('Block is live, please stop before operation')
-    process.exit(1)
-  }
+  const { repoType, name: blockName, supportedAppblockVersions, blockId, orphanBranchFolder } = blockConfig
+  const { force } = cmdOptions || {}
 
-  // TODO - Check if there are any .sync files in the block and warn
-  const blockDetails = appConfig.getBlock(blockName)
-
-  const latestVersion = getLatestVersion(blockDetails.directory)
+  const latestVersion = getLatestVersion(blockConfig.directory)
   if (latestVersion) console.log(`Last published version is ${latestVersion}`)
 
-  if (!isClean(blockDetails.directory)) {
-    console.log('Git directory is not clean, Please push before publish')
-    process.exit(1)
-  }
+  isCleanBlock(blockManager.directory, blockName)
 
   // ------------------------------------------ //
-  const [readmePath] = ensureReadMeIsPresent(blockDetails.directory, blockName, false)
-  if (!readmePath) {
-    console.log('Make sure to add a README.md ')
-    process.exit(1)
+  const [readmePath] = ensureReadMeIsPresent(blockManager.directory, blockName, false)
+  if (!readmePath) throw new Error('Make sure to add a README.md ')
+
+  if (!blockId) {
+    throw new Error('No blockId found in config! Make sure block is synced')
   }
 
-  spinnies.add('p1', { text: `Getting blocks details` })
-  const blockId = await appConfig.getBlockId(blockName)
-  spinnies.remove('p1')
-  spinnies.stopAll()
+  // check for abVersion langVersion Dependencies support for block
+  let appblockVersionIds
 
-  const version = await readInput({
-    name: 'version',
-    message: 'Enter the version',
-    validate: (ans) => {
-      if (semver.valid(ans)) {
+  if (!supportedAppblockVersions) {
+    throw new Error(`Please set appblock version and try again`)
+  }
+
+  // ========= check language & dependencies support ========================
+  await checkLangDepSupport({ force, blockManager, appblockVersionIds, supportedAppblockVersions })
+
+  const version =
+    cmdOptions.version ||
+    (await readInput({
+      name: 'version',
+      message: 'Enter the version',
+      validate: (ans) => {
+        if (!semver.valid(ans)) return 'Invalid versioning'
         if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
           return `Last published version is ${latestVersion}`
         }
         return true
-      }
-      return 'Invalid versioning'
-    },
-    default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
-  })
+      },
+      default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
+    }))
 
-  const message = await readInput({
-    name: 'tagMessage',
-    message: 'Enter a message to add to tag.(defaults to empty)',
-  })
+  const versionNote =
+    cmdOptions.versionNote ||
+    (await readInput({
+      name: 'versionNote',
+      message: 'Enter the version note (defaults to empty)',
+    }))
 
-  // check for abVersion langVersion Dependencies support for block
-  const { supportedAppblockVersions } = blockDetails.meta
-  let appblockVersionIds
-
-  if (!supportedAppblockVersions) {
-    throw new Error(`Please set-appblock-version and try again`)
-  }
-
-  // ========= languageVersion ========================
-  const { languageVersionIds, languageVersions, allSupported } = await getLanguageVersionData({
-    blockDetails,
-    appblockVersionIds,
-    supportedAppblockVersions,
-  })
-
-  if (!allSupported) {
-    const goAhead = await confirmationPrompt({
-      message: `Some appblock version doesn't have support for given languages. Do you want to continue ?`,
-      name: 'goAhead',
-      default: false,
-    })
-
-    if (!goAhead) throw new Error(`Cancelled on no support`)
-  }
-
-  // ========= dependencies ========================
-  // Check if the dependencies exit to link with block
-  const { dependencies, depExist } = await getDependencies({ blockDetails })
-  if (!depExist) {
-    const noDep = await readInput({
-      type: 'confirm',
-      name: 'noDep',
-      message: 'No package dependencies found to link with block. Do you want to continue ?',
-      default: true,
-    })
-
-    if (!noDep) process.exit(1)
-  } else {
-    // eslint-disable-next-line prefer-const
-    const { isAllDepExist } = await getDependencyIds({
-      languageVersionIds,
-      dependencies,
-      languageVersions,
-      noRequest: true,
-      blockName: blockDetails.meta.name,
-    })
-    if (!isAllDepExist) {
-      const goAhead = await confirmationPrompt({
-        message: `Appblock version doesn't have support for some dependencies. Do you want to continue ?`,
-        name: 'goAhead',
-        default: false,
-      })
-
-      if (!goAhead) throw new Error(`Cancelled on no support`)
-    }
-  }
-
-  appConfig.updateBlock(blockName, { blockVersion: version })
-  const { gitUserName, gitUserEmail } = await getGitConfigNameEmail()
-
-  spinnies.add('p1', { text: `Creating new version ${version}` })
-  await pushBlocks(gitUserName, gitUserEmail, `refactor: version ${version}`, [appConfig.getBlock(blockName)], true)
-
-  spinnies.update('p1', { text: `Tagging new version ${version}` })
-
-  const blockSource = blockDetails.meta.source
-  const prefersSsh = configstore.get('prefersSsh')
-  const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
-  const Git = new GitManager(blockDetails.directory, 'Not very imp', repoUrl, prefersSsh)
-  // await pushTags(blockDetails.directory)
-  await Git.addTag(version, message)
-  await Git.pushTags()
+  const blockConfigData = { ...blockConfig }
+  delete blockConfigData.orphanBranchFolder
+  delete blockConfigData.workSpaceFolder
 
   // Update source code to appblock cloud
-
-  spinnies.update('p1', { text: `Registering new version ${version}` })
+  spinnies.add('cv', { text: `Registering new version ${version}` })
 
   const reqBody = {
     block_id: blockId,
     version_no: semver.parse(version).version,
     status: 1,
-    release_notes: message,
+    release_notes: versionNote,
+    app_config: blockConfigData,
+    parent_block_ids: blockConfigData.parentBlockIDs || [],
   }
 
   if (supportedAppblockVersions && appblockVersionIds?.length < 1) {
@@ -164,7 +91,7 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
     delete reqBody.appblock_version_ids
   }
 
-  const resp = await axios.post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
+  const resp = await post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
 
   const { data } = resp
   if (data.err) {
@@ -172,20 +99,34 @@ const createBlockVersion = async ({ blockName, appConfig }) => {
   }
   const versionId = data?.data?.id
 
-  spinnies.update('p1', { text: `Uploading readme` })
-  const res = await uploadReadMe(readmePath, blockId, versionId)
-  if (res.status !== 200) {
-    throw new Error('Something went wrong while uploading readme.')
+  // upload and update readme
+  await uploadBlockReadme({ readmePath, blockId, versionId })
+
+  if (repoType === 'mono') {
+    // handle mono repo git flow
+    const parentBranch = blockConfig.source.branch
+    const releaseBranch = `block_${blockName}@${version}`
+
+    const Git = new GitManager(orphanBranchFolder, blockConfig.source.ssh)
+    Git.createReleaseBranch(releaseBranch, parentBranch)
+
+    blockConfigData.version = version
+    blockConfigData.versionId = versionId
+    writeFileSync(path.join(orphanBranchFolder, blockManager.configName), JSON.stringify(blockConfigData, null, 2))
+
+    Git.stageAll()
+    Git.commit(`release branch for version ${version}`)
+    Git.push(releaseBranch)
+    Git.checkoutBranch(parentBranch)
+  } else if (repoType === 'multi') {
+    // handle multi repo git flow
+    // TODO check and setup the correct workflow
+    const Git = new GitManager(blockManager.directory, blockConfig.source.ssh)
+    await Git.addTag(version, versionNote)
+    await Git.pushTags()
   }
 
-  spinnies.update('p1', { text: `Updating readme` })
-  const upResp = await updateReadme(blockId, versionId, res.key)
-  if (upResp.status !== 200) {
-    throw new Error('Something went wrong while updating readme.')
-  }
-  spinnies.update('p1', { text: `ReadMe updated successfully` })
-
-  spinnies.succeed('p1', { text: `new version created successfully` })
+  spinnies.succeed('cv', { text: `new version created successfully` })
 
   return { blockId, versionId }
 }

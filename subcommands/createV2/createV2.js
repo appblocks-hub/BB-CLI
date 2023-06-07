@@ -30,7 +30,6 @@ async function create(blockName, cmdOptions) {
     await Create.initializePackageConfigManager()
     await Create.createBlock()
   } catch (error) {
-    console.log(error)
     logger.error(error)
     spinnies.add('create', { text: error.message })
     spinnies.fail('create', { text: error.message })

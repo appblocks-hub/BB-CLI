@@ -1,13 +1,17 @@
 /* eslint-disable no-continue */
+const { nanoid } = require('nanoid')
 const { mkdir, writeFile } = require('fs/promises')
 const path = require('path')
 const { AsyncSeriesHook } = require('tapable')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 
+
+
 // eslint-disable-next-line no-unused-vars
 const { spinnies } = require('../../loader')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 //
 class CreateCore {
@@ -23,7 +27,7 @@ class CreateCore {
 
     this.cwd = process.cwd()
     this.blockDetails = {}
-    this.packageConfigManager = {}
+    this.packageManager = {}
     this.isOutOfContext = false
 
     this.hooks = {
@@ -34,14 +38,14 @@ class CreateCore {
   }
 
   async initializePackageConfigManager() {
-    const configPath = path.resolve('block.config.json')
+    const configPath = path.resolve(BB_CONFIG_NAME)
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       this.isOutOfContext = true
     } else if (configManager instanceof PackageConfigManager) {
-      this.packageConfigManager = configManager
-      this.packageConfig = this.packageConfigManager.config
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
     } else throw new Error('Cannot use create command inside another block')
   }
 
@@ -52,7 +56,7 @@ class CreateCore {
     this.spinnies.add('create', { text: `creating block` })
 
     this.blockFolderPath = path.join(this.cwd, this.cmdArgs.blockName)
-    this.blockConfigPath = path.join(this.blockFolderPath, 'block.config.json')
+    this.blockConfigPath = path.join(this.blockFolderPath, BB_CONFIG_NAME)
 
     try {
       await mkdir(this.blockFolderPath)
@@ -63,23 +67,27 @@ class CreateCore {
 
     this.repoType = this.packageConfig.repoType
 
+
     this.blockDetails = {
+      blockId:nanoid(),
       name: this.cmdArgs.blockName,
       type: blockTypeInverter(this.cmdOpts.type),
       source: {
         ...this.packageConfig.source,
-        branch: `orphan-${this.cmdArgs.blockName}`,
+        branch: `block_${this.cmdArgs.blockName}`,
       },
+      parentBlockIDs:[...this.packageConfig.parentBlockIDs,this.packageConfig.blockId],
       repoType: this.repoType,
       language: this.cmdOpts.language,
       supportedAppblockVersions: this.packageConfig.supportedAppblockVersions,
+      isPublic:this.packageConfig.isPublic
     }
 
     await this.hooks.beforeConfigUpdate?.promise(this)
     // template setup hooks
 
     await writeFile(this.blockConfigPath, JSON.stringify(this.blockDetails, null, 2))
-    const { error } = await this.packageConfigManager.addBlock(this.blockConfigPath)
+    const { error } = await this.packageManager.addBlock(this.blockConfigPath)
     if (error) throw error
 
     // afterCreate hook

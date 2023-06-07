@@ -13,7 +13,10 @@ class ConfigFactory {
         manager: null,
         error: {
           ..._err,
-          type: _err.code === 'ENOENT' ? 'OUT_OF_CONTEXT' : _err.code,
+          message: _err.message,
+          name: _err.name,
+          code: _err.code,
+          type: _err.code === 'ENOENT' ? 'OUT_OF_CONTEXT' : _err.code || _err.name,
         },
       }
     }
@@ -28,6 +31,7 @@ class ConfigFactory {
     } else {
       manager = new BlockConfigManager(config, configPath)
     }
+
     await manager.init()
 
     return { manager, error: null }

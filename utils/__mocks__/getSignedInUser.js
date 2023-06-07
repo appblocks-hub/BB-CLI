@@ -7,7 +7,7 @@
 
 /* eslint-disable */
 
-const getGithubSignedInUser = jest.fn().mockResolvedValue({ user: { userId: 'r', userName: 'arjun' }, err: null })
+const getGithubSignedInUser = jest.fn().mockResolvedValue({ user: { userId: '1234', userName: 'arjun' }, err: null })
 const getShieldSignedInUser = jest.fn()
 
 module.exports = {

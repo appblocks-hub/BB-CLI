@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const { headLessConfigStore } = require('../../configstore')
 const { spinnies } = require('../../loader')
 const { feedback } = require('../../utils/cli-feedback')
 const { Logger } = require('../../utils/loggerV2')
@@ -16,12 +17,17 @@ const PushCore = require('./pushCore')
 async function push(blockName, cmdOptions) {
   const { logger } = new Logger('push')
   const Push = new PushCore(blockName, cmdOptions, { logger, spinnies, feedback })
+
+  if (process.env.BB_CLI_RUN_HEADLESS) {
+    global.HEADLESS_CONFIGS = headLessConfigStore.store
+  }
+
   try {
     new HandleBeforePush().apply(Push)
     new HandleMonoRepoPush().apply(Push)
     new HandleMultiRepoPush().apply(Push)
 
-    await Push.initializeAppConfig()
+    await Push.initializeConfig()
     await Push.pushBlocks()
   } catch (error) {
     logger.error(error)

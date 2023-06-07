@@ -16,6 +16,7 @@ const { getBlockDetails } = require('./registryUtils')
 const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 const { lrManager } = require('./locaRegistry/manager')
 const { configstore } = require('../configstore')
+const { BB_CONFIG_NAME } = require('./constants')
 
 // eslint-disable-next-line no-unused-vars
 function debounce(func, wait, immediate) {
@@ -62,8 +63,8 @@ class AppblockConfigManager {
   constructor() {
     // eslint-disable-next-line no-bitwise
     this.Id = Math.floor(Math.random() * 10 ** 18 + (1 << (Math.random() * 90)))
-    this.blockConfigName = 'block.config.json'
-    this.configName = 'block.config.json'
+    this.blockConfigName = BB_CONFIG_NAME
+    this.configName = BB_CONFIG_NAME
     this.liveConfigName = '.block.live.json'
     this.liveDetails = {}
     this.cwd = '.'
@@ -167,7 +168,7 @@ class AppblockConfigManager {
           this.events.emit('write')
         }
         for (let i = 0; i < bdirs.length; i += 1) {
-          const d = await readFile(path.join(bdirs[i], 'block.config.json'))
+          const d = await readFile(path.join(bdirs[i], BB_CONFIG_NAME))
           this.addBlock({
             directory: path.relative('.', bdirs[i]) || '.',
             meta: JSON.parse(d),
@@ -320,7 +321,7 @@ class AppblockConfigManager {
   async refreshConfig() {
     const picker = (b) => ({ name: b.meta.name, directory: b.directory })
     for (const { name, directory } of this.getDependencies(false, null, picker)) {
-      if (!existsSync(path.join(this.cwd, directory, 'block.config.json'))) {
+      if (!existsSync(path.join(this.cwd, directory, BB_CONFIG_NAME))) {
         // check if atleast package json and config json exists and the directory exists
         // assume all errors are ENOENT, no permission error occurs-hope
         this.removeBlock(name)
@@ -329,7 +330,7 @@ class AppblockConfigManager {
   }
 
   async initV2(cwd, configName, subcmd, options = { reConfig: true, isGlobal: false }) {
-    this.configName = configName || 'block.config.json'
+    this.configName = configName || BB_CONFIG_NAME
     this.cwd = cwd || '.'
     this.subcmd = subcmd || null
 
@@ -383,13 +384,13 @@ class AppblockConfigManager {
   /**
    * Initialzes the config on the current given dir or '.'
    * @param {import('fs').PathLike} cwd Dir to init
-   * @param {String} configName Default is block.config.json
+   * @param {String} configName
    * @param {String} subcmd Which command is calling init
    * @param {import('./jsDoc/types').appConfigInitOptions} options
    * @returns {Promise<undefined>}
    */
   async init(cwd, configName, subcmd, options = { reConfig: true, isGlobal: false }) {
-    this.configName = configName || 'block.config.json'
+    this.configName = configName || BB_CONFIG_NAME
     this.cwd = cwd || '.'
     this.subcmd = subcmd || null
 

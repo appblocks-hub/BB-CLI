@@ -3,6 +3,7 @@ const { EventEmitter } = require('events')
 const path = require('path')
 const { getOnPremConfigDetails } = require('./onPrem/util')
 const { isEmptyObject } = require('../../utils')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 /**
  * DeployblockConfigManager
@@ -154,7 +155,7 @@ class DeployblockConfigManager {
       this.config = JSON.parse(readFileSync(path.resolve(this.cwd, this.configName)))
     } catch (err) {
       if (err.code === 'ENOENT') {
-        if (!existsSync(path.resolve(this.cwd, 'block.config.json'))) {
+        if (!existsSync(path.resolve(this.cwd, BB_CONFIG_NAME))) {
           throw new Error(`Please init block or run the command in root folder of your app `)
         }
       }

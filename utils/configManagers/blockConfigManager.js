@@ -10,12 +10,16 @@ class BlockConfigManager extends ConfigManager {
     return this.liveDetails?.isOn
   }
 
-  // get  isUiBlock() {
-  //   for (const block of this.uiBlocks) {
-  //     if (block.meta.name === ) return true
-  //   }
-  //   return false
-  // }
+  updateLiveConfig(newConfig) {
+    this.liveDetails = { ...this.liveDetails, ...newConfig }
+    this.events.emit('writeLive')
+    return this.liveDetails
+  }
+
+  updatePortConfig(portConfig) {
+    this.availablePort = portConfig.availablePort
+    this.portKey = portConfig.key
+  }
 }
 
 module.exports = BlockConfigManager

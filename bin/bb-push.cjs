@@ -8,10 +8,8 @@
  */
 
 const { Command } = require('commander')
-const push = require('../subcommands/push')
-const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
+const push = require('../subcommands/pushV2')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 
 const program = new Command().hook('preAction', async () => {
@@ -20,9 +18,7 @@ const program = new Command().hook('preAction', async () => {
     process.exitCode = 1
     return
   }
-  await ensureUserLogins()
   await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference()
 })
 
 program

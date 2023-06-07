@@ -26,9 +26,9 @@ class handleBeforeCreate {
         // eslint-disable-next-line prefer-const
         let { type, autoRepo } = core.cmdOpts
         let { blockName } = core.cmdArgs
-        const { logger, packageConfigManager } = core
+        const { logger, packageManager } = core
 
-        // if (!packageConfigManager.config?.supportedAppblockVersions) {
+        // if (!packageManager.config?.supportedAppblockVersions) {
         //   throw new Error(
         //     'No supported appblock version set for package block. Please use set-appblock-version command'
         //   )
@@ -50,7 +50,7 @@ class handleBeforeCreate {
         }
 
         if (type === 8) {
-          const viewBlocks = [...packageConfigManager.uiBlocks]
+          const viewBlocks = [...packageManager.uiBlocks]
           const depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
           if (depLibBlocks) {
             console.log(

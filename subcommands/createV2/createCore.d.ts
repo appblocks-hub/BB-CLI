@@ -10,9 +10,9 @@ declare class CreateCore{
   logger :object;
 
 
-  cwd : string?;
-  blockDetails:object?;
-  packageConfigManager: packageConfigManagerManager;
+  cwd : string | undefined;
+  blockDetails:object | undefined;
+  packageConfigManager: PackageConfigManager;
   
   hooks : {
     beforeCreate : AsyncSeriesHook,

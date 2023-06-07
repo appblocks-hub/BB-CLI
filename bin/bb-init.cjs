@@ -8,29 +8,10 @@
  */
 
 const { Command } = require('commander')
-const init = require('../subcommands/init')
-const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
-const { isInGitRepository, isGitInstalled } = require('../utils/gitCheckUtils')
+const init = require('../subcommands/temp-init')
 
-const program = new Command().hook('preAction', async () => {
-  if (!isGitInstalled()) {
-    console.log('Git not installed')
-    process.exit(1)
-  }
-  if (isInGitRepository()) {
-    console.log('Already in a Git repository')
-    process.exit(1)
-  }
-  await ensureUserLogins()
-  await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference('init')
-})
-program
-  .argument('<appblock-name>', 'Name of app')
-  .option('--no-autoRepo')
-  .description('create an appblock')
-  .action(init)
+const program = new Command()
+
+program.argument('<package-name>', 'Name of app').description('create an appblock').action(init)
 
 program.parse(process.argv)

@@ -15,12 +15,12 @@ const traverse = require('@babel/traverse').default
 
 class BlockPusher {
   constructor(block, bar, noLogs) {
-    this.blockMeta = block
+    this.blockMeta = block.config
     this.blockPath = block.directory
-    this.blockName = block.meta.name
-    this.blockSource = block.meta.source
-    this.blockType = block.meta.type
-    this.repoType = block.meta.repoType
+    this.blockName = block.config.name
+    this.blockSource = block.config.source
+    this.blockType = block.config.type
+    this.repoType = block.config.repoType
     this.gitAddIgnore = block.gitAddIgnore
     this.progress = noLogs
       ? null
@@ -78,9 +78,13 @@ class BlockPusher {
           return
         }
         if (errorCode) {
-          // in case push is failed, reset commit so user can re-run push again,
-          // and the repo wont be clean at that time
-          execSync('git reset HEAD~1', { cwd: this.blockPath })
+          try {
+            // in case push is failed, reset commit so user can re-run push again,
+            // and the repo wont be clean at that time
+            execSync('git reset HEAD~1', { cwd: this.blockPath })
+          } catch (error) {
+            console.log();
+          }
         }
       })
       this.child.on('error', () => {

@@ -7,11 +7,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// const inquirer = require('inquirer')
-// const inquirerFileTree = require('inquirer-file-tree-selection-prompt')
-// inquirer.registerPrompt('file-tree-selection', inquirerFileTree)
-// inquirer.registerPrompt('customList', customList)
-
 const { Command } = require('commander')
 
 const packageJson = require('../package.json')
@@ -42,9 +37,9 @@ cmd('connect', 'to connect github')
 
 cmd('create', 'to create a new block')
 
-cmd('create-v2', 'to create a new block v2')
-
 cmd('create-app', 'register app for deploy')
+
+cmd('ci-build', 'Build modules for deployment')
 
 cmd('create-version', 'Create version for block')
 
@@ -78,17 +73,11 @@ cmd('publish', 'Publish block or appblock')
 
 cmd('pull', 'to pull blocks')
 
-cmd('pull-v2', 'to pull blocks')
-
 cmd('push', 'To commit and push blocks')
-
-cmd('push-v2', 'To commit and push blocks')
 
 cmd('push-config', 'to push package lock config')
 
 cmd('start', 'To start one or all blocks')
-
-cmd('start-v2', 'To start one or all blocks')
 
 cmd('start-job', 'Schedule the job')
 
@@ -100,13 +89,15 @@ cmd('temp-init', 'temporary init command')
 
 cmd('temp-migrate', 'Migrate existing architecture to Single Repo')
 
+cmd('sync', 'Sync blocks architecture with registry')
+
 cmd('temp-push', 'Temporary Push command')
 
 cmd('temp-pull', 'Temporary Pull command')
 
 cmd('stop-job', 'Stop the job')
 
-cmd('sync', 'To sync all blocks')
+// cmd('sync', 'To sync all blocks')
 
 cmd('update-language-version', 'update block language version')
 
@@ -114,9 +105,7 @@ cmd('use', 'to select space')
 
 cmd('set-appblock-version', 'To add supported version of appblock to block')
 
-/**
- * PRIVATE FEATURES
- */
+cmd('connect-remote', 'To add remote for package block')
 
 cmd('deploy', 'deploy app')
 

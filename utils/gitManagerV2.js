@@ -68,6 +68,18 @@ class GitManager {
     return this._run('checkout', [name])
   }
 
+  getCommits(branchName, n) {
+    return this._run(`log --oneline -${n}`, [branchName || 'main'])
+  }
+
+  checkRemoteBranch(branchName) {
+    return this._run(`ls-remote --heads ${this.remote} ${branchName}`, [])
+  }
+
+  getCommits(branchName, n) {
+    return this._run(`log --oneline -${n}`, [branchName || 'main'])
+  }
+
   checkoutTag(tag, branch = 'main') {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
@@ -84,12 +96,16 @@ class GitManager {
     this.cwd = path.resolve(directoryPath)
   }
 
+  createReleaseBranch(releaseBranch, parentBranch) {
+    return this._run('checkout', ['-b', releaseBranch, parentBranch])
+  }
+
   /* ********************************
    *************** F ****************
    ******************************** */
 
-  fetch(from) {
-    return this._run('fetch', [from])
+  fetch(opts) {
+    return this._run('fetch', [opts, this.remote])
   }
 
   /* ********************************
@@ -121,6 +137,10 @@ class GitManager {
     return this._run('checkout', ['-b', branchName])
   }
 
+  newOrphanBranch(branchName) {
+    return this._run('checkout', ['--orphan', branchName])
+  }
+
   /**
    *
    * @param {String} branchName Name of new branch
@@ -138,8 +158,12 @@ class GitManager {
     this._run('pull', [this.remote])
   }
 
+  pullBranch(upstreamBranch, remoteName) {
+    return this._run(`pull ${remoteName}`, [upstreamBranch || 'main'])
+  }
+
   currentBranch() {
-    return this._run('branch', ['--show-current'])
+    return this._run('branch', [this.remote, '--show-current'])
   }
 
   diff() {
@@ -182,6 +206,10 @@ class GitManager {
     return this._run('status', [])
   }
 
+  statusWithOptions(...opts) {
+    return this._run('status', [...opts])
+  }
+
   setUpstreamAndPush(upstreamBranch) {
     return this._run('push -u', [this.remote, upstreamBranch || 'main'])
   }
@@ -209,6 +237,8 @@ class GitManager {
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
     if (r.status === 'error') {
+      console.log('git action is \n', r)
+
       throw new GitError(this.cwd, r.msg, false, operation, opts)
     }
     return r

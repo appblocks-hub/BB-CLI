@@ -14,49 +14,61 @@ type BlockDetails = {
 
 declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   constructor(config: PackageConfig, cwd: PathLike)
+
   liveDetails: blockLiveDetails
+
   readonly isPackageConfigManager: true
-  public getDependencies<
-    C extends PackageConfigManager | BlockConfigManager,
-  >( filter?: (b: C) => boolean, picker?: (b: C) => Partial<C>): Generator<PackageConfigManager|BlockConfigManager>|[]
+
+  /**
+   * Function to traverse on nested packages with given level or till the end
+   */
+  private _traverseManager(tLevel: Number | null): Promise<Array<BlockConfigManager>>
+
+  public getDependencies<C extends PackageConfigManager | BlockConfigManager>(
+    filter?: (b: C) => boolean,
+    picker?: (b: C) => Partial<C>
+  ): Generator<PackageConfigManager | BlockConfigManager> | []
+
+  /**
+   * 
+   * @param block Name of block to check
+   */
+  public has(block: string): boolean
 
   /**
    *  To iterate and get all live blocks' config manager
    */
-  public get liveBlocks(): any
-  // public get liveJobBlocks(): any;
+  public liveBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all function block managers
    */
-  public get nonLiveBlocks(): Generator<BlockConfigManager>
+  public nonLiveBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all ui block managers
    */
-  public get uiBlocks(): Generator<BlockConfigManager>
+  public uiBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all function block managers
    */
-  public get fnBlocks(): Generator<BlockConfigManager>
+  public fnBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all shared-fn block managers
    */
-  public get shareFnBlocks(): Generator<BlockConfigManager>
-
-  /**
-   * To iterate and get all job block managers
-   */
-  public get jobBlocks(): Generator<BlockConfigManager>
+  public shareFnBlocks(): Array<BlockConfigManager>
 
   /**
    * To iterate and get all block names
    */
-  public get allBlockNames(): Generator<string>
+  public allBlockNames(): Array<string>
 
-  public get env(): any
+  /**
+   * To iterate and get all block languages
+   */
+  public getAllBlockLanguages(): Array<string>
 
   /**
    * Adds the block which the argument points, to the package current package
@@ -67,9 +79,25 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Promise<{ manager: BlockConfigManager | PackageConfigManager | null; err: ?Error }>
 
   /**
+   * To get immediate member blocks
+   * @param configPath
+   */
+  public getBlock(configPath: PathLike): Promise<BlockConfigManager | null>
+
+  /**
+   * To traverse and get get any level oh member blocks
+   * @param configPath
+   */
+  public getAnyBlock(
+    configPath: PathLike,
+    tLevel: Number | null
+  ): Promise<BlockConfigManager | PackageConfigManager | null>
+
+  /**
    *
    * @param name
    */
   public removeBlock(name: string): Promise<PackageConfig>
 }
+
 export = PackageConfigManager

@@ -5,56 +5,84 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { prompt } = require('inquirer')
-const { configstore } = require('../configstore')
-const { appConfig } = require('./appconfigStore')
+const { configstore, headLessConfigStore } = require('../configstore')
 const { feedback } = require('./cli-feedback')
 const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
+const ConfigFactory = require('./configManagers/configFactory')
+const BlockConfigManager = require('./configManagers/blockConfigManager')
 
 async function checkSpaceLinkedToPackageBlock(cmd) {
   if (cmd === 'pull') return true
 
   // check space is linked with package block
-  await appConfig.init(null, null, cmd)
-  if (appConfig.isInAppblockContext || appConfig.isInBlockContext) {
-    if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
-      await appConfig.init('../', null, cmd, { reConfig: true })
-    }
-
-    const { name, blockId } = appConfig.config
-    await lrManager.init()
-
-    const spaceId = configstore.get('currentSpaceId')
-
-    if (!spaceId || !lrManager.isSpaceLinkedToPackageBlock(blockId, spaceId)) {
-      const { space_name, space_id } = await lrManager.linkedSpaceOfPackageBlock(name, blockId)
-
-      if (!space_name) return false
-
-      if (space_id === spaceId) return true
-
-      const switchSpace = await confirmationPrompt({
-        name: 'switchSpace',
-        message: `${name} package block is under space ${space_name}. Do you want to set space to ${space_name}`,
-        default: true,
-      })
-
-      if (!switchSpace) {
-        feedback({ type: 'error', message: `Access denied for current space` })
-        process.exit(0)
-      }
-
-      // TODO: Check for space existance
-      configstore.set('currentSpaceName', space_name)
-      configstore.set('currentSpaceId', space_id)
-
-      feedback({ type: 'success', message: `Current Space: ${configstore.get('currentSpaceName')}` })
-    }
+  const configPath = path.resolve('block.config.json')
+  const { manager, error } = await ConfigFactory.create(configPath)
+  if (error) {
+    if (error.type !== 'OUT_OF_CONTEXT') throw error
+    throw new Error('Please run the command inside package context ')
   }
 
-  return false
+  let packageManager = manager
+
+  if (cmd === 'create-version' || manager instanceof BlockConfigManager) {
+    const { rootManager } = await manager.findMyParents()
+    packageManager = rootManager
+  }
+
+  const headlessConfig = headLessConfigStore.store
+  const spaceId = headlessConfig.prismaSchemaFolderPath || configstore.get('currentSpaceId')
+
+  if (cmd === 'create-version') {
+    // check with synced workspace
+    const workSpaceFolder = path.join(packageManager.directory, 'bb_modules', 'workspace')
+
+    const { manager: mc, error: wErr } = await ConfigFactory.create(
+      path.join(workSpaceFolder, packageManager.configName)
+    )
+
+    if (wErr) {
+      if (wErr.type !== 'OUT_OF_CONTEXT') throw wErr
+      throw new Error('Please run the command inside package context ')
+    }
+    
+    packageManager = mc
+  }
+
+  const { name, blockId } = packageManager.config
+  if (!blockId) throw new Error(`Block ID not found for root ${name}`)
+
+  await lrManager.init()
+
+  if (!spaceId || !lrManager.isSpaceLinkedToPackageBlock(blockId, spaceId)) {
+    const { space_name, space_id } = await lrManager.linkedSpaceOfPackageBlock(name, blockId)
+
+    if (!space_name) return false
+
+    if (space_id === spaceId) return true
+
+    const switchSpace = await confirmationPrompt({
+      name: 'switchSpace',
+      message: `${name} package block is under space ${space_name}. Do you want to set space to ${space_name}`,
+      default: true,
+    })
+
+    if (!switchSpace) {
+      feedback({ type: 'error', message: `Access denied for current space` })
+      process.exit(0)
+    }
+
+    // TODO: Check for space existence
+    configstore.set('currentSpaceName', space_name)
+    configstore.set('currentSpaceId', space_id)
+
+    feedback({ type: 'success', message: `Current Space: ${configstore.get('currentSpaceName')}` })
+  }
+
+  return true
 }
 
 async function checkAndSetUserSpacePreference(cmd) {
@@ -89,6 +117,7 @@ async function checkAndSetUserSpacePreference(cmd) {
       configstore.set('currentSpaceId', id)
     } catch (err) {
       // TODO: feedback here
+      feedback({ type: 'error', message: err.message })
       process.exit(1)
     }
   } else {

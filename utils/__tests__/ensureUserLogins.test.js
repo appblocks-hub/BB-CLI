@@ -10,7 +10,7 @@ const handleGithubAuth = require('../handleGithubAuth')
 
 const POSTDATA = {
   client_id: githubClientID,
-  scope: 'repo,read:org',
+  scope: 'repo,read:org,delete_repo',
 }
 const URIENCODEDSTRING = 'ABC%20abc%20123'
 const DECODEDSTRING = 'ABC abc 123'
