@@ -8,39 +8,32 @@
 /* eslint-disable no-continue */
 
 const chalk = require('chalk')
-const { logFail } = require('../../utils')
-const { readInput } = require('../../utils/questionPrompts')
+const path = require('path')
+const { existsSync } = require('fs')
+// const { logFail } = require('../../utils')
 const createBBModules = require('./createBBModules')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
-const path = require('path')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
-const { existsSync, writeFileSync } = require('fs')
-const { isInRepo } = require('../../utils/Queries')
 const { configstore } = require('../../configstore')
 const { headLessConfigStore } = require('../../configstore')
-const { default: axios } = require('axios')
-const { githubGraphQl } = require('../../utils/api')
-const { getGitHeader } = require('../../utils/getHeaders')
 const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
 const syncBlocks = require('../../utils/syncBlocks')
 
 const tempSync = async (blockName, options) => {
+  const { returnOnError } = options || {}
   try {
-    const { environment, configName } = options
-
     const rootConfigPath = path.resolve(process.cwd(), 'block.config.json')
     const bbModulesPath = path.resolve(process.cwd(), 'bb_modules')
-    let configFactory = await ConfigFactory.create(rootConfigPath)
+    const configFactory = await ConfigFactory.create(rootConfigPath)
 
-    let { manager: configManager } = configFactory
-    let repoUrl = configManager.config.source.https
+    const { manager: configManager } = configFactory
+    const repoUrl = configManager.config.source.https
 
-    let parent = await configManager.findMyParentPackage()
+    const parent = await configManager.findMyParentPackage()
 
-    if (!configManager.manager instanceof PackageConfigManager || parent.data.parentPackageFound !== false) {
-      logFail(`\nPlease call sync from the root package block..`)
-      process.exit(1)
+    if (!(configManager instanceof PackageConfigManager) || parent.data.parentPackageFound !== false) {
+     throw new Error("Please call sync from the root package block..")
     }
 
     const { defaultBranch, repoVisibility } = await setVisibilityAndDefaultBranch({
@@ -52,37 +45,23 @@ const tempSync = async (blockName, options) => {
     const bbModulesExists = existsSync(bbModulesPath)
 
     const bbModulesData = await createBBModules({
-      bbModulesPath: bbModulesPath,
+      bbModulesPath,
       rootConfig: configManager.config,
-      bbModulesExists: bbModulesExists,
+      bbModulesExists,
       defaultBranch,
       repoVisibility,
     })
-
 
     syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID)
 
     // return
 
-    const orphanBranchData = await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
+    await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
   } catch (error) {
+    // returnOnError to throw error if called from other commands
+    if (returnOnError) throw new Error(`Syncing failed! Please run bb sync and try again `)
     console.log(chalk.red(error.message))
   }
 }
 
 module.exports = tempSync
-
-/**
- * archiver package eg, for zipping
- */
-// https://stackoverflow.com/questions/65960979/node-js-archiver-need-syntax-for-excluding-file-types-via-glob
-// const fs = require('fs');
-// const archiver = require('archiver');
-// const output = fs.createWriteStream(__dirname);
-// const archive = archiver('zip', { zlib: { level: 9 } });
-// archive.pipe(output);
-// archive.glob('*/**', {
-//    cwd: __dirname,
-//    ignore: ['**/node_modules/*', '.git', '*.zip']
-// });
-// archive.finalize();

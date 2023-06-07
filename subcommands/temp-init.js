@@ -1,10 +1,12 @@
 const path = require('path')
+const { nanoid } = require('nanoid')
 const { mkdir, writeFile } = require('fs/promises')
 const chalk = require('chalk')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
+
 
 /**
  * Action for bb-temp-init
@@ -41,6 +43,16 @@ const init = async (packagename) => {
     ],
   })
 
+  const blockVisibility = await readInput({
+    type: 'list',
+    name: 'blockVisibility',
+    message: 'Select the block visibility',
+    choices: [
+      { name: 'Public', value: true },
+      { name: 'Private', value: false },
+    ],
+  })
+
   /**
    * Create a new package directory, assume there is no name conflict for dir name
    */
@@ -55,11 +67,14 @@ const init = async (packagename) => {
     JSON.stringify({
       name: packagename,
       type: 'package',
-      blockId: null,
+      blockId:nanoid(),
       source: {
         https: null,
         ssh: null,
+        branch: `block_${packagename}`
       },
+      parentBlockIDs:[],
+      isPublic:blockVisibility,
       supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
       repoType,
     })
