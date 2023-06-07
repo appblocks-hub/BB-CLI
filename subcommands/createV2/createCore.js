@@ -1,8 +1,11 @@
 /* eslint-disable no-continue */
+const { nanoid } = require('nanoid')
 const { mkdir, writeFile } = require('fs/promises')
 const path = require('path')
 const { AsyncSeriesHook } = require('tapable')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
+
+
 
 // eslint-disable-next-line no-unused-vars
 const { spinnies } = require('../../loader')
@@ -64,16 +67,20 @@ class CreateCore {
 
     this.repoType = this.packageConfig.repoType
 
+
     this.blockDetails = {
+      blockId:nanoid(),
       name: this.cmdArgs.blockName,
       type: blockTypeInverter(this.cmdOpts.type),
       source: {
         ...this.packageConfig.source,
-        branch: `orphan-${this.cmdArgs.blockName}`,
+        branch: `block_${this.cmdArgs.blockName}`,
       },
+      parentBlockIDs:[...this.packageConfig.parentBlockIDs,this.packageConfig.blockId],
       repoType: this.repoType,
       language: this.cmdOpts.language,
       supportedAppblockVersions: this.packageConfig.supportedAppblockVersions,
+      isPublic:this.packageConfig.isPublic
     }
 
     await this.hooks.beforeConfigUpdate?.promise(this)

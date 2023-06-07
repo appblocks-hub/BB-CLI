@@ -1,10 +1,13 @@
 const path = require('path')
+const { nanoid } = require('nanoid')
 const { mkdir, writeFile } = require('fs/promises')
 const chalk = require('chalk')
 const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
+const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
+
 
 /**
  * Action for bb-temp-init
@@ -41,6 +44,16 @@ const init = async (packagename) => {
     ],
   })
 
+  const blockVisibility = await readInput({
+    type: 'list',
+    name: 'blockVisibility',
+    message: 'Select the block visibility',
+    choices: [
+      { name: 'Public', value: true },
+      { name: 'Private', value: false },
+    ],
+  })
+
   /**
    * Create a new package directory, assume there is no name conflict for dir name
    */
@@ -50,26 +63,35 @@ const init = async (packagename) => {
   /**
    * Write the package config to newly created directory
    */
+  const packageBlockId=nanoid()
+  const packageParentBlockIDs=[]
+
   await writeFile(
     path.join(DIRPATH, 'block.config.json'),
     JSON.stringify({
       name: packagename,
       type: 'package',
-      blockId: null,
+      blockId:packageBlockId,
       source: {
         https: null,
         ssh: null,
+        branch: `block_${packagename}`
       },
+      parentBlockIDs:packageParentBlockIDs,
+      isPublic:blockVisibility,
       supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
       repoType,
     })
   )
 
+  const readmeString = generateFunctionReadme(packagename)
+  writeFile(`${DIRPATH}/README.md`, readmeString)
+
   /**
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) await setupTemplateV2({ DIRPATH })
+  if (useTemplate) await setupTemplateV2({ DIRPATH,blockVisibility,packageBlockId,packageParentBlockIDs})
 
   console.log(chalk.dim(`\ncd ${packagename} and start hacking\n`))
   console.log(chalk.dim(`run bb sync from ${packagename} to register templates as new block`))

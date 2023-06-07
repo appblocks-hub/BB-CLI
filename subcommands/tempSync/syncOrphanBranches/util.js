@@ -10,8 +10,35 @@ const path = require('path')
 
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { getGitConfigNameEmail, getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
+const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { headLessConfigStore } = require('../../../configstore')
+
+const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
+
+
+// const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {
+//   const copyCommandWithExclusions = `rsync -av --exclude={${excludedDirs.join(',')}} ${sourceDir}/ ${destinationDir}/`
+
+//   console.log('copy command with exclusions is', copyCommandWithExclusions)
+//   // execSync(copyCommandWithExclusions)
+// }
+
+const getLatestCommits = async (branchName, n, Git) => {
+  let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
+
+  let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
+
+  return commits
+}
+
+const retrieveCommitHash = (commitMessage) => {
+  const pattern = /\[commitHash:(\w+)\]/
+  const matches = commitMessage.match(pattern)
+  if (matches && matches.length > 1) {
+    return matches[1]
+  }
+  return ''
+}
 
 const generateOrphanBranch = async (options) => {
   const { bbModulesPath, block, repoUrl, blockMetaDataMap } = options
@@ -28,15 +55,12 @@ const generateOrphanBranch = async (options) => {
     'cliruntimelogs',
     'logs',
     'headless-config.json',
-    'metaDataMap.json',
-    'testApiPayload.json',
   ]
-  const orphanRemoteName = 'origin'
   const orphanCommitMessage = ''
 
   if (blockConfig.type === 'package') {
     const memberBlocks = block?.memberBlocks ?? {}
-    Object.keys(memberBlocks)?.map((item) => {
+    Object.keys(memberBlocks)?.forEach((item) => {
       const memberBlockDirectory = blockMetaDataMap[item].blockManager.directory
       const directoryPathArray = memberBlockDirectory.split('/')
       const directoryRelativePath = directoryPathArray[directoryPathArray.length - 1]
@@ -117,21 +141,6 @@ const generateOrphanBranch = async (options) => {
   }
 }
 
-// const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {
-//   const copyCommandWithExclusions = `rsync -av --exclude={${excludedDirs.join(',')}} ${sourceDir}/ ${destinationDir}/`
-
-//   console.log('copy command with exclusions is', copyCommandWithExclusions)
-//   // execSync(copyCommandWithExclusions)
-// }
-
-const getLatestCommits = async (branchName, n, Git) => {
-  let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
-
-  let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
-
-  return commits
-}
-
 function copyDirectory(sourceDir, destinationDir, exclusions) {
   const stack = [
     {
@@ -209,16 +218,6 @@ function isExcluded(name, stats, exclusions) {
   })
 }
 
-const buildCommitMessage = (commitHash, commitMesage) => `[commitHash:${commitHash}] ${commitMesage}`
-
-const retrieveCommitHash = (commitMessage) => {
-  const pattern = /\[commitHash:(\w+)\]/
-  const matches = commitMessage.match(pattern)
-  if (matches && matches.length > 1) {
-    return matches[1]
-  }
-  return ''
-}
 module.exports = {
   generateOrphanBranch,
   getLatestCommits,

@@ -13,7 +13,7 @@ async function updateAllMemberConfig(manger, source) {
   for await (const blockManager of manger.getDependencies()) {
     if (!blockManager?.config) continue
 
-    blockManager.updateConfig({ source })
+    blockManager.updateConfig({ source: { ...source, branch: blockManager.config.source.branch } })
 
     const { type } = blockManager.config
 

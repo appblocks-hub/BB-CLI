@@ -6,13 +6,12 @@
  */
 
 /* eslint-disable camelcase */
-const axios = require('axios')
-const { spinnies } = require('../loader')
-const { blocksSync } = require('./api')
-const { getShieldHeader, getShieldHeaderWithSpaceID } = require('./getHeaders')
-const { feedback } = require('./cli-feedback')
 const { writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } = require('fs')
 const path = require('path')
+const axios = require('axios')
+const { blocksSync } = require('./api')
+const { getShieldHeader } = require('./getHeaders')
+const { feedback } = require('./cli-feedback')
 
 /**
  *
@@ -25,52 +24,50 @@ const path = require('path')
  * @param {String} job_config Configuration for job
  */
 // eslint-disable-next-line consistent-return
-async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID) {
+async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
-
+try{
   const postData = {
     block_meta_data_map,
     block_name_array,
   }
 
-  try {
-    const shieldHeader = getShieldHeader()
+  const shieldHeader = getShieldHeader()
 
-    shieldHeader.space_id = currentSpaceID
+  shieldHeader.space_id = currentSpaceID
 
-    const res = await axios.post(blocksSync, postData, {
-      headers: shieldHeader,
-    })
+  const res = await axios.post(blocksSync, postData, {
+    headers: shieldHeader,
+  })
 
-    if (res.data.err) {
-      feedback({ type: 'error', message: res.data.msg })
-      process.exit(1)
-    }
-
-    const resData = res.data.data
-
-
-    const logOutRoot=path.resolve('logs', 'out')
-    const syncLogDirectory = path.join(logOutRoot,'sync-logs' )
-
-    createSyncLogs(syncLogDirectory,resData?.non_available_block_names??[])
-
-    // spinnies.succeed('syncBlocks', { text: `Blocks Created Successfully` })
-    // spinnies.remove('syncBlocks')
-  } catch (err) {
-    console.log('axios error is', err)
-    // spinnies.fail('', { text: `Blocks Creation Failed` })
-    // spinnies.remove('syncBlocks')
-    // throw err
+  if (res.data.err) {
+    feedback({ type: 'error', message: res.data.msg })
+    process.exit(1)
   }
+
+  const resData = res.data.data
+
+  const logOutRoot = path.resolve('logs', 'out')
+  const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
+
+  createSyncLogs(syncLogDirectory, resData?.non_available_block_names ?? [], returnOnError)
+}catch(err){
+  if (returnOnError){
+    throw err
+  }
+
+}
+  // spinnies.succeed('syncBlocks', { text: `Blocks Created Successfully` })
+  // spinnies.remove('syncBlocks')
 }
 
-function createSyncLogs(directoryPath, fileNames) {
+function createSyncLogs(directoryPath, fileNames,returnOnError) {
   // Create the directory if it doesn't exist
   if (!existsSync(directoryPath)) {
     mkdirSync(directoryPath, { recursive: true })
     console.log('sync logs created:', directoryPath)
   }
+
 
   // Get the list of files in the directory
   const files = readdirSync(directoryPath)
@@ -90,10 +87,11 @@ function createSyncLogs(directoryPath, fileNames) {
 
     if (!existsSync(filePath)) {
       writeFileSync(filePath, '', 'utf8')
-      console.log('File created:', filePath)
-    } else {
-    }
+    } 
   })
+  if ( fileNames.length > 0 && returnOnError) {
+    throw new Error("BB Sync failed.")
+    }
 }
 
 module.exports = syncBlocks

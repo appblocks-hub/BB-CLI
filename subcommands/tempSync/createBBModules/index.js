@@ -6,22 +6,16 @@
  */
 const path = require('path')
 
-const { rmdirSync, mkdirSync, existsSync, writeFileSync } = require('fs')
+const { rmdirSync, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const {
-  buildBlockConfig,
-  searchFile,
-  addBlockWorkSpaceCommits,
-  getAndSetSpace,
-  checkAndPushChanges,
-} = require('./util')
+const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
 
 const createBBModules = async (options) => {
-  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
+  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
 
   const apiPayload = {}
   const blockMetaDataMap = {}
@@ -29,11 +23,9 @@ const createBBModules = async (options) => {
 
   const workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
   let repoUrl = rootConfig.source.https
-  const workSpaceRemoteName = 'origin'
   if (configstore.get('prefersSsh')) {
     repoUrl = rootConfig.source.ssh
   }
-
 
   const Git = new GitManager(workspaceDirectoryPath, repoUrl)
   if (!bbModulesExists) {
@@ -55,7 +47,6 @@ const createBBModules = async (options) => {
     }
   }
 
-
   const currentBranch = (await Git.currentBranch())?.out
 
   if (currentBranch !== defaultBranch) {
@@ -65,7 +56,7 @@ const createBBModules = async (options) => {
   // set the appropriate space for the repository
   const currentSpaceID = await getAndSetSpace(headLessConfigStore)
 
-  const pullResult = await Git.pull()
+  await Git.pull()
 
   // building initial package config manager inside bb_modules/workspace directory
   const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
@@ -82,7 +73,6 @@ const createBBModules = async (options) => {
   await buildBlockConfig({
     workSpaceConfigManager,
     blockMetaDataMap,
-    repoVisibility,
     blockNameArray,
     rootPath: workSpaceConfigDirectoryPath,
     apiPayload,
@@ -90,7 +80,7 @@ const createBBModules = async (options) => {
 
   await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
 
-  await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
+  // await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
 
   return {
     blockMetaDataMap,
