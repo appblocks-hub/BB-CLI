@@ -66,12 +66,14 @@ const connectRemote = async (cmdOptions) => {
     await Git.addRemote('origin', source.ssh)
 
     if (manager.config.repoType === 'multi') {
-      manager.updateConfig({ source })
+      manager.updateConfig({  ...manager
+        .config.source,source })
       spinnies.succeed('cr', { text: 'Successfully added source to block' })
       return
     }
 
-    manager.updateConfig({ source })
+    manager.updateConfig({ ...manager
+      .config.source,source })
     await updateAllMemberConfig(manager, source)
 
     spinnies.succeed('cr', { text: 'Successfully added source to blocks' })
