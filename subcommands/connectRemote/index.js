@@ -56,6 +56,7 @@ const connectRemote = async (cmdOptions) => {
     }
 
     const source = {
+      ...manager.config.source,
       ssh: sourceUrl.trim(),
       https: convertGitSshUrlToHttps(sourceUrl.trim()),
     }
@@ -66,14 +67,12 @@ const connectRemote = async (cmdOptions) => {
     await Git.addRemote('origin', source.ssh)
 
     if (manager.config.repoType === 'multi') {
-      manager.updateConfig({  ...manager
-        .config.source,source })
+      manager.updateConfig({ source })
       spinnies.succeed('cr', { text: 'Successfully added source to block' })
       return
     }
 
-    manager.updateConfig({ ...manager
-      .config.source,source })
+    manager.updateConfig({source })
     await updateAllMemberConfig(manager, source)
 
     spinnies.succeed('cr', { text: 'Successfully added source to blocks' })

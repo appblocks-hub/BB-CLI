@@ -36,7 +36,7 @@ const tempSync = async (blockName, options) => {
      throw new Error("Please call sync from the root package block..")
     }
 
-    const { defaultBranch, repoVisibility } = await setVisibilityAndDefaultBranch({
+    const { defaultBranch} = await setVisibilityAndDefaultBranch({
       configstore,
       repoUrl,
       headLessConfigStore,
@@ -49,10 +49,9 @@ const tempSync = async (blockName, options) => {
       rootConfig: configManager.config,
       bbModulesExists,
       defaultBranch,
-      repoVisibility,
     })
 
-    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID)
+    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID,returnOnError)
 
     // return
 

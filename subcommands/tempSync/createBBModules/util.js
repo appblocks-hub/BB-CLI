@@ -21,9 +21,9 @@ const { isInRepo } = require('../../../utils/Queries')
 const { getGitHeader } = require('../../../utils/getHeaders')
 
 const buildApiPayload = (currentConfig, apiPayload) => {
-  if (currentConfig?.id && currentConfig?.type && currentConfig?.source) {
+  if (currentConfig?.blockId && currentConfig?.type && currentConfig?.source) {
     apiPayload[currentConfig.name] = {
-      id: currentConfig.id,
+      id: currentConfig.blockId,
       type: currentConfig.type,
       source: currentConfig.source,
       language: currentConfig?.language ?? '',
@@ -87,12 +87,11 @@ const buildApiPayload = (currentConfig, apiPayload) => {
 // }
 
 const buildBlockConfig = async (options) => {
-  let { workSpaceConfigManager, blockMetaDataMap, repoVisibility, blockNameArray, rootPath, apiPayload } = options
+  let { workSpaceConfigManager, blockMetaDataMap, blockNameArray, rootPath, apiPayload } = options
 
   let currentPackageMemberBlocks = {}
 
   let packageMetaData = { blockManager: workSpaceConfigManager }
-
 
   let packageConfig = workSpaceConfigManager.config
 
@@ -124,13 +123,11 @@ const buildBlockConfig = async (options) => {
       await buildBlockConfig({
         workSpaceConfigManager: blockManager,
         blockMetaDataMap,
-        repoVisibility,
         blockNameArray,
         rootPath,
         apiPayload,
       })
     } else {
-
       if (!blockMetaDataMap[currentConfig.name]) {
         blockMetaDataMap[currentConfig.name] = currentMetaData
         blockNameArray.push(currentConfig.name)
@@ -273,10 +270,10 @@ const setVisibilityAndDefaultBranch = async (options) => {
   const { configstore, repoUrl, headLessConfigStore } = options
 
   let defaultBranch = headLessConfigStore.get('defaultBranch')
-  let repoVisibility = headLessConfigStore.get('repoVisibility')
+  // let repoVisibility = headLessConfigStore.get('repoVisibility')
 
-  if (defaultBranch && repoVisibility) {
-    return { defaultBranch, repoVisibility }
+  if (defaultBranch) {
+    return { defaultBranch }
   }
 
   const githubUserName = configstore.get('githubUserName')
@@ -302,26 +299,26 @@ const setVisibilityAndDefaultBranch = async (options) => {
   const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
   defaultBranch = existingRepoData?.defaultBranchName ?? ''
-  repoVisibility = existingRepoData?.visibility ?? ''
+  // repoVisibility = existingRepoData?.visibility ?? ''
 
-  if (repoVisibility.length === 0) {
-    console.log('Error getting Repository visibility and main branch from git\n')
+  // if (repoVisibility.length === 0) {
+  //   console.log('Error getting Repository visibility and main branch from git\n')
 
-    const inputRepoVisibility = await readInput({
-      name: 'inputRepoVisibility',
-      type: 'checkbox',
-      message: 'Select the repo visibility',
-      choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
-      validate: (input) => {
-        if (!input || input?.length < 1) return `Please enter either public or private`
-        return true
-      },
-    })
+  //   const inputRepoVisibility = await readInput({
+  //     name: 'inputRepoVisibility',
+  //     type: 'checkbox',
+  //     message: 'Select the repo visibility',
+  //     choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
+  //     validate: (input) => {
+  //       if (!input || input?.length < 1) return `Please enter either public or private`
+  //       return true
+  //     },
+  //   })
 
-    repoVisibility = inputRepoVisibility
-  }
+  //   repoVisibility = inputRepoVisibility
+  // }
 
-  headLessConfigStore.set('repoVisibility', repoVisibility)
+  // headLessConfigStore.set('repoVisibility', repoVisibility)
 
   if (defaultBranch.length === 0) {
     console.log('entered repo main branch unavailable\n')
@@ -339,7 +336,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
 
   headLessConfigStore.set('defaultBranch', defaultBranch)
 
-  return { defaultBranch, repoVisibility }
+  return { defaultBranch }
 }
 
 const calculateDirectoryDifference = (path1, path2) => {

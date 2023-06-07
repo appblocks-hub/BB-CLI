@@ -10,17 +10,12 @@ const { rmdirSync, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const {
-  buildBlockConfig,
-  searchFile,
-  addBlockWorkSpaceCommits,
-  getAndSetSpace,
-} = require('./util')
+const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
 
 const createBBModules = async (options) => {
-  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
+  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
 
   const apiPayload = {}
   const blockMetaDataMap = {}
@@ -78,7 +73,6 @@ const createBBModules = async (options) => {
   await buildBlockConfig({
     workSpaceConfigManager,
     blockMetaDataMap,
-    repoVisibility,
     blockNameArray,
     rootPath: workSpaceConfigDirectoryPath,
     apiPayload,

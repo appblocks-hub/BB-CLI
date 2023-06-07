@@ -6,6 +6,7 @@ const { isValidBlockName } = require('../utils/blocknameValidator')
 const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
+const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
 
 
 /**
@@ -62,29 +63,35 @@ const init = async (packagename) => {
   /**
    * Write the package config to newly created directory
    */
+  const packageBlockId=nanoid()
+  const packageParentBlockIDs=[]
+
   await writeFile(
     path.join(DIRPATH, 'block.config.json'),
     JSON.stringify({
       name: packagename,
       type: 'package',
-      blockId:nanoid(),
+      blockId:packageBlockId,
       source: {
         https: null,
         ssh: null,
         branch: `block_${packagename}`
       },
-      parentBlockIDs:[],
+      parentBlockIDs:packageParentBlockIDs,
       isPublic:blockVisibility,
       supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
       repoType,
     })
   )
 
+  const readmeString = generateFunctionReadme(packagename)
+  writeFile(`${DIRPATH}/README.md`, readmeString)
+
   /**
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) await setupTemplateV2({ DIRPATH })
+  if (useTemplate) await setupTemplateV2({ DIRPATH,blockVisibility,packageBlockId,packageParentBlockIDs})
 
   console.log(chalk.dim(`\ncd ${packagename} and start hacking\n`))
   console.log(chalk.dim(`run bb sync from ${packagename} to register templates as new block`))

@@ -55,8 +55,6 @@ const generateOrphanBranch = async (options) => {
     'cliruntimelogs',
     'logs',
     'headless-config.json',
-    'metaDataMap.json',
-    'testApiPayload.json',
   ]
   const orphanCommitMessage = ''
 
