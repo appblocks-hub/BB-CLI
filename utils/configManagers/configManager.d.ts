@@ -105,6 +105,12 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
    * if found, returns the absolute path
    */
   public findMyParentPackage(): Promise<string>
+
+  /**
+   * Get all parent upto given level or till the no parent found parent
+   */
+  private findMyParents(tLevel: Number | null): Promise<Array<PackageConfigManager>>
+
   public isPackage(): config is PackageConfig
   public init(): Promise<void>
   public getBlockId(): Promise<string>

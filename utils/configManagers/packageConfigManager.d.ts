@@ -79,6 +79,21 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Promise<{ manager: BlockConfigManager | PackageConfigManager | null; err: ?Error }>
 
   /**
+   * To get immediate member blocks
+   * @param configPath
+   */
+  public getBlock(configPath: PathLike): Promise<BlockConfigManager | null>
+
+  /**
+   * To traverse and get get any level oh member blocks
+   * @param configPath
+   */
+  public getAnyBlock(
+    configPath: PathLike,
+    tLevel: Number | null
+  ): Promise<BlockConfigManager | PackageConfigManager | null>
+
+  /**
    *
    * @param name
    */

@@ -14,14 +14,21 @@ const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePre
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
 const program = new Command().hook('preAction', async () => {
-  await ensureUserLogins()
-  await checkAndSetGitConnectionPreference()
-  await checkAndSetUserSpacePreference()
+  try {
+    await ensureUserLogins()
+    await checkAndSetGitConnectionPreference()
+    await checkAndSetUserSpacePreference('create-version')
+  } catch (error) {
+    console.log(error.response?.data.message || error.message)
+  }
 })
 
 program
   .argument('[block-name]', 'Name of block to create-version')
-  .option('--latest', 'Select the latest version of member blocks on package version create')
+  .option('-v, --version <version>', 'New sematic version')
+  .option('-vn, --version-note <version-note>', 'Version note for new version')
+  .option('-f, --force', 'Discard all waring prompt and force the create version')
+  .option('-l, --latest', 'Select the latest version of member blocks on package version create')
   .action(createVersion)
 
 program.parse(process.argv)

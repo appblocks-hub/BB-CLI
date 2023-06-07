@@ -14,6 +14,7 @@ const { spinnies } = require('../../loader')
 const { tryGitInit, isInGitRepository } = require('../../utils/gitCheckUtils')
 const { generateGitIgnore } = require('../../templates/createTemplates/function-templates')
 const { initializeConfig, updateAllMemberConfig } = require('./util')
+const { GitManager } = require('../../utils/gitManagerV2')
 
 const connectRemote = async (cmdOptions) => {
   try {
@@ -60,6 +61,9 @@ const connectRemote = async (cmdOptions) => {
     }
 
     spinnies.add('cr', { text: 'Adding source to blocks' })
+
+    const Git = new GitManager(manager.directory, source.ssh)
+    await Git.addRemote('origin', source.ssh)
 
     if (manager.config.repoType === 'multi') {
       manager.updateConfig({ source })

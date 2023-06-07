@@ -96,6 +96,10 @@ class GitManager {
     this.cwd = path.resolve(directoryPath)
   }
 
+  createReleaseBranch(releaseBranch, parentBranch) {
+    return this._run('checkout', ['-b', releaseBranch, parentBranch])
+  }
+
   /* ********************************
    *************** F ****************
    ******************************** */

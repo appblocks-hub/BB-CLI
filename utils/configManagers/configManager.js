@@ -1,3 +1,4 @@
+/* eslint-disable import/extensions */
 const { EventEmitter } = require('stream')
 const path = require('path')
 const os = require('os')
@@ -126,11 +127,56 @@ class ConfigManager {
       parentPackageFound = true
       parentPackageConfig = { ...data }
     }
+
     return {
       data: { parent, parentPackageConfig,parentPackageFound },
       err:
         currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
     }
+  }
+
+  /**
+   *
+   * @param {Number} tLevel
+   * @returns
+   */
+  findMyParents = async (tLevel) => {
+    let currentPath = path.join(this.directory)
+    const parentManagers = []
+
+    const { default: _DYNAMIC_CONFIG_FACTORY } = await import('./configFactory.js')
+
+    let parent = path.dirname(currentPath)
+    let err
+
+    while (parent !== currentPath && !err) {
+      const configPath = path.join(parent, this.configName)
+      const { manager, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
+
+      if (error && error.code !== 'ENOENT') {
+        error.path = path.relative(path.resolve(), configPath)
+        err = error
+        continue
+      }
+
+      if (manager?.isPackageConfigManager) parentManagers.push(manager)
+
+      parent = path.dirname(parent)
+
+      if (tLevel != null && tLevel > 0) {
+        // eslint-disable-next-line no-param-reassign
+        if (Number.isNaN(tLevel)) tLevel -= 1
+      }
+
+      if ((tLevel != null && tLevel <= 0) || parent === '/') {
+        currentPath = parent
+      }
+    }
+
+    let rootManager = parentManagers.length > 0 ? parentManagers[0] : null
+    if (!rootManager && this.isPackageConfigManager) rootManager = this
+
+    return { err, parentManagers, rootManager }
   }
 
   updateConfig(newConfig) {
