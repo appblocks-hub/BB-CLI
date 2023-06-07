@@ -28,6 +28,7 @@ const deleteApp = require('../subcommands/deleteApp')
 const log = require('../subcommands/log')
 const start = require('../subcommands/start')
 const ls = require('../subcommands/ls')
+const runTest = require('../subcommands/runTest')
 const flush = require('../subcommands/flush')
 const push = require('../subcommands/push')
 const stop = require('../subcommands/stop')
@@ -149,6 +150,8 @@ async function init() {
   program.command('flush').description(desc.flush).action(flush)
 
   program.command('ls').description(desc.ls).option('-g, --global', 'execute globally').action(ls)
+
+  program.command('run-test').description(desc.run_test).option('-g, --global', 'execute globally').action(runTest)
 
   program.command('temp-migrate').description('').option('-g, --global', 'execute globally').action(tempMigrate)
 

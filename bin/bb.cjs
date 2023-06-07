@@ -26,6 +26,8 @@ const cmd = program.command.bind(program)
 
 // cmd('test', 'to tests')
 
+cmd('run-test', 'to run tests')
+
 cmd('add-categories', 'block assign categories to blocks')
 
 cmd('add-tags', 'block add tags')
