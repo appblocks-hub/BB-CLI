@@ -101,6 +101,7 @@ class HandleBeforePush {
         core.blocksToPush = blocksToPush
         core.gitUserName = gitUserName
         core.gitUserEmail = gitUserEmail
+        core.cmdOpts.message = message
       }
     )
   }

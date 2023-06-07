@@ -6,8 +6,9 @@
  */
 
 const path = require('path')
-const { execSync } = require('child_process')
 const chalk = require('chalk')
+const { existsSync } = require('fs')
+const { execSync } = require('child_process')
 const { spinnies } = require('../../loader')
 const createBlockVersion = require('./createBlockVersion')
 const { createPackageVersion } = require('./createPackageVersion')
@@ -46,32 +47,38 @@ const createVersion = async (bkName, cmdOptions) => {
       orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
       workSpaceFolder = path.join(rootManager.directory, 'bb_modules', 'workspace')
 
-      const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
-      isCleanBlock(manager.directory, isCleanBlockName)
-      isCleanBlock(orphanBranchFolder)
-      isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
-
       // sync
       spinnies.add('sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
       spinnies.succeed('sync', { text: 'sync is up to date' })
 
-      const execOptions = { cwd: manager.directory }
+      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
+      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
 
+      const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
+      isCleanBlock(manager.directory, isCleanBlockName)
+      isCleanBlock(orphanBranchFolder)
+      isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
+
+      const execOptions = { cwd: manager.directory }
       let aheadChanges = false
       const existBranch =
         execSync(`git ls-remote --exit-code --heads origin ${curBranch}`, execOptions).toString().trim() !== ''
-      if (existBranch) {
+
+      if (existBranch && curBranch !== 'main') {
+        // check changes in main branch and current branch
         const changesExist = execSync(`git log origin/main..origin/${curBranch}`, execOptions).toString().trim() !== ''
         if (changesExist) aheadChanges = true
-      } else aheadChanges = true
+      } else if (!existBranch) aheadChanges = true
 
       if (aheadChanges) {
-        console.log(chalk.dim('Create version code will be considered from main branch only'))
-        if (!cmdOptions?.force) {
+        console.log(chalk.dim('Your current branch changes are not synced to main'))
+        if (cmdOptions?.force) {
+          console.log(chalk.dim('Version will be created from main branch code'))
+        } else {
           const goAhead = await confirmationPrompt({
             name: 'goAhead',
-            message: 'Your current branch changes are not synced to main. Do you want to continue?',
+            message: 'Create version code will be considered from main branch only. Do you want to continue?',
           })
 
           if (!goAhead) return
@@ -139,7 +146,6 @@ const createVersion = async (bkName, cmdOptions) => {
       await createPackageVersion({ packageManager, cmdOptions })
     }
   } catch (err) {
-    console.log({ err })
     spinnies.add('cv', { text: 'Error' })
     spinnies.fail('cv', { text: `${err.message} ${err.path ? `(${err.path})` : ''} ` })
     spinnies.stopAll()
