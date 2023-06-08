@@ -13,6 +13,7 @@ const { generateSidebarTemplateJs } = require('./generate-sidebar-template')
 const { generateUiElementsEsLintRc } = require('./generate-eslintrc')
 const { generateUiElementsCommitlintRc } = require('./generate-commitlintrc')
 const { generateUiElementsPrettierRc } = require('./generate-prettierrc')
+const { generateDashboardTemplateJs } = require('./generate-dashboard-template')
 
 module.exports = {
   generateUiElementIndexHtml,
@@ -31,4 +32,5 @@ module.exports = {
   generateUiElementsCommitlintRc,
   generateUiElementsPrettierRc,
   generateUiElementPackageJsonWithoutLint,
+  generateDashboardTemplateJs,
 }
