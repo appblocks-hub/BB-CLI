@@ -76,10 +76,6 @@ class GitManager {
     return this._run(`ls-remote --heads ${this.remote} ${branchName}`, [])
   }
 
-  getCommits(branchName, n) {
-    return this._run(`log --oneline -${n}`, [branchName || 'main'])
-  }
-
   checkoutTag(tag, branch = 'main') {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
@@ -236,10 +232,8 @@ class GitManager {
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
-    if (r.status === 'error') {
-      console.log('git action is \n', r)
-
-      throw new GitError(this.cwd, r.msg, false, operation, opts)
+    if (r.err != null) {
+      throw new GitError(this.cwd, r.err, false, operation, opts)
     }
     return r
   }
