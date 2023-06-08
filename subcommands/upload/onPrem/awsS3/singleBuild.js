@@ -28,12 +28,12 @@ const singleBuildDeployment = async ({ deployConfigManager, config, opdBackupFol
         deployData.elements_server_dns || `http://${deployData.elementsBucket}.${s3Website}/remoteEntry.js`
 
       const envData = {
-        BLOCK_ELEMENTS_URL: eleWebDomain,
-        BLOCK_DEP_LIB_URL: eleWebDomain,
-        BLOCK_CONTAINER_URL: deployData.server_dns || `http://${deployData.bucket}.${s3Website}`,
+        BB_ELEMENTS_URL: eleWebDomain,
+        BB_DEP_LIB_URL: eleWebDomain,
+        BB_CONTAINER_URL: deployData.server_dns || `http://${deployData.bucket}.${s3Website}`,
       }
 
-      if (backendUrl) envData.BLOCK_FUNCTION_URL = backendUrl
+      if (backendUrl) envData.BB_FUNCTION_URL = backendUrl
 
       envPath = path.resolve(`.env.view`)
       const existingEnvDataFile = await readFileSync(envPath, 'utf-8')

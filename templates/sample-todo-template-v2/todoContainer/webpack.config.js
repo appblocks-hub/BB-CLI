@@ -9,10 +9,7 @@ env.init()
 
 const __dirname = path.resolve()
 
-const port =
-  (process.env.BLOCK_CONTAINER_URL &&
-    Number(process.env.BLOCK_CONTAINER_URL.substr(process.env.BLOCK_CONTAINER_URL.length - 4))) ||
-  3000
+const port = 3000
 
 export default {
   entry: './src/index',

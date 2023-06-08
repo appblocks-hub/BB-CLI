@@ -10,7 +10,7 @@ function Home() {
   React.useEffect(() => {
     console.log({ e: process.env })
     let updateData = [{ id: 'test', item: 'test' }]
-    fetch(`${process.env.BLOCK_FUNCTION_URL}/listTodos`)
+    fetch(`${process.env.BB_FUNCTION_URL}/listTodos`)
       .then((res) => res.json())
       .then((data) => {
         updateData =

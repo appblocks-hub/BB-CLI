@@ -15,6 +15,7 @@ const {
   generateUiElementsPrettierRc,
   generateUiElementsCommitlintRc,
   generateUiElementFederationExpose,
+  generateUiElementFederationShared,
 } = require('../../../templates/createTemplates/uiElement-templates')
 
 // eslint-disable-next-line no-unused-vars
@@ -52,6 +53,7 @@ class handleUIElement {
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const fedExposeString = generateUiElementFederationExpose(blockName)
+        const fedSharedString = generateUiElementFederationShared(blockName)
         const packageJsonString = generateUiElementPackageJson(blockName)
         const eslintrcString = generateUiElementsEsLintRc()
         const commitLintRcString = generateUiElementsCommitlintRc()
@@ -71,6 +73,7 @@ class handleUIElement {
         writeFileSync(`${core.blockFolderPath}/README.md`, readmeString)
         writeFileSync(`${core.blockFolderPath}/webpack.config.js`, webpackConfigString)
         writeFileSync(`${core.blockFolderPath}/federation-expose.js`, fedExposeString)
+        writeFileSync(`${core.blockFolderPath}/federation-shared.js`, fedSharedString)
         writeFileSync(`${core.blockFolderPath}/.gitignore`, gitignore)
         writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
         writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
