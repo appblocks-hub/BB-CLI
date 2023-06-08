@@ -33,6 +33,7 @@ const buildApiPayload = (currentConfig, apiPayload) => {
       parentBlockIDs: currentConfig?.parentBlockIDs ?? [],
       isPublic: currentConfig?.isPublic ?? false,
       description: currentConfig?.description ?? '',
+      variantOf: currentConfig?.variantOf ?? '',
     }
   }
 }
