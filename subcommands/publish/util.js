@@ -26,7 +26,7 @@ const createZip = async ({ blockName, directory, version, excludePaths = [], roo
   try {
     const dir = `${directory}`
     const rootDirectory = rootDir || path.resolve('.')
-    const ZIP_TEMP_FOLDER = path.join(rootDirectory, '_ab_tmp', 'upload', blockName || '')
+    const ZIP_TEMP_FOLDER = path.join(rootDirectory, '._ab_tmp', 'upload', blockName || '')
     const EXCLUDE_IN_ZIP = [
       'node_modules/*',
       '.git/*',
