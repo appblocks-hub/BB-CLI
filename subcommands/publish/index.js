@@ -62,6 +62,7 @@ const publish = async (bkName, cmdOptions) => {
       const checkOutVersion = `block_${blockName}@${versionData.version_number}`
       const Git = new GitManager(orphanBranchFolder, rootManager.config.source.ssh)
       try {
+        await Git.fetch('--all')
         await Git.checkoutBranch(checkOutVersion)
         zipFile = await createZip({
           blockName,
