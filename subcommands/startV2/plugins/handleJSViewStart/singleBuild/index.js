@@ -30,8 +30,8 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
     }
 
+    if (!containerBlocks?.length) return { error: `No container block found` }
     if (!elementsBlocks?.length) return { error: `No element blocks found` }
-    if (!containerBlocks) return { error: `No container block found` }
 
     let containerBlock = containerBlocks[0]
     for (const block of containerBlocks) {
