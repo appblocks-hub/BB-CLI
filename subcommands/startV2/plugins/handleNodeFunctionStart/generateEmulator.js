@@ -39,7 +39,7 @@ const emulatorCode = (port) =>
   
       const { block, route } = getBlock(url);
       if (!block) {
-        console.log("No block found for url ", url);
+        console.log("No block found for url -> ", url);
         res.send("requested function not registered in app.").status(404);
         res.end();
         return;
