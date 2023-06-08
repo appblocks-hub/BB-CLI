@@ -11,16 +11,17 @@ const syncOrphanBranch = async (options) => {
   const { blockMetaDataMap, bbModulesPath, repoUrl } = options
 
   const blocksArray = Object.keys(blockMetaDataMap)
-  for (const item of blocksArray) {
-    const block = blockMetaDataMap[item]
-
-    try {
-      await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
-    } catch (err) {
-      console.log(`error creating orphan branch for ${block.blockManager.config.name}`)
-      throw err
-    }
-  }
+  await Promise.all(
+    Object.values(blockMetaDataMap).map(async (block) => {
+      try {
+        await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
+        return true
+      } catch (err) {
+        console.log(`Error creating orphan branch for ${block.blockManager.config.name}`)
+        return false
+      }
+    })
+  )
 }
 
 module.exports = syncOrphanBranch

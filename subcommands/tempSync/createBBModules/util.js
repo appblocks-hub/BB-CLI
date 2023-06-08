@@ -250,11 +250,12 @@ const promptAndSetSpace = async (Data, configstore) => {
 
 const getAndSetSpace = async (configstore) => {
   const currentSpaceId = configstore.get('currentSpaceId')
-
+  // console.log('currentSpaceId', currentSpaceId);
   if (currentSpaceId) {
     return currentSpaceId
   }
   const res = await listSpaces()
+  // console.log('res', res.data);
   if (res.data.err) {
     throw new Error('Unable to get space details')
   }

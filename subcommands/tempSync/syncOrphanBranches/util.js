@@ -126,17 +126,23 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
-
+    console.log("orphanBranchCommitHash !== block.workSpaceCommitID ",orphanBranchCommitHash !== block.workSpaceCommitID, orphanBranchCommitHash, block.workSpaceCommitID)
+   
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
-      clearDirectory(orphanBranchPath, exclusions)
+      try{
+        clearDirectory(orphanBranchPath, exclusions)
 
-      copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
-
-      await Git.stageAll()
-
-      await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanBranchCommitMessage))
-
-      await Git.push(orphanBranchName)
+        copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
+  
+        await Git.stageAll()
+  
+        await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanBranchCommitMessage))
+  
+        await Git.push(orphanBranchName)
+      }catch(e) {
+        console.log("Error while pushing to orphan branch", e);
+      }
+     
     }
   }
 }
