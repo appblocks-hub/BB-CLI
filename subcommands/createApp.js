@@ -9,7 +9,6 @@
 // const { transports } = require('winston')
 const { default: axios } = require('axios')
 const { readInput } = require('../utils/questionPrompts')
-// const { logger } = require('../utils/logger')
 const { appRegistryCreateApp } = require('../utils/api')
 const { getShieldHeader } = require('../utils/getHeaders')
 
