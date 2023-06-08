@@ -26,11 +26,14 @@ const tempSync = async (blockName, options) => {
   try {
     spinnies.add('bb', { text: 'Initializing config manager' })
 
-    const rootConfigPath = path.resolve(process.cwd(), 'block.config.json')
-    const bbModulesPath = path.resolve(process.cwd(), 'bb_modules')
-    const configFactory = await ConfigFactory.create(rootConfigPath)
+    const rootConfigPath = path.resolve('block.config.json')
+    const bbModulesPath = path.resolve('bb_modules')
+    const { manager: configManager, error } = await ConfigFactory.create(rootConfigPath)
+    if (error) {
+      if (error.type !== 'OUT_OF_CONTEXT') throw error
+      throw new Error('Cannot run bb command outside of bb context')
+    }
 
-    const { manager: configManager } = configFactory
     const repoUrl = configManager.config.source.https
 
     if (!repoUrl) throw new Error('No git source found. Please run bb connect-remote and try again')
@@ -43,7 +46,7 @@ const tempSync = async (blockName, options) => {
 
     //  check origin exist
     const cmdCheckMain = 'git ls-remote --heads --quiet origin main'
-    const existBranch = (await execSync(cmdCheckMain, { cwd: configManager.directory }).toString().trim()) !== ''
+    const existBranch = execSync(cmdCheckMain, { cwd: configManager.directory }).toString().trim() !== ''
     if (!existBranch) throw new Error('Remote main branch not found! Please run bb push -f and try again')
 
     const { defaultBranch } = await setVisibilityAndDefaultBranch({
@@ -52,7 +55,6 @@ const tempSync = async (blockName, options) => {
       headLessConfigStore,
     })
 
-    spinnies.update('bb', { text: 'Generating bb modules' })
     const bbModulesExists = existsSync(bbModulesPath)
     const bbModulesData = await createBBModules({
       bbModulesPath,
