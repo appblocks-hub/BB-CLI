@@ -144,7 +144,7 @@ const createVersion = async (bkName, cmdOptions) => {
       await createBlockVersion({ blockManager, cmdOptions })
     } else if (packageManager) {
       await createPackageVersion({ packageManager, cmdOptions })
-    }
+    } else throw new Error(`Error reading config manager`)
   } catch (err) {
     spinnies.add('cv', { text: 'Error' })
     spinnies.fail('cv', { text: `${err.message} ${err.path ? `(${err.path})` : ''} ` })
