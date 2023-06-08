@@ -8,7 +8,7 @@ const generateWebpackConfig = (options) => {
   }
 
   // eslint-disable-next-line no-template-curly-in-string
-  const depLibUrl = '${process.env.BLOCK_DEP_LIB_URL}'
+  const depLibUrl = '${process.env.BB_DEP_LIB_URL}'
 
   return `
 import HtmlWebpackPlugin from 'html-webpack-plugin'
