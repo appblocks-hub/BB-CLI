@@ -83,7 +83,7 @@ class BlockPusher {
             // and the repo wont be clean at that time
             execSync('git reset HEAD~1', { cwd: this.blockPath })
           } catch (error) {
-            console.log();
+            console.warn(error.message)
           }
         }
       })

@@ -33,10 +33,10 @@ const tempSync = async (blockName, options) => {
     const parent = await configManager.findMyParentPackage()
 
     if (!(configManager instanceof PackageConfigManager) || parent.data.parentPackageFound !== false) {
-     throw new Error("Please call sync from the root package block..")
+      throw new Error('Please call sync from the root package block..')
     }
 
-    const { defaultBranch} = await setVisibilityAndDefaultBranch({
+    const { defaultBranch } = await setVisibilityAndDefaultBranch({
       configstore,
       repoUrl,
       headLessConfigStore,
@@ -51,7 +51,7 @@ const tempSync = async (blockName, options) => {
       defaultBranch,
     })
 
-    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID,returnOnError)
+    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID, returnOnError)
 
     // return
 

@@ -1,6 +1,7 @@
 const generateGitIgnore = () => `
 #
 ._ab_*
+bb_*
 .deploy
 .deployed.config.json
 
