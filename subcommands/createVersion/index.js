@@ -62,8 +62,8 @@ const createVersion = async (bkName, cmdOptions) => {
 
       const execOptions = { cwd: manager.directory }
       let aheadChanges = false
-      const existBranch =
-        execSync(`git ls-remote --exit-code --heads origin ${curBranch}`, execOptions).toString().trim() !== ''
+      const existBranchRes = execSync(`git ls-remote --heads --quiet origin ${curBranch}`, execOptions)
+      const existBranch = existBranchRes.toString().trim() !== ''
 
       if (existBranch && curBranch !== 'main') {
         // check changes in main branch and current branch

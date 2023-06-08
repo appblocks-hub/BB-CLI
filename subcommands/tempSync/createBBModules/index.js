@@ -47,7 +47,7 @@ const createBBModules = async (options) => {
     }
   }
 
-  const currentBranch = (await Git.currentBranch())?.out
+  const currentBranch = (await Git.currentBranch())?.out?.trim()
 
   if (currentBranch !== defaultBranch) {
     await Git.checkoutBranch(defaultBranch)
@@ -59,13 +59,12 @@ const createBBModules = async (options) => {
   await Git.pull()
 
   // building initial package config manager inside bb_modules/workspace directory
-  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
-    workspaceDirectoryPath,
-    'block.config.json'
-  )
+  const searchFileData = searchFile(workspaceDirectoryPath, 'block.config.json')
+  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFileData || {}
 
-  const { manager: workSpaceConfigManager } = await ConfigFactory.create(workSpaceConfigPath)
+  const { manager: workSpaceConfigManager, error } = await ConfigFactory.create(workSpaceConfigPath)
 
+  if (error) throw error
   // const { manager: workSpaceConfigManager } = configFactory
 
   workSpaceConfigManager.newParentBlockIDs = []
