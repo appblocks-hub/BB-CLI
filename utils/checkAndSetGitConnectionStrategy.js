@@ -12,53 +12,48 @@ const { readInput } = require('./questionPrompts')
 
 async function checkAndSetGitConnectionPreference() {
   let pref = configstore.get('prefersSsh', '')
+
   if (pref === '') {
     const p = await getConnectionStrategyPreference()
-    if (p === 'SSH') {
-      pref = true
-      configstore.set('prefersSsh', true)
-    } else {
-      pref = false
-      configstore.set('prefersSsh', false)
-    }
+    pref = p === 'SSH'
+    configstore.set('prefersSsh', pref)
   }
+
   if (pref) {
     try {
       const presentName = configstore.get('githubUserName')
       const sshName = await checkSSH()
-      if (sshName === presentName) {
-        return true
-      }
-      console.log(chalk.blueBright(`Please sign into ${sshName}'s account for a seemless developer experience`))
-      console.log(`Use ${chalk.blueBright('block connect github -f')} to restart github login`)
-      configstore.set('prefersSsh', '')
+      if (sshName === presentName) return true
+
+      console.log(chalk.blueBright(`Please sign into ${sshName}'s account for a seamless developer experience`))
+      console.log(`Use ${chalk.blueBright('bb connect github -f')} to restart github login`)
+      configstore.delete('prefersSsh')
       throw new Error('Key of different user')
     } catch (err) {
-      console.log('Something went wrong')
       console.log(err.message)
       configstore.delete('prefersSsh')
       process.exit(1)
     }
   }
+
   try {
     const gitPat = configstore.get('gitPersonalAccessToken', '')
-    if (gitPat === '') {
-      await getAndSetGitPat()
-    }
+    if (gitPat === '') await getAndSetGitPat()
   } catch (err) {
-    console.log('Something went wrong while dealing with git PAT')
+    console.log('Error on dealing with git PAT')
     console.log(err.message)
     configstore.delete('prefersSsh')
     configstore.delete('gitPersonalAccessToken')
     process.exit(1)
   }
+
   return true
 }
 
 async function getConnectionStrategyPreference() {
   const p = await readInput({
     type: 'list',
-    name: 'connpref',
+    name: 'connPref',
     message: 'Which connection do you prefer',
     choices: ['Personnel Access Token', 'SSH'],
   })
@@ -80,10 +75,9 @@ async function getAndSetGitPat() {
  */
 function checkSSH() {
   return new Promise((res, rej) => {
-    exec('ssh -T git@github.com', (error, stdout, stderror) => {
+    exec('ssh -T git@github.com', (error, stdout, stdError) => {
       if (error.code < 2) {
-        // res(stderror.match(/Hi (\w+)!/)[1])
-        res(stderror.match(/(?<=Hi ).*(?=!)/)[0])
+        res(stdError.match(/(?<=Hi ).*(?=!)/)[0])
       }
       rej(new Error('Failed connection:SSH set up'))
     })

@@ -2,12 +2,14 @@ const generateGitIgnore = () => `
 #
 ._ab_*
 bb_*
+.env*
 .deploy
 .deployed.config.json
 
 # Logs
 logs
 *.log
+cliruntimelogs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
