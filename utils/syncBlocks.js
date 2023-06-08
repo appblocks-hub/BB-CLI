@@ -6,7 +6,7 @@
  */
 
 /* eslint-disable camelcase */
-const { writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } = require('fs')
+const { writeFileSync, existsSync, mkdirSync } = require('fs')
 const path = require('path')
 const axios = require('axios')
 const { blocksSync } = require('./api')
@@ -26,6 +26,8 @@ const { feedback } = require('./cli-feedback')
 // eslint-disable-next-line consistent-return
 async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
+  const logOutRoot = path.resolve('logs', 'out')
+  const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
   try {
     const postData = {
       block_meta_data_map,
@@ -40,53 +42,46 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID,
       headers: shieldHeader,
     })
 
+
     if (res.data.err) {
       feedback({ type: 'error', message: res.data.msg })
-      process.exit(1)
+      throw new Error()
     }
 
     const resData = res.data.data
 
-    const logOutRoot = path.resolve('logs', 'out')
-    const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
-
-    createSyncLogs(syncLogDirectory, resData?.non_available_block_names ?? [], returnOnError)
+    updateSyncLogs(
+      syncLogDirectory,
+      {apiLogs:{
+        non_available_block_names: resData?.non_available_block_names_map ?? {},
+        error: res?.data?.err??false,
+        message:res?.data?.msg??""
+      }},
+      returnOnError
+    )
   } catch (err) {
-    if (returnOnError) throw err
+    updateSyncLogs(
+      syncLogDirectory,
+      {apiLogs:{ error: true, message: 'Sync Api Failed', non_available_block_names: {} }},
+      returnOnError
+    )
   }
   // spinnies.succeed('syncBlocks', { text: `Blocks Created Successfully` })
   // spinnies.remove('syncBlocks')
 }
 
-function createSyncLogs(directoryPath, fileNames, returnOnError) {
+function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap, returnOnError) {
   // Create the directory if it doesn't exist
   if (!existsSync(directoryPath)) {
     mkdirSync(directoryPath, { recursive: true })
     console.log('sync logs created:', directoryPath)
   }
 
-  // Get the list of files in the directory
-  const files = readdirSync(directoryPath)
+  const filePath = path.join(directoryPath, 'logs')
 
-  // Delete files that are not present in the fileNames array
-  files.forEach((file) => {
-    const filePath = path.join(directoryPath, file)
+  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap), 'utf8', { flag: 'w' })
 
-    if (!fileNames.includes(file)) {
-      unlinkSync(filePath)
-    }
-  })
-
-  // Iterate over the file names and create the files if they don't exist
-  fileNames.forEach((fileName) => {
-    const filePath = path.join(directoryPath, fileName)
-
-    if (!existsSync(filePath)) {
-      writeFileSync(filePath, '', 'utf8')
-    }
-  })
-  
-  if (fileNames.length > 0 && returnOnError) {
+  if (Object.keys(nonAvailableBlockNamesMap) > 0 && returnOnError) {
     throw new Error('BB Sync failed.')
   }
 }
