@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.0...v0.26.1) (2023-06-08)
+
+
+### Bug Fixes
+
+* bb start with todo template ([11579bd](https://github.com/appblocks-hub/BB-CLI/commit/11579bde426ef6a07bb877b8c142aefe21121607))
+* sync issue and typo on bb connect ([4d0fafc](https://github.com/appblocks-hub/BB-CLI/commit/4d0fafc2a5b254a5098b0264a4bb730ca60ed0e4))
+
 ## [0.26.0](https://github.com/appblocks-hub/BB-CLI/compare/0.25.0...v0.26.0) (2023-06-08)
 
 
