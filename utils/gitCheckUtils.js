@@ -40,8 +40,7 @@ function tryGitInit() {
     if (isInGitRepository()) return true
 
     execSync('git init', { stdio: 'ignore' })
-    execSync('git branch -M main', { stdio: 'ignore' })
-    
+
     return true
   } catch (e) {
     console.warn('Git repo not initialized', e)
