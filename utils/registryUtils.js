@@ -15,6 +15,7 @@ const {
   appBlockGetBlockMetadata,
   appBlockGetAllBlockVersions,
   appBlockCreateVariant,
+  getBlockFromStore,
 } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 
@@ -40,6 +41,22 @@ const addANewBlockVariant = ({ block_id, parent_id, version_id }) =>
     },
     { headers: getShieldHeader() }
   )
+
+const getBlockFromStoreFn = async (blockName, spaceName) => {
+  try {
+    const { status, data } = await axios.post(
+      getBlockFromStore,
+      {
+        block_name: blockName,
+        space_name: spaceName,
+      },
+      { headers: getShieldHeader() }
+    )
+    return { status, data: { err: null, data } }
+  } catch (err) {
+    return { status: 204, data: { err, data: null } }
+  }
+}
 
 // This api will check the block name against default space_id if space_name is not passed
 const getBlockDetails = (componentName) => {
@@ -113,4 +130,5 @@ module.exports = {
   getConfigFromRegistry,
   updateReadme,
   getAppConfigFromRegistry,
+  getBlockFromStoreFn,
 }

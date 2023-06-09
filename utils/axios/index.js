@@ -41,7 +41,6 @@ const axiosGet = (url, options) =>
 
       resolve({ data: res.data, error: null })
     } catch (error) {
-      console.log(error)
       if (!handleError) reject(error)
       resolve({ data: null, error })
     }
