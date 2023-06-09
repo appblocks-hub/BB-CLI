@@ -91,7 +91,7 @@ const init = async (packagename) => {
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) await setupTemplateV2({ DIRPATH,blockVisibility,packageBlockId,packageParentBlockIDs})
+  if (useTemplate) await setupTemplateV2({ DIRPATH,blockVisibility,packageBlockId,packageParentBlockIDs,packagename})
 
   console.log(chalk.dim(`\ncd ${packagename} and start hacking\n`))
   console.log(chalk.dim(`run bb sync from ${packagename} to register templates as new block`))

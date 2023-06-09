@@ -24,7 +24,7 @@ const { feedback } = require('./cli-feedback')
  * @param {String} job_config Configuration for job
  */
 // eslint-disable-next-line consistent-return
-async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError) {
+async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError,syncLogs) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
   const logOutRoot = path.resolve('logs', 'out')
   const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
@@ -50,19 +50,23 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID,
 
     const resData = res.data.data
 
+    // eslint-disable-next-line no-param-reassign
+    syncLogs.apiLogs={
+      non_available_block_names: resData?.non_available_block_names_map ?? {},
+      error: res?.data?.err??false,
+      message:res?.data?.msg??""
+    }
     updateSyncLogs(
       syncLogDirectory,
-      {apiLogs:{
-        non_available_block_names: resData?.non_available_block_names_map ?? {},
-        error: res?.data?.err??false,
-        message:res?.data?.msg??""
-      }},
+      syncLogs,
       returnOnError
     )
   } catch (err) {
+    // eslint-disable-next-line no-param-reassign
+    syncLogs.apiLogs={ error: true, message: 'Sync Api Failed', non_available_block_names: {} }
     updateSyncLogs(
       syncLogDirectory,
-      {apiLogs:{ error: true, message: 'Sync Api Failed', non_available_block_names: {} }},
+      syncLogs,
       returnOnError
     )
   }
@@ -79,9 +83,9 @@ function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap, returnOnError)
 
   const filePath = path.join(directoryPath, 'logs')
 
-  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap), 'utf8', { flag: 'w' })
+  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap,null, 2), 'utf8', { flag: 'w' })
 
-  if (Object.keys(nonAvailableBlockNamesMap) > 0 && returnOnError) {
+  if ( returnOnError) {
     throw new Error('BB Sync failed.')
   }
 }
