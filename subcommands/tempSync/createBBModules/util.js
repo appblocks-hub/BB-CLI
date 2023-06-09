@@ -271,8 +271,8 @@ const getAndSetSpace = async (configstore) => {
 const setVisibilityAndDefaultBranch = async (options) => {
   const { configstore, repoUrl, headLessConfigStore } = options
 
-  let defaultBranch = headLessConfigStore.get('defaultBranch')
-  // let repoVisibility = headLessConfigStore.get('repoVisibility')
+  let defaultBranch = headLessConfigStore().get('defaultBranch')
+  // let repoVisibility = headLessConfigStore().get('repoVisibility')
 
   if (defaultBranch) {
     return { defaultBranch }
@@ -320,7 +320,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
   //   repoVisibility = inputRepoVisibility
   // }
 
-  // headLessConfigStore.set('repoVisibility', repoVisibility)
+  // headLessConfigStore().set('repoVisibility', repoVisibility)
 
   if (defaultBranch.length === 0) {
     console.log('entered repo main branch unavailable\n')
@@ -336,7 +336,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
     defaultBranch = inputRepoMainBranch
   }
 
-  headLessConfigStore.set('defaultBranch', defaultBranch)
+  headLessConfigStore().set('defaultBranch', defaultBranch)
 
   return { defaultBranch }
 }

@@ -27,7 +27,7 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
   let packageManager = manager
 
-  const headlessConfig = headLessConfigStore.store
+  const headlessConfig = headLessConfigStore().store
   const spaceId = headlessConfig.prismaSchemaFolderPath || configstore.get('currentSpaceId')
 
   if (cmd === 'create-version') {
