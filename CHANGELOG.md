@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.4...v0.26.5) (2023-06-09)
+
+
+### Bug Fixes
+
+* repo issue and logger issue ([86303c6](https://github.com/appblocks-hub/BB-CLI/commit/86303c6253eda50523b7c4b4fea20db04199dda7))
+
 ## [0.26.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.3...v0.26.4) (2023-06-09)
 
 
