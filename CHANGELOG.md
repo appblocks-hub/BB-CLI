@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.5...v0.26.6) (2023-06-09)
+
+
+### Bug Fixes
+
+* syncBlock modified error handling ([5504c10](https://github.com/appblocks-hub/BB-CLI/commit/5504c10f39dbf105fbeb6fbfc75e2e7f9930ca52))
+
 ## [0.26.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.4...v0.26.5) (2023-06-09)
 
 
