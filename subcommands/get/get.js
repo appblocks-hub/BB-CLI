@@ -9,7 +9,13 @@ const { getBlockFromStoreFn } = require('../../utils/registryUtils')
 const { axiosGet } = require('../../utils/axios')
 const { readJsonAsync } = require('../../utils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
+const ConfigFactory = require('../../utils/configManagers/configFactory')
+const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
+const { nanoid } = require('nanoid')
+const { writeFile } = require('fs/promises')
 
+// const testurl =
+// 'https://blocks-source-code.s3.amazonaws.com/tP8TJpmldM-LCjnRKFRVE/0.0.9/mytester.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAV3D3DHT6CSKOK345%2F20230608%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230608T143105Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2b39349203829daafdef7f3280aa8df0d83bc2033d668ac5e5c3d908ef30fdcf'
 const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   // eslint-disable-next-line no-async-promise-executor
   new Promise(async (resolve, reject) => {
@@ -42,32 +48,74 @@ const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   })
 
 class Bootstrap {
-  constructor(name, dest, url, childBlocks) {
+  constructor(name, versionId, dest, url, childBlocks, parent, logger) {
+    this.versionId = versionId
     this.destination = dest
     this.sourceS3Url = url
     this.config = null
     this.childBlocks = childBlocks
     this.name = name
     this.childPromiseArray = []
+    this.parent = parent
+    this.logger = logger
   }
 
   async bootstrap(packages, signed_urls) {
-    console.log(`Running bootstrap for ${this.name}`)
+    console.log(`downloading ${this.name}`)
 
     /**
      * Download and extract zip
      */
-    await downloadSourceCode(this.sourceS3Url, this.destination, this.name)
+    try {
+      // if (this.parent?.name === 'pck2' && this.destination.includes('g/mytFn1')) {
+      //   this.sourceS3Url === testurl
+      // }
+      // if (this.name === 'pck2') {
+      //   this.sourceS3Url = testurl
+      // }
+      await downloadSourceCode(this.sourceS3Url, this.destination, this.name)
+    } catch (err) {
+      this.logger.error(`downloading source code of ${this.name} failed ${err.message}`)
+      return { err: true, msg: `downloading source code of ${this.name} failed` }
+    }
 
     /**
      * Read the config from newly downloaded souce code for editing
      */
-    const { data: conf, err: _err } = await readJsonAsync(path.join(this.destination, BB_CONFIG_NAME))
-    if (_err) {
-      console.log('Error reading config from package')
-      process.exit(1)
+    const { data: conf, err: errorReadindConfig } = await readJsonAsync(path.join(this.destination, BB_CONFIG_NAME))
+    if (errorReadindConfig) {
+      this.logger.error(`Error reading config of ${this.name} from ${path.join(this.destination, BB_CONFIG_NAME)}`)
+      this.logger.error(`${errorReadindConfig.message}`)
+      return { err: true, msg: `Error reading config of ${this.name}` }
     }
     this.config = conf
+
+    /**
+     * Update the config with new details
+     */
+
+    this.config.blockId = nanoid()
+    this.config.isPublic = this.parent?.isPublic || false
+    this.config.source.branch = `block_${this.name}`
+    this.config['variantOf'] = this.versionId
+    this.config.parentBlockIDs = this.parent ? [...this.parent.parentBlockIDs, this.parent.blockId] : []
+
+    /**
+     * Write the newly generated config to file
+     */
+    try {
+      await writeFile(path.join(this.destination, BB_CONFIG_NAME), JSON.stringify(this.config, null, 2))
+    } catch (err) {
+      this.logger.error(
+        `Error writing updated config of ${this.name} of ${this.parent.name} at ${path.join(
+          this.destination,
+          BB_CONFIG_NAME
+        )}`
+      )
+      this.logger.error(`${err.message}`)
+      return { err: true, msg: `Error writing config of ${this.name}` }
+    }
+
     // for testing
     // if (this.name === 'mytester') {
     //   this.config.dependencies['pck2'] = { directory: 'pck2' }
@@ -79,17 +127,33 @@ class Bootstrap {
     // use for block
 
     /**
-     * If not a pakage block return
+     * If not a package block return
      */
-    if (!this.childBlocks?.length) return
+    if (!this.childBlocks?.length) return { err: false, msg: `${this.name} has been added to ${this.parent.name}` }
+
     console.log(`setting up child blocks of ${this.name} `)
 
-    const t = (child) => {
+    const loopFn = (child) => {
+      /**
+       * Details of parent (this) to be passed to child as "parent"
+       */
+      const m = {
+        name: this.name,
+        isPublic: this.config.isPublic,
+        blockId: this.config.blockId,
+        parentBlockIDs: this.config.parentBlockIDs,
+      }
+      /**
+       * Initialize a new child
+       */
       const p = new Bootstrap(
         child.child_block_name,
+        child.child_version_id,
         path.join(this.destination, this.config.dependencies[child.child_block_name].directory),
         signed_urls[child.child_version_id],
-        child.child_blocks
+        child.child_blocks,
+        m,
+        this.logger
       )
       /**
        * If child is a package block, create a package bootstrap
@@ -108,14 +172,18 @@ class Bootstrap {
     /**
      * If there are child blocks, loops and get each of them
      */
-    this.childBlocks.forEach(t)
+    this.childBlocks.forEach(loopFn)
     const res = await Promise.allSettled(this.childPromiseArray.map((v) => v.bootstrap()))
-    console.log(res)
+    res.forEach(({ value: { err, msg } }) => {
+      console.log(`${err ? 'ERROR:' + msg : msg}`)
+    })
+    return { err: false, msg: '' }
   }
 }
 
 async function get(blockname) {
   const { logger } = new Logger('get')
+
   let [spacename, name] = blockname.split('/')
   if (spacename) {
     spacename = spacename.replace('@', '')
@@ -123,10 +191,28 @@ async function get(blockname) {
   if (!name) {
     spacename = configstore.get('currentSpaceName')
   }
+
+  /**
+   * To store the inner root nodes of tree
+   */
   const packages = []
   logger.info(`User call with ${blockname}`)
   logger.debug(`spacename:${spacename}`)
   logger.debug(`name:${name}`)
+
+  const { manager, error: managerError } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
+
+  /**
+   * OUT_OF_CONTEXT can be ignored, as user can get blocks outside of block context
+   */
+  if (managerError && managerError.type !== 'OUT_OF_CONTEXT') {
+    console.log(managerError.message)
+    return
+  }
+  if (manager instanceof BlockConfigManager) {
+    console.log('Move out to a package block context')
+    return
+  }
 
   const {
     data: { err, data },
@@ -137,25 +223,41 @@ async function get(blockname) {
     process.exit(1)
   }
   let { err: error, msg, data: blockData } = data
-  // blockData = JSON.parse(readFileSync(path.resolve('zc.json')))
+  // const blockData = JSON.parse(readFileSync(path.resolve('zc.json')))
+  // blockData.signed_urls = yu.signed_urls
   // console.log(JSON.stringify(blockData, null, 2))
   if (error) {
-    console.log(error)
+    console.log(msg)
     logger.error(`Error from server: ${msg}`)
     process.exit(1)
   }
 
   const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
+  const p = new Bootstrap(
+    block_name,
+    block_version_id,
+    path.resolve(block_name),
+    signed_urls[block_version_id],
+    child_blocks,
+    manager
+      ? {
+          name: manager.config.name,
+          blockId: manager.config.blockId,
+          isPublic: manager.config.isPublic || false,
+          parentBlockIDs: [],
+        }
+      : null,
+    logger
+  )
 
   if (block_type === 1) {
     logger.info(`block type is package`)
-    const p = new Bootstrap(block_name, path.resolve(block_name), signed_urls[block_version_id], child_blocks)
     packages.push(p)
   }
 
   if (block_type !== 1) {
     logger.info(`block type is not pacakage`)
-    await new Bootstrap(block_name, path.resolve(block_name), signed_urls[block_version_id]).bootstrap()
+    await p.bootstrap()
   }
 
   /**
@@ -164,8 +266,19 @@ async function get(blockname) {
   for (; packages.length > 0; ) {
     const b = packages.pop()
     console.log(`Bootstrapping ${b.name}`)
-    await b.bootstrap(packages, signed_urls)
+    const { err, msg } = await b.bootstrap(packages, signed_urls)
+    console.log(`${err ? 'ERROR:' + msg : msg}`)
   }
+
+  /**
+   * Update the block config
+   */
+  manager?.updateConfig({
+    dependencies: {
+      ...manager.config.dependencies,
+      [block_name]: { directory: path.relative(path.resolve(), path.resolve(block_name)) },
+    },
+  })
 }
 
 module.exports = get
