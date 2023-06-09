@@ -28,13 +28,14 @@ async function setupTemplateV2(options) {
 
   Promise.allSettled(Object.keys(b.dependencies).map(async (blockName)=>{
     const blockConfigPath=path.join(DIRPATH,b.dependencies[blockName].directory,BB_CONFIG_NAME)
-    const currentBlock=b.dependencies[blockName].meta
+    const currentBlock=JSON.parse(await readFile(blockConfigPath,'utf8'))
     if (existsSync(blockConfigPath)){
       currentBlock.blockId=nanoid()
       currentBlock.isPublic=blockVisibility
       currentBlock.parentBlockIDs=[...packageParentBlockIDs,b.blockId]
       currentBlock.source.branch=`block_${currentBlock.name}`
 
+      
       await writeFile(blockConfigPath,JSON.stringify(currentBlock,null,2))
     }
 

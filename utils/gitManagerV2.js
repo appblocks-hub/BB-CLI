@@ -151,11 +151,11 @@ class GitManager {
    ******************************** */
 
   pull() {
-    this._run('pull', [this.remote])
+    return this._run('pull', [this.remote])
   }
 
-  pullBranch(upstreamBranch, remoteName) {
-    return this._run(`pull ${remoteName}`, [upstreamBranch || 'main'])
+  pullBranch(upstreamBranch) {
+    return this._run(`pull `, [this.remote, upstreamBranch || 'main'])
   }
 
   currentBranch() {
