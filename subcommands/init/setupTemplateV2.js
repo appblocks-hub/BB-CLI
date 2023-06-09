@@ -5,7 +5,7 @@ const { existsSync } = require('fs')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 async function setupTemplateV2(options) {
-  const { DIRPATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType } = options
+  const { DIRPATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType,packagename} = options
 
   const configPath = path.join(DIRPATH, BB_CONFIG_NAME)
   const config = await readFile(configPath, { encoding: 'utf8' })
@@ -36,6 +36,7 @@ async function setupTemplateV2(options) {
         currentBlock.repoType = repoType
         currentBlock.parentBlockIDs = [...packageParentBlockIDs, b.blockId]
         currentBlock.source.branch = `block_${currentBlock.name}`
+        currentBlock.name=`${packagename}_${currentBlock.name}`
 
         await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
       }

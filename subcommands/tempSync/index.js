@@ -20,6 +20,8 @@ const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
 const { spinnies } = require('../../loader')
 const syncBlocks = require('../../utils/syncBlocks')
+// eslint-disable-next-line prefer-const
+let syncLogs={}
 
 const tempSync = async (blockName, options) => {
   const { returnOnError } = options || {}
@@ -62,15 +64,23 @@ const tempSync = async (blockName, options) => {
       defaultBranch,
     })
 
-    syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID, returnOnError)
+   await syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID, returnOnError,syncLogs)
+   if (syncLogs?.apiLogs?.error){
+    console.log("Appblocks sync failed")
+    throw new Error("")
+   }
+   const nonAvailableBlockNames=(syncLogs?.apiLogs?.non_available_block_names??{})
+   if (Object.keys(nonAvailableBlockNames).length>0){
+    console.log(`Appblocks sync failed for ${Object.keys( nonAvailableBlockNames).join(",")}`)
+   }   
 
-    await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
+    await syncOrphanBranch({ ...bbModulesData, bbModulesPath,nonAvailableBlockNames})
   } catch (error) {
-    console.log('error is', error)
     // returnOnError to throw error if called from other commands
     spinnies.stopAll()
+    if (returnOnError){
     throw new Error(`Syncing failed! Please run bb sync and try again `)
   }
-}
+}}
 
 module.exports = tempSync

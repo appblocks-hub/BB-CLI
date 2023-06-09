@@ -15,6 +15,7 @@ const { headLessConfigStore } = require('../../../configstore')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
+
 // const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {
 //   const copyCommandWithExclusions = `rsync -av --exclude={${excludedDirs.join(',')}} ${sourceDir}/ ${destinationDir}/`
 
@@ -23,6 +24,7 @@ const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitH
 // }
 
 const getLatestCommits = async (branchName, n, Git) => {
+
   let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
 
   let commits = latestWorkSpaceCommit?.out?.trim()?.split('\n') ?? []
@@ -40,15 +42,26 @@ const retrieveCommitHash = (commitMessage) => {
 }
 
 const generateOrphanBranch = async (options) => {
+
+
   const { bbModulesPath, block, repoUrl, blockMetaDataMap } = options
   let blockConfig = block.blockManager.config
 
+
   let orphanBranchName = blockConfig.source.branch
 
-  const orphanRemoteName = 'origin'
+
+  const orphanRemoteName="origin"
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
-  let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs', 'headless-config.json']
+  let exclusions = [
+    '.git',
+    '._ab_em',
+    '._ab_em_elements',
+    'cliruntimelogs',
+    'logs',
+    'headless-config.json',
+  ]
   const orphanCommitMessage = ''
 
   if (blockConfig.type === 'package') {
@@ -75,13 +88,15 @@ const generateOrphanBranch = async (options) => {
 
       await Git.init()
 
-      await Git.addRemote(orphanRemoteName, Git.remote)
+      await Git.addRemote(orphanRemoteName,Git.remote)
 
       const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore)
 
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
+     
 
       await Git.fetch()
+
     } catch (err) {
       rmdirSync(orphanBranchPath, { recursive: true, force: true })
       throw err
@@ -105,6 +120,7 @@ const generateOrphanBranch = async (options) => {
   } else {
     await Git.fetch()
 
+
     await Git.checkoutBranch(orphanBranchName)
 
     await Git.pull()
@@ -116,20 +132,22 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
+   
+   
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
-      clearDirectory(orphanBranchPath, exclusions)
+        clearDirectory(orphanBranchPath, exclusions)
 
-      copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
-
-      await Git.stageAll()
-      try {
+        copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
+  
+        await Git.stageAll()
+  
         await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
-      }catch (err) {
-        console.log("Warning: Commit error in ",blockConfig?.name)
-      }
-      await Git.push(orphanBranchName)
+  
+        await Git.push(orphanBranchName)
+   
     }
   }
+
 }
 
 function copyDirectory(sourceDir, destinationDir, exclusions) {
