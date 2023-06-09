@@ -271,7 +271,7 @@ const getAndSetSpace = async (configstore) => {
 const setVisibilityAndDefaultBranch = async (options) => {
   const { configstore, repoUrl, headLessConfigStore } = options
 
-  let defaultBranch = headLessConfigStore().get('defaultBranch')
+  let defaultBranch = headLessConfigStore.get('defaultBranch')
   // let repoVisibility = headLessConfigStore().get('repoVisibility')
 
   if (defaultBranch) {
@@ -336,7 +336,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
     defaultBranch = inputRepoMainBranch
   }
 
-  headLessConfigStore().set('defaultBranch', defaultBranch)
+  headLessConfigStore.set('defaultBranch', defaultBranch)
 
   return { defaultBranch }
 }
