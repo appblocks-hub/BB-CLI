@@ -8,13 +8,19 @@ const {
   generateUiContainerIndexJs,
   generateUiContainerBootstrapJs,
   generateUiContainerAppJs,
+  // generateUiContainerPackageJsonWithoutLint,
   generateUiContainerReadme,
   generateUiContainerAppRoute,
   generateUiContainerLayout,
   generateUiContainerPackageJson,
+  generateUiContainerCommitlintRc,
   generateUiContainerEsLintRc,
   generateUiContainerPrettierRc,
-  generateUiContainerCommitlintRc,
+
+  generateUiContainerBabelRc,
+  generateUiContainerAppTestJs,
+  generateUiContainerJestConfig,
+  generateUiContainerJestSetup,
 } = require('../../../templates/createTemplates/uiContainer-templates')
 
 // eslint-disable-next-line no-unused-vars
@@ -48,6 +54,7 @@ class handleUIContainer {
         const indexJsString = generateUiContainerIndexJs(blockName)
         const bootstrapString = generateUiContainerBootstrapJs(blockName)
         const appJsString = generateUiContainerAppJs(blockName)
+        // const packageJsonString = generateUiContainerPackageJsonWithoutLint(blockName)
         const gitignore = generateGitIgnore()
         const readmeString = generateUiContainerReadme(blockName)
         const appRouteString = generateUiContainerAppRoute(blockName)
@@ -56,6 +63,11 @@ class handleUIContainer {
         const eslintrcString = generateUiContainerEsLintRc()
         const prettierrcString = generateUiContainerPrettierRc()
         const commitlintRcString = generateUiContainerCommitlintRc()
+
+        const babelRcString = generateUiContainerBabelRc()
+        const jestConfigString = generateUiContainerJestConfig()
+        const jestSetupString = generateUiContainerJestSetup()
+        const appTestString = generateUiContainerAppTestJs()
 
         mkdirSync(`${core.blockFolderPath}/public`, { recursive: true })
         mkdirSync(`${core.blockFolderPath}/common/routes`, { recursive: true })
@@ -78,6 +90,11 @@ class handleUIContainer {
         writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
         writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
         writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitlintRcString)
+
+        writeFileSync(`${core.blockFolderPath}/.babelrc`, babelRcString)
+        writeFileSync(`${core.blockFolderPath}/jest.config.js`, jestConfigString)
+        writeFileSync(`${core.blockFolderPath}/jest.setup.js`, jestSetupString)
+        writeFileSync(`${core.blockFolderPath}/App.test.js`, appTestString)
       }
     )
   }

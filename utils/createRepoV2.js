@@ -33,7 +33,7 @@ async function createRepo(originalRepoName) {
   const inputs = {}
   // const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS === 'true'
   const SHOULD_RUN_WITHOUT_PROMPTS = true
-  global.HEADLESS_CONFIGS = headLessConfigStore.store
+  global.HEADLESS_CONFIGS = headLessConfigStore().store
 
   inputs.gitTarget = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS.gitTarget : await getGitTarget()
 

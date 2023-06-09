@@ -24,7 +24,7 @@ const { feedback } = require('./cli-feedback')
  * @param {String} job_config Configuration for job
  */
 // eslint-disable-next-line consistent-return
-async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError,syncLogs) {
+async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError, syncLogs) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
   const logOutRoot = path.resolve('logs', 'out')
   const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
@@ -42,39 +42,33 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID,
       headers: shieldHeader,
     })
 
-
     if (res.data.err) {
       feedback({ type: 'error', message: res.data.msg })
-      throw new Error()
+      throw new Error('Response failed')
     }
 
     const resData = res.data.data
 
     // eslint-disable-next-line no-param-reassign
-    syncLogs.apiLogs={
+    syncLogs.apiLogs = {
       non_available_block_names: resData?.non_available_block_names_map ?? {},
-      error: res?.data?.err??false,
-      message:res?.data?.msg??""
+      error: res?.data?.err ?? false,
+      message: res?.data?.msg ?? '',
     }
-    updateSyncLogs(
-      syncLogDirectory,
-      syncLogs,
-      returnOnError
-    )
+    updateSyncLogs(syncLogDirectory, syncLogs, returnOnError)
   } catch (err) {
     // eslint-disable-next-line no-param-reassign
-    syncLogs.apiLogs={ error: true, message: 'Sync Api Failed', non_available_block_names: {} }
-    updateSyncLogs(
-      syncLogDirectory,
-      syncLogs,
-      returnOnError
-    )
+    syncLogs.apiLogs = { error: true, message: 'Sync Api Failed', non_available_block_names: {} }
+    updateSyncLogs(syncLogDirectory, syncLogs, returnOnError)
+    if (returnOnError) {
+      throw new Error('BB Sync failed.')
+    }
   }
   // spinnies.succeed('syncBlocks', { text: `Blocks Created Successfully` })
   // spinnies.remove('syncBlocks')
 }
 
-function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap, returnOnError) {
+function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap) {
   // Create the directory if it doesn't exist
   if (!existsSync(directoryPath)) {
     mkdirSync(directoryPath, { recursive: true })
@@ -83,11 +77,7 @@ function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap, returnOnError)
 
   const filePath = path.join(directoryPath, 'logs')
 
-  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap,null, 2), 'utf8', { flag: 'w' })
-
-  if ( returnOnError) {
-    throw new Error('BB Sync failed.')
-  }
+  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap, null, 2), 'utf8', { flag: 'w' })
 }
 
 module.exports = syncBlocks

@@ -10,17 +10,17 @@ const { generateFunctionReadme } = require('../templates/createTemplates/functio
 
 /**
  * Action for bb-temp-init
- * @param {string} packagename Package name provided by user in command line
+ * @param {string} packageName Package name provided by user in command line
  */
-const init = async (packagename) => {
+const init = async (packageName) => {
   /**
    * Check if user provided name matches valid regex, else prompt for new name
    */
-  if (!isValidBlockName(packagename)) {
-    feedback({ type: 'warn', message: `${packagename} is not a valid name (Only snake case with numbers is valid)` })
+  if (!isValidBlockName(packageName)) {
+    feedback({ type: 'warn', message: `${packageName} is not a valid name (Only snake case with numbers is valid)` })
 
     // eslint-disable-next-line no-param-reassign
-    packagename = await getBlockName()
+    packageName = await getBlockName()
   }
 
   /**
@@ -56,8 +56,8 @@ const init = async (packagename) => {
   /**
    * Create a new package directory, assume there is no name conflict for dir name
    */
-  const DIRPATH = path.join(path.resolve(packagename))
-  await mkdir(DIRPATH, { recursive: true })
+  const DIR_PATH = path.join(path.resolve(packageName))
+  await mkdir(DIR_PATH, { recursive: true })
 
   /**
    * Write the package config to newly created directory
@@ -66,15 +66,15 @@ const init = async (packagename) => {
   const packageParentBlockIDs = []
 
   await writeFile(
-    path.join(DIRPATH, 'block.config.json'),
+    path.join(DIR_PATH, 'block.config.json'),
     JSON.stringify({
-      name: packagename,
+      name: packageName,
       type: 'package',
       blockId: packageBlockId,
       source: {
         https: null,
         ssh: null,
-        branch: `block_${packagename}`,
+        branch: `block_${packageName}`,
       },
       parentBlockIDs: packageParentBlockIDs,
       isPublic: blockVisibility,
@@ -83,17 +83,18 @@ const init = async (packagename) => {
     })
   )
 
-  const readmeString = generateFunctionReadme(packagename)
-  writeFile(`${DIRPATH}/README.md`, readmeString)
+  const readmeString = generateFunctionReadme(packageName)
+  writeFile(`${DIR_PATH}/README.md`, readmeString)
 
   /**
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) await setupTemplateV2({ DIRPATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType,packagename })
-
-  console.log(chalk.dim(`\ncd ${packagename} and start hacking\n`))
-  console.log(chalk.dim(`run bb sync from ${packagename} to register templates as new block`))
+  if (useTemplate) {
+    await setupTemplateV2({ DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName })
+  }
+  console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
+  console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
 }
 
 module.exports = init

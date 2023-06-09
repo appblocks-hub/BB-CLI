@@ -7,6 +7,7 @@
 
 const { exec } = require('child_process')
 const semver = require('semver')
+const path = require('path')
 const chalk = require('chalk')
 const { post } = require('../../utils/axios')
 const {
@@ -17,8 +18,20 @@ const {
 } = require('../../utils/api')
 const { readInput } = require('../../utils/questionPrompts')
 const { spinnies } = require('../../loader')
+const { readJsonAsync } = require('../../utils')
 
 const getNodeLanguageVersion = async () => [{ name: 'node', version: process.version }]
+const getReactLanguageVersion = async (dir) => {
+  let version = '18.0.0'
+  const { data, err } = await readJsonAsync(path.join(dir, 'package.json'))
+  if (!err && data.dependencies?.react) {
+    const versionString = data.dependencies.react
+    // eslint-disable-next-line prefer-destructuring
+    version = versionString.match(/\d+\.\d+\.\d+/)[0]
+  }
+
+  return [{ name: 'react', version }]
+}
 
 const getSystemLanguageVersion = async (options) => {
   const { blockDetails } = options
@@ -35,7 +48,7 @@ const getSystemLanguageVersion = async (options) => {
       languageVersions = await getNodeLanguageVersion(directory)
       break
     case 'js':
-      languageVersions = await getNodeLanguageVersion(directory)
+      languageVersions = await getReactLanguageVersion(directory)
       break
 
     default:
@@ -230,12 +243,20 @@ const getLanguageVersionData = async ({
   }
 
   const langSupportedAppblockVersions = {}
+  const blockLang = blockDetails.meta.language === 'js' ? 'reactjs' : blockDetails.meta.language
+
+  const sysSupportLangVersion = langVersions.data?.find((lang) => {
+    const [abLangVer] = lang.version.split('.')
+    const [sysLangVer] = systemLanguageVersion[0]?.version?.split('.') || []
+    return abLangVer === sysLangVer
+  })
+
   const choices = langVersions.data?.reduce((acc, lang) => {
-    const blockLang = blockDetails.meta.language === 'js' ? 'nodejs' : blockDetails.meta.language
-    if (lang.name.includes(blockLang)) {
-      langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
-      acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })
-    }
+    if (sysSupportLangVersion && lang.id !== sysSupportLangVersion.id) return acc
+    if (!lang.name.includes(blockLang)) return acc
+    
+    langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
+    acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })
 
     return acc
   }, [])
@@ -284,7 +305,7 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
   spinnies.add('langVersion', { text: `Getting language versions` })
   const langVersionData = await langVersionsLinkedToAbVersion({ supportedAppblockVersions })
   spinnies.remove('langVersion')
-  const bklangs = langVersionData?.data?.reduce((acc, { name, version }) => {
+  const bkLangs = langVersionData?.data?.reduce((acc, { name, version }) => {
     const [langName] = name.split('@')
     if (!blockLanguages.some((l) => langName.includes(l))) return acc
 
@@ -295,7 +316,7 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
     return acc
   }, {})
 
-  if (Object.keys(bklangs)?.length < 1) {
+  if (Object.keys(bkLangs)?.length < 1) {
     throw new Error(
       `Appblocks versions (${supportedAppblockVersions}) doesn't support given languages (${blockLanguages})`
     )
@@ -304,7 +325,7 @@ const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, bl
   const errors = []
 
   await Promise.all(
-    Object.entries(bklangs).map(async ([name, versions]) => {
+    Object.entries(bkLangs).map(async ([name, versions]) => {
       const prmRes = await new Promise((resolve) => {
         exec(`${languageVersionCheckCommand[name] || `${name} -v`} `, (err, stdout) => {
           if (err) {

@@ -10,6 +10,10 @@ const { generateUiContainerAppRoute } = require('./generate-appRoute')
 const { generateUiContainerCommitlintRc } = require('./generate-commitlintrc')
 const { generateUiContainerEsLintRc } = require('./generate-eslintrc')
 const { generateUiContainerPrettierRc } = require('./generate-prettierrc')
+const { generateUiContainerBabelRc } = require('./generate-babelrc')
+const { generateUiContainerAppTestJs } = require('./generate-appTest')
+const { generateUiContainerJestConfig } = require('./generate-JestConfig')
+const { generateUiContainerJestSetup } = require('./generate-JestSetup')
 
 module.exports = {
   generateUiContainerIndexHtml,
@@ -25,4 +29,8 @@ module.exports = {
   generateUiContainerEsLintRc,
   generateUiContainerPrettierRc,
   generateUiContainerPackageJsonWithoutLint,
+  generateUiContainerBabelRc,
+  generateUiContainerAppTestJs,
+  generateUiContainerJestConfig,
+  generateUiContainerJestSetup,
 }

@@ -11,16 +11,13 @@ const { Command } = require('commander')
 const connectRemote = require('../subcommands/connectRemote')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
-const { spinnies } = require('../loader')
 
 const program = new Command().hook('preAction', async () => {
-  spinnies.add('gc', { text: `Checking git configurations` })
   try {
     if (!isGitInstalled()) throw new Error('Git not installed')
     await checkAndSetGitConnectionPreference()
-    spinnies.remove('gc')
   } catch (error) {
-    spinnies.fail('gc', { text: error.message })
+    console.log(error.message)
     process.exit(1)
   }
 })
