@@ -1,7 +1,16 @@
 const generateGitIgnore = () => `
+#
+._ab_*
+bb_*
+.env*
+.deploy
+.deployed.config.json
+headless-config.json
+
 # Logs
 logs
 *.log
+cliruntimelogs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -40,6 +49,7 @@ bower_components
 build/Release
 emulator/
 # Dependency directories
+node_modules
 node_modules/
 jspm_packages/
 

@@ -8,6 +8,7 @@
  */
 
 const { Command } = require('commander')
+const { default: chalk } = require('chalk')
 const createVersion = require('../subcommands/createVersion')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
@@ -19,7 +20,8 @@ const program = new Command().hook('preAction', async () => {
     await checkAndSetGitConnectionPreference()
     await checkAndSetUserSpacePreference('create-version')
   } catch (error) {
-    console.log(error.response?.data.message || error.message)
+    console.log(chalk.red(error.response?.data.message || error.message))
+    process.exit(1)
   }
 })
 
