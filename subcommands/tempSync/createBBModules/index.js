@@ -38,7 +38,7 @@ const createBBModules = async (options) => {
 
         await Git.clone('.')
 
-        const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore)
+        const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore())
 
         await checkAndSetGitConfigNameEmail(workspaceDirectoryPath, { gitUserEmail, gitUserName })
 
@@ -56,7 +56,7 @@ const createBBModules = async (options) => {
     }
 
     // set the appropriate space for the repository
-    const currentSpaceID = await getAndSetSpace(headLessConfigStore)
+    const currentSpaceID = await getAndSetSpace(headLessConfigStore())
 
     spinnies.add('Config Manager', { text: 'Initialising config manager' })
 
