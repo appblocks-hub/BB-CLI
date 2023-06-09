@@ -9,7 +9,7 @@
 
 const path = require('path')
 const { existsSync } = require('fs')
-const { execSync } = require('child_process')
+// const { execSync } = require('child_process')
 // const { logFail } = require('../../utils')
 const createBBModules = require('./createBBModules')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
@@ -18,14 +18,12 @@ const { configstore } = require('../../configstore')
 const { headLessConfigStore } = require('../../configstore')
 const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
+const { spinnies } = require('../../loader')
 const syncBlocks = require('../../utils/syncBlocks')
-// const {  spinnies } = require('../../loader')
 
 const tempSync = async (blockName, options) => {
   const { returnOnError } = options || {}
   try {
-    // spinnies.add('bb', { text: 'Initializing config manager' })
-
     const rootConfigPath = path.resolve('block.config.json')
     const bbModulesPath = path.resolve('bb_modules')
     const { manager: configManager, error } = await ConfigFactory.create(rootConfigPath)
@@ -45,9 +43,9 @@ const tempSync = async (blockName, options) => {
     }
 
     //  check origin exist
-    const cmdCheckMain = 'git ls-remote --heads --quiet origin main'
-    const existBranch = execSync(cmdCheckMain, { cwd: configManager.directory }).toString().trim() !== ''
-    if (!existBranch) throw new Error('Remote main branch not found! Please run bb push -f and try again')
+    // const cmdCheckMain = 'git ls-remote --heads --quiet origin main'
+    // const existBranch = execSync(cmdCheckMain, { cwd: configManager.directory }).toString().trim() !== ''
+    // if (!existBranch) throw new Error('Remote main branch not found! Please run bb push -f and try again')
 
     const { defaultBranch } = await setVisibilityAndDefaultBranch({
       configstore,
@@ -64,20 +62,14 @@ const tempSync = async (blockName, options) => {
       defaultBranch,
     })
 
-    // spinnies.update('bb', { text: 'Syncing blocks to registry' })
     syncBlocks(bbModulesData.blockNameArray, bbModulesData.apiPayload, bbModulesData.currentSpaceID, returnOnError)
 
-    // return
-    // spinnies.update('bb', { text: 'Syncing orphan branches' })
     await syncOrphanBranch({ ...bbModulesData, bbModulesPath })
-    // spinnies.succeed('bb', { text: 'Sync completed successfully' })
   } catch (error) {
-    // spinnies.stopAll()
+    console.log('error is', error)
     // returnOnError to throw error if called from other commands
-    if (returnOnError) throw new Error(`Syncing failed! Please run bb sync and try again `)
-
-    // spinnies.add('bb', { text: 'Syncing ' })
-    // spinnies.fail('bb', { text: error.message })
+    spinnies.stopAll()
+    throw new Error(`Syncing failed! Please run bb sync and try again `)
   }
 }
 
