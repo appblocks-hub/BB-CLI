@@ -87,7 +87,7 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       createFileSync(logOutPath, '')
     }
 
-    const headlessConfig = headLessConfigStore.store
+    const headlessConfig = headLessConfigStore().store
     if (headlessConfig.prismaSchemaFolderPath) {
       const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
       if (ie.err) throw new Error(ie.err)

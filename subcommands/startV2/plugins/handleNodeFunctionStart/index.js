@@ -110,7 +110,7 @@ class HandleNodeFunctionStart {
         this.depsInstallReport = await Promise.allSettled(pArray)
       }
 
-      const headlessConfig = headLessConfigStore.store
+      const headlessConfig = headLessConfigStore().store
       if (headlessConfig.prismaSchemaFolderPath) {
         const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
         if (ie.err) throw new Error(ie.err)

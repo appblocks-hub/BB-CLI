@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.26.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.5...v0.26.6) (2023-06-09)
+
+
+### Bug Fixes
+
+* syncBlock modified error handling ([5504c10](https://github.com/appblocks-hub/BB-CLI/commit/5504c10f39dbf105fbeb6fbfc75e2e7f9930ca52))
+
+## [0.26.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.4...v0.26.5) (2023-06-09)
+
+
+### Bug Fixes
+
+* repo issue and logger issue ([86303c6](https://github.com/appblocks-hub/BB-CLI/commit/86303c6253eda50523b7c4b4fea20db04199dda7))
+
+## [0.26.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.3...v0.26.4) (2023-06-09)
+
+
+### Bug Fixes
+
+* headless config creation outside package ([ecfbd12](https://github.com/appblocks-hub/BB-CLI/commit/ecfbd12e73581b650d606cec8b35d452174b5beb))
+* reading blockName instead of name from config ([8940d17](https://github.com/appblocks-hub/BB-CLI/commit/8940d175ebc43af6fe919f1850593d7f20fcc91b))
+* remove not working commands from bb list ([8b2b303](https://github.com/appblocks-hub/BB-CLI/commit/8b2b303ff2a6fed68f7feb4d06f495449f5b3cb0))
+
+## [0.26.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.2...v0.26.3) (2023-06-09)
+
+
+### Bug Fixes
+
+* create-version issue ([32a3682](https://github.com/appblocks-hub/BB-CLI/commit/32a36823848a4d3b0c46492c272ff4c8a0d6b907))
+* fetch -all unwanted arg removed ([ea345f1](https://github.com/appblocks-hub/BB-CLI/commit/ea345f13226abdd16233e2cccb27319bcb036584))
+
+## [0.26.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.1...v0.26.2) (2023-06-09)
+
+
+### Bug Fixes
+
+* set-appblock-version config manager issue ([1ea99aa](https://github.com/appblocks-hub/BB-CLI/commit/1ea99aa3898f5cd0fff261ea63f01ed914155f04))
+
 ## [0.26.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.0...v0.26.1) (2023-06-08)
 
 

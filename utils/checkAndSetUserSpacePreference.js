@@ -13,7 +13,6 @@ const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
 const ConfigFactory = require('./configManagers/configFactory')
-const BlockConfigManager = require('./configManagers/blockConfigManager')
 
 async function checkSpaceLinkedToPackageBlock(cmd) {
   if (cmd === 'pull') return true
@@ -28,15 +27,13 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
   let packageManager = manager
 
-  if (cmd === 'create-version' || manager instanceof BlockConfigManager) {
-    const { rootManager } = await manager.findMyParents()
-    packageManager = rootManager
-  }
-
-  const headlessConfig = headLessConfigStore.store
+  const headlessConfig = headLessConfigStore().store
   const spaceId = headlessConfig.prismaSchemaFolderPath || configstore.get('currentSpaceId')
 
   if (cmd === 'create-version') {
+    const { rootManager } = await manager.findMyParents()
+    packageManager = rootManager
+
     // check with synced workspace
     const workSpaceFolder = path.join(packageManager.directory, 'bb_modules', 'workspace')
 
@@ -46,9 +43,9 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
     if (wErr) {
       if (wErr.type !== 'OUT_OF_CONTEXT') throw wErr
-      throw new Error('Please run the command inside package context ')
+      throw new Error('No workspace found. Please run bb sync and try again.')
     }
-    
+
     packageManager = mc
   }
 

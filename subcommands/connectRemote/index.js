@@ -68,10 +68,12 @@ const connectRemote = async (cmdOptions) => {
 
     const Git = new GitManager(manager.directory, source.ssh)
 
-    const prefersSsh = process.env.BB_CLI_RUN_HEADLESS
-      ? headLessConfigStore.store.prefersSsh
-      : configstore.get('prefersSsh')
+    let { prefersSsh } = headLessConfigStore().store
+    if (prefersSsh == null) prefersSsh = configstore.get('prefersSsh')
 
+    await Git.stageAll()
+    await Git.commit('feat: Initial commit')
+    await Git.renameBranch('main')
     await Git.addRemote('origin', prefersSsh ? source.ssh : source.https)
 
     if (manager.config.repoType === 'multi') {

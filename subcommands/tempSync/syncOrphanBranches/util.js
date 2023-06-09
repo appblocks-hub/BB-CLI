@@ -77,7 +77,7 @@ const generateOrphanBranch = async (options) => {
 
       await Git.addRemote(orphanRemoteName, Git.remote)
 
-      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore)
+      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore())
 
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
 
@@ -116,17 +116,16 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
+
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
       clearDirectory(orphanBranchPath, exclusions)
 
       copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
-      try {
-        await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
-      }catch (err) {
-        console.log("Warning: Commit error in ",blockConfig?.name)
-      }
+
+      await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
+
       await Git.push(orphanBranchName)
     }
   }
