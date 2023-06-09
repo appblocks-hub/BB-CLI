@@ -1,8 +1,9 @@
-/* eslint-disable */
+const { nanoid } = require('nanoid')
+const { writeFile } = require('fs/promises')
 const decompress = require('decompress')
 const { execSync } = require('child_process')
 const path = require('path')
-const { createWriteStream, readFileSync } = require('fs')
+const { createWriteStream } = require('fs')
 const { tmpdir } = require('os')
 const { Logger } = require('../../utils/loggerV2')
 const { getBlockFromStoreFn } = require('../../utils/registryUtils')
@@ -11,11 +12,8 @@ const { readJsonAsync } = require('../../utils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
-const { nanoid } = require('nanoid')
-const { writeFile } = require('fs/promises')
+const { configstore } = require('../../configstore')
 
-// const testurl =
-// 'https://blocks-source-code.s3.amazonaws.com/tP8TJpmldM-LCjnRKFRVE/0.0.9/mytester.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAV3D3DHT6CSKOK345%2F20230608%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230608T143105Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2b39349203829daafdef7f3280aa8df0d83bc2033d668ac5e5c3d908ef30fdcf'
 const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   // eslint-disable-next-line no-async-promise-executor
   new Promise(async (resolve, reject) => {
@@ -67,12 +65,6 @@ class Bootstrap {
      * Download and extract zip
      */
     try {
-      // if (this.parent?.name === 'pck2' && this.destination.includes('g/mytFn1')) {
-      //   this.sourceS3Url === testurl
-      // }
-      // if (this.name === 'pck2') {
-      //   this.sourceS3Url = testurl
-      // }
       await downloadSourceCode(this.sourceS3Url, this.destination, this.name)
     } catch (err) {
       this.logger.error(`downloading source code of ${this.name} failed ${err.message}`)
@@ -94,10 +86,11 @@ class Bootstrap {
      * Update the config with new details
      */
 
+    // eslint-disable-next-line dot-notation
+    this.config['variantOf'] = this.versionId
     this.config.blockId = nanoid()
     this.config.isPublic = this.parent?.isPublic || false
     this.config.source.branch = `block_${this.name}`
-    this.config['variantOf'] = this.versionId
     this.config.parentBlockIDs = this.parent ? [...this.parent.parentBlockIDs, this.parent.blockId] : []
 
     /**
@@ -116,16 +109,6 @@ class Bootstrap {
       return { err: true, msg: `Error writing config of ${this.name}` }
     }
 
-    // for testing
-    // if (this.name === 'mytester') {
-    //   this.config.dependencies['pck2'] = { directory: 'pck2' }
-    // }
-    // if (this.name === 'pck2') {
-    //   this.config.dependencies['mytFn1'] = { directory: 'g/mytFn1' }
-    //   this.config.dependencies['mytSharedFn1'] = { directory: 'g/mytSharedFn1' }
-    // }
-    // use for block
-
     /**
      * If not a package block return
      */
@@ -135,6 +118,7 @@ class Bootstrap {
 
     const loopFn = (child) => {
       /**
+
        * Details of parent (this) to be passed to child as "parent"
        */
       const m = {
@@ -175,7 +159,7 @@ class Bootstrap {
     this.childBlocks.forEach(loopFn)
     const res = await Promise.allSettled(this.childPromiseArray.map((v) => v.bootstrap()))
     res.forEach(({ value: { err, msg } }) => {
-      console.log(`${err ? 'ERROR:' + msg : msg}`)
+      console.log(`${err ? `ERROR:${msg}` : msg}`)
     })
     return { err: false, msg: '' }
   }
@@ -184,6 +168,7 @@ class Bootstrap {
 async function get(blockname) {
   const { logger } = new Logger('get')
 
+  // eslint-disable-next-line prefer-const
   let [spacename, name] = blockname.split('/')
   if (spacename) {
     spacename = spacename.replace('@', '')
@@ -222,10 +207,9 @@ async function get(blockname) {
     logger.error(err.message)
     process.exit(1)
   }
-  let { err: error, msg, data: blockData } = data
-  // const blockData = JSON.parse(readFileSync(path.resolve('zc.json')))
-  // blockData.signed_urls = yu.signed_urls
-  // console.log(JSON.stringify(blockData, null, 2))
+
+  const { err: error, msg, data: blockData } = data
+
   if (error) {
     console.log(msg)
     logger.error(`Error from server: ${msg}`)
@@ -266,8 +250,8 @@ async function get(blockname) {
   for (; packages.length > 0; ) {
     const b = packages.pop()
     console.log(`Bootstrapping ${b.name}`)
-    const { err, msg } = await b.bootstrap(packages, signed_urls)
-    console.log(`${err ? 'ERROR:' + msg : msg}`)
+    const { err: _error, msg: _message } = await b.bootstrap(packages, signed_urls)
+    console.log(`${err ? `ERROR:${_message}` : _message}`)
   }
 
   /**
