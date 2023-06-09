@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.2...v0.26.3) (2023-06-09)
+
+
+### Bug Fixes
+
+* create-version issue ([32a3682](https://github.com/appblocks-hub/BB-CLI/commit/32a36823848a4d3b0c46492c272ff4c8a0d6b907))
+* fetch -all unwanted arg removed ([ea345f1](https://github.com/appblocks-hub/BB-CLI/commit/ea345f13226abdd16233e2cccb27319bcb036584))
+
 ## [0.26.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.1...v0.26.2) (2023-06-09)
 
 
