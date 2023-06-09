@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.26.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.3...v0.26.4) (2023-06-09)
+
+
+### Bug Fixes
+
+* headless config creation outside package ([ecfbd12](https://github.com/appblocks-hub/BB-CLI/commit/ecfbd12e73581b650d606cec8b35d452174b5beb))
+* reading blockName instead of name from config ([8940d17](https://github.com/appblocks-hub/BB-CLI/commit/8940d175ebc43af6fe919f1850593d7f20fcc91b))
+* remove not working commands from bb list ([8b2b303](https://github.com/appblocks-hub/BB-CLI/commit/8b2b303ff2a6fed68f7feb4d06f495449f5b3cb0))
+
 ## [0.26.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.2...v0.26.3) (2023-06-09)
 
 
