@@ -116,16 +116,17 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
-
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
       clearDirectory(orphanBranchPath, exclusions)
 
       copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
-
-      await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
-
+      try {
+        await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
+      }catch (err) {
+        console.log("Warning: Commit error in ",blockConfig?.name)
+      }
       await Git.push(orphanBranchName)
     }
   }
