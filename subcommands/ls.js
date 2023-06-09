@@ -8,7 +8,6 @@
 const chalk = require('chalk')
 const path = require('path')
 const Table = require('cli-table3')
-const { appConfig } = require('../utils/appconfigStore')
 const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
 const ConfigFactory = require('../utils/configManagers/configFactory')
 const { BB_CONFIG_NAME } = require('../utils/constants')
@@ -40,12 +39,7 @@ const rowGenerate = (isLive, g) => {
   return [whiteBright(name), type, g.pid, g.port, { content: url, href: `http://${url}` }, g.log.out, green('LIVE')]
 }
 
-const ls = async (options) => {
-  const { global: isGlobal } = options
-  await appConfig.init(null, null, null, {
-    isGlobal,
-  })
-
+const ls = async () => {
   /**
    * If global is true, for each package block, iterate throuh its dependencies, get the live status, and create table
    * else get details from appConfig and get live details and build
