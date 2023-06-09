@@ -72,11 +72,14 @@ const config = new Conf({
 /**
  * @type {Conf}
  */
-const headLessConfig = new Conf({
-  configName: 'headless-config',
-  cwd: path.resolve(),
-  schema: headlessSCHEMA,
-})
+const headLessConfig = () => {
+  const hConfig = new Conf({
+    configName: 'headless-config',
+    cwd: path.resolve(),
+    schema: headlessSCHEMA,
+  })
+  return hConfig
+}
 
 module.exports = {
   configstore: config,

@@ -97,7 +97,7 @@ const createVersion = async (bkName, cmdOptions) => {
 
       // called from package context
 
-      if (!blockName || blockName === manager.config.blockName) {
+      if (!blockName || blockName === manager.config.name) {
         // if blockName is empty or passed blockName is of package
         packageManager = manager
       } else {
@@ -117,14 +117,14 @@ const createVersion = async (bkName, cmdOptions) => {
       if (manager instanceof BlockConfigManager) {
         // called from block context
 
-        if (blockName && blockName !== manager.config.blockName) {
+        if (blockName && blockName !== manager.config.name) {
           throw new Error('Cannot pass block name inside block context')
         }
         blockManager = manager
       } else if (manager instanceof PackageConfigManager) {
         // called from package context
 
-        if (!blockName || blockName === manager.config.blockName) {
+        if (!blockName || blockName === manager.config.name) {
           // if passed blockName is of package
           packageManager = manager
         } else {

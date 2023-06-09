@@ -19,7 +19,7 @@ async function push(blockName, cmdOptions) {
   const Push = new PushCore(blockName, cmdOptions, { logger, spinnies, feedback })
 
   if (process.env.BB_CLI_RUN_HEADLESS) {
-    global.HEADLESS_CONFIGS = headLessConfigStore.store
+    global.HEADLESS_CONFIGS = headLessConfigStore().store
   }
 
   try {
