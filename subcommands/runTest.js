@@ -68,24 +68,36 @@ async function runTest(options) {
   /**
    * @type {Array<string>}
    */
-  const roots = [manager]
+  const roots = []
 
-  for (; roots.length > 0; ) {
-    const root = roots.pop()
-    for await (const m of root.getDependencies()) {
-      if (m instanceof PackageConfigManager) {
-        logger.info('User is inside a package')
-        roots.push(m)
-      }
-      if (m instanceof BlockConfigManager) {
-        logger.info('User is inside a block')
-        if (!nameSatisfies(m)) {
-          logger.info(`You are inside a block (${m.config.name}) & it does not match any of the given block names`)
-          continue
+  if (manager instanceof PackageConfigManager) {
+    logger.info('User is inside a package')
+    roots.push(manager)
+    for (; roots.length > 0; ) {
+      const root = roots.pop()
+      for await (const m of root.getDependencies()) {
+        if (m instanceof PackageConfigManager) {
+          logger.info('User is inside a package')
+          roots.push(m)
         }
-        pathList.push(m)
+        if (m instanceof BlockConfigManager) {
+          logger.info('User is inside a block')
+          if (!nameSatisfies(m)) {
+            logger.info(`You are inside a block (${m.config.name}) & it does not match any of the given block names`)
+            continue
+          }
+          pathList.push(m)
+        }
       }
     }
+  }
+
+  if (manager instanceof BlockConfigManager) {
+    logger.info('User is inside a block')
+    if (!nameSatisfies(manager)) {
+      logger.info(`You are inside a block (${manager.config.name}) & it does not match any of the given block names`)
+    }
+    pathList.push(manager)
   }
 
   console.log(`\ntests will be run in the following blocks\n`)
@@ -101,7 +113,7 @@ async function runTest(options) {
 
       const url = `file://${encodeURI(pathList[index].directory)}/coverage/lcov-report/index.html`
       const linkText = 'Click here to open Coverage Report '
-      console.log(generateHyperlink(url, linkText))
+      // console.log(generateHyperlink(url, linkText))
 
       // table.push(rowGenerate(v.value.data), url, v.value.err)
       // console.log(!v.value.err)
