@@ -8,5 +8,6 @@
   "start": "node index.js",
   "build": "npm run build",
   "postPull": "npm i",
-  "name": "addTodo"
+  "name": "addTodo",
+  "supportedAppblockVersions": ["1.0.0"]
 }
