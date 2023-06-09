@@ -155,9 +155,23 @@ function getTags(dir) {
   }
 }
 
-function getLatestVersion(dir) {
+const listReleaseBranchVersions = (dir) => {
+  try {
+    const branches = execSync(`git branch`, { cwd: dir }).toString().trim().split('\n')
+    return branches.map((branch) => branch.split('@')[1]).filter((b) => b)
+  } catch (err) {
+    throw new Error(`Error in getting tags -> ${err.message}`)
+  }
+}
+
+function getLatestVersion(dir, repoType) {
   // eslint-disable-next-line no-useless-catch
   try {
+    if (repoType === 'mono') {
+      const releaseBranches = listReleaseBranchVersions(dir)
+      return semver.rsort(releaseBranches)[0]
+    }
+
     const tags = getTags(dir)
     return semver.rsort(tags)[0]
   } catch (error) {

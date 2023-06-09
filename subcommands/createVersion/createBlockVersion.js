@@ -25,7 +25,7 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   const { repoType, name: blockName, supportedAppblockVersions, blockId, orphanBranchFolder } = blockConfig
   const { force } = cmdOptions || {}
 
-  const latestVersion = getLatestVersion(blockConfig.directory)
+  const latestVersion = getLatestVersion(orphanBranchFolder, repoType)
   if (latestVersion) console.log(`Last published version is ${latestVersion}`)
 
   isCleanBlock(blockManager.directory, blockName)

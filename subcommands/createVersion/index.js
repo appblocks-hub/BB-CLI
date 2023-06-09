@@ -51,6 +51,7 @@ const createVersion = async (bkName, cmdOptions) => {
       spinnies.add('sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
       spinnies.succeed('sync', { text: 'sync is up to date' })
+      console.log();
 
       if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
       if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
