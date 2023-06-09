@@ -12,6 +12,9 @@ const runTest = require('../subcommands/runTest')
 
 const program = new Command()
 
-program.option('-g, --global', 'execute globally').action(runTest)
+program
+  .option('-g, --global', 'execute globally')
+  .option('-in,--inside <blocks...>', 'inside which block?', [])
+  .action(runTest)
 
 program.parse(process.argv)

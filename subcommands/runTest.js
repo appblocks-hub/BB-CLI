@@ -1,94 +1,113 @@
-/**
- * Copyright (c) Appblocks. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-const chalk = require('chalk')
+const path = require('path')
 const Table = require('cli-table3')
-const { appConfig } = require('../utils/appconfigStore')
+const chalk = require('chalk')
 
-/**
- * @typedef {object} _p1
- * @property {string} pckName
- * @property {import('../utils/jsDoc/types').dependencies} dependencies
- */
+const ConfigFactory = require('../utils/configManagers/configFactory')
+const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
+const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
 
-/**
- * Generate the raw for cli-table
- * @param {Boolean} isLive running status of block
- * @param {import('../utils/jsDoc/types').blockDetailsWithLive} g Block details with live data
- * @returns {Array<String>}
- */
-const rowGenerate = (isLive, g) => {
-  const { red, whiteBright, green } = chalk
-  const { meta } = g
-  const { name, type } = meta
+const { Logger } = require('../utils/loggerV2')
+const { pexec } = require('../utils/execPromise')
+const { BB_CONFIG_NAME } = require('../utils/constants')
 
-  if (!isLive) return [whiteBright(name), type, 'Null', 'Null', '...', '...', red('OFF')]
+// const rowGenerate = (name, location, status) => {
+//   const { red, whiteBright, green } = chalk
+//   console.log('status = ', status)
+//   const showStatus = status ? green('PASS') : red('FAILED')
+//   // const url = `file://${location}/coverage/lcov-report/index.html`
+//   return [whiteBright(name), location, showStatus]
+// }
 
-  let url = `localhost:${g.port}`
-
-  if (type === 'shared-fn') url = ''
-  if (type === 'function') url = `localhost:${g.port}/${name}`
-  if (type === 'job') url = `localhost:${g.port}/${name}`
-
-  return [whiteBright(name), type, g.pid, g.port, { content: url, href: `http://${url}` }, g.log.out, green('LIVE')]
+function generateHyperlink(url, text) {
+  const hyperlink = `\u001b]8;;${url}\u001b\\${text}\u001b]8;;\u001b\\`
+  return hyperlink
 }
 
-const runTest = async (options) => {
-  const { global: isGlobal } = options
-  await appConfig.init(null, null, null, {
-    isGlobal,
-  })
+async function runTest(options) {
+  const { inside } = options
+
+  const command = 'npm run test'
+  const CONFIGNAME = BB_CONFIG_NAME
+
+  const { logger } = new Logger('run_test')
+  logger.info('RUN TEST COMMAND STARTED')
 
   /**
-   * If global is true, for each package block, iterate throuh its dependencies, get the live status, and create table
-   * else get details from appConfig and get live details and build
+   * Checks if passed manager name is in the names list given by the user
+   * @param {PackageConfigManager | BlockConfigManager} c a manager
+   * @returns {boolean}
    */
-  const head = ['Block Name', 'Type', 'PID', 'Port', 'Url', 'Log', 'Status']
-  if (isGlobal) head.unshift('Package')
+  const nameSatisfies = (c) => {
+    if (inside.length === 0) return true
+    return inside.includes(c.config.name)
+  }
+
+  /**
+   * For debug alone
+   */
+  logger.debug(`insideList-${inside.join(',')}`)
+
+  const head = ['Block Name', 'Coverage Report', 'Status']
   const table = new Table({
     head: head.map((v) => chalk.cyanBright(v)),
   })
 
-  const { localRegistryData } = appConfig.lrManager
+  const { manager, e } = await ConfigFactory.create(path.resolve(CONFIGNAME))
 
-  if (isGlobal) {
-    for (const pck in localRegistryData) {
-      if (Object.hasOwnProperty.call(localRegistryData, pck)) {
-        const tableData = []
-        let rowSpan = 0
-        const { rootPath } = localRegistryData[pck]
-
-        await appConfig.init(rootPath, null, null, { isGlobal: false, reConfig: true })
-
-        for (const block of appConfig.getDependencies(true)) {
-          rowSpan += 1
-          tableData.push(rowGenerate(block.isOn, block))
-        }
-
-        // Get the count and insert it to first array
-        const _d = { rowSpan, content: pck, vAlign: 'center' }
-        if (tableData.length) {
-          tableData[0].unshift(_d)
-        }
-        table.push(...tableData)
-      }
-    }
-    console.log(table.toString())
+  if (e?.err) {
+    logger.error(e.err.message)
+    console.log(e.err.message)
+    process.exitCode = 1
     return
   }
 
-  // handle the case without -g option
-  // only display the blocks in current package
-  const allBlocks = [...appConfig.allBlockNames]
-  for (const block of allBlocks) {
-    const g = appConfig.getBlockWithLive(block)
-    table.push(rowGenerate(appConfig.isLive(block), g))
+  /**
+   * @type {Array<string>}
+   */
+  const pathList = []
+  /**
+   * @type {Array<string>}
+   */
+  const roots = [manager]
+
+  for (; roots.length > 0; ) {
+    const root = roots.pop()
+    for await (const m of root.getDependencies()) {
+      if (m instanceof PackageConfigManager) {
+        logger.info('User is inside a package')
+        roots.push(m)
+      }
+      if (m instanceof BlockConfigManager) {
+        logger.info('User is inside a block')
+        if (!nameSatisfies(m)) {
+          logger.info(`You are inside a block (${m.config.name}) & it does not match any of the given block names`)
+          continue
+        }
+        pathList.push(m)
+      }
+    }
   }
-  console.log(table.toString())
+
+  console.log(`\ntests will be run in the following blocks\n`)
+  pathList.forEach((v) => {
+    console.log(`${chalk.blue(v.config.name)} : ${chalk.italic(v.directory)}`)
+    logger.info(v.directory)
+  })
+  console.log('\n')
+  await Promise.allSettled(pathList.map((l) => pexec(command, { cwd: l.directory }, l.config.name))).then((res) => {
+    res.forEach((v, index) => {
+      const colour = v.value.err ? chalk.red : chalk.green
+      console.log('\n\n', colour(v.value.data), ' : ', colour(v.value.err ? v.value.err : 'Passed'), v.value.out)
+
+      const url = `file://${encodeURI(pathList[index].directory)}/coverage/lcov-report/index.html`
+      const linkText = 'Click here to open Coverage Report '
+      console.log(generateHyperlink(url, linkText))
+
+      // table.push(rowGenerate(v.value.data), url, v.value.err)
+      // console.log(!v.value.err)
+    })
+  })
+  // console.log(table.toString())
 }
 
 module.exports = runTest
