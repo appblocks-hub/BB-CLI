@@ -101,7 +101,7 @@ class GitManager {
    ******************************** */
 
   fetch(opts) {
-    return this._run('fetch', [opts, this.remote])
+    return this._run('fetch', [opts])
   }
 
   /* ********************************

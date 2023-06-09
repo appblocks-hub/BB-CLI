@@ -8,5 +8,6 @@
   "language": "js",
   "start": "npx webpack-dev-server",
   "build": "npx webpack",
-  "postPull": "npm i"
+  "postPull": "npm i",
+  "supportedAppblockVersions": ["1.0.0"]
 }

@@ -132,7 +132,7 @@ const generateOrphanBranch = async (options) => {
     const orphanBranchCommitMessage = orphanBranchCommits[0].split(' ')[1]
 
     const orphanBranchCommitHash = retrieveCommitHash(orphanBranchCommitMessage)
-    console.log("orphanBranchCommitHash !== block.workSpaceCommitID ",orphanBranchCommitHash !== block.workSpaceCommitID, orphanBranchCommitHash, block.workSpaceCommitID,blockConfig.name)
+   
    
     if (orphanBranchCommitHash !== block.workSpaceCommitID) {
         clearDirectory(orphanBranchPath, exclusions)
