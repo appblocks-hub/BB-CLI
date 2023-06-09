@@ -22,7 +22,7 @@ const {
   getGitRepoVisibility,
   getBlockName,
 } = require('./questionPrompts')
-const { configstore } = require('../configstore')
+const { configstore, headLessConfigStore } = require('../configstore')
 
 /**
  * @param {String}  originalRepoName originalRepoName to try to create repo with
@@ -31,7 +31,9 @@ async function createRepo(originalRepoName) {
   let repoName = originalRepoName
   const headersV4 = getGitHeader()
   const inputs = {}
-  const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS === 'true'
+  // const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS === 'true'
+  const SHOULD_RUN_WITHOUT_PROMPTS = true
+  global.HEADLESS_CONFIGS = headLessConfigStore.store
 
   inputs.gitTarget = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS.gitTarget : await getGitTarget()
 

@@ -7,6 +7,7 @@
 const open = require('open')
 
 const path = require('path')
+const { execSync } = require('child_process')
 const { spinnies } = require('../../loader')
 const { publishPackageBlock } = require('./publishPackageBlock')
 const publishBlock = require('./publishBlock')
@@ -61,18 +62,23 @@ const publish = async (bkName, cmdOptions) => {
       versionData = await getBlockVersions(bManger.config.blockId, cmdOptions.version)
       const checkOutVersion = `block_${blockName}@${versionData.version_number}`
       const Git = new GitManager(orphanBranchFolder, rootManager.config.source.ssh)
+      let isCheckOut = false
       try {
         await Git.fetch('--all')
-        await Git.checkoutBranch(checkOutVersion)
+        const curBranch = execSync(`git branch --show-current`, { cwd: manager.directory }).toString().trim()
+        if (curBranch !== checkOutVersion) {
+          isCheckOut = true
+          await Git.checkoutBranch(checkOutVersion)
+        }
         zipFile = await createZip({
           blockName,
           rootDir: rootManager.directory,
           directory: orphanBranchFolder,
           version: versionData.version_number,
         })
-        await Git.undoCheckout()
+        if (isCheckOut) await Git.undoCheckout()
       } catch (e) {
-        await Git.undoCheckout()
+        if (isCheckOut) await Git.undoCheckout()
         if (e.type === 'CREATE_ZIP') throw e
         console.log(`Error checkout to ${checkOutVersion} in bb_modules/block_${blockName}`)
         throw new Error(`Please run bb sync and try again`)

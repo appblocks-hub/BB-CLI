@@ -72,8 +72,10 @@ const connectRemote = async (cmdOptions) => {
       ? headLessConfigStore.store.prefersSsh
       : configstore.get('prefersSsh')
 
-    await Git.addRemote('origin', prefersSsh ? source.ssh : source.https)
+    await Git.stageAll()
+    await Git.commit('feat: Initial commit')
     await Git.renameBranch('main')
+    await Git.addRemote('origin', prefersSsh ? source.ssh : source.https)
 
     if (manager.config.repoType === 'multi') {
       manager.updateConfig({ source })
