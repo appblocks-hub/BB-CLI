@@ -31,12 +31,12 @@ async function setupTemplateV2(options) {
       const blockConfigPath = path.join(DIRPATH, b.dependencies[blockName].directory, BB_CONFIG_NAME)
       const currentBlock = JSON.parse(await readFile(blockConfigPath, 'utf8'))
       if (existsSync(blockConfigPath)) {
+        currentBlock.name=`${packagename}_${currentBlock.name}`
         currentBlock.blockId = nanoid()
         currentBlock.isPublic = blockVisibility
         currentBlock.repoType = repoType
         currentBlock.parentBlockIDs = [...packageParentBlockIDs, b.blockId]
         currentBlock.source.branch = `block_${currentBlock.name}`
-        currentBlock.name=`${packagename}_${currentBlock.name}`
 
         await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
       }
