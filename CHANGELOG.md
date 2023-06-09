@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.1...v0.26.2) (2023-06-09)
+
+
+### Bug Fixes
+
+* set-appblock-version config manager issue ([1ea99aa](https://github.com/appblocks-hub/BB-CLI/commit/1ea99aa3898f5cd0fff261ea63f01ed914155f04))
+
 ## [0.26.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.0...v0.26.1) (2023-06-08)
 
 
