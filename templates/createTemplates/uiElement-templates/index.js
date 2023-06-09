@@ -7,6 +7,7 @@ const { generateUiElementJs } = require('./generate-uiElementJs')
 const { generateUiElementWebpack } = require('./generate-webpackConfig')
 const { generateUiElementIndexHtml } = require('./generateIndexHtml')
 const { generateUiElementFederationExpose } = require('./generate-federation-exposeJs')
+const { generateUiElementFederationShared } = require('./generate-federation-shared')
 const { generateLayoutTemplateJs } = require('./generate-layout-template')
 const { generateHeaderTemplateJs } = require('./generate-header-template')
 const { generateSidebarTemplateJs } = require('./generate-sidebar-template')
@@ -31,4 +32,5 @@ module.exports = {
   generateUiElementsCommitlintRc,
   generateUiElementsPrettierRc,
   generateUiElementPackageJsonWithoutLint,
+  generateUiElementFederationShared
 }

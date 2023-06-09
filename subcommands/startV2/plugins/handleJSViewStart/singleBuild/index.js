@@ -30,8 +30,8 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
     }
 
+    if (!containerBlocks?.length) return { error: `No container block found` }
     if (!elementsBlocks?.length) return { error: `No element blocks found` }
-    if (!containerBlocks) return { error: `No container block found` }
 
     let containerBlock = containerBlocks[0]
     for (const block of containerBlocks) {
@@ -61,9 +61,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     const updatedEnv = await upsertEnv(
       'view',
       {
-        [`BB_${rootPackageName}_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
-        [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-        [`BB_${rootPackageName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        [`BB_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
+        [`BB_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        [`BB_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
       },
       env,
       rootPackageName
@@ -72,13 +72,13 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     const emEleFolderName = '._ab_em_elements'
     const emEleFolder = path.join(relativePath, emEleFolderName)
 
+    core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
+    await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
+
     if (updatedEnv?.envString) {
       writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
       writeFileSync(path.join(containerBlock.directory, '.env'), updatedEnv.envString)
     }
-
-    core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
-    await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
     core.spinnies.update('singleBuild', { text: `Merging elements` })
     const errorBlocks = await mergeDatas(elementsBlocks, emEleFolder, depLib, env)

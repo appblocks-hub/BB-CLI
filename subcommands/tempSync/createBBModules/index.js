@@ -6,22 +6,18 @@
  */
 const path = require('path')
 
-const { rmdirSync, mkdirSync, existsSync, writeFileSync } = require('fs')
+const { rmdirSync, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const {
-  buildBlockConfig,
-  searchFile,
-  addBlockWorkSpaceCommits,
-  getAndSetSpace,
-  checkAndPushChanges,
-} = require('./util')
+const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
+const { spinnies } = require('../../../loader')
 
 const createBBModules = async (options) => {
-  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, repoVisibility } = options
+  try{
+  const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
 
   const apiPayload = {}
   const blockMetaDataMap = {}
@@ -29,11 +25,9 @@ const createBBModules = async (options) => {
 
   const workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
   let repoUrl = rootConfig.source.https
-  const workSpaceRemoteName = 'origin'
   if (configstore.get('prefersSsh')) {
     repoUrl = rootConfig.source.ssh
   }
-
 
   const Git = new GitManager(workspaceDirectoryPath, repoUrl)
   if (!bbModulesExists) {
@@ -55,8 +49,7 @@ const createBBModules = async (options) => {
     }
   }
 
-
-  const currentBranch = (await Git.currentBranch())?.out
+  const currentBranch = (await Git.currentBranch())?.out?.trim()
 
   if (currentBranch !== defaultBranch) {
     await Git.checkoutBranch(defaultBranch)
@@ -65,16 +58,16 @@ const createBBModules = async (options) => {
   // set the appropriate space for the repository
   const currentSpaceID = await getAndSetSpace(headLessConfigStore)
 
-  const pullResult = await Git.pull()
+  spinnies.add('Config Manager', { text: 'Initialising config manager' })
 
+ await Git.pull()
   // building initial package config manager inside bb_modules/workspace directory
-  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFile(
-    workspaceDirectoryPath,
-    'block.config.json'
-  )
+  const searchFileData = searchFile(workspaceDirectoryPath, 'block.config.json')
+  const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFileData || {}
 
-  const { manager: workSpaceConfigManager } = await ConfigFactory.create(workSpaceConfigPath)
+  const { manager: workSpaceConfigManager, error } = await ConfigFactory.create(workSpaceConfigPath)
 
+  if (error) throw error
   // const { manager: workSpaceConfigManager } = configFactory
 
   workSpaceConfigManager.newParentBlockIDs = []
@@ -82,7 +75,6 @@ const createBBModules = async (options) => {
   await buildBlockConfig({
     workSpaceConfigManager,
     blockMetaDataMap,
-    repoVisibility,
     blockNameArray,
     rootPath: workSpaceConfigDirectoryPath,
     apiPayload,
@@ -90,7 +82,8 @@ const createBBModules = async (options) => {
 
   await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
 
-  await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
+  // await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
+  spinnies.succeed('Config Manager', { text: 'Config Manager initialised' })
 
   return {
     blockMetaDataMap,
@@ -100,6 +93,10 @@ const createBBModules = async (options) => {
     apiPayload,
     currentSpaceID,
   }
+}catch(err){
+  spinnies.fail('Config Manager', { text: err.toString()})
+  throw err
+}
 }
 
 module.exports = createBBModules

@@ -5,7 +5,7 @@ const TodoInput = (props) => {
   const system = {
     module: './todoInput',
     scope: 'remotes',
-    url: process.env.BLOCK_ELEMENTS_URL,
+    url: process.env.BB_ELEMENTS_URL,
   }
 
   const { Component: FederatedComponent, errorLoading } = useFederatedComponent(

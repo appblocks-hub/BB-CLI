@@ -27,7 +27,7 @@ const updateEnvWith = (envData, customData, prefix, customEnv) => {
   const updatedData = envData
 
   Object.entries(customData).forEach(([key, value]) => {
-    if (prefix && !key.startsWith(prefix) && !key.startsWith(`BB_${prefix}`)) {
+    if (prefix && !key.startsWith(prefix) && !key.startsWith(`BB_`)) {
       console.log(chalk.yellow(`Discarded ${key} env: Env key should start with ${prefix}`))
       return
     }

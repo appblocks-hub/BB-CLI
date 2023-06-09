@@ -5,22 +5,21 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const { spinnies } = require('../../../loader')
 const { generateOrphanBranch } = require('./util')
 
 const syncOrphanBranch = async (options) => {
   const { blockMetaDataMap, bbModulesPath, repoUrl } = options
 
-  const blocksArray = Object.keys(blockMetaDataMap)
-  for (const item of blocksArray) {
-    const block = blockMetaDataMap[item]
+  await Promise.all(
+    Object.values(blockMetaDataMap).map(async (block) => {
+      const blockName = block.blockManager.config.name
 
-    try {
+      spinnies.add(`${blockName}`, { text: `Syncing ${blockName}` })
       await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
-    } catch (err) {
-      console.log(`error creating orphan branch for ${block.blockManager.config.name}`)
-      throw err
-    }
-  }
+      spinnies.succeed(`${blockName}`, { text: `${blockName} synced successfully` })
+    })
+  )
 }
 
 module.exports = syncOrphanBranch

@@ -123,13 +123,13 @@ class HandleNodeFunctionStart {
         await mkdir(path.join(core.cwd, './logs', 'out'), { recursive: true })
 
         // Release port before server start
-        this.fnBlocks[0].portKey.abort()
+        this.fnBlocks[0]?.portKey.abort()
 
         // handle environments
         const rootPackageName = core.packageConfig.name.toUpperCase()
         const { environment } = core.cmdOpts
         await upsertEnv('function', {}, environment, rootPackageName)
-        const updateEnvValue = { [`BB_${rootPackageName}_FUNCTION_URL`]: `http://localhost:${this.port}` }
+        const updateEnvValue = { [`BB_FUNCTION_URL`]: `http://localhost:${this.port}` }
         await upsertEnv('view', updateEnvValue, environment, rootPackageName)
 
         // start node

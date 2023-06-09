@@ -5,104 +5,24 @@
     "https": "",
     "ssh": ""
   },
-  "env": {
-    "function": {
-      "DB_FILE_PATH": "../db.json"
-    },
-    "view": {
-      "BLOCK_ENV_TEST": "TEST ENV"
-    }
-  },
   "dependencies": {
     "todoInput": {
-      "directory": "todoInput",
-      "meta": {
-        "name": "todoInput",
-        "type": "ui-elements",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "js",
-        "start": "npx webpack-dev-server",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "todoInput"
     },
     "todoItem": {
-      "directory": "todoItem",
-      "meta": {
-        "name": "todoItem",
-        "type": "ui-elements",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "js",
-        "start": "npx webpack-dev-server",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "todoItem"
     },
     "todoContainer": {
-      "directory": "todoContainer",
-      "meta": {
-        "name": "todoContainer",
-        "type": "ui-container",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "js",
-        "start": "npx webpack-dev-server",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "todoContainer"
     },
     "addTodo": {
-      "directory": "addTodo",
-      "meta": {
-        "name": "addTodo",
-        "type": "function",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "nodejs",
-        "start": "node index.js",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "addTodo"
     },
     "listTodos": {
-      "directory": "listTodos",
-      "meta": {
-        "name": "listTodos",
-        "type": "function",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "nodejs",
-        "start": "node index.js",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "listTodos"
     },
     "removeTodo": {
-      "directory": "removeTodo",
-      "meta": {
-        "name": "removeTodo",
-        "type": "function",
-        "source": {
-          "https": "",
-          "ssh": ""
-        },
-        "language": "nodejs",
-        "start": "node index.js",
-        "build": "npm run build",
-        "postPull": "npm i"
-      }
+      "directory": "removeTodo"
     }
   }
 }

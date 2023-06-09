@@ -11,13 +11,12 @@ const { Command } = require('commander')
 const tempSync = require('../subcommands/tempSync')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 
-const { ensureUserLogins } = require('../utils/ensureUserLogins')
+// const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 const { ensureGitAndShieldLogins } = require('../utils/ensureGitAndShieldLogins')
 
 const program = new Command().hook('preAction', async (_, actionCommand) => {
   const noRepo = !actionCommand._optionValues?.repo
-  console.log("action command",actionCommand._optionValues)
   if (!isGitInstalled()) {
     console.log('Git not installed')
     process.exitCode = 1

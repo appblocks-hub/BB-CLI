@@ -1,6 +1,9 @@
 {
   "type": "function",
-  "source": "",
+  "source": {
+    "https": "",
+    "ssh": ""
+  },
   "language": "nodejs",
   "start": "node index.js",
   "build": "npm run build",

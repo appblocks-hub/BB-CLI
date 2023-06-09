@@ -8,10 +8,14 @@
  */
 
 const { Command } = require('commander')
-const log = require('../subcommands/logV2')
+const ciBuild = require('../subcommands/ci_build')
 
 const program = new Command()
 
-program.argument('[block-name]', 'Name of a live block').action(log)
+program
+  .argument('[block]', 'name of block or block type')
+  .option('-env, --environment <environment>', 'environment')
+  .option('-cn, --config-name <config-name>', 'Name of the configuration')
+  .action(ciBuild)
 
 program.parse(process.argv)

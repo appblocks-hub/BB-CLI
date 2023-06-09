@@ -6,36 +6,121 @@
  */
 const open = require('open')
 
+const path = require('path')
 const { spinnies } = require('../../loader')
-const { appConfig } = require('../../utils/appconfigStore')
 const { publishPackageBlock } = require('./publishPackageBlock')
 const publishBlock = require('./publishBlock')
 const { publishRedirectApi } = require('../../utils/api')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
+const ConfigFactory = require('../../utils/configManagers/configFactory')
+const { GitManager } = require('../../utils/gitManagerV2')
+const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const { getBlockVersions, createZip } = require('./util')
+const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
 
-const publish = async (blockName) => {
-  await appConfig.init(null, null)
-
-  if (appConfig.isInBlockContext && !appConfig.isInAppblockContext) {
-    // eslint-disable-next-line no-param-reassign
-    blockName = appConfig.allBlockNames.next().value
+const publish = async (bkName, cmdOptions) => {
+  const configPath = path.resolve(BB_CONFIG_NAME)
+  const { manager: cm, error } = await ConfigFactory.create(configPath)
+  if (error) {
+    if (error.type !== 'OUT_OF_CONTEXT') throw error
+    throw new Error('Please run the command inside package context ')
   }
 
+  const manager = cm
+  const blockName = bkName || manager.config.name
+
+  let rootManager
+  let orphanBranchFolder
+  let packageManager
+  let blockManager
+  let zipFile
+  let versionData
+
   try {
-    // Publish package block
-    if (!blockName || appConfig.config.name === blockName) {
-      await publishPackageBlock({ appConfig })
-    } else {
+    if (manager.config.repoType === 'mono') {
+      const { err, rootManager: rm } = await manager.findMyParents()
+      if (err) throw err
+      rootManager = rm
+
+      orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
+
+      let bManger
+      if (blockName === rootManager.config.name) {
+        bManger = rootManager
+      } else {
+        bManger = await rootManager.getAnyBlock(blockName)
+        if (!bManger) throw new Error(`${blockName} block not found`)
+      }
+
+      bManger.config.orphanBranchFolder = orphanBranchFolder
+
+      if (bManger instanceof PackageConfigManager) {
+        packageManager = bManger
+      } else blockManager = bManger
+
+      versionData = await getBlockVersions(bManger.config.blockId, cmdOptions.version)
+      const checkOutVersion = `block_${blockName}@${versionData.version_number}`
+      const Git = new GitManager(orphanBranchFolder, rootManager.config.source.ssh)
+      try {
+        await Git.fetch('--all')
+        await Git.checkoutBranch(checkOutVersion)
+        zipFile = await createZip({
+          blockName,
+          rootDir: rootManager.directory,
+          directory: orphanBranchFolder,
+          version: versionData.version_number,
+        })
+        await Git.undoCheckout()
+      } catch (e) {
+        await Git.undoCheckout()
+        if (e.type === 'CREATE_ZIP') throw e
+        console.log(`Error checkout to ${checkOutVersion} in bb_modules/block_${blockName}`)
+        throw new Error(`Please run bb sync and try again`)
+      }
+    } else if (manager.config.repoType === 'multi') {
+      if (manager instanceof BlockConfigManager) {
+        // called from block context
+
+        if (blockName && blockName !== manager.config.blockName) {
+          throw new Error('Cannot pass block name inside block context')
+        }
+        blockManager = manager
+      } else if (manager instanceof PackageConfigManager) {
+        // called from package context
+
+        if (!blockName || blockName === manager.config.blockName) {
+          // if passed blockName is of package
+          packageManager = manager
+        } else {
+          //  if passed blockName
+          const cManager = await manager.getAnyBlock(blockName)
+
+          //  check if blockName exist
+          if (!cManager) throw new Error(`${blockName} block not found!`)
+
+          if (cManager instanceof PackageConfigManager) packageManager = cManager
+          else blockManager = cManager
+        }
+      }
+
+      const bId = packageManager?.config.blockId || blockManager?.config.blockId
+      versionData = await getBlockVersions(bId, cmdOptions.version)
+    } else throw new Error(`Please check repoType is mono or multi`)
+
+    if (packageManager) {
+      // Publish package block
+      await publishPackageBlock({ packageManager, zipFile, versionData, cmdOptions })
+    } else if (blockManager) {
       // Publish single block
-      await publishBlock({ appConfig, blockName })
-    }
+      await publishBlock({ blockManager, zipFile, versionData, cmdOptions })
+    } else throw new Error('Error getting block manager')
 
     spinnies.stopAll()
     await open(`${publishRedirectApi}`)
-  } catch (error) {
+  } catch (err) {
     spinnies.add('p1', { text: 'Error' })
-    spinnies.fail('p1', { text: error.message })
+    spinnies.fail('p1', { text: err.message })
     spinnies.stopAll()
-    process.exit(1)
   }
 }
 

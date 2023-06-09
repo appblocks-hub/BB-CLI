@@ -15,7 +15,11 @@ const config = async (options) => {
   if (set) {
     for (const optKey in set) {
       if (Object.hasOwnProperty.call(set, optKey)) {
-        const element = set[optKey]
+        let element = set[optKey]
+
+        if (element === 'true' || element === 'false') {
+          element = element === 'true'
+        }
 
         if (configstore.has(optKey)) {
           feedback({ type: 'info', message: `${optKey} is already present with value ${configstore.get(optKey)}` })

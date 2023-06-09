@@ -35,6 +35,8 @@ cmd('create', 'to create a new block')
 
 cmd('create-app', 'register app for deploy')
 
+cmd('ci-build', 'Build modules for deployment')
+
 cmd('create-version', 'Create version for block')
 
 cmd('delete', 'Delete block component')

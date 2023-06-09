@@ -26,10 +26,10 @@ const blockPushProcess = async (options) => {
     blockParentPath,
     gitAddIgnore,
   } = options
-
+  
+  const { logger } = new Logger('pushProcess')
   try {
     process.send({ failed: false, message: 'Starting to push..' })
-    const { logger } = new Logger('pushProcess')
     if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
 
     // setup GitManager

@@ -7,7 +7,7 @@ const TodoInput = ({ refetch }) => {
   const handleAdd = async () => {
     setSubmitting(true)
     try {
-      const res = await fetch(`${process.env.BLOCK_FUNCTION_URL}/addTodo`, {
+      const res = await fetch(`${process.env.BB_FUNCTION_URL}/addTodo`, {
         method: 'post',
         body: JSON.stringify({ name: todo }),
       })

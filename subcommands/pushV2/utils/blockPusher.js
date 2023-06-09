@@ -78,9 +78,13 @@ class BlockPusher {
           return
         }
         if (errorCode) {
-          // in case push is failed, reset commit so user can re-run push again,
-          // and the repo wont be clean at that time
-          execSync('git reset HEAD~1', { cwd: this.blockPath })
+          try {
+            // in case push is failed, reset commit so user can re-run push again,
+            // and the repo wont be clean at that time
+            execSync('git reset HEAD~1', { cwd: this.blockPath })
+          } catch (error) {
+            console.warn(error.message)
+          }
         }
       })
       this.child.on('error', () => {
