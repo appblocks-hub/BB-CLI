@@ -147,8 +147,9 @@ const createVersion = async (bkName, cmdOptions) => {
       await createPackageVersion({ packageManager, cmdOptions })
     } else throw new Error(`Error reading config manager`)
   } catch (err) {
+    const errMsg = err.response?.data?.msg || err.message
     spinnies.add('cv', { text: 'Error' })
-    spinnies.fail('cv', { text: `${err.message} ${err.path ? `(${err.path})` : ''} ` })
+    spinnies.fail('cv', { text: `${errMsg} ${err.path ? `(${err.path})` : ''} ` })
     spinnies.stopAll()
   }
 }

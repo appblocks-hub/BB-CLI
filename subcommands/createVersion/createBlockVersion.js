@@ -91,13 +91,10 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
     delete reqBody.appblock_version_ids
   }
 
-  const resp = await post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
+  const { data, error } = await post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
+  if (error) throw error
 
-  const { data } = resp
-  if (data.err) {
-    throw new Error('Something went wrong from our side\n', data.msg).message
-  }
-  const versionId = data?.data?.id
+  const versionId = data.data?.id
 
   // upload and update readme
   await uploadBlockReadme({ readmePath, blockId, versionId })
