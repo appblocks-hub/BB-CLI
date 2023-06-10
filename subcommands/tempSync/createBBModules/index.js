@@ -60,7 +60,7 @@ const createBBModules = async (options) => {
 
     spinnies.add('Config Manager', { text: 'Initialising config manager' })
 
-    await Git.pull()
+    await Git.pullBranch(defaultBranch)
     // building initial package config manager inside bb_modules/workspace directory
     const searchFileData = searchFile(workspaceDirectoryPath, 'block.config.json')
     const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFileData || {}
