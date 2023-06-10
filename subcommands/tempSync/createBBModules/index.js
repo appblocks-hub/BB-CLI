@@ -12,7 +12,7 @@ const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questio
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
-const { headLessConfigStore, configstore } = require('../../../configstore')
+const { headLessConfigStore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
 
 const createBBModules = async (options) => {
@@ -24,10 +24,7 @@ const createBBModules = async (options) => {
     const blockNameArray = []
 
     const workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
-    let repoUrl = rootConfig.source.https
-    if (configstore.get('prefersSsh')) {
-      repoUrl = rootConfig.source.ssh
-    }
+     const repoUrl = rootConfig.source.ssh
 
     const Git = new GitManager(workspaceDirectoryPath, repoUrl)
     if (!bbModulesExists) {
