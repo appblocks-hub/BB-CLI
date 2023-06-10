@@ -29,9 +29,8 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   spinnies.add('bv', { text: `Checking block versions` })
   const bkVersions = await getAllBlockVersions(blockId)
   spinnies.remove('bv')
-
-  const latestVersion = bkVersions.data?.[0]?.version_number
-  if (latestVersion) console.log(`Last published version is ${latestVersion}`)
+  const latestVersion = bkVersions.data?.data?.[0]?.version_number
+  if (latestVersion) console.log(`Latest created version is ${latestVersion}`)
 
   isCleanBlock(blockManager.directory, blockName)
 
@@ -61,7 +60,7 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
       validate: (ans) => {
         if (!semver.valid(ans)) return 'Invalid versioning'
         if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
-          return `Last published version is ${latestVersion}`
+          return `Last created version is ${latestVersion}`
         }
         return true
       },

@@ -98,10 +98,10 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   }
 
   spinnies.add('bv', { text: `Checking block versions` })
-  const res = await getAllBlockVersions(pkBlockId)
-  const { data: pkBlockVersion } = res
+  const pkBlockVersion = await getAllBlockVersions(pkBlockId)
   spinnies.remove('bv')
-  const latestVersion = pkBlockVersion.data?.[0]?.version_number
+  const latestVersion = pkBlockVersion.data?.data?.[0]?.version_number
+  if (latestVersion) console.log(`Latest created version is ${latestVersion}`)
 
   const version =
     cmdOptions.version ||
