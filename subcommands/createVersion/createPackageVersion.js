@@ -2,11 +2,9 @@ const path = require('path')
 const chalk = require('chalk')
 const { writeFileSync, readFileSync, existsSync } = require('fs')
 const semver = require('semver')
-const { configstore } = require('../../configstore')
 const { spinnies } = require('../../loader')
 const { getAllBlocksVersions, appBlockAddVersion } = require('../../utils/api')
 const { post } = require('../../utils/axios')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
 const { GitManager } = require('../../utils/gitManagerV2')
 const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
@@ -36,8 +34,12 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   const [readmePath] = ensureReadMeIsPresent(packageManager.directory, packageName, false)
   if (!readmePath) throw new Error('Make sure to add a README.md ')
 
-  const memberBlocks = await packageManager.getAllLevelAnyBlock()
-  const memberBlockIds = memberBlocks.map((m) => m.config.blockId)
+  const memberBlocks = []
+  const memberBlockIds = []
+  for await (const blockManager of packageManager.getDependencies()) {
+    memberBlocks.push(blockManager)
+    memberBlockIds.push(blockManager.config.blockId)
+  }
 
   spinnies.add('cv', { text: 'Getting all block versions' })
   const { data, error } = await post(getAllBlocksVersions, {
@@ -95,8 +97,10 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
     updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
   }
 
-  const { data: pkBlockVersion } = await getAllBlockVersions(pkBlockId)
-
+  spinnies.add('bv', { text: `Checking block versions` })
+  const res = await getAllBlockVersions(pkBlockId)
+  const { data: pkBlockVersion } = res
+  spinnies.remove('bv')
   const latestVersion = pkBlockVersion.data?.[0]?.version_number
 
   const version =
@@ -161,19 +165,27 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   packageConfigData.versionId = versionId
 
   if (repoType === 'mono') {
-    // handle mono repo git flow
-    const parentBranch = packageConfig.source.branch
-    const releaseBranch = `block_${packageName}@${version}`
+    try {
+      // handle mono repo git flow
+      const parentBranch = packageConfig.source.branch
+      const releaseBranch = `block_${packageName}@${version}`
 
-    const Git = new GitManager(orphanBranchFolder, packageConfig.source.ssh)
-    Git.createReleaseBranch(releaseBranch, parentBranch)
+      const Git = new GitManager(orphanBranchFolder, packageConfig.source.ssh)
+      await Git.createReleaseBranch(releaseBranch, parentBranch)
 
-    writeFileSync(path.join(orphanBranchFolder, packageManager.configName), JSON.stringify(packageConfigData, null, 2))
+      writeFileSync(
+        path.join(orphanBranchFolder, packageManager.configName),
+        JSON.stringify(packageConfigData, null, 2)
+      )
 
-    Git.stageAll()
-    Git.commit(`release branch for block for version ${version}`)
-    Git.push(releaseBranch)
-    Git.checkoutBranch(parentBranch)
+      await Git.stageAll()
+      await Git.commit(`release branch for block for version ${version}`)
+      await Git.push(releaseBranch)
+    } catch (err) {
+      if (!['already exists', 'tree clean'].some((e) => err.message.includes(e))) {
+        throw err
+      }
+    }
   } else if (repoType === 'multi') {
     const ignoresApCreated = [
       '._ab_em/*',
@@ -200,10 +212,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
 
     spinnies.update('cv', { text: `Tagging new version ${version}` })
 
-    const blockSource = { ...packageConfigData.source }
-    const prefersSsh = configstore.get('prefersSsh')
-    const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
-    const Git = new GitManager('.', 'Not very imp', repoUrl, prefersSsh)
+    const Git = new GitManager('.', packageConfigData.source.ssh)
     await Git.addTag(version, versionNote)
     await Git.pushTags()
   }

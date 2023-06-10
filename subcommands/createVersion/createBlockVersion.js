@@ -13,11 +13,12 @@ const { spinnies } = require('../../loader')
 const { appBlockAddVersion } = require('../../utils/api')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { getShieldHeader } = require('../../utils/getHeaders')
-const { getLatestVersion, isCleanBlock } = require('../../utils/gitCheckUtils')
+const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { GitManager } = require('../../utils/gitManagerV2')
 const { readInput } = require('../../utils/questionPrompts')
 const { checkLangDepSupport, uploadBlockReadme } = require('./utils')
 const { post } = require('../../utils/axios')
+const { getAllBlockVersions } = require('../../utils/registryUtils')
 
 const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   const blockConfig = blockManager.config
@@ -25,7 +26,11 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   const { repoType, name: blockName, supportedAppblockVersions, blockId, orphanBranchFolder } = blockConfig
   const { force } = cmdOptions || {}
 
-  const latestVersion = getLatestVersion(orphanBranchFolder, repoType)
+  spinnies.add('bv', { text: `Checking block versions` })
+  const bkVersions = await getAllBlockVersions(blockId)
+  spinnies.remove('bv')
+
+  const latestVersion = bkVersions.data?.[0]?.version_number
   if (latestVersion) console.log(`Last published version is ${latestVersion}`)
 
   isCleanBlock(blockManager.directory, blockName)
@@ -105,16 +110,21 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
     const releaseBranch = `block_${blockName}@${version}`
 
     const Git = new GitManager(orphanBranchFolder, blockConfig.source.ssh)
-    Git.createReleaseBranch(releaseBranch, parentBranch)
+    try {
+      await Git.createReleaseBranch(releaseBranch, parentBranch)
 
-    blockConfigData.version = version
-    blockConfigData.versionId = versionId
-    writeFileSync(path.join(orphanBranchFolder, blockManager.configName), JSON.stringify(blockConfigData, null, 2))
+      blockConfigData.version = version
+      blockConfigData.versionId = versionId
+      writeFileSync(path.join(orphanBranchFolder, blockManager.configName), JSON.stringify(blockConfigData, null, 2))
 
-    Git.stageAll()
-    Git.commit(`release branch for version ${version}`)
-    Git.push(releaseBranch)
-    Git.checkoutBranch(parentBranch)
+      await Git.stageAll()
+      await Git.commit(`release branch for version ${version}`)
+      await Git.push(releaseBranch)
+    } catch (err) {
+      if (!['already exists', 'tree clean'].some((e) => err.message.includes(e))) {
+        throw err
+      }
+    }
   } else if (repoType === 'multi') {
     // handle multi repo git flow
     // TODO check and setup the correct workflow
