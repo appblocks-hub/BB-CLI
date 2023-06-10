@@ -107,8 +107,8 @@ const generateOrphanBranch = async (options) => {
 
     await Git.checkoutBranch(orphanBranchName)
 
-    await Git.pull()
-
+    await Git.pullBranch(orphanBranchName)
+   
     // compare code from the existing workspace folder and the orphan branch folder
 
     let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
