@@ -144,9 +144,7 @@ function ensureReadMeIsPresent(dir, blockName, showLogs) {
 async function uploadReadMe(filePath, block_id, block_version_id) {
   const result = { status: 'failed', key: '', error: '' }
   try {
-    const {
-      data: { url, key },
-    } = await axios.post(
+    const resPre = await axios.post(
       appBlockGetPresignedUrlForReadMe,
       {
         block_id,
@@ -156,28 +154,25 @@ async function uploadReadMe(filePath, block_id, block_version_id) {
         headers: getShieldHeader(),
       }
     )
-    result.key = key
+    const { data } = resPre
+
+    result.key = data.key
 
     const file = fs.readFileSync(filePath, { encoding: 'utf8' })
 
-    const res = await axios.put(url, file, {
+    const res = await axios.put(data.url, file, {
       headers: {
         'content-type': 'text/markdown',
       },
     })
-    if (res.status === 200) {
-      result.status = 200
-      result.error = null
-    } else {
-      result.status = res.status
-      result.error = res.data.msg
-    }
+
+    result.status = res.status
+    result.error = res.status === 200 ? null : res.data.msg
   } catch (err) {
-    // console.log(err)
     // TODO -- throw a ShieldError from here
     result.error = err.response.data?.msg || err.message
-    return result
   }
+
   return result
 }
 

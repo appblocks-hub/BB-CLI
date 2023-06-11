@@ -21,23 +21,25 @@ class GitManager {
   /**
    *
    * @param {String} cwd The directory path where the command is to be run
-   * @param {String} url Source url (git repo https or ssh id if ssh is true)
+   * @param {String} sshUrl Source sshUrl (git repo https or ssh id if ssh is true)
    */
-  constructor(cwd, url) {
+  constructor(cwd, sshUrl) {
     this.cwd = path.resolve(cwd)
     this.ssh = configstore.get('prefersSsh')
     this.username = configstore.get('githubUserName')
     this.token = configstore.get('gitPersonalAccessToken')
-    this.url = url
-    this._createRemote(url)
+    this.sshUrl = sshUrl
+    this._createRemote(sshUrl)
   }
 
+
   /**
-   * Selects and sets remote url from block meta data
-   * @param {String} url
+   * Selects and sets remote sshUrl from block meta data
+   * @param {String} sshUrl
    */
-  _createRemote(url) {
-    this.remote = this.ssh ? url : url.replace('//github.com', `//${this.token}:x-oauth-basic@github.com`)
+  _createRemote(sshUrl) {
+    this.remote = this.ssh ? sshUrl : sshUrl.replace('git@github.com:', `https://${this.token}:x-oauth-basic@github.com/`)
+
   }
 
   /* ********************************
