@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.8](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.7...v0.26.8) (2023-06-11)
+
+
+### Bug Fixes
+
+* get command missing ([#147](https://github.com/appblocks-hub/BB-CLI/issues/147)) ([1b2fe56](https://github.com/appblocks-hub/BB-CLI/commit/1b2fe56939fdfd6d01ab4d2face734620a38f993))
+
 ## [0.26.7](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.6...v0.26.7) (2023-06-10)
 
 
