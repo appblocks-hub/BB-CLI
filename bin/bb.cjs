@@ -71,4 +71,6 @@ cmd('set-appblock-version', 'To add supported version of appblock to block')
 
 cmd('connect-remote', 'To add remote for package block')
 
+cmd('get', 'To get free blocks from the store')
+
 program.parseAsync(process.argv)
