@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.7](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.6...v0.26.7) (2023-06-10)
+
+
+### Bug Fixes
+
+* pull issue in bb sync ([0b24cdb](https://github.com/appblocks-hub/BB-CLI/commit/0b24cdb0b7023223564856a3c6ed700adad3aa31))
+
 ## [0.26.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.5...v0.26.6) (2023-06-09)
 
 
