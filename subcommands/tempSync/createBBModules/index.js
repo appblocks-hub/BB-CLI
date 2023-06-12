@@ -12,7 +12,7 @@ const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questio
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
-const { headLessConfigStore } = require('../../../configstore')
+const { configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
 
 const createBBModules = async (options) => {
@@ -35,7 +35,7 @@ const createBBModules = async (options) => {
 
         await Git.clone('.')
 
-        const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore())
+        const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true,configstore)
 
         await checkAndSetGitConfigNameEmail(workspaceDirectoryPath, { gitUserEmail, gitUserName })
 
@@ -53,7 +53,7 @@ const createBBModules = async (options) => {
     }
 
     // set the appropriate space for the repository
-    const currentSpaceID = await getAndSetSpace(headLessConfigStore())
+    const currentSpaceID = await getAndSetSpace(configstore)
 
     spinnies.add('Config Manager', { text: 'Initialising config manager' })
 
