@@ -6,15 +6,12 @@ import BlockConfigManager from './blockConfigManager'
 import PackageConfigManager from './packageConfigManager'
 
 export type FactoryCreateResult = {
-  manager:BlockConfigManager | PackageConfigManager,
-  error:{
-    data:object,
-    err:Error
-  }
-} 
+  manager: BlockConfigManager | PackageConfigManager,
+  error: Error
+}
 
 declare class ConfigFactory {
-  readonly static cache: Record<string,object>
+  readonly static cache: Record<string, object>
   /**
    * Creates a instance
    */

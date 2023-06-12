@@ -81,6 +81,12 @@ class PackageConfigManager extends ConfigManager {
     return this.config
   }
 
+  updateConfigDependencies(newDependency) {
+    this.config.dependencies = { ...this.config.dependencies, ...newDependency }
+    this.events.emit('write')
+    return this.config
+  }
+
   has(block) {
     return !!this.config.dependencies?.[block]
   }
@@ -141,7 +147,6 @@ class PackageConfigManager extends ConfigManager {
       }
     }
     return []
-  
   }
 }
 module.exports = PackageConfigManager
