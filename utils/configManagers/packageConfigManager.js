@@ -1,5 +1,6 @@
 const path = require('path')
 const chalk = require('chalk')
+const { existsSync } = require('fs')
 const ConfigManager = require('./configManager')
 const { BB_CONFIG_NAME } = require('../constants')
 
@@ -70,6 +71,16 @@ class PackageConfigManager extends ConfigManager {
     }
     this.events.emit('write')
     return { manager, err: null }
+  }
+
+  async refreshConfig() {
+    for (const block in this.config.dependencies) {
+      if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
+        const relativeDirectory = this.config.dependencies[block].directory
+        const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
+        if (!existsSync(configPath)) this.removeBlock(block)
+      }
+    }
   }
 
   async removeBlock(name) {
