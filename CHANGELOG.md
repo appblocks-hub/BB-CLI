@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.4...v0.27.5) (2023-06-12)
+
+
+### Bug Fixes
+
+* shared block issue in bb start ([f41c783](https://github.com/appblocks-hub/BB-CLI/commit/f41c783714ce9ca10a101e05879b5d34350e63c6))
+
 ## [0.27.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.3...v0.27.4) (2023-06-12)
 
 
