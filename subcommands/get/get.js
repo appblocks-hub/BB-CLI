@@ -46,7 +46,7 @@ const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   })
 
 class Bootstrap {
-  constructor(name, versionId, dest, url, childBlocks, parent, rootParent, logger) {
+  constructor(name, versionId, dest, url, childBlocks, parentManager, rootParentManager, logger) {
     this.versionId = versionId
     this.destination = dest
     this.sourceS3Url = url
@@ -54,8 +54,8 @@ class Bootstrap {
     this.childBlocks = childBlocks
     this.name = name
     this.childPromiseArray = []
-    this.parent = parent
-    this.rootParent = rootParent
+    this.parentManager = parentManager
+    this.rootParentManager = rootParentManager
     this.logger = logger
   }
 
@@ -83,7 +83,7 @@ class Bootstrap {
       this.logger.error(`${configCreateError.message}`)
       return { err: true, msg: `Error reading config of ${this.name}` }
     }
-    this.config = configmanager.config
+    this.config = { ...configmanager.config }
 
     /**
      * Update the config with new details
@@ -94,17 +94,14 @@ class Bootstrap {
     this.config.name = this.name
     this.config.variantOf = this.versionId
     this.config.blockId = nanoid()
-    this.config.isPublic = this.rootParent?.isPublic || false
-    this.config.source = this.rootParent?.source || this.config.source
+    this.config.isPublic = this.rootParentManager?.config.isPublic || false
+    this.config.source = this.rootParentManager
+      ? { ...this.rootParentManager.config.source }
+      : { ssh: null, https: null }
+    this.config.parentBlockIDs = this.parentManager
+      ? [...this.parentManager.config.parentBlockIDs, this.parentManager.config.blockId]
+      : []
     this.config.source.branch = `block_${this.name}`
-    this.config.parentBlockIDs = this.parent ? [...this.parent.parentBlockIDs, this.parent.blockId] : []
-
-    // if no rootParent present, fill it
-    // this.rootParent = {
-    //   name: this.config.name,
-    //   isPublic: this.config.isPublic || true,
-    //   source: this.config.source,
-    // }
     /**
      * Write the newly generated config to file
      */
@@ -114,26 +111,28 @@ class Bootstrap {
      * If not a package block return
      */
     if (!this.childBlocks?.length)
-      return { err: false, msg: `${this.name} has been added to ${this.parent.name}`, name: this.name }
+      return { err: false, msg: `${this.name} has been added to ${this.parentManager.config.name}`, name: this.name }
 
     console.log(`setting up child blocks of ${this.name} `)
 
-    const loopFn = (child) => {
-      /**
+    /**
+     * Details of parent (this) to be passed to child as "parent"
+     */
 
-       * Details of parent (this) to be passed to child as "parent"
-       */
-      const m = {
-        name: this.name,
-        isPublic: this.config.isPublic,
-        blockId: this.config.blockId,
-        source: this.config.source,
-        parentBlockIDs: this.config.parentBlockIDs,
-      }
+    if (!this.parentManager) {
+      this.parentManager = configmanager
+    }
+    if (!this.rootParentManager) {
+      this.rootParentManager = configmanager
+    }
+
+    const m = configmanager
+
+    const loopFn = (child) => {
       /**
        * All block name should be prependend with the root package block name
        */
-      const modifiedChildName = `${this.rootParent.name}_${child.child_block_name}`
+      const modifiedChildName = `${this.rootParentManager.config.name}_${child.child_block_name}`
       const modifiedChildPath = this.config.dependencies[child.child_block_name].directory.replace(
         child.child_block_name,
         modifiedChildName
@@ -149,7 +148,7 @@ class Bootstrap {
         signed_urls[child.child_version_id],
         child.child_blocks,
         m,
-        this.rootParent,
+        this.rootParentManager,
         this.logger
       )
       /**
@@ -176,7 +175,6 @@ class Bootstrap {
       if (!err) {
         const [_, ...originalNameArray] = name.split('_')
         const originalName = originalNameArray.join('_')
-        console.log('UPDATEING config for', originalName, this.config.name)
         configmanager.updateConfigDependencies({
           [name]: {
             directory: this.config.dependencies[originalName].directory.replace(originalName, name),
@@ -185,13 +183,20 @@ class Bootstrap {
         configmanager.removeBlock(originalName)
       }
     })
-    const rootManager = configmanager.findMyParents(1)
-    console.log(`root manager from ${this.name}`, rootManager)
-    rootManager?.updateConfigDependencies({
-      [this.name]: {
-        directory: 'blah',
-      },
-    })
+
+    if (this.parentManager.id !== configmanager.id) {
+      const [_, ...originalNameArray] = this.name.split('_')
+      const originalName = originalNameArray.join('_')
+      const newPath = this.parentManager.has(originalName)
+        ? this.parentManager.config.dependencies[originalName].directory.replace(originalName, this.name)
+        : path.resolve(this.name)
+      this.parentManager?.updateConfigDependencies({
+        [this.name]: {
+          directory: newPath,
+        },
+      })
+      this.parentManager.removeBlock(originalName)
+    }
     return { err: false, msg: '', name: this.name }
   }
 }
@@ -249,47 +254,26 @@ async function get(blockname) {
 
   const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
 
-  const rootParent = {
-    name: '',
-    source: {
-      https: null,
-      ssh: null,
-    },
-    isPublic: true,
-  }
+  let rootParentManager = null
   if (manager) {
     const { rootManager } = await manager.findMyParents()
-    rootParent.name = rootManager.config.name
-    rootParent.isPublic = rootManager.config.isPublic || true
-    rootParent.source = rootManager.config.source
-    console.log(rootManager)
+    rootParentManager = rootManager
   }
   if (!manager && block_type === 1) {
     // we are not inside a package context
-    rootParent.name = block_name
-    rootParent.isPublic = true
-    rootParent.source = { https: null, ssh: null }
   }
   if (!manager && block_type !== 1) {
     // todo
   }
 
   const p = new Bootstrap(
-    manager ? `${rootParent.name}_${block_name}` : block_name,
+    manager ? `${rootParentManager.config.name}_${block_name}` : block_name,
     block_version_id,
-    manager ? path.resolve(`${rootParent.name}_${block_name}`) : path.resolve(block_name),
+    manager ? path.resolve(`${rootParentManager.config.name}_${block_name}`) : path.resolve(block_name),
     signed_urls[block_version_id],
     child_blocks,
-    manager
-      ? {
-          name: manager.config.name,
-          blockId: manager.config.blockId,
-          isPublic: manager.config.isPublic || false,
-          source: manager.source,
-          parentBlockIDs: manager.parentBlockIDs || [],
-        }
-      : null,
-    rootParent,
+    manager,
+    rootParentManager,
     logger
   )
 
