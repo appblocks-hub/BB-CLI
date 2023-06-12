@@ -11,7 +11,7 @@ const path = require('path')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
-const { headLessConfigStore } = require('../../../configstore')
+const { configstore } = require('../../../configstore')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
@@ -77,7 +77,7 @@ const generateOrphanBranch = async (options) => {
 
       await Git.addRemote(orphanRemoteName, Git.remote)
 
-      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore())
+      const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, configstore)
 
       await checkAndSetGitConfigNameEmail(orphanBranchPath, { gitUserEmail, gitUserName })
 
