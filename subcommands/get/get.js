@@ -1,5 +1,5 @@
 const { nanoid } = require('nanoid')
-const { writeFile } = require('fs/promises')
+// const { writeFile } = require('fs/promises')
 const decompress = require('decompress')
 const { execSync } = require('child_process')
 const path = require('path')
@@ -8,7 +8,7 @@ const { tmpdir } = require('os')
 const { Logger } = require('../../utils/loggerV2')
 const { getBlockFromStoreFn } = require('../../utils/registryUtils')
 const { axiosGet } = require('../../utils/axios')
-const { readJsonAsync } = require('../../utils')
+// const { readJsonAsync } = require('../../utils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
@@ -46,7 +46,7 @@ const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   })
 
 class Bootstrap {
-  constructor(name, versionId, dest, url, childBlocks, parent, logger) {
+  constructor(name, versionId, dest, url, childBlocks, parentManager, rootParentManager, logger) {
     this.versionId = versionId
     this.destination = dest
     this.sourceS3Url = url
@@ -54,7 +54,8 @@ class Bootstrap {
     this.childBlocks = childBlocks
     this.name = name
     this.childPromiseArray = []
-    this.parent = parent
+    this.parentManager = parentManager
+    this.rootParentManager = rootParentManager
     this.logger = logger
   }
 
@@ -74,69 +75,80 @@ class Bootstrap {
     /**
      * Read the config from newly downloaded souce code for editing
      */
-    const { data: conf, err: errorReadindConfig } = await readJsonAsync(path.join(this.destination, BB_CONFIG_NAME))
-    if (errorReadindConfig) {
+    const { manager: configmanager, error: configCreateError } = await ConfigFactory.create(
+      path.join(this.destination, BB_CONFIG_NAME)
+    )
+    if (configCreateError) {
       this.logger.error(`Error reading config of ${this.name} from ${path.join(this.destination, BB_CONFIG_NAME)}`)
-      this.logger.error(`${errorReadindConfig.message}`)
+      this.logger.error(`${configCreateError.message}`)
       return { err: true, msg: `Error reading config of ${this.name}` }
     }
-    this.config = conf
+    this.config = { ...configmanager.config }
 
     /**
      * Update the config with new details
      */
 
-    // eslint-disable-next-line dot-notation
-    this.config['variantOf'] = this.versionId
+    // if versionId is present, remove it
+    if (this.config?.versionId) delete this.config.versionId
+    this.config.name = this.name
+    this.config.variantOf = this.versionId
     this.config.blockId = nanoid()
-    this.config.isPublic = this.parent?.isPublic || false
+    this.config.isPublic = this.rootParentManager?.config.isPublic || false
+    this.config.source = this.rootParentManager
+      ? { ...this.rootParentManager.config.source }
+      : { ssh: null, https: null }
+    this.config.parentBlockIDs = this.parentManager
+      ? [...this.parentManager.config.parentBlockIDs, this.parentManager.config.blockId]
+      : []
     this.config.source.branch = `block_${this.name}`
-    this.config.parentBlockIDs = this.parent ? [...this.parent.parentBlockIDs, this.parent.blockId] : []
-
     /**
      * Write the newly generated config to file
      */
-    try {
-      await writeFile(path.join(this.destination, BB_CONFIG_NAME), JSON.stringify(this.config, null, 2))
-    } catch (err) {
-      this.logger.error(
-        `Error writing updated config of ${this.name} of ${this.parent.name} at ${path.join(
-          this.destination,
-          BB_CONFIG_NAME
-        )}`
-      )
-      this.logger.error(`${err.message}`)
-      return { err: true, msg: `Error writing config of ${this.name}` }
-    }
+    configmanager.updateConfig(this.config)
 
     /**
      * If not a package block return
      */
-    if (!this.childBlocks?.length) return { err: false, msg: `${this.name} has been added to ${this.parent.name}` }
+    if (!this.childBlocks?.length)
+      return { err: false, msg: `${this.name} has been added to ${this.parentManager.config.name}`, name: this.name }
 
     console.log(`setting up child blocks of ${this.name} `)
 
+    /**
+     * Details of parent (this) to be passed to child as "parent"
+     */
+
+    if (!this.parentManager) {
+      this.parentManager = configmanager
+    }
+    if (!this.rootParentManager) {
+      this.rootParentManager = configmanager
+    }
+
+    const m = configmanager
+
     const loopFn = (child) => {
       /**
-
-       * Details of parent (this) to be passed to child as "parent"
+       * All block name should be prependend with the root package block name
        */
-      const m = {
-        name: this.name,
-        isPublic: this.config.isPublic,
-        blockId: this.config.blockId,
-        parentBlockIDs: this.config.parentBlockIDs,
-      }
+      const modifiedChildName = `${this.rootParentManager.config.name}_${child.child_block_name}`
+      const modifiedChildPath = this.config.dependencies[child.child_block_name].directory.replace(
+        child.child_block_name,
+        modifiedChildName
+      )
+
       /**
        * Initialize a new child
        */
       const p = new Bootstrap(
-        child.child_block_name,
+        modifiedChildName,
         child.child_version_id,
-        path.join(this.destination, this.config.dependencies[child.child_block_name].directory),
+        path.join(this.destination, modifiedChildPath),
         signed_urls[child.child_version_id],
         child.child_blocks,
         m,
+        this.rootParentManager,
         this.logger
       )
       /**
@@ -158,10 +170,34 @@ class Bootstrap {
      */
     this.childBlocks.forEach(loopFn)
     const res = await Promise.allSettled(this.childPromiseArray.map((v) => v.bootstrap()))
-    res.forEach(({ value: { err, msg } }) => {
+    res.forEach(({ value: { err, msg, name } }) => {
       console.log(`${err ? `ERROR:${msg}` : msg}`)
+      if (!err) {
+        const [_, ...originalNameArray] = name.split('_')
+        const originalName = originalNameArray.join('_')
+        configmanager.updateConfigDependencies({
+          [name]: {
+            directory: this.config.dependencies[originalName].directory.replace(originalName, name),
+          },
+        })
+        configmanager.removeBlock(originalName)
+      }
     })
-    return { err: false, msg: '' }
+
+    if (this.parentManager.id !== configmanager.id) {
+      const [_, ...originalNameArray] = this.name.split('_')
+      const originalName = originalNameArray.join('_')
+      const newPath = this.parentManager.has(originalName)
+        ? this.parentManager.config.dependencies[originalName].directory.replace(originalName, this.name)
+        : path.resolve(this.name)
+      this.parentManager?.updateConfigDependencies({
+        [this.name]: {
+          directory: newPath,
+        },
+      })
+      this.parentManager.removeBlock(originalName)
+    }
+    return { err: false, msg: '', name: this.name }
   }
 }
 
@@ -217,20 +253,27 @@ async function get(blockname) {
   }
 
   const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
+
+  let rootParentManager = null
+  if (manager) {
+    const { rootManager } = await manager.findMyParents()
+    rootParentManager = rootManager
+  }
+  if (!manager && block_type === 1) {
+    // we are not inside a package context
+  }
+  if (!manager && block_type !== 1) {
+    // todo
+  }
+
   const p = new Bootstrap(
-    block_name,
+    manager ? `${rootParentManager.config.name}_${block_name}` : block_name,
     block_version_id,
-    path.resolve(block_name),
+    manager ? path.resolve(`${rootParentManager.config.name}_${block_name}`) : path.resolve(block_name),
     signed_urls[block_version_id],
     child_blocks,
-    manager
-      ? {
-          name: manager.config.name,
-          blockId: manager.config.blockId,
-          isPublic: manager.config.isPublic || false,
-          parentBlockIDs: [],
-        }
-      : null,
+    manager,
+    rootParentManager,
     logger
   )
 
@@ -260,7 +303,9 @@ async function get(blockname) {
   manager?.updateConfig({
     dependencies: {
       ...manager.config.dependencies,
-      [block_name]: { directory: path.relative(path.resolve(), path.resolve(block_name)) },
+      [`${rootParentManager.config.name}_${block_name}`]: {
+        directory: path.relative(path.resolve(), path.resolve(`${rootParentManager.config.name}_${block_name}`)),
+      },
     },
   })
 }

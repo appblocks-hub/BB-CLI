@@ -1,5 +1,102 @@
 # Changelog
 
+## [0.27.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.0...v0.27.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* check block name duplicate form root level ([1972b63](https://github.com/appblocks-hub/BB-CLI/commit/1972b631a47fdfffcdaa727333b52c94905338a2))
+
+## [0.27.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.9...v0.27.0) (2023-06-12)
+
+
+### Features
+
+* bb pull update for mono and single repo with plugin architecture ([5c5ddb4](https://github.com/appblocks-hub/BB-CLI/commit/5c5ddb474b99dda069d2cb92596408b1c3f1da8e))
+* bb push update for mono and single repo with plugin architecture ([5d956b2](https://github.com/appblocks-hub/BB-CLI/commit/5d956b29996b780a7106cada204ec2421c132ccc))
+* bb-exec refactor & more filters ([a12c1c3](https://github.com/appblocks-hub/BB-CLI/commit/a12c1c3d572b563a8ae3a68653475d410a985ee1))
+* bb-exec refactor & more filters ([#86](https://github.com/appblocks-hub/BB-CLI/issues/86)) ([a063246](https://github.com/appblocks-hub/BB-CLI/commit/a063246e259b801cb377d6ac0585bbcdb92d0a4f))
+* create package inside another package ([5367399](https://github.com/appblocks-hub/BB-CLI/commit/53673993ab26960498855a22cdeb298dd0920bd8))
+* create version ([0b3ce50](https://github.com/appblocks-hub/BB-CLI/commit/0b3ce5093e1185d8c59ed493cb87c88c8dd3fe0b))
+* create version ([0b3ce50](https://github.com/appblocks-hub/BB-CLI/commit/0b3ce5093e1185d8c59ed493cb87c88c8dd3fe0b))
+* create version ([0a9610a](https://github.com/appblocks-hub/BB-CLI/commit/0a9610ae043ae65ede71e72db42e3cbfa706649c))
+* middleware for function blocks ([dac57ef](https://github.com/appblocks-hub/BB-CLI/commit/dac57ef41e62807f3722e0a7a92cfdc7cce96850))
+* new workflow for publish ([85a591f](https://github.com/appblocks-hub/BB-CLI/commit/85a591f09afcc47bec98b998f712539402c2af88))
+* one liner command for upload and deploy ([728e233](https://github.com/appblocks-hub/BB-CLI/commit/728e233dc75faabdb0cbfd7a94546b8a341b8f1a))
+* pass custom env name for bb start ([07c0530](https://github.com/appblocks-hub/BB-CLI/commit/07c0530a6ccda92ba80d99a5589bc9c2a2dcc54f))
+* real time log ([0d0681e](https://github.com/appblocks-hub/BB-CLI/commit/0d0681e36f557b6de92006570f84af04f961879b))
+* traverseManager for packageConfigManager ([b1806ff](https://github.com/appblocks-hub/BB-CLI/commit/b1806ff4a7a6d2b3fecceca545bf5818a6e9e6e1))
+* update log with new config manager ([0add4c5](https://github.com/appblocks-hub/BB-CLI/commit/0add4c531b1351e586b604b94e891c0974171aa9))
+* workflows ([8cbb12b](https://github.com/appblocks-hub/BB-CLI/commit/8cbb12b0ce9241b9941787c143e893ada758b44e))
+
+
+### Bug Fixes
+
+* bb ls show all level member blocks ([1857076](https://github.com/appblocks-hub/BB-CLI/commit/1857076dcdc067c004fa564e7f5d04d861a16488))
+* bb nested start issues ([924e5db](https://github.com/appblocks-hub/BB-CLI/commit/924e5db12de526d4981e95b6e5d8ad82b28daae0))
+* bb start elements symlink issue ([dba89de](https://github.com/appblocks-hub/BB-CLI/commit/dba89def09608282f704ef4aa2d013db75e96e3f))
+* bb start with todo template ([11579bd](https://github.com/appblocks-hub/BB-CLI/commit/11579bde426ef6a07bb877b8c142aefe21121607))
+* connect remote config update issue ([ed53197](https://github.com/appblocks-hub/BB-CLI/commit/ed531970309ae2b97ee9b612fa2973abbab6b336))
+* create readme for sub package ([a4a310d](https://github.com/appblocks-hub/BB-CLI/commit/a4a310d806517c35df3a5e57c2c2bc71de69517b))
+* create version api error handle issue ([256e7ec](https://github.com/appblocks-hub/BB-CLI/commit/256e7ecbcd23bf7206db0142d9dc3faba2be34bf))
+* create version orphan check ([81a9bd5](https://github.com/appblocks-hub/BB-CLI/commit/81a9bd5075eabc9dc86709e10072a3486a4f9026))
+* create-version issue ([320a8ec](https://github.com/appblocks-hub/BB-CLI/commit/320a8ec57bc9044c36eea7d5fc0146397e675fdb))
+* create-version issue ([32a3682](https://github.com/appblocks-hub/BB-CLI/commit/32a36823848a4d3b0c46492c272ff4c8a0d6b907))
+* dependencies install on each block for be singlebuild ([adca283](https://github.com/appblocks-hub/BB-CLI/commit/adca2839377423c99ef1cc2da9b9a7899cc5f936))
+* dependencies warn in create version ([e3b0e56](https://github.com/appblocks-hub/BB-CLI/commit/e3b0e56e5f048688e299bc079339c9e47cc7957a))
+* deprecated config manager in use command ([7bfbd2e](https://github.com/appblocks-hub/BB-CLI/commit/7bfbd2ea998016f60a9da7b2694a185c4f0dbffe))
+* env issue on block type wise start ([788c31c](https://github.com/appblocks-hub/BB-CLI/commit/788c31c4f929f294b7530e4de971171553affb99))
+* fetch -all unwanted arg removed ([ea345f1](https://github.com/appblocks-hub/BB-CLI/commit/ea345f13226abdd16233e2cccb27319bcb036584))
+* fixing the generated md files ([886f544](https://github.com/appblocks-hub/BB-CLI/commit/886f544a9a4373d27064ed483564db7512d8baf2))
+* get command missing ([#147](https://github.com/appblocks-hub/BB-CLI/issues/147)) ([1b2fe56](https://github.com/appblocks-hub/BB-CLI/commit/1b2fe56939fdfd6d01ab4d2face734620a38f993))
+* gitignore fix and create-version error message fix ([fd8c609](https://github.com/appblocks-hub/BB-CLI/commit/fd8c6098c22a2b3762e270b6b9bee46d796bcff7))
+* headless config ([d68e7d6](https://github.com/appblocks-hub/BB-CLI/commit/d68e7d63f104a8f59eed961d354dd39507321c4d))
+* headless config creation outside package ([ecfbd12](https://github.com/appblocks-hub/BB-CLI/commit/ecfbd12e73581b650d606cec8b35d452174b5beb))
+* latest version list ([13acb91](https://github.com/appblocks-hub/BB-CLI/commit/13acb913d0866be5c40cf01d0081ead226075609))
+* modified sync ([af4ef2a](https://github.com/appblocks-hub/BB-CLI/commit/af4ef2a3d0fb5ac0956667a4f58f337b24318ffd))
+* prefix tmp with ._ab_ instead of _ab_ ([b9790c9](https://github.com/appblocks-hub/BB-CLI/commit/b9790c9c9907f18d32e59f310720d6b561984a6e))
+* pull issue in bb sync ([0b24cdb](https://github.com/appblocks-hub/BB-CLI/commit/0b24cdb0b7023223564856a3c6ed700adad3aa31))
+* reading blockName instead of name from config ([8940d17](https://github.com/appblocks-hub/BB-CLI/commit/8940d175ebc43af6fe919f1850593d7f20fcc91b))
+* remove meta from sample template ([7f52212](https://github.com/appblocks-hub/BB-CLI/commit/7f522124642488a339a058032a44c60e117c307a))
+* remove not working commands from bb list ([8b2b303](https://github.com/appblocks-hub/BB-CLI/commit/8b2b303ff2a6fed68f7feb4d06f495449f5b3cb0))
+* removed singleBuildDeployment ([cfeccc3](https://github.com/appblocks-hub/BB-CLI/commit/cfeccc3089b00de88f724bfc5e26905919e8bd5d))
+* rename master to main ([aa38ff8](https://github.com/appblocks-hub/BB-CLI/commit/aa38ff86594115aed51e45a6f3d3dee00691d8a3))
+* repo issue and logger issue ([86303c6](https://github.com/appblocks-hub/BB-CLI/commit/86303c6253eda50523b7c4b4fea20db04199dda7))
+* run fe only if ui blocks exist ([e8af246](https://github.com/appblocks-hub/BB-CLI/commit/e8af246f04245984f307adf7a7edfc2c9307dc08))
+* s3 bucket policy update and docker build ([d69e221](https://github.com/appblocks-hub/BB-CLI/commit/d69e221f5a80755c3d007f5ad45959212a1fcbce))
+* set-appblock-version config manager issue ([1ea99aa](https://github.com/appblocks-hub/BB-CLI/commit/1ea99aa3898f5cd0fff261ea63f01ed914155f04))
+* simple fixes ([ca7ae29](https://github.com/appblocks-hub/BB-CLI/commit/ca7ae297920c887e85db0d1e942a37e646d60bc2))
+* single build inconsistancy ([1cc72d6](https://github.com/appblocks-hub/BB-CLI/commit/1cc72d6c8c00a1cb8c7513c72a6e4eb5e3fa3b12))
+* sync issue and typo on bb connect ([4d0fafc](https://github.com/appblocks-hub/BB-CLI/commit/4d0fafc2a5b254a5098b0264a4bb730ca60ed0e4))
+* syncBlock modified error handling ([5504c10](https://github.com/appblocks-hub/BB-CLI/commit/5504c10f39dbf105fbeb6fbfc75e2e7f9930ca52))
+* updatePortConfig method ([754c454](https://github.com/appblocks-hub/BB-CLI/commit/754c454903d32b7b8bf80a82f055da02bbad3a62))
+* workflow ([8ad0bf1](https://github.com/appblocks-hub/BB-CLI/commit/8ad0bf1457c2e44a48973ffd87cfd6b2eeafc81d))
+* workflow fix ([1c678f6](https://github.com/appblocks-hub/BB-CLI/commit/1c678f60a67d5cd9c96bf51dc95bebb3bc5b141c))
+* workflow fixes ([c5c5b22](https://github.com/appblocks-hub/BB-CLI/commit/c5c5b227376f6097bfc572cefdceeeef0875314b))
+
+## [0.26.9](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.8...v0.26.9) (2023-06-12)
+
+
+### Bug Fixes
+
+* bb ls show all level member blocks ([1857076](https://github.com/appblocks-hub/BB-CLI/commit/1857076dcdc067c004fa564e7f5d04d861a16488))
+* bb start elements symlink issue ([dba89de](https://github.com/appblocks-hub/BB-CLI/commit/dba89def09608282f704ef4aa2d013db75e96e3f))
+* deprecated config manager in use command ([7bfbd2e](https://github.com/appblocks-hub/BB-CLI/commit/7bfbd2ea998016f60a9da7b2694a185c4f0dbffe))
+
+## [0.26.8](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.7...v0.26.8) (2023-06-11)
+
+
+### Bug Fixes
+
+* get command missing ([#147](https://github.com/appblocks-hub/BB-CLI/issues/147)) ([1b2fe56](https://github.com/appblocks-hub/BB-CLI/commit/1b2fe56939fdfd6d01ab4d2face734620a38f993))
+
+## [0.26.7](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.6...v0.26.7) (2023-06-10)
+
+
+### Bug Fixes
+
+* pull issue in bb sync ([0b24cdb](https://github.com/appblocks-hub/BB-CLI/commit/0b24cdb0b7023223564856a3c6ed700adad3aa31))
+
 ## [0.26.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.5...v0.26.6) (2023-06-09)
 
 

@@ -81,6 +81,12 @@ class PackageConfigManager extends ConfigManager {
     return this.config
   }
 
+  updateConfigDependencies(newDependency) {
+    this.config.dependencies = { ...this.config.dependencies, ...newDependency }
+    this.events.emit('write')
+    return this.config
+  }
+
   has(block) {
     return !!this.config.dependencies?.[block]
   }
@@ -114,7 +120,7 @@ class PackageConfigManager extends ConfigManager {
       const shouldTraverse = tLevel == null || tLevel > 0
       if (manager instanceof PackageConfigManager) {
         if (!shouldTraverse) continue
-        const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
+        const nextTraverseLevel = shouldTraverse != null ? tLevel - 1 : null
         if (includeSubPack) res.push(manager)
         const children = await manager._traverseManager(nextTraverseLevel, includeSubPack)
         res = res.concat(children)
@@ -133,15 +139,14 @@ class PackageConfigManager extends ConfigManager {
         const relativeDirectory = this.config.dependencies[block].directory
         const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
-        c.pathRelativeToParent = relativeDirectory
         if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
+        if (c) c.pathRelativeToParent = relativeDirectory
         const f = filter || (() => true)
         const p = picker || ((b) => b)
         if (f(c)) yield p(c)
       }
     }
     return []
-  
   }
 }
 module.exports = PackageConfigManager
