@@ -99,6 +99,7 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
    */
   public removeBlock(name: string): Promise<PackageConfig>
 
+  public refreshConfig(): Promise<void>
   public updateConfigDependencies(newDependency: object): PackageConfig
 }
 

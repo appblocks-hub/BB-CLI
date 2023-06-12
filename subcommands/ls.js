@@ -56,6 +56,7 @@ const ls = async () => {
   const configPath = path.resolve(BB_CONFIG_NAME)
   const { manager } = await ConfigFactory.create(configPath)
   if (manager instanceof PackageConfigManager) {
+    await manager.refreshConfig()
     const allMemberBlocks = await manager.getAllLevelMemberBlock()
     for (const blockManager of allMemberBlocks) {
       table.push(

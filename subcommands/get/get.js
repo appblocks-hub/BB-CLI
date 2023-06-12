@@ -1,5 +1,4 @@
 const { nanoid } = require('nanoid')
-// const { writeFile } = require('fs/promises')
 const decompress = require('decompress')
 const { execSync } = require('child_process')
 const path = require('path')
@@ -8,7 +7,6 @@ const { tmpdir } = require('os')
 const { Logger } = require('../../utils/loggerV2')
 const { getBlockFromStoreFn } = require('../../utils/registryUtils')
 const { axiosGet } = require('../../utils/axios')
-// const { readJsonAsync } = require('../../utils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
@@ -189,7 +187,7 @@ class Bootstrap {
       const originalName = originalNameArray.join('_')
       const newPath = this.parentManager.has(originalName)
         ? this.parentManager.config.dependencies[originalName].directory.replace(originalName, this.name)
-        : path.resolve(this.name)
+        : path.relative(path.resolve(), path.resolve(this.name))
       this.parentManager?.updateConfigDependencies({
         [this.name]: {
           directory: newPath,
