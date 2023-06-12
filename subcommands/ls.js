@@ -26,25 +26,22 @@ const { BB_CONFIG_NAME } = require('../utils/constants')
  */
 const rowGenerate = (isLive, g) => {
   const { red, whiteBright, green } = chalk
-  const { name, type, directory } = g
-  const blockDir = path.relative(path.resolve(), directory)
+  const { name, type } = g
 
   if (!isLive) return [whiteBright(name), type, 'Null', 'Null', '...', '...', red('OFF')]
 
   let url = `localhost:${g.port}`
 
   if (type === 'shared-fn') url = ''
-  if (type === 'function') url = `localhost:${g.port}/${blockDir}`
-  if (type === 'job') url = `localhost:${g.port}/${blockDir}`
+  if (type === 'function') url = `localhost:${g.port}/${name}`
+  if (type === 'job') url = `localhost:${g.port}/${name}`
 
-  const outPath = path.relative(path.resolve(), g.log.out)
-
-  return [whiteBright(name), type, g.pid, g.port, { content: url, href: `http://${url}` }, outPath, green('LIVE')]
+  return [whiteBright(name), type, g.pid, g.port, { content: url, href: `http://${url}` }, g.log.out, green('LIVE')]
 }
 
 const ls = async () => {
   /**
-   * If global is true, for each package block, iterate through its dependencies, get the live status, and create table
+   * If global is true, for each package block, iterate throuh its dependencies, get the live status, and create table
    * else get details from appConfig and get live details and build
    */
   const head = ['Block Name', 'Type', 'PID', 'Port', 'Url', 'Log', 'Status']
@@ -53,22 +50,54 @@ const ls = async () => {
     head: head.map((v) => chalk.cyanBright(v)),
   })
 
+  // const { localRegistryData } = appConfig.lrManager
+
+  // if (isGlobal) {
+  //   for (const pck in localRegistryData) {
+  //     if (Object.hasOwnProperty.call(localRegistryData, pck)) {
+  //       const tableData = []
+  //       let rowSpan = 0
+  //       const { rootPath } = localRegistryData[pck]
+
+  //       await appConfig.init(rootPath, null, null, { isGlobal: false, reConfig: true })
+
+  //       for (const block of appConfig.getDependencies(true)) {
+  //         rowSpan += 1
+  //         tableData.push(rowGenerate(block.isOn, block))
+  //       }
+
+  //       // Get the count and insert it to first array
+  //       const _d = { rowSpan, content: pck, vAlign: 'center' }
+  //       if (tableData.length) {
+  //         tableData[0].unshift(_d)
+  //       }
+  //       table.push(...tableData)
+  //     }
+  //   }
+  //   console.log(table.toString())
+  //   return
+  // }
+
   const configPath = path.resolve(BB_CONFIG_NAME)
-  const { manager } = await ConfigFactory.create(configPath)
-  if (manager instanceof PackageConfigManager) {
-    const allMemberBlocks = await manager.getAllLevelMemberBlock()
-    for (const blockManager of allMemberBlocks) {
-      table.push(
-        rowGenerate(blockManager.isLive, {
-          ...blockManager.liveDetails,
-          ...blockManager.config,
-          directory: blockManager.directory,
-        })
-      )
+  const { manager: configManager } = await ConfigFactory.create(configPath)
+  if (configManager instanceof PackageConfigManager) {
+    for await (const blockManager of configManager.getDependencies()) {
+      table.push(rowGenerate(blockManager.isLive, { ...blockManager.liveDetails, ...blockManager.config }))
     }
   }
 
   console.log(table.toString())
+
+  // handle the case without -g option
+  // only display the blocks in current package
+  // const allBlocks = [...appConfig.allBlockNames]
+  // console.log(allBlocks1, allBlocks)
+  // console.log(allBlocks.length)
+  // for (const block of allBlocks) {
+  //   const g = appConfig.getBlockWithLive(block)
+  //   table.push(rowGenerate(appConfig.isLive(block), g))
+  // }
+  // console.log(table.toString())
 }
 
 module.exports = ls
