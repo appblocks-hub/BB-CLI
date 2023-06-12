@@ -8,7 +8,6 @@ const generateUiElementPackageJson = (name) => `{
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack --mode production",
-    "prepare": "npx husky install",
     "test": "jest",
     "coverage": "jest --coverage",
     "lint:fix": "npx eslint *.js --fix",
@@ -68,3 +67,6 @@ const generateUiElementPackageJson = (name) => `{
 `
 
 module.exports = { generateUiElementPackageJson }
+
+// removed husky
+// "prepare": "npx husky install",
