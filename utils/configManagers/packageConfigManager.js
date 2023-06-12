@@ -114,7 +114,7 @@ class PackageConfigManager extends ConfigManager {
       const shouldTraverse = tLevel == null || tLevel > 0
       if (manager instanceof PackageConfigManager) {
         if (!shouldTraverse) continue
-        const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
+        const nextTraverseLevel = shouldTraverse && tLevel != null ? tLevel - 1 : null
         if (includeSubPack) res.push(manager)
         const children = await manager._traverseManager(nextTraverseLevel, includeSubPack)
         res = res.concat(children)
@@ -141,7 +141,6 @@ class PackageConfigManager extends ConfigManager {
       }
     }
     return []
-  
   }
 }
 module.exports = PackageConfigManager
