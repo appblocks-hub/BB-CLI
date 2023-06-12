@@ -98,6 +98,8 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
    * @param name
    */
   public removeBlock(name: string): Promise<PackageConfig>
+
+  public updateConfigDependencies(newDependency: object): PackageConfig
 }
 
 export = PackageConfigManager
