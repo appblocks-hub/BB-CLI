@@ -28,7 +28,11 @@ class handleBeforeCreate {
         let { blockName } = core.cmdArgs
         const { logger, packageManager } = core
 
-        const allExistingBlockNames = await packageManager.allBlockNames()
+        const { err, rootManager } = await packageManager.findMyParents()
+        if (err) throw err
+
+        const allExistingBlocks = await rootManager.getAllLevelAnyBlock()
+        const allExistingBlockNames = allExistingBlocks.map((m) => m.config?.name)
         if (allExistingBlockNames.includes(blockName)) {
           throw new Error('Block name already exist')
         }
