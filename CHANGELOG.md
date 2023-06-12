@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.1...v0.27.2) (2023-06-12)
+
+
+### Bug Fixes
+
+* absolute path issue in config on bb get ([9a20067](https://github.com/appblocks-hub/BB-CLI/commit/9a20067a2beb6cb7fddc0ca138f76fefac8a5e96))
+* **get:** path entry is not realative ([293efa1](https://github.com/appblocks-hub/BB-CLI/commit/293efa1ba303b9d0f6734063b4654593fb449784))
+
 ## [0.27.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.0...v0.27.1) (2023-06-12)
 
 
