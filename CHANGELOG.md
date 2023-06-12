@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.2...v0.27.3) (2023-06-12)
+
+
+### Bug Fixes
+
+* traverse check issue ([d344332](https://github.com/appblocks-hub/BB-CLI/commit/d344332f91f4a43f5205f848579ddd12ad8039fe))
+
 ## [0.27.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.1...v0.27.2) (2023-06-12)
 
 
