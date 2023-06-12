@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.3...v0.27.4) (2023-06-12)
+
+
+### Bug Fixes
+
+* Adding test templates for UI-Elements ([55a7210](https://github.com/appblocks-hub/BB-CLI/commit/55a72104d3f8cf5cf2d811ef47f22cb6d1e37a5c))
+* Adding test templates for UI-Elements ([#162](https://github.com/appblocks-hub/BB-CLI/issues/162)) ([55a7210](https://github.com/appblocks-hub/BB-CLI/commit/55a72104d3f8cf5cf2d811ef47f22cb6d1e37a5c))
+
 ## [0.27.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.2...v0.27.3) (2023-06-12)
 
 
