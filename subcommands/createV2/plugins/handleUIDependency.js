@@ -5,7 +5,7 @@ const { generateGitIgnore } = require('../../../templates/createTemplates/functi
 const {
   generateUiElementWebpack,
   generateUiElementsReadme,
-  generateUiElementsEsLintRc,
+  generateUiElementEsLintRc,
   generateUiElementIndexHtml,
   generateUiElementsPrettierRc,
   generateUiElementPackageJson,
@@ -44,7 +44,7 @@ class handleUIDependency {
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const packageJsonString = generateUiElementPackageJson(blockName)
-        const eslintrcString = generateUiElementsEsLintRc()
+        const eslintrcString = generateUiElementEsLintRc()
         const commitLintRcString = generateUiElementsCommitlintRc()
         const prettierrcString = generateUiElementsPrettierRc()
         const fedExposeString = generateUiElementFederationExpose(blockName)
