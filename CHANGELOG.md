@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.26.9](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.8...v0.26.9) (2023-06-12)
+
+
+### Bug Fixes
+
+* bb ls show all level member blocks ([1857076](https://github.com/appblocks-hub/BB-CLI/commit/1857076dcdc067c004fa564e7f5d04d861a16488))
+* bb start elements symlink issue ([dba89de](https://github.com/appblocks-hub/BB-CLI/commit/dba89def09608282f704ef4aa2d013db75e96e3f))
+* deprecated config manager in use command ([7bfbd2e](https://github.com/appblocks-hub/BB-CLI/commit/7bfbd2ea998016f60a9da7b2694a185c4f0dbffe))
+
 ## [0.26.8](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.7...v0.26.8) (2023-06-11)
 
 
