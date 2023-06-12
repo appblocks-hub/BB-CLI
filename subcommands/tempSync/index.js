@@ -15,6 +15,7 @@ const createBBModules = require('./createBBModules')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { configstore } = require('../../configstore')
+const { headLessConfigStore } = require('../../configstore')
 const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
 const { spinnies } = require('../../loader')
@@ -50,7 +51,8 @@ const tempSync = async (blockName, options) => {
 
     const { defaultBranch } = await setVisibilityAndDefaultBranch({
       configstore,
-      repoUrl
+      repoUrl,
+      headLessConfigStore: headLessConfigStore(),
     })
 
     // spinnies.update('bb', { text: 'Generating bb modules' })
