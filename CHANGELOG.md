@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.0...v0.27.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* check block name duplicate form root level ([1972b63](https://github.com/appblocks-hub/BB-CLI/commit/1972b631a47fdfffcdaa727333b52c94905338a2))
+
 ## [0.27.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.26.9...v0.27.0) (2023-06-12)
 
 
