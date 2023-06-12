@@ -303,8 +303,8 @@ async function get(blockname) {
   manager?.updateConfig({
     dependencies: {
       ...manager.config.dependencies,
-      [`${manager.config.name}_${block_name}`]: {
-        directory: path.relative(path.resolve(), path.resolve(`${manager.config.name}_${block_name}`)),
+      [`${rootParentManager.config.name}_${block_name}`]: {
+        directory: path.relative(path.resolve(), path.resolve(`${rootParentManager.config.name}_${block_name}`)),
       },
     },
   })
