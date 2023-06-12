@@ -88,11 +88,13 @@ async function bbexecV2(command, options) {
   if (manager instanceof PackageConfigManager) {
     logger.info('User is inside a package')
     roots.push(manager)
+    await manager.refreshConfig()
     for (; roots.length > 0; ) {
       const root = roots.pop()
       for await (const m of root.getDependencies()) {
         if (m instanceof PackageConfigManager) {
           roots.push(m)
+          await manager.refreshConfig()
         }
         if (!groupSatisfies(m)) continue
         if (!nameSatisfies(m)) continue

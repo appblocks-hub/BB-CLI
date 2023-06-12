@@ -79,10 +79,18 @@ const ls = async () => {
   // }
 
   const configPath = path.resolve(BB_CONFIG_NAME)
-  const { manager: configManager } = await ConfigFactory.create(configPath)
-  if (configManager instanceof PackageConfigManager) {
-    for await (const blockManager of configManager.getDependencies()) {
-      table.push(rowGenerate(blockManager.isLive, { ...blockManager.liveDetails, ...blockManager.config }))
+  const { manager } = await ConfigFactory.create(configPath)
+  if (manager instanceof PackageConfigManager) {
+    await manager.refreshConfig()
+    const allMemberBlocks = await manager.getAllLevelMemberBlock()
+    for (const blockManager of allMemberBlocks) {
+      table.push(
+        rowGenerate(blockManager.isLive, {
+          ...blockManager.liveDetails,
+          ...blockManager.config,
+          directory: blockManager.directory,
+        })
+      )
     }
   }
 
