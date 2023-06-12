@@ -73,7 +73,7 @@ const {
 const {
   generateUiContainerCommitlintRc,
 } = require('../templates/createTemplates/uiContainer-templates/generate-commitlintrc')
-const { generateUiElementsEsLintRc } = require('../templates/createTemplates/uiElement-templates/generate-eslintrc')
+const { generateUiElementEsLintRc } = require('../templates/createTemplates/uiElement-templates/generate-eslintrc')
 const {
   generateUiElementsCommitlintRc,
 } = require('../templates/createTemplates/uiElement-templates/generate-commitlintrc')
@@ -509,7 +509,7 @@ function createUiElementFolders(componentpath, componentname) {
   const gitignore = generateGitIgnore()
   const readmeString = generateUiElementsReadme(componentname)
   const fedExposeString = generateUiElementFederationExpose(componentname)
-  const eslintrcString = generateUiElementsEsLintRc()
+  const eslintrcString = generateUiElementEsLintRc()
   const commitlintrcString = generateUiElementsCommitlintRc()
   const prettierrcString = generateUiElementsPrettierRc()
 
