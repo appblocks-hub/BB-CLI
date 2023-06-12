@@ -59,7 +59,6 @@ async function setupTemplateV2(options) {
 
             let newData = oldData
             const oldAppJsData = await readFile(appJsPath, 'utf8')
-            console.log({ oldAppJsData })
             let newAppJsData = oldAppJsData
             templateBlocks.forEach((oldBlockName) => {
               newAppJsData = newAppJsData.replaceAll(oldBlockName, `${packageName}_${oldBlockName}`)
