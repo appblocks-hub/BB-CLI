@@ -53,13 +53,23 @@ async function setupTemplateV2(options) {
           if (currentBlock.type === 'ui-elements') {
             const oldDataPath = path.resolve(newBlockPath, 'src', 'remote', `${templateBlockName}.js`)
             const newDataPath = path.resolve(newBlockPath, 'src', 'remote', `${newBlockName}.js`)
+            
+            const appJsPath = path.resolve(newBlockPath, 'src', 'App.js')
             const oldData = await readFile(oldDataPath, 'utf8')
+
             let newData = oldData
+            const oldAppJsData = await readFile(appJsPath, 'utf8')
+            console.log({ oldAppJsData })
+            let newAppJsData = oldAppJsData
             templateBlocks.forEach((oldBlockName) => {
+              newAppJsData = newAppJsData.replaceAll(oldBlockName, `${packageName}_${oldBlockName}`)
               newData = newData.replaceAll(oldBlockName, `${packageName}_${oldBlockName}`)
             })
             if (existsSync(path.dirname(newDataPath))) mkdirSync(path.dirname(newDataPath), { recursive: true })
+
             await writeFile(newDataPath, newData)
+            await writeFile(appJsPath, newAppJsData)
+
             rmSync(oldDataPath, { recursive: true })
 
             const fedExposeString = generateUiElementFederationExpose(newBlockName)

@@ -16,6 +16,7 @@ const { upsertEnv } = require('../../../../utils/envManager')
 class HandleNodeFunctionStart {
   constructor() {
     this.fnBlocks = []
+    this.fnSharedBlocks = []
     this.blockEmulateData = {}
     this.middlewareBlockListData = {}
     this.depsInstallReport = []
@@ -35,8 +36,11 @@ class HandleNodeFunctionStart {
        * Filter node fn blocks
        */
       for (const { type, blocks } of core.blockStartGroups) {
-        if (type !== 'function') continue
-        this.fnBlocks = blocks.filter((b) => b.config.language === 'nodejs')
+        if (type === 'function') {
+          this.fnBlocks = blocks.filter((b) => b.config.language === 'nodejs')
+        } else if (type === 'shared-fn') {
+          this.fnSharedBlocks = blocks.filter((b) => b.config.language === 'nodejs')
+        }
       }
 
       if (!this.fnBlocks.length) return
@@ -85,7 +89,14 @@ class HandleNodeFunctionStart {
       }
 
       if (core.cmdOpts.singleInstance) {
-        await updateEmulatorPackageSingleBuild(emPath, this.blockEmulateData)
+        const sharedBlocks = {}
+        this.fnSharedBlocks.forEach((b) => {
+          sharedBlocks[b.config.name] = {
+            ...b.config,
+            directory: b.directory,
+          }
+        })
+        await updateEmulatorPackageSingleBuild(emPath, { ...this.blockEmulateData, ...sharedBlocks })
       }
 
       spinnies.update('emBuild', { text: 'Installing dependencies for function emulator' })
@@ -98,6 +109,12 @@ class HandleNodeFunctionStart {
       if (core.cmdOpts.singleInstance) {
         spinnies.update('emBuild', { text: 'Configuring node modules' })
         await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
+        if (this.fnSharedBlocks?.length) {
+          await linkEmulatedNodeModulesToBlocks(
+            emPath,
+            this.fnSharedBlocks.map((m) => ({ directory: m.directory }))
+          )
+        }
       } else {
         spinnies.update('emBuild', { text: 'Installing dependencies in function blocks' })
         const pArray = []
