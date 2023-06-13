@@ -1,6 +1,8 @@
 const chalk = require('chalk')
 const { exec } = require('child_process')
 const { readFile } = require('fs/promises')
+const isRunning = require('is-running')
+const treeKill = require('tree-kill')
 
 const logFail = (msg) => console.log(chalk.red(msg))
 
@@ -51,4 +53,15 @@ const logErr = (err) => {
   console.log(chalk.red(errMsg))
 }
 
-module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, pExec, logErr }
+// eslint-disable-next-line arrow-body-style
+const treeKillSync = async (livePid) => {
+  return new Promise((resolve, reject) => {
+    if (!isRunning(livePid)) resolve(true)
+    treeKill(livePid, (err) => {
+      if (!err) return resolve(true)
+      return reject(err)
+    })
+  })
+}
+
+module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, pExec, logErr, treeKillSync }
