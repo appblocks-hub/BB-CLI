@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.5...v0.27.6) (2023-06-13)
+
+
+### Bug Fixes
+
+* container update issue ([0fce357](https://github.com/appblocks-hub/BB-CLI/commit/0fce3578d2204649f7a7296acfe9320471c3bc89))
+* remove unwanted log ([87c4391](https://github.com/appblocks-hub/BB-CLI/commit/87c4391bc1346f07efe7c0672d90255c24791de1))
+
 ## [0.27.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.4...v0.27.5) (2023-06-12)
 
 
