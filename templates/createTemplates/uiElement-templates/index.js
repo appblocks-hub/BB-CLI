@@ -14,6 +14,7 @@ const { generateSidebarTemplateJs } = require('./generate-sidebar-template')
 const { generateUiElementEsLintRc } = require('./generate-eslintrc')
 const { generateUiElementsCommitlintRc } = require('./generate-commitlintrc')
 const { generateUiElementsPrettierRc } = require('./generate-prettierrc')
+const { generateDashboardTemplateJs } = require('./generate-dashboard-template')
 const { generateUiElementBabelRc } = require('./generate-babelrc')
 const { generateUiElementAppTestJs } = require('./generate-appTest')
 const { generateUiElementJestConfig } = require('./generate-JestConfig')
@@ -35,6 +36,8 @@ module.exports = {
   generateUiElementEsLintRc,
   generateUiElementsCommitlintRc,
   generateUiElementsPrettierRc,
+  generateUiElementPackageJsonWithoutLint,
+  generateDashboardTemplateJs,
   generateUiElementFederationShared,
   generateUiElementBabelRc,
   generateUiElementAppTestJs,
