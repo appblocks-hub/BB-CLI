@@ -8,12 +8,14 @@ const path = require('path')
 const { existsSync } = require('fs')
 const { writeFile } = require('fs/promises')
 const { createRepo } = require('../../utils/createRepoV2')
-const { confirmationPrompt } = require('../../utils/questionPrompts')
+// const { confirmationPrompt } = require('../../utils/questionPrompts')
 const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
 const { spinnies } = require('../../loader')
 const { tryGitInit, isInGitRepository } = require('../../utils/gitCheckUtils')
 const { generateGitIgnore } = require('../../templates/createTemplates/function-templates')
 const { initializeConfig, updateAllMemberConfig } = require('./util')
+const { GitManager } = require('../../utils/gitManagerV2')
+const { headLessConfigStore, configstore } = require('../../configstore')
 
 const connectRemote = async (cmdOptions) => {
   try {
@@ -26,19 +28,21 @@ const connectRemote = async (cmdOptions) => {
       throw new Error('Please run this command from root package context')
     }
 
-    if (manager.config.source.https && !cmdOptions.force) {
-      const goAhead = await confirmationPrompt({
-        message: `Source already exist. Do you want to replace with new source ?`,
-        name: 'goAhead',
-      })
+    const sourceExist = manager.config.source.https && manager.config.source.ssh
+    if (sourceExist) throw new Error('Source already exist')
 
-      if (!goAhead) throw new Error('Source already exist')
-    }
+    // TODO: if there is an option to update existing source, warn and continue
+    // if (sourceExist && !cmdOptions.force) {
+    //   const goAhead = await confirmationPrompt({
+    //     message: `Source already exist. Do you want to replace with new source ?`,
+    //     name: 'goAhead',
+    //   })
+
+    //   if (!goAhead) throw new Error('Source already exist')
+    // }
 
     // check if already git initialized else init
-    if (!isInGitRepository()) {
-      tryGitInit()
-    }
+    if (!isInGitRepository()) tryGitInit()
 
     // check if gitignore exist else add
     const gitIgnorePath = path.join(manager.directory, '.gitignore')
@@ -55,11 +59,22 @@ const connectRemote = async (cmdOptions) => {
     }
 
     const source = {
+      ...manager.config.source,
       ssh: sourceUrl.trim(),
       https: convertGitSshUrlToHttps(sourceUrl.trim()),
     }
 
     spinnies.add('cr', { text: 'Adding source to blocks' })
+
+    const Git = new GitManager(manager.directory, source.ssh)
+
+    let { prefersSsh } = headLessConfigStore().store
+    if (prefersSsh == null) prefersSsh = configstore.get('prefersSsh')
+
+    await Git.stageAll()
+    await Git.commit('feat: Initial commit')
+    await Git.renameBranch('main')
+    await Git.addRemote('origin', prefersSsh ? source.ssh : source.https)
 
     if (manager.config.repoType === 'multi') {
       manager.updateConfig({ source })

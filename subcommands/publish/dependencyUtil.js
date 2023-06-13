@@ -44,6 +44,31 @@ const getPackageJsonDependencies = async ({ directory, name: bName, blockId }) =
   }
 }
 
+const getDependenciesV2 = async (options) => {
+  const { blockDetails } = options
+
+  const {
+    directory,
+    config: { blockId, name, language },
+  } = blockDetails
+
+  let dependencies = []
+
+  switch (language) {
+    case 'nodejs':
+      dependencies = await getPackageJsonDependencies({ directory, name, blockId })
+      break
+    case 'js':
+      dependencies = await getPackageJsonDependencies({ directory, name, blockId })
+      break
+
+    default:
+      break
+  }
+
+  return { dependencies, depExist: dependencies.length > 0 }
+}
+
 const getDependencies = async (options) => {
   const { blockDetails } = options
 
@@ -171,7 +196,7 @@ const getDependencyIds = async (options) => {
     Object.entries(noExistingDeps).forEach(([lang, deps]) => {
       console.log(
         chalk.yellow(
-          `${lang} does not support listed dependencies for ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
+          `${lang} in appblocks does not have support for listed dependencies of ${blockName} \n${deps.map((d) => d.showVal).join('\n')}\n`
         )
       )
     })
@@ -195,4 +220,4 @@ const getDependencyIds = async (options) => {
   return { requestDeps, depIds: [...new Set(depIds)], isAllDepExist: false }
 }
 
-module.exports = { getDependencies, addDependencies, getDependencyIds }
+module.exports = { getDependencies, getDependenciesV2, addDependencies, getDependencyIds }

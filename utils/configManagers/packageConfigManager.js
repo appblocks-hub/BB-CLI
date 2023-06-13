@@ -1,6 +1,8 @@
 const path = require('path')
 const chalk = require('chalk')
+const { existsSync } = require('fs')
 const ConfigManager = require('./configManager')
+const { BB_CONFIG_NAME } = require('../constants')
 
 class PackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
@@ -71,11 +73,27 @@ class PackageConfigManager extends ConfigManager {
     return { manager, err: null }
   }
 
+  async refreshConfig() {
+    for (const block in this.config.dependencies) {
+      if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
+        const relativeDirectory = this.config.dependencies[block].directory
+        const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
+        if (!existsSync(configPath)) this.removeBlock(block)
+      }
+    }
+  }
+
   async removeBlock(name) {
     if (!this.config.dependencies[name]) {
       return this.config
     }
     delete this.config.dependencies[name]
+    this.events.emit('write')
+    return this.config
+  }
+
+  updateConfigDependencies(newDependency) {
+    this.config.dependencies = { ...this.config.dependencies, ...newDependency }
     this.events.emit('write')
     return this.config
   }
@@ -91,17 +109,31 @@ class PackageConfigManager extends ConfigManager {
     return res[0]
   }
 
-  async _traverseManager(tLevel) {
+  async getAnyBlock(name, tLevel) {
+    const filter = ({ config }) => config.name === name
+    const res = await this._traverseManager(tLevel, true)
+    return res.filter(filter)[0]
+  }
+
+  async getAllLevelAnyBlock() {
+    const res = await this._traverseManager(null, true)
+    return res
+  }
+
+  async getAllLevelMemberBlock() {
+    const res = await this._traverseManager(null)
+    return res
+  }
+
+  async _traverseManager(tLevel, includeSubPack) {
     let res = []
     for await (const manager of this.getDependencies()) {
       const shouldTraverse = tLevel == null || tLevel > 0
       if (manager instanceof PackageConfigManager) {
         if (!shouldTraverse) continue
-        const nextTraverseLevel = shouldTraverse ? tLevel - 1 : null
-        if (!manager._traverseManager) {
-          console.log('in =>', manager.config.name)
-        }
-        const children = await manager._traverseManager(nextTraverseLevel)
+        const nextTraverseLevel = shouldTraverse && tLevel != null ? tLevel - 1 : null
+        if (includeSubPack) res.push(manager)
+        const children = await manager._traverseManager(nextTraverseLevel, includeSubPack)
         res = res.concat(children)
       } else res.push(manager)
     }
@@ -116,10 +148,10 @@ class PackageConfigManager extends ConfigManager {
     for (const block in this.config.dependencies) {
       if (Object.hasOwnProperty.call(this.config.dependencies, block)) {
         const relativeDirectory = this.config.dependencies[block].directory
-        const configPath = path.join(this.directory, relativeDirectory, 'block.config.json')
+        const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
-        c.pathRelativeToParent = relativeDirectory
         if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
+        if (c) c.pathRelativeToParent = relativeDirectory
         const f = filter || (() => true)
         const p = picker || ((b) => b)
         if (f(c)) yield p(c)

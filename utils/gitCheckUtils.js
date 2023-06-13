@@ -37,11 +37,10 @@ function isGitInstalled() {
 function tryGitInit() {
   try {
     execSync('git --version', { stdio: 'ignore' })
-    if (isInGitRepository()) {
-      return true
-    }
+    if (isInGitRepository()) return true
 
     execSync('git init', { stdio: 'ignore' })
+
     return true
   } catch (e) {
     console.warn('Git repo not initialized', e)
@@ -100,14 +99,31 @@ function getGitDirsIn(source) {
 }
 
 function isGitRepo(dir) {
-  return execSync(`cd ${dir} && git rev-parse --git-dir 2> /dev/null;`).toString().trim() === '.git'
+  return execSync(`cd ${dir} && git rev-parse --git-dir`).toString().trim().endsWith('.git')
 }
 
 function isClean(dir) {
-  if (!isGitRepo(dir)) {
-    throw new Error('Not in a git repo')
-  }
+  if (!isGitRepo(dir)) throw new Error('Not in a git repo')
   return execSync(`git status --porcelain`, { cwd: dir }).toString().trim() === ''
+}
+
+function isCleanBlock(dir, blockName) {
+  if (!isGitRepo(dir)) throw new Error('Not in a git repo')
+  const modifiedFiles = execSync(`git status --porcelain`, { cwd: dir })
+    .toString()
+    .trim()
+    .split('\n')
+    .filter((s) => s)
+
+  // TODO: Find a better way to check un-pushed commits
+  // execSync(`git fetch --all`, { cwd: dir })
+  // const unPushedCommits = execSync(`git log origin/$(git symbolic-ref --short HEAD)..HEAD`, { cwd: dir }).toString().trim() !== ''
+  // if (unPushedCommits) throw new Error(`${dir} has un-pushed commits`)
+
+  if (modifiedFiles.length <= 0) return true
+  if (blockName && !modifiedFiles.some((mF) => mF.includes(blockName))) return true
+
+  throw new Error(`${dir} has non-staged changes `)
 }
 
 function addTag(dir, tag, msg = ' ') {
@@ -139,9 +155,23 @@ function getTags(dir) {
   }
 }
 
-function getLatestVersion(dir) {
+const listReleaseBranchVersions = (dir) => {
+  try {
+    const branches = execSync(`git branch`, { cwd: dir }).toString().trim().split('\n')
+    return branches.map((branch) => branch.split('@')[1]).filter((b) => b)
+  } catch (err) {
+    throw new Error(`Error in getting tags -> ${err.message}`)
+  }
+}
+
+function getLatestVersion(dir, repoType) {
   // eslint-disable-next-line no-useless-catch
   try {
+    if (repoType === 'mono') {
+      const releaseBranches = listReleaseBranchVersions(dir)
+      return semver.rsort(releaseBranches)[0]
+    }
+
     const tags = getTags(dir)
     return semver.rsort(tags)[0]
   } catch (error) {
@@ -271,4 +301,5 @@ module.exports = {
   getLatestVersion,
   addTag,
   pushTags,
+  isCleanBlock,
 }

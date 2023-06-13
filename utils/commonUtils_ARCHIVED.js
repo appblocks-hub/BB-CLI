@@ -6,7 +6,7 @@
  */
 
 const { transports } = require('winston')
-const { logger } = require('./logger')
+const { logger } = require('./logger_ARCHIVED')
 
 const addLog = (log, fileName = 'debug') => {
   const wTransport = new transports.File({ filename: `${fileName}.log` })

@@ -21,7 +21,7 @@ class HandleBeforeStart {
 
         const { blockName } = core.cmdArgs
         // If name exist check with config and dependencies
-        if (blockName && !await core.packageManager.has(blockName)) {
+        if (blockName && !(await core.packageManager.has(blockName))) {
           throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
         }
 
@@ -36,7 +36,7 @@ class HandleBeforeStart {
         if ([...(await core.packageManager.nonLiveBlocks())].length === 0) {
           throw new Error(`All blocks are already live!`)
         }
-        
+
         // check if function or job exist when blockType passed as function
         if (core.cmdOpts.blockType === 'function' && ![...(await core.packageManager.fnBlocks())]?.length) {
           throw new Error(`No function blocks to start!`)
@@ -59,12 +59,15 @@ class HandleBeforeStart {
          * starting them again to avoid not killed processes
          */
         for (const block of await core.packageManager.liveBlocks()) {
-          if (!isRunning(block?.pid)) continue
-          treeKill(block.pid, (err) => {
+          const livePid = block.liveDetails.pid
+          if (!livePid) continue
+          if (!isRunning(livePid)) continue
+
+          treeKill(livePid, (err) => {
             if (err) {
               core.feedback({
                 type: 'muted',
-                message: `${block.config.name} was live with pid:${block.pid}, couldn't kill it`,
+                message: `${block.config.name} was live with pid:${livePid}, couldn't kill it`,
               })
             }
           })

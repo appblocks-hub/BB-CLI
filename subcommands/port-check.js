@@ -148,7 +148,7 @@ const getFreePorts = async (appConfig, blockName, startBlockType) => {
       const blockToStart = appConfig.getBlockWithLive(bName)
       if (blockToStart.isOn && blockToStart.port) {
         if (block.meta.type === 'ui-dep-lib') {
-          bName = 'BLOCK_DEP_LIB_URL'
+          bName = 'BB_DEP_LIB_URL'
         }
         ports[bName] = await validateAndAssignPortProxy(blockToStart.port)
       }
@@ -178,27 +178,27 @@ const getFreePorts = async (appConfig, blockName, startBlockType) => {
     if (!startBlockType || startBlockType === 'ui') {
       switch (bName) {
         case 'emElements':
-          acc.BLOCK_ELEMENTS_URL = `${url}/remoteEntry.js`
-          acc.BLOCK_DEP_LIB_URL = `${url}/remoteEntry.js`
+          acc.BB_ELEMENTS_URL = `${url}/remoteEntry.js`
+          acc.BB_DEP_LIB_URL = `${url}/remoteEntry.js`
           break
 
         case 'container':
-          acc.BLOCK_CONTAINER_URL = url
+          acc.BB_CONTAINER_URL = url
           break
 
         default:
-          acc[`BLOCK_ENV_URL_${bName}`] = url
+          acc[`BB_ENV_URL_${bName}`] = url
           break
       }
     }
     if (!startBlockType || startBlockType === 'function') {
       switch (bName) {
         case 'emulatorPorts':
-          acc.BLOCK_FUNCTION_URL = url
+          acc.BB_FUNCTION_URL = url
           break
 
         default:
-          acc[`BLOCK_ENV_URL_${bName}`] = url
+          acc[`BB_ENV_URL_${bName}`] = url
           break
       }
     }
@@ -209,7 +209,7 @@ const getFreePorts = async (appConfig, blockName, startBlockType) => {
   await updateEnv('view', envPortValues)
   await updateEnv(
     'function',
-    envPortValues?.BLOCK_FUNCTION_URL ? { BLOCK_FUNCTION_URL: envPortValues.BLOCK_FUNCTION_URL } : {}
+    envPortValues?.BB_FUNCTION_URL ? { BB_FUNCTION_URL: envPortValues.BB_FUNCTION_URL } : {}
   )
 
   return ports

@@ -21,23 +21,25 @@ class GitManager {
   /**
    *
    * @param {String} cwd The directory path where the command is to be run
-   * @param {String} url Source url (git repo https or ssh id if ssh is true)
+   * @param {String} sshUrl Source sshUrl (git repo https or ssh id if ssh is true)
    */
-  constructor(cwd, url) {
+  constructor(cwd, sshUrl) {
     this.cwd = path.resolve(cwd)
     this.ssh = configstore.get('prefersSsh')
     this.username = configstore.get('githubUserName')
     this.token = configstore.get('gitPersonalAccessToken')
-    this.url = url
-    this._createRemote(url)
+    this.sshUrl = sshUrl
+    this._createRemote(sshUrl)
   }
 
+
   /**
-   * Selects and sets remote url from block meta data
-   * @param {String} url
+   * Selects and sets remote sshUrl from block meta data
+   * @param {String} sshUrl
    */
-  _createRemote(url) {
-    this.remote = this.ssh ? url : url.replace('//github.com', `//${this.token}:x-oauth-basic@github.com`)
+  _createRemote(sshUrl) {
+    this.remote = this.ssh ? sshUrl : sshUrl.replace('git@github.com:', `https://${this.token}:x-oauth-basic@github.com/`)
+
   }
 
   /* ********************************
@@ -68,6 +70,14 @@ class GitManager {
     return this._run('checkout', [name])
   }
 
+  getCommits(branchName, n) {
+    return this._run(`log --oneline -${n}`, [branchName || 'main'])
+  }
+
+  checkRemoteBranch(branchName) {
+    return this._run(`ls-remote --heads ${this.remote} ${branchName}`, [])
+  }
+
   checkoutTag(tag, branch = 'main') {
     return this._run('checkout', [`tags/${tag}`, `-b ${branch}`])
   }
@@ -84,12 +94,16 @@ class GitManager {
     this.cwd = path.resolve(directoryPath)
   }
 
+  createReleaseBranch(releaseBranch, parentBranch) {
+    return this._run('checkout', ['-b', releaseBranch, parentBranch])
+  }
+
   /* ********************************
    *************** F ****************
    ******************************** */
 
-  fetch(from) {
-    return this._run('fetch', [from])
+  fetch(opts) {
+    return this._run('fetch', [opts])
   }
 
   /* ********************************
@@ -121,6 +135,10 @@ class GitManager {
     return this._run('checkout', ['-b', branchName])
   }
 
+  newOrphanBranch(branchName) {
+    return this._run('checkout', ['--orphan', branchName])
+  }
+
   /**
    *
    * @param {String} branchName Name of new branch
@@ -135,11 +153,15 @@ class GitManager {
    ******************************** */
 
   pull() {
-    this._run('pull', [this.remote])
+    return this._run('pull', [this.remote])
+  }
+
+  pullBranch(upstreamBranch) {
+    return this._run(`pull `, [this.remote, upstreamBranch || 'main'])
   }
 
   currentBranch() {
-    return this._run('branch', ['--show-current'])
+    return this._run('branch', [this.remote, '--show-current'])
   }
 
   diff() {
@@ -182,6 +204,10 @@ class GitManager {
     return this._run('status', [])
   }
 
+  statusWithOptions(...opts) {
+    return this._run('status', [...opts])
+  }
+
   setUpstreamAndPush(upstreamBranch) {
     return this._run('push -u', [this.remote, upstreamBranch || 'main'])
   }
@@ -208,8 +234,8 @@ class GitManager {
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })
-    if (r.status === 'error') {
-      throw new GitError(this.cwd, r.msg, false, operation, opts)
+    if (r.err != null) {
+      throw new GitError(this.cwd, r.err, false, operation, opts)
     }
     return r
   }

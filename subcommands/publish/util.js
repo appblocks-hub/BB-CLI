@@ -1,11 +1,12 @@
 const { execSync } = require('child_process')
-const { mkdirSync } = require('fs')
+const { mkdirSync, existsSync } = require('fs')
 const path = require('path')
 const { spinnies } = require('../../loader')
 const { listAppblockVersions } = require('../../utils/api')
 const { post } = require('../../utils/axios')
 const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
 const { readInput } = require('../../utils/questionPrompts')
+const { getAllBlockVersions } = require('../../utils/registryUtils')
 
 const getPublishedVersion = (name, directory) => {
   try {
@@ -21,24 +22,31 @@ const getPublishedVersion = (name, directory) => {
   }
 }
 
-const createZip = async ({ directory, version, excludePaths = [] }) => {
-  const dir = `${directory}`
-  const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
-  const EXCLUDE_IN_ZIP = ['node_modules', '.git', '**/node_modules', '**/.git', ...excludePaths].reduce(
-    (acc, ele) => `${acc} -x '${ele}/*'`, 
-    ''
-  )
+const createZip = async ({ blockName, directory, version, excludePaths = [], rootDir }) => {
+  try {
+    const dir = `${directory}`
+    const rootDirectory = rootDir || path.resolve('.')
+    const ZIP_TEMP_FOLDER = path.join(rootDirectory, '._ab_tmp', 'upload', blockName || '')
+    const EXCLUDE_IN_ZIP = [
+      'node_modules/*',
+      '.git/*',
+      '**/node_modules/*',
+      '**/.git/*',
+      '.env*',
+      ...excludePaths,
+    ].reduce((acc, ele) => `${acc} -x '${ele}'`)
 
-  const zipFile = `${ZIP_TEMP_FOLDER}/${version}.zip`
-  const zipDir = `${ZIP_TEMP_FOLDER}/${dir.substring(0, dir.lastIndexOf('/'))}`
+    if (!existsSync(ZIP_TEMP_FOLDER)) mkdirSync(ZIP_TEMP_FOLDER, { recursive: true })
 
-  // TODO get code of specified version
+    const zipFile = path.join(ZIP_TEMP_FOLDER, `${version}.zip`)
 
-  mkdirSync(zipDir, { recursive: true })
+    execSync(`cd ${dir} && zip -r ${zipFile} . ${EXCLUDE_IN_ZIP}`)
 
-  await execSync(`cd ${dir} && zip -r ${zipFile} . ${EXCLUDE_IN_ZIP}`)
-
-  return zipFile
+    return zipFile
+  } catch (error) {
+    error.type = 'CREATE_ZIP'
+    throw error
+  }
 }
 
 const getAllAppblockVersions = async (options) => {
@@ -67,8 +75,7 @@ const getAppblockVersionData = async () => {
   }))
 
   if (!choices) {
-    console.log('Error getting appblocks versions')
-    process.exit(1)
+    throw new Error('Error getting appblocks versions')
   }
 
   const appblockVersions = await readInput({
@@ -81,8 +88,43 @@ const getAppblockVersionData = async () => {
       return true
     },
   })
-  console.log(appblockVersions)
   return { appblockVersions }
 }
 
-module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions }
+const getBlockVersions = async (blockId, version) => {
+  spinnies.add('bv', { text: `Getting block versions` })
+  const { data } = await getAllBlockVersions(blockId, {
+    status: [1],
+  })
+  spinnies.remove('bv')
+
+  const blockVersions = data?.data || []
+
+  if (blockVersions.length < 1) {
+    throw new Error('No unreleased block versions found. Please create version and try again.')
+  }
+
+  let versionData
+  if (version) {
+    versionData = blockVersions.find((v) => v.version_number === version)
+    if (!versionData) throw new Error(`No unreleased version found for ${version}`)
+  } else {
+    versionData = await readInput({
+      name: 'versionData',
+      type: 'list',
+      message: 'Select a version to publish',
+      choices: blockVersions.map((v) => ({
+        name: v.version_number,
+        value: v,
+      })),
+      validate: (ans) => {
+        if (!ans) return 'Invalid version'
+        return true
+      },
+    })
+  }
+
+  return versionData
+}
+
+module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions, getBlockVersions }

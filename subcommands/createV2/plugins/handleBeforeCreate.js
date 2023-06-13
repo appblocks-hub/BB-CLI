@@ -28,11 +28,14 @@ class handleBeforeCreate {
         let { blockName } = core.cmdArgs
         const { logger, packageManager } = core
 
-        // if (!packageManager.config?.supportedAppblockVersions) {
-        //   throw new Error(
-        //     'No supported appblock version set for package block. Please use set-appblock-version command'
-        //   )
-        // }
+        const { err, rootManager } = await packageManager.findMyParents()
+        if (err) throw err
+
+        const allExistingBlocks = await rootManager.getAllLevelAnyBlock()
+        const allExistingBlockNames = allExistingBlocks.map((m) => m.config?.name)
+        if (allExistingBlockNames.includes(blockName)) {
+          throw new Error('Block name already exist')
+        }
 
         core.logger.info(`Create called with ${blockName} and ${type || 'no type'}`)
         if (!isValidBlockName(blockName)) {
@@ -45,7 +48,7 @@ class handleBeforeCreate {
         }
 
         if (!type) {
-          type = await getBlockType(['data'])
+          type = await getBlockType(['data', 'job', 'ui-dep-lib'])
           logger.info(`Prompted user for a type and got back ${type}`)
         }
 

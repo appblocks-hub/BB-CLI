@@ -58,6 +58,7 @@ api.getSpaceLinkedToBlock = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get
 api.checkDependenciesApi = `${api.appBlockRegistryOrigin}/api/registry/public/v0.1/check-dependencies/invoke`
 api.submitForDependenciesReview = `${api.appBlockRegistryOrigin}/api/registry/v0.1/submit-dependency-for-review/invoke`
 api.linkAbVersionBlockVersion = `${api.appBlockRegistryOrigin}/api/registry/v0.1/link-ab-version-to-block-version/invoke`
+api.getBlockFromStore = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-from-store/invoke`
 
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = APP_REG_BASE_URL
@@ -77,6 +78,7 @@ api.appRegistryCreateDiployHistory = `${api.appBlockAppRegistryOrigin}/api/app-r
 api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/check-app-env-exist/invoke`
 api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-deploy-signed-url/invoke`
 api.appRegistryCopyObject = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/copy-s3-object/invoke`
+api.blocksSync = `${api.appBlockRegistryOrigin}/api/registry/v0.1/sync-blocks/invoke`
 
 // SPACES
 api.appBlockSpacesOrigin = SPACES_API_BASE_URL

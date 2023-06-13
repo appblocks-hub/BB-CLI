@@ -5,7 +5,7 @@ const TodoItem = (props) => {
   const system = {
     module: './todoItem',
     scope: 'remotes',
-    url: process.env.BLOCK_ELEMENTS_URL,
+    url: process.env.BB_ELEMENTS_URL,
   }
 
   const { Component: FederatedComponent, errorLoading } = useFederatedComponent(

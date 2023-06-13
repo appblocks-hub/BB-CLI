@@ -16,6 +16,7 @@ const { getBlockMetaData } = require('../../../utils/registryUtils')
 
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
+const { BB_CONFIG_NAME } = require('../../../utils/constants')
 
 class HandleAfterPull {
   /**
@@ -33,7 +34,7 @@ class HandleAfterPull {
       ) => {
         const { blockDetails } = core
 
-        const blockConfigPath = path.join(core.blockClonePath, 'block.config.json')
+        const blockConfigPath = path.join(core.blockClonePath, BB_CONFIG_NAME)
 
         let blockConfig = {}
 

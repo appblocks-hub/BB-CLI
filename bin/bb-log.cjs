@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const log = require('../subcommands/log')
+const log = require('../subcommands/logV2')
 
 const program = new Command()
 

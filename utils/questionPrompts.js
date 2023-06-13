@@ -98,7 +98,7 @@ function getBlockType(filterList) {
       name: 'blockType',
       message: 'Select the type of block',
       choices: blockTypes.reduce((acc, v) => {
-        const filterListData = filterList || ['package', 'data']
+        const filterListData = filterList || ['package', 'data', 'job', 'ui-dep-lib']
         if (!filterListData.includes(v[0])) return acc.concat({ name: v[0], value: v[1] })
         return acc
       }, []),
@@ -324,6 +324,72 @@ function getGitConfigNameEmail(defaultContinue) {
     .catch((err) => console.log(err))
 }
 
+function getGitConfigNameEmailFromConfigStore(defaultContinue,configStore) {
+  const localGitName = configStore.get('localGitName', '')
+  const localGitEmail = configStore.get('localGitEmail', '')
+
+  if (defaultContinue && localGitName && localGitEmail) {
+    return { gitUserEmail: localGitEmail, gitUserName: localGitName }
+  }
+
+  const questions = [
+    {
+      type: 'confirm',
+      name: 'useStoredCredentials',
+      message: `Continue with ${localGitEmail} and ${localGitName}`,
+      when: () => {
+        if (localGitEmail && localGitName) {
+          return true
+        }
+        return false
+      },
+    },
+    {
+      type: 'input',
+      name: 'gitUserName',
+      message: 'Enter git username',
+      validate: (ans) => {
+        if (ans) return true
+        return 'Please enter a user name'
+      },
+      when: (ans) => {
+        if (ans.useStoredCredentials) {
+          return false
+        }
+        return true
+      },
+    },
+
+    {
+      type: 'input',
+      name: 'gitUserEmail',
+      message: 'Enter git email',
+      validate: (ans) => {
+        if (ans) return true
+        return 'Please enter a user email'
+      },
+      when: (ans) => {
+        if (ans.useStoredCredentials) {
+          return false
+        }
+        return true
+      },
+    },
+  ]
+
+  return inquirer
+    .prompt(questions)
+    .then((ans) => {
+      if (ans.useStoredCredentials) {
+        return { gitUserEmail: localGitEmail, gitUserName: localGitName }
+      }
+      configStore.set('localGitEmail', ans.gitUserEmail)
+      configStore.set('localGitName', ans.gitUserName)
+      return ans
+    })
+    .catch((err) => console.log(err))
+}
+
 function setWithTemplate() {
   return inquirer.prompt({
     type: 'confirm',
@@ -433,4 +499,5 @@ module.exports = {
   getGitTarget,
   getGitRepoDescription,
   getGitRepoVisibility,
+  getGitConfigNameEmailFromConfigStore
 }

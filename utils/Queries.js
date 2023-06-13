@@ -300,6 +300,7 @@ const existingRepoData = ({ data: { data } }) => {
     ownerId: isInorg ? data?.user?.organization?.id : data?.user?.id,
     visibility: data?.user?.repository?.visibility,
     description: data?.user?.repository?.description,
+    defaultBranchName: data?.user?.repository?.defaultBranchRef?.name,
   }
 }
 
@@ -312,6 +313,9 @@ const isInRepo = `query ($user:String!,$reponame:String!,$orgname:String!) {
       isInOrganization
       visibility
       description
+      defaultBranchRef{
+        name
+        }
     }
     organization(login: $orgname){
       id

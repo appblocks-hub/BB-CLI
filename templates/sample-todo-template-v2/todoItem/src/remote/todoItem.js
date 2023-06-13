@@ -5,7 +5,7 @@ const TodoItem = ({ id, item, refetch }) => {
     e.preventDefault()
     const idToRemove = e.target.value.trim()
 
-    fetch(`${process.env.BLOCK_FUNCTION_URL}/removeTodo`, {
+    fetch(`${process.env.BB_FUNCTION_URL}/removeTodo`, {
       method: 'delete',
       body: JSON.stringify({ id: idToRemove }),
     })

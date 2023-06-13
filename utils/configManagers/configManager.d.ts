@@ -90,7 +90,7 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   configPath: string
   config: C
   directory: string
-  pathRelativeToParent: string
+  pathRelativeToParent: string // This will not always be filled, be cautious 
   liveConfigPath: string
   liveDetails: BlockLiveDetails
 
@@ -101,12 +101,19 @@ declare class ConfigManager<C extends BlockConfig | PackageConfig> {
   private _write(configPath: string, data: object): void
   /**
    * Recursively moves up the current path,
-   * reading block.config.json, checking for type package,
+   * reading <BB_CONFIG_NAME>, checking for type package,
    * if found, returns the absolute path
    */
   public findMyParentPackage(): Promise<string>
+
+  /**
+   * Get all parent upto given level or till the no parent found parent
+   */
+  public findMyParents(tLevel: Number | null): Promise<Array<PackageConfigManager>>
+
   public isPackage(): config is PackageConfig
   public init(): Promise<void>
+  public getBlockId(): Promise<string>
 
   /**
    * Returns the updated config, also emits a write event

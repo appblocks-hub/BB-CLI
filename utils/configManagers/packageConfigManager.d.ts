@@ -30,6 +30,12 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Generator<PackageConfigManager | BlockConfigManager> | []
 
   /**
+   * 
+   * @param block Name of block to check
+   */
+  public has(block: string): boolean
+
+  /**
    *  To iterate and get all live blocks' config manager
    */
   public liveBlocks(): Array<BlockConfigManager>
@@ -73,10 +79,28 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Promise<{ manager: BlockConfigManager | PackageConfigManager | null; err: ?Error }>
 
   /**
+   * To get immediate member blocks
+   * @param configPath
+   */
+  public getBlock(configPath: PathLike): Promise<BlockConfigManager | null>
+
+  /**
+   * To traverse and get get any level oh member blocks
+   * @param configPath
+   */
+  public getAnyBlock(
+    configPath: PathLike,
+    tLevel: Number | null
+  ): Promise<BlockConfigManager | PackageConfigManager | null>
+
+  /**
    *
    * @param name
    */
   public removeBlock(name: string): Promise<PackageConfig>
+
+  public refreshConfig(): Promise<void>
+  public updateConfigDependencies(newDependency: object): PackageConfig
 }
 
 export = PackageConfigManager

@@ -30,9 +30,6 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
     }
 
-    if (!elementsBlocks?.length) return { error: `No element blocks found` }
-    if (!containerBlocks) return { error: `No container block found` }
-
     let containerBlock = containerBlocks[0]
     for (const block of containerBlocks) {
       if (path.dirname(block.directory) !== path.resolve()) continue
@@ -54,77 +51,85 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       )
     }
 
-    const emElPort = ports?.emElements[0]
     const containerPort = ports?.container[0]
+    let emData = {}
+    let errorBlocks = []
+    if (elementsBlocks?.length) {
+      const emElPort = ports?.emElements[0]
 
-    const rootPackageName = core.packageConfig.name.toUpperCase()
-    const updatedEnv = await upsertEnv(
-      'view',
-      {
-        [`BB_${rootPackageName}_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
-        [`BB_${rootPackageName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-        [`BB_${rootPackageName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-      },
-      env,
-      rootPackageName
-    )
+      const rootPackageName = core.packageConfig.name.toUpperCase()
+      const updatedEnv = await upsertEnv(
+        'view',
+        {
+          [`BB_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
+          [`BB_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+          [`BB_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        },
+        env,
+        rootPackageName
+      )
 
-    const emEleFolderName = '._ab_em_elements'
-    const emEleFolder = path.join(relativePath, emEleFolderName)
+      const emEleFolderName = '._ab_em_elements'
+      const emEleFolder = path.join(relativePath, emEleFolderName)
 
-    if (updatedEnv?.envString) {
-      writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
-      writeFileSync(path.join(containerBlock.directory, '.env'), updatedEnv.envString)
-    }
+      core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
+      await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
-    core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
-    await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
-
-    core.spinnies.update('singleBuild', { text: `Merging elements` })
-    const errorBlocks = await mergeDatas(elementsBlocks, emEleFolder, depLib, env)
-
-    await packageInstall(emEleFolder, elementsBlocks)
-
-    if (buildOnly) {
-      const bashRes = await runBash(`npm run build`, emEleFolder)
-      if (bashRes.status !== 'success') {
-        core.spinnies.succeed('singleBuild', { text: `Error in build: ${bashRes.msg}` })
-        return { error: bashRes.msg }
+      if (updatedEnv?.envString) {
+        writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
+        writeFileSync(path.join(containerBlock.directory, '.env'), updatedEnv.envString)
       }
 
-      core.spinnies.succeed('singleBuild', { text: `Elements build success` })
-      return {
-        elementsBuildFolder: path.join(emEleFolder, 'dist'),
-        emEleFolder,
-        containerBlock,
+      core.spinnies.update('singleBuild', { text: `Merging elements` })
+      errorBlocks = await mergeDatas(elementsBlocks, emEleFolder, depLib, env)
+
+      await packageInstall(emEleFolder, elementsBlocks)
+
+      if (buildOnly) {
+        const bashRes = await runBash(`npm run build`, emEleFolder)
+        if (bashRes.status !== 'success') {
+          core.spinnies.succeed('singleBuild', { text: `Error in build: ${bashRes.msg}` })
+          return { error: bashRes.msg }
+        }
+
+        core.spinnies.succeed('singleBuild', { text: `Elements build success` })
+        return {
+          elementsBuildFolder: path.join(emEleFolder, 'dist'),
+          emEleFolder,
+          containerBlock,
+        }
       }
-    }
 
-    core.spinnies.update('singleBuild', { text: `Starting elements emulator` })
-    const emData = await emulateElements(emEleFolder, emElPort)
+      core.spinnies.update('singleBuild', { text: `Starting elements emulator` })
+      emData = await emulateElements(emEleFolder, emElPort)
 
-    if (emData.exitCode === null) {
-      elementsBlocks.forEach((blockManager) => {
-        if (errorBlocks.includes(blockManager.config.name)) return
-        blockManager.updateLiveConfig({
-          isOn: true,
-          singleInstance: true,
-          pid: emData.pid || null,
-          port: emElPort || null,
-          log: emData.logPaths,
+      if (emData.exitCode === null) {
+        elementsBlocks.forEach((blockManager) => {
+          if (errorBlocks.includes(blockManager.config.name)) return
+          blockManager.updateLiveConfig({
+            isOn: true,
+            singleInstance: true,
+            pid: emData.pid || null,
+            port: emElPort || null,
+            log: emData.logPaths,
+          })
         })
-      })
-    } else {
-      core.spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
-      throw new Error('Error in single build process. Please check logs')
+      } else {
+        core.spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
+        throw new Error('Error in single build process. Please check logs')
+      }
+
+      let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
+      if (errorBlocks?.length > 0) sMsg += ` with above errors`
+
+      core.spinnies.succeed('singleBuild', { text: sMsg })
     }
 
-    let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
-    if (errorBlocks?.length > 0) sMsg += ` with above errors`
+    let containerProcessData = {}
+    if (containerBlock) {
+      containerProcessData = await startJsProgram(core, containerBlock, containerPort)
+    }
 
-    core.spinnies.succeed('singleBuild', { text: sMsg })
-
-    const containerProcessData = await startJsProgram(core, containerBlock, containerPort)
     return { emData, containerProcessData, errorBlocks }
   } catch (error) {
     await stopEmulatedElements({ rootPath: relativePath })

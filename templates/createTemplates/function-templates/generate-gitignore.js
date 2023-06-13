@@ -1,12 +1,16 @@
 const generateGitIgnore = () => `
 #
 ._ab_*
+bb_*
 .deploy
 .deployed.config.json
+headless-config.json
 
 # Logs
 logs
 *.log
+pushlogs
+cliruntimelogs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -45,7 +49,7 @@ bower_components
 build/Release
 emulator/
 # Dependency directories
-node_modules/
+node_modules
 jspm_packages/
 
 # TypeScript v1 declaration files
@@ -77,7 +81,8 @@ typings/
 
 # dotenv environment variables file
 .env
-.env.test
+.env.view*
+.env.function*
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

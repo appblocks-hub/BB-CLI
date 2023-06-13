@@ -9,12 +9,17 @@ const {
   generateUiElementIndexJs,
   generateUiElementsReadme,
   generateUiElementIndexHtml,
-  generateUiElementsEsLintRc,
+  generateUiElementEsLintRc,
   generateUiElementBootstrapJs,
   generateUiElementPackageJson,
   generateUiElementsPrettierRc,
   generateUiElementsCommitlintRc,
   generateUiElementFederationExpose,
+  generateUiElementFederationShared,
+  generateUiElementBabelRc,
+  generateUiElementAppTestJs,
+  generateUiElementJestConfig,
+  generateUiElementJestSetup,
 } = require('../../../templates/createTemplates/uiElement-templates')
 
 // eslint-disable-next-line no-unused-vars
@@ -52,10 +57,15 @@ class handleUIElement {
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const fedExposeString = generateUiElementFederationExpose(blockName)
+        const fedSharedString = generateUiElementFederationShared(blockName)
         const packageJsonString = generateUiElementPackageJson(blockName)
-        const eslintrcString = generateUiElementsEsLintRc()
+        const eslintrcString = generateUiElementEsLintRc()
         const commitLintRcString = generateUiElementsCommitlintRc()
         const prettierrcString = generateUiElementsPrettierRc()
+        const babelRcString = generateUiElementBabelRc()
+        const jestConfigString = generateUiElementJestConfig()
+        const jestSetupString = generateUiElementJestSetup()
+        const appTestString = generateUiElementAppTestJs()
 
         mkdirSync(`${core.blockFolderPath}/public`)
         mkdirSync(`${core.blockFolderPath}/src/remote`, { recursive: true })
@@ -71,10 +81,15 @@ class handleUIElement {
         writeFileSync(`${core.blockFolderPath}/README.md`, readmeString)
         writeFileSync(`${core.blockFolderPath}/webpack.config.js`, webpackConfigString)
         writeFileSync(`${core.blockFolderPath}/federation-expose.js`, fedExposeString)
+        writeFileSync(`${core.blockFolderPath}/federation-shared.js`, fedSharedString)
         writeFileSync(`${core.blockFolderPath}/.gitignore`, gitignore)
         writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
         writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
         writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
+        writeFileSync(`${core.blockFolderPath}/.babelrc`, babelRcString)
+        writeFileSync(`${core.blockFolderPath}/jest.config.js`, jestConfigString)
+        writeFileSync(`${core.blockFolderPath}/jest.setup.js`, jestSetupString)
+        writeFileSync(`${core.blockFolderPath}/App.test.js`, appTestString)
       }
     )
   }

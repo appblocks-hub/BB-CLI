@@ -13,11 +13,13 @@ const { isGitInstalled } = require('../utils/gitCheckUtils')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 
 const program = new Command().hook('preAction', async () => {
-  if (!isGitInstalled()) {
-    console.log('Git not installed')
-    process.exitCode = 1
+  try {
+    if (!isGitInstalled()) throw new Error('Git not installed')
+    await checkAndSetGitConnectionPreference()
+  } catch (error) {
+    console.log(error.message)
+    process.exit(1)
   }
-  await checkAndSetGitConnectionPreference()
 })
 
 program

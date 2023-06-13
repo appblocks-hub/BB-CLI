@@ -5,11 +5,13 @@ const { generateGitIgnore } = require('../../../templates/createTemplates/functi
 const {
   generateUiElementWebpack,
   generateUiElementsReadme,
-  generateUiElementsEsLintRc,
+  generateUiElementEsLintRc,
   generateUiElementIndexHtml,
   generateUiElementsPrettierRc,
   generateUiElementPackageJson,
   generateUiElementsCommitlintRc,
+  generateUiElementFederationExpose,
+  generateUiElementFederationShared,
 } = require('../../../templates/createTemplates/uiElement-templates')
 // eslint-disable-next-line no-unused-vars
 const CreateCore = require('../createCore')
@@ -42,9 +44,11 @@ class handleUIDependency {
         const gitignore = generateGitIgnore()
         const readmeString = generateUiElementsReadme(blockName)
         const packageJsonString = generateUiElementPackageJson(blockName)
-        const eslintrcString = generateUiElementsEsLintRc()
+        const eslintrcString = generateUiElementEsLintRc()
         const commitLintRcString = generateUiElementsCommitlintRc()
         const prettierrcString = generateUiElementsPrettierRc()
+        const fedExposeString = generateUiElementFederationExpose(blockName)
+        const fedSharedString = generateUiElementFederationShared(blockName)
 
         mkdirSync(`${core.blockFolderPath}/public`, { recursive: true })
         mkdirSync(`${core.blockFolderPath}/src`, { recursive: true })
@@ -58,6 +62,8 @@ class handleUIDependency {
         writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
         writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
         writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitLintRcString)
+        writeFileSync(`${core.blockFolderPath}/federation-expose.js`, fedExposeString)
+        writeFileSync(`${core.blockFolderPath}/federation-shared.js`, fedSharedString)
 
         const fedExpose = Object.keys(JSON.parse(packageJsonString).dependencies).reduce((acc, dep) => {
           acc[`./${dep}`] = dep

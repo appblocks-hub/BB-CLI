@@ -12,10 +12,8 @@ const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil
 
 const checkIsAllBlockSupportDependencies = async (blocks, supportedAppblockVersions) => {
   const result = await Promise.all(
-    blocks.map(async (blockDetails) => {
-      const {
-        meta: { name: blockName },
-      } = blockDetails
+    blocks.map(async (blockManagers) => {
+      const { name: blockName } = blockManagers.config
 
       // Commented since not adding support for existing versions for now
       // if (version) {
@@ -30,14 +28,16 @@ const checkIsAllBlockSupportDependencies = async (blocks, supportedAppblockVersi
       // ========= languageVersion ========================
       spinnies.add('savu', { text: `Getting language versions` })
       const { languageVersionIds, languageVersions } = await getLanguageVersionData({
-        blockDetails,
+        blockDetails: { directory: blockManagers.directory, meta: blockManagers.config },
         supportedAppblockVersions,
       })
       spinnies.remove('savu')
 
       if (!languageVersionIds?.length) return false
 
-      const { dependencies, depExist } = await getDependencies({ blockDetails })
+      const { dependencies, depExist } = await getDependencies({
+        blockDetails: { directory: blockManagers.directory, meta: blockManagers.config },
+      })
 
       if (depExist) {
         spinnies.add('savu', { text: `Checking dependency support for ${blockName}` })

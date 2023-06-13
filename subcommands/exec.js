@@ -5,6 +5,7 @@ const ConfigFactory = require('../utils/configManagers/configFactory')
 const { Logger } = require('../utils/loggerV2')
 const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
 const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
+const { BB_CONFIG_NAME } = require('../utils/constants')
 
 function pexec(cmd, options, name) {
   return new Promise((resolve) => {
@@ -19,7 +20,7 @@ function pexec(cmd, options, name) {
   })
 }
 async function bbexecV2(command, options) {
-  const CONFIGNAME = 'block.config.json'
+  const CONFIGNAME = BB_CONFIG_NAME
 
   const { logger } = new Logger('exec')
   logger.info('EXEC COMMAND STARTED')
@@ -87,11 +88,13 @@ async function bbexecV2(command, options) {
   if (manager instanceof PackageConfigManager) {
     logger.info('User is inside a package')
     roots.push(manager)
+    await manager.refreshConfig()
     for (; roots.length > 0; ) {
       const root = roots.pop()
       for await (const m of root.getDependencies()) {
         if (m instanceof PackageConfigManager) {
           roots.push(m)
+          await manager.refreshConfig()
         }
         if (!groupSatisfies(m)) continue
         if (!nameSatisfies(m)) continue
