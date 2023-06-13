@@ -49,10 +49,6 @@ class HandleJSViewStart {
         this.elementsPort = this.elementsBlocks[0]?.availablePort
         this.containerPort = this.containerBlocks[0]?.availablePort
 
-        // Release port before server start
-        this.elementsBlocks[0]?.portKey?.abort()
-        this.containerBlocks[0]?.portKey?.abort()
-
         const { error } = await singleBuild({
           core,
           blocks: {
