@@ -49,11 +49,13 @@ async function setupTemplateV2(options) {
           currentBlock.parentBlockIDs = [...packageParentBlockIDs, b.blockId]
           currentBlock.source.branch = `block_${newBlockName}`
 
+          await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
+
           // NOTE: Find a better solution for below.
           if (currentBlock.type === 'ui-elements') {
             const oldDataPath = path.resolve(newBlockPath, 'src', 'remote', `${templateBlockName}.js`)
             const newDataPath = path.resolve(newBlockPath, 'src', 'remote', `${newBlockName}.js`)
-            
+
             const appJsPath = path.resolve(newBlockPath, 'src', 'App.js')
             const oldData = await readFile(oldDataPath, 'utf8')
 
@@ -87,7 +89,6 @@ async function setupTemplateV2(options) {
             )
           }
 
-          await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
         }
       })
     )
