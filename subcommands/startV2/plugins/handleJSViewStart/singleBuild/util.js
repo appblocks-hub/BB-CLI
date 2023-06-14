@@ -3,12 +3,12 @@ const { promisify } = require('util')
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync } = require('fs')
+const net = require('net')
 const { createFileSync } = require('../../../../../utils/fileAndFolderHelpers')
 const { runBashLongRunning, runBash } = require('../../../../bash')
-const { checkPnpm } = require('../../../../../utils/pnpmUtils')
 const { pexec } = require('../../../../../utils/execPromise')
-const { configstore } = require('../../../../../configstore')
 const { spinnies } = require('../../../../../loader')
+const { getNodePackageInstaller } = require('../../../../../utils/nodePackageManager')
 
 const emulateElements = async (emEleFolder, port) => {
   const logOutPath = path.resolve('./logs/out/elements.log')
@@ -61,9 +61,7 @@ const packageInstall = async (emEleFolder, elementBlocks) => {
   try {
     const src = path.join(emEleFolder, 'node_modules')
 
-    let installer = 'npm i'
-    const nodePackageManager = configstore.get('nodePackageManager')
-    if (global.usePnpm || (!nodePackageManager && checkPnpm())) installer = 'pnpm i'
+    const { installer } = getNodePackageInstaller()
 
     spinnies.update('singleBuild', { text: `Installing dependencies for elements emulator (${installer})` })
 
@@ -102,7 +100,28 @@ const getModuleFederationPluginShared = async (directory) => {
   return {}
 }
 
+// eslint-disable-next-line arrow-body-style
+const portInUse = async (port) => {
+  return new Promise((resolve) => {
+    const server = net.createServer((socket) => {
+      socket.write('Echo server\r\n')
+      socket.pipe(socket)
+    })
+
+    server.on('error', () => {
+      resolve(true)
+    })
+    server.on('listening', () => {
+      server.close()
+      resolve(false)
+    })
+
+    server.listen(port, '127.0.0.1')
+  })
+}
+
 module.exports = {
+  portInUse,
   emulateElements,
   stopEmulatedElements,
   packageInstall,

@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.27.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.5...v0.27.6) (2023-06-13)
+
+
+### Bug Fixes
+
+* container update issue ([0fce357](https://github.com/appblocks-hub/BB-CLI/commit/0fce3578d2204649f7a7296acfe9320471c3bc89))
+* remove unwanted log ([87c4391](https://github.com/appblocks-hub/BB-CLI/commit/87c4391bc1346f07efe7c0672d90255c24791de1))
+
+## [0.27.5](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.4...v0.27.5) (2023-06-12)
+
+
+### Bug Fixes
+
+* shared block issue in bb start ([f41c783](https://github.com/appblocks-hub/BB-CLI/commit/f41c783714ce9ca10a101e05879b5d34350e63c6))
+
+## [0.27.4](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.3...v0.27.4) (2023-06-12)
+
+
+### Bug Fixes
+
+* Adding test templates for UI-Elements ([55a7210](https://github.com/appblocks-hub/BB-CLI/commit/55a72104d3f8cf5cf2d811ef47f22cb6d1e37a5c))
+* Adding test templates for UI-Elements ([#162](https://github.com/appblocks-hub/BB-CLI/issues/162)) ([55a7210](https://github.com/appblocks-hub/BB-CLI/commit/55a72104d3f8cf5cf2d811ef47f22cb6d1e37a5c))
+
+## [0.27.3](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.2...v0.27.3) (2023-06-12)
+
+
+### Bug Fixes
+
+* traverse check issue ([d344332](https://github.com/appblocks-hub/BB-CLI/commit/d344332f91f4a43f5205f848579ddd12ad8039fe))
+
 ## [0.27.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.1...v0.27.2) (2023-06-12)
 
 

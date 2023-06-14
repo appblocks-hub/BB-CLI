@@ -11,9 +11,14 @@ const { generateUiElementFederationShared } = require('./generate-federation-sha
 const { generateLayoutTemplateJs } = require('./generate-layout-template')
 const { generateHeaderTemplateJs } = require('./generate-header-template')
 const { generateSidebarTemplateJs } = require('./generate-sidebar-template')
-const { generateUiElementsEsLintRc } = require('./generate-eslintrc')
+const { generateUiElementEsLintRc } = require('./generate-eslintrc')
 const { generateUiElementsCommitlintRc } = require('./generate-commitlintrc')
 const { generateUiElementsPrettierRc } = require('./generate-prettierrc')
+const { generateDashboardTemplateJs } = require('./generate-dashboard-template')
+const { generateUiElementBabelRc } = require('./generate-babelrc')
+const { generateUiElementAppTestJs } = require('./generate-appTest')
+const { generateUiElementJestConfig } = require('./generate-JestConfig')
+const { generateUiElementJestSetup } = require('./generate-JestSetup')
 
 module.exports = {
   generateUiElementIndexHtml,
@@ -28,9 +33,14 @@ module.exports = {
   generateLayoutTemplateJs,
   generateHeaderTemplateJs,
   generateSidebarTemplateJs,
-  generateUiElementsEsLintRc,
+  generateUiElementEsLintRc,
   generateUiElementsCommitlintRc,
   generateUiElementsPrettierRc,
   generateUiElementPackageJsonWithoutLint,
-  generateUiElementFederationShared
+  generateDashboardTemplateJs,
+  generateUiElementFederationShared,
+  generateUiElementBabelRc,
+  generateUiElementAppTestJs,
+  generateUiElementJestConfig,
+  generateUiElementJestSetup,
 }

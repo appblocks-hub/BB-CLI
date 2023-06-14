@@ -11,7 +11,6 @@ const generateUiContainerPackageJson = (name) => `
     "build": "webpack --mode production",
     "serve": "webpack-cli serve",
     "clean": "rm -rf dist",
-    "prepare": "npx husky install",
     "test": "jest",
     "coverage": "jest --coverage",
     "lint": "npx eslint *.js",
@@ -110,3 +109,6 @@ const generateUiContainerPackageJsonWithoutLint = (name) => `
   }
     `
 module.exports = { generateUiContainerPackageJson, generateUiContainerPackageJsonWithoutLint }
+
+// removed husky
+// "prepare": "npx husky install",
