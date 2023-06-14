@@ -7,7 +7,7 @@
 
 const path = require('path')
 const { prompt } = require('inquirer')
-const { configstore, headLessConfigStore } = require('../configstore')
+const {  headLessConfigStore } = require('../configstore')
 const { feedback } = require('./cli-feedback')
 const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
@@ -27,8 +27,7 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
   let packageManager = manager
 
-  const headlessConfig = headLessConfigStore().store
-  const spaceId = headlessConfig.prismaSchemaFolderPath || configstore.get('currentSpaceId')
+  const spaceId = headLessConfigStore().get('currentSpaceId')
 
   if (cmd === 'create-version') {
     const { rootManager } = await manager.findMyParents()
@@ -73,17 +72,17 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
     }
 
     // TODO: Check for space existence
-    configstore.set('currentSpaceName', space_name)
-    configstore.set('currentSpaceId', space_id)
+    headLessConfigStore().set('currentSpaceName', space_name)
+    headLessConfigStore().set('currentSpaceId', space_id)
 
-    feedback({ type: 'success', message: `Current Space: ${configstore.get('currentSpaceName')}` })
+    feedback({ type: 'success', message: `Current Space: ${headLessConfigStore().get('currentSpaceName')}` })
   }
 
   return true
 }
 
 async function checkAndSetUserSpacePreference(cmd) {
-  const currentSpaceName = configstore.get('currentSpaceName')
+  const currentSpaceName = headLessConfigStore().get('currentSpaceName')
 
   if (!currentSpaceName) {
     try {
@@ -110,8 +109,8 @@ async function checkAndSetUserSpacePreference(cmd) {
       const {
         spaceSelect: { name, id },
       } = await prompt(question)
-      configstore.set('currentSpaceName', name)
-      configstore.set('currentSpaceId', id)
+      headLessConfigStore().set('currentSpaceName', name)
+      headLessConfigStore().set('currentSpaceId', id)
     } catch (err) {
       // TODO: feedback here
       feedback({ type: 'error', message: err.message })

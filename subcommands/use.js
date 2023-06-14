@@ -8,11 +8,14 @@
 const path = require('path')
 const chalk = require('chalk')
 const { prompt } = require('inquirer')
-const { configstore } = require('../configstore')
+const { headLessConfigStore } = require('../configstore')
 const { feedback } = require('../utils/cli-feedback')
 const { listSpaces } = require('../utils/spacesUtils')
 const { BB_CONFIG_NAME } = require('../utils/constants')
 const ConfigFactory = require('../utils/configManagers/configFactory')
+const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
+
+
 
 /**
  * Prompt question set the selected answers to config space details
@@ -31,8 +34,8 @@ const promptAndSetSpace = async (Data) => {
     spaceSelect: { name, id },
   } = await prompt(question)
 
-  configstore.set('currentSpaceName', name)
-  configstore.set('currentSpaceId', id)
+  headLessConfigStore().set('currentSpaceName', name)
+  headLessConfigStore().set('currentSpaceId', id)
 
   feedback({ type: 'success', message: `${name} set` })
 }
@@ -43,16 +46,15 @@ const promptAndSetSpace = async (Data) => {
  */
 const use = async (spaceName) => {
   // check space is linked with block
-  const currentSpaceName = configstore.get('currentSpaceName')
+  const currentSpaceName = headLessConfigStore().get('currentSpaceName')
 
   const configPath = path.resolve(BB_CONFIG_NAME)
-  const { error } = await ConfigFactory.create(configPath)
+  const { error, manager: configManager } = await ConfigFactory.create(configPath)
   if (error) {
     if (error.type !== 'OUT_OF_CONTEXT') throw error
-  } else if (currentSpaceName) {
-    console.log(chalk.dim(`current space is ${currentSpaceName}`))
-    feedback({ type: 'error', message: `Switching spaces is not allowed inside package context` })
-    process.exit(0)
+    throw new Error('Please run the command inside package context ')
+  } else if (configManager instanceof BlockConfigManager) {
+    throw new Error('Please run the command inside package context ')
   }
 
   if (spaceName && currentSpaceName === spaceName) {
@@ -83,8 +85,8 @@ const use = async (spaceName) => {
       feedback({ type: 'error', message: `${spaceName} doesn't exist` })
       await promptAndSetSpace(Data)
     } else {
-      configstore.set('currentSpaceName', spaceDetails.space_name)
-      configstore.set('currentSpaceId', spaceDetails.space_id)
+      headLessConfigStore().set('currentSpaceName', spaceDetails.space_name)
+      headLessConfigStore().set('currentSpaceId', spaceDetails.space_id)
       feedback({ type: 'success', message: `${spaceName} set` })
     }
   } catch (err) {

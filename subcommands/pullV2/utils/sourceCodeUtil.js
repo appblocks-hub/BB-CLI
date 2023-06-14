@@ -5,7 +5,7 @@ const decompress = require('decompress')
 const { createWriteStream } = require('fs')
 const { tmpdir } = require('os')
 const path = require('path')
-const { configstore } = require('../../../configstore')
+const { headLessConfigStore } = require('../../../configstore')
 const { getSourceCodeSignedUrl } = require('../../../utils/api')
 const { post, axiosGet } = require('../../../utils/axios')
 
@@ -69,7 +69,7 @@ const pullSourceCodeFromAppblock = async (options) => {
 
   options.blockId = blockDetails.parent_id
   options.variantBlockId = blockDetails.block_id
-  options.spaceId = configstore.get('currentSpaceId')
+  options.spaceId = headLessConfigStore().get('currentSpaceId')
 
   const signedSourceCodeUrl = await getSignedSourceCodeUrl(options)
   if (!signedSourceCodeUrl) throw new Error('Error getting source code from appblocks')

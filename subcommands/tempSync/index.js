@@ -69,7 +69,8 @@ const tempSync = async (blockName, options) => {
       bbModulesData.apiPayload,
       bbModulesData.currentSpaceID,
       returnOnError,
-      syncLogs
+      syncLogs,
+      bbModulesData.rootPackageBlockID
     )
     if (syncLogs?.apiLogs?.error) {
       console.log('Appblocks sync failed')
