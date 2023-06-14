@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const { default: chalk } = require('chalk')
+const chalk = require('chalk')
 const createVersion = require('../subcommands/createVersion')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
