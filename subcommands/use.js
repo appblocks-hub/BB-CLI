@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const path = require('path')
 const chalk = require('chalk')
 const { prompt } = require('inquirer')
 const { headLessConfigStore } = require('../configstore')
@@ -18,7 +17,7 @@ const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
 
 
 /**
- * Prompt question set the selected answers to config space details
+ * Prompt question set the seleted answers to config space details
  * @param {import('../utils/jsDoc/types').spaceDetails} Data
  */
 const promptAndSetSpace = async (Data) => {
@@ -41,10 +40,10 @@ const promptAndSetSpace = async (Data) => {
 }
 /**
  *
- * @param {String?} spaceName Name of space
+ * @param {String?} space_name Name of space
  * @returns
  */
-const use = async (spaceName) => {
+const use = async (space_name) => {
   // check space is linked with block
   const currentSpaceName = headLessConfigStore().get('currentSpaceName')
 
@@ -57,8 +56,8 @@ const use = async (spaceName) => {
     throw new Error('Please run the command inside package context ')
   }
 
-  if (spaceName && currentSpaceName === spaceName) {
-    feedback({ type: 'info', message: `${spaceName} is already set` })
+  if (space_name && currentSpaceName === space_name) {
+    feedback({ type: 'info', message: `${space_name} is already set` })
     process.exit(0)
   }
 
@@ -74,20 +73,20 @@ const use = async (spaceName) => {
      * @type {import('../utils/jsDoc/types').spaceDetails}
      */
     const Data = res.data.data
-    if (!spaceName) {
+    if (!space_name) {
       // if space name is not given, prompt the user with available space names
       await promptAndSetSpace(Data)
       return
     }
-    const spaceDetails = Data.filter((v) => v.space_name === spaceName)[0]
+    const spaceDetails = Data.filter((v) => v.space_name === space_name)[0]
     if (!spaceDetails) {
       // if User given space name is not present, prompt the user with available space names
-      feedback({ type: 'error', message: `${spaceName} doesn't exist` })
+      feedback({ type: 'error', message: `${space_name} doesn't exist` })
       await promptAndSetSpace(Data)
     } else {
       headLessConfigStore().set('currentSpaceName', spaceDetails.space_name)
       headLessConfigStore().set('currentSpaceId', spaceDetails.space_id)
-      feedback({ type: 'success', message: `${spaceName} set` })
+      feedback({ type: 'success', message: `${space_name} set` })
     }
   } catch (err) {
     feedback({ type: 'error', message: err.message })

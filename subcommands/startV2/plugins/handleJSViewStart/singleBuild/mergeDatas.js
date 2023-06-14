@@ -1,4 +1,4 @@
-const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs')
+const { readFileSync, writeFileSync, existsSync } = require('fs')
 const chalk = require('chalk')
 const path = require('path')
 const { symlink } = require('fs/promises')
@@ -58,8 +58,6 @@ const mergeAllDatas = async (elementBlocks, emEleFolder, depLib) => {
           if (type !== 'ui-dep-lib') {
             try {
               const dest = path.join(emEleFolder, 'src', directory)
-              const parentDirPath = path.dirname(dest)
-              if (!existsSync(parentDirPath)) mkdirSync(parentDirPath, { recursive: true })
               await symlink(src, dest)
             } catch (error) {
               if (error.code !== 'EEXIST') throw error
