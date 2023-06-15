@@ -55,6 +55,9 @@ class StartCore {
 
     this.middlewareBlockList = []
 
+    this.packageManager = {}
+    this.packageConfig = {}
+
     this.hooks = {
       beforeStart: new AsyncSeriesHook(['core']),
       afterStart: new AsyncSeriesHook(['core']),
@@ -68,6 +71,7 @@ class StartCore {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       this.isOutOfContext = true
     } else if (configManager instanceof PackageConfigManager) {
+      await configManager.refreshConfig()
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
     } else throw new Error('Not inside a package context')
