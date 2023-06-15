@@ -1,7 +1,7 @@
 import React from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import AppRoute from '../common/routes/appRoute'
-import Header from '../components/Header'
+import AppRoute from './remote/common/routes/appRoute'
+import Header from './remote/components/Header'
 
 const App = () => {
   const handleError = (error, errorInfo) => {

@@ -78,7 +78,7 @@ async function setupTemplateV2(options) {
           } else if (currentBlock.type === 'ui-container') {
             await Promise.allSettled(
               ['Home', 'TodoInput', 'TodoItem'].forEach(async (cmp) => {
-                const pathVal = path.resolve(newBlockPath, 'components', cmp, 'index.js')
+                const pathVal = path.resolve(newBlockPath, 'src', 'remote', 'components', cmp, 'index.js')
                 const oldData = await readFile(pathVal, 'utf8')
                 let newData = oldData
                 templateBlocks.forEach((oldBlockName) => {
@@ -88,7 +88,6 @@ async function setupTemplateV2(options) {
               })
             )
           }
-
         }
       })
     )

@@ -1,10 +1,10 @@
 const path = require('path')
 const { AsyncSeriesHook } = require('tapable')
-const treeKill = require('tree-kill')
 
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
+const { treeKillSync } = require('../../utils')
 
 class StopCore {
   /**
@@ -42,18 +42,16 @@ class StopCore {
       const { pid } = blockManager.liveDetails
       const { name } = blockManager.config
 
-      treeKill(pid, (err) => {
-        if (err) {
-          console.log(`Error stopping ${name} block process with pid `, pid)
-          return
-        }
-
+      try {
+        await treeKillSync(pid)
         blockManager.updateLiveConfig({
           pid: null,
           isOn: false,
           singleInstance: false,
         })
-      })
+      } catch (error) {
+        console.log(`Error stopping ${name} block process with pid `, pid)
+      }
     }
     console.log(`Blocks stopped successfully!`)
 

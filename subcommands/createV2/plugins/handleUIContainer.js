@@ -70,9 +70,9 @@ class handleUIContainer {
         const appTestString = generateUiContainerAppTestJs()
 
         mkdirSync(`${core.blockFolderPath}/public`, { recursive: true })
-        mkdirSync(`${core.blockFolderPath}/common/routes`, { recursive: true })
-        mkdirSync(`${core.blockFolderPath}/components/Layout`, { recursive: true })
-        mkdirSync(`${core.blockFolderPath}/src`, { recursive: true })
+        mkdirSync(`${core.blockFolderPath}/src/remote`, { recursive: true })
+        mkdirSync(`${core.blockFolderPath}/src/remote/common/routes`, { recursive: true })
+        mkdirSync(`${core.blockFolderPath}/src/remote/components/Layout`, { recursive: true })
 
         writeFileSync(`${core.blockFolderPath}/public/index.html`, indexHtmlString)
 
@@ -80,8 +80,8 @@ class handleUIContainer {
         writeFileSync(`${core.blockFolderPath}/src/bootstrap.js`, bootstrapString)
         writeFileSync(`${core.blockFolderPath}/src/App.js`, appJsString)
 
-        writeFileSync(`${core.blockFolderPath}/common/routes/appRoute.js`, appRouteString)
-        writeFileSync(`${core.blockFolderPath}/components/Layout/index.js`, layoutString)
+        writeFileSync(`${core.blockFolderPath}/src/remote/common/routes/appRoute.js`, appRouteString)
+        writeFileSync(`${core.blockFolderPath}/src/remote/components/Layout/index.js`, layoutString)
 
         writeFileSync(`${core.blockFolderPath}/package.json`, packageJsonString)
         writeFileSync(`${core.blockFolderPath}/README.md`, readmeString)
