@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.7](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.6...v0.27.7) (2023-06-14)
+
+
+### Bug Fixes
+
+* chalk import issue ([95f8eb8](https://github.com/appblocks-hub/BB-CLI/commit/95f8eb8ff54d27f0fbeee6cfb896e1e1632ce5d9))
+* start by block type (ui/function) issue ([91e1dd9](https://github.com/appblocks-hub/BB-CLI/commit/91e1dd96bbbfbe24503e36d2658f4cabf8bca640))
+
 ## [0.27.6](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.5...v0.27.6) (2023-06-13)
 
 

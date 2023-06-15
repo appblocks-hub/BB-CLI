@@ -47,18 +47,19 @@ const createVersion = async (bkName, cmdOptions) => {
       orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
       workSpaceFolder = path.join(rootManager.directory, 'bb_modules', 'workspace')
 
+      const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
+      isCleanBlock(manager.directory, isCleanBlockName)
+      
       // sync
       spinnies.add('sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
       spinnies.succeed('sync', { text: 'sync is up to date' })
       console.log();
-
+      
       if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
-      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
-
-      const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
-      isCleanBlock(manager.directory, isCleanBlockName)
       isCleanBlock(orphanBranchFolder)
+      
+      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
       isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
 
       const execOptions = { cwd: manager.directory }
