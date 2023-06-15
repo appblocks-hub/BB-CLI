@@ -79,6 +79,7 @@ const createBBModules = async (options) => {
 
     await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
 
+
     // await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
     spinnies.succeed('Config Manager', { text: 'Config Manager initialised' })
 
@@ -89,7 +90,8 @@ const createBBModules = async (options) => {
       blockNameArray,
       apiPayload,
       currentSpaceID,
-      rootPackageBlockID:workSpaceConfigManager.config.blockId
+      rootPackageBlockID:workSpaceConfigManager.config.blockId,
+      rootPackageName :workSpaceConfigManager.config.name
     }
   } catch (err) {
     spinnies.add('Config Manager')
