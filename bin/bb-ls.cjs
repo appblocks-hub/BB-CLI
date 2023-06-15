@@ -12,6 +12,9 @@ const ls = require('../subcommands/ls')
 
 const program = new Command()
 
-program.option('-g, --global', 'execute globally').action(ls)
+program
+  .option('-g, --global', 'execute globally')
+  .option('--no-multi', 'show all blocks in one falttened table')
+  .action(ls)
 
 program.parse(process.argv)
