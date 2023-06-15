@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { configstore } = require('../../configstore')
+const { headLessConfigStore } = require('../../configstore')
 const { lrManager } = require('../../utils/locaRegistry/manager')
 
 const initializeSpaceToPackageBlock = async (blockFinalName, blockId) => {
@@ -13,8 +13,8 @@ const initializeSpaceToPackageBlock = async (blockFinalName, blockId) => {
   lrManager.linkSpaceToPackageBlock({
     blockId,
     name: blockFinalName,
-    space_id: configstore.get('currentSpaceId'),
-    space_name: configstore.get('currentSpaceName'),
+    space_id: headLessConfigStore().get('currentSpaceId'),
+    space_name: headLessConfigStore().get('currentSpaceName'),
   })
 }
 

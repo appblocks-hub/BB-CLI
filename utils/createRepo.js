@@ -15,7 +15,7 @@ const { cloneTemplateRepository, createRepository } = require('./Mutations')
 // const { orgTeams } = require('./Queries')
 const { githubGraphQl } = require('./api')
 const { getGitHeader } = require('./getHeaders')
-const { configstore } = require('../configstore')
+const { configstore,headLessConfigStore } = require('../configstore')
 const { GitManager } = require('./gitmanager')
 const { spinnies } = require('../loader')
 const { readInput } = require('./questionPrompts')
@@ -112,7 +112,7 @@ async function createRepo(
       spinnies.update('createRepo', { text: `checking repository name availability of ${checkThisName}` })
       // console.log(chalk.dim(`\nchecking name availability of ${checkThisName}\n`))
       const BLOCKNAME = `${checkThisName}`
-      const spaceName = configstore.get('currentSpaceName')
+      const spaceName = headLessConfigStore().get('currentSpaceName')
 
       // console.log(BLOCKNAME)
       const { data: innerData } = await axios.post(

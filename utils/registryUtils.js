@@ -7,7 +7,7 @@
 
 // const axios = require('axios')
 const { axios } = require('./axiosInstances')
-const { configstore } = require('../configstore')
+const { headLessConfigStore } = require('../configstore')
 const {
   appBlockGetBlockDetails,
   appBlockUpdateReadme,
@@ -66,7 +66,7 @@ const getBlockDetails = (componentName) => {
 
   if (!blockName) {
     blockName = spaceName
-    spaceName = configstore.get('currentSpaceName')
+    spaceName = headLessConfigStore().get('currentSpaceName')
   }
 
   return axios.post(

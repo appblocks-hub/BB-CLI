@@ -158,6 +158,7 @@ class PackageConfigManager extends ConfigManager {
       }
     }
     return []
+  
   }
 }
 module.exports = PackageConfigManager

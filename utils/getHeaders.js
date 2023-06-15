@@ -5,11 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { configstore } = require('../configstore')
+const { configstore,headLessConfigStore } = require('../configstore')
 
 const getShieldHeader = () => ({
   'Content-Type': 'application/json',
-  space_id: configstore.get('currentSpaceId', ''),
+  space_id: headLessConfigStore().get('currentSpaceId', ''),
   Authorization: `Bearer ${configstore.get('appBlockUserToken')}`,
 })
 

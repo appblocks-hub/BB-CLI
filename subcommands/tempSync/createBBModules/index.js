@@ -89,6 +89,7 @@ const createBBModules = async (options) => {
       blockNameArray,
       apiPayload,
       currentSpaceID,
+      rootPackageBlockID:workSpaceConfigManager.config.blockId
     }
   } catch (err) {
     spinnies.add('Config Manager')
