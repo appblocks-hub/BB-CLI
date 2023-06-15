@@ -24,7 +24,7 @@ const { feedback } = require('./cli-feedback')
  * @param {String} job_config Configuration for job
  */
 // eslint-disable-next-line consistent-return
-async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError, syncLogs,root_package_block_id) {
+async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID, returnOnError, syncLogs,root_package_block_id,root_package_name) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
   const logOutRoot = path.resolve('logs', 'out')
   const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
@@ -32,7 +32,8 @@ async function syncBlocks(block_name_array, block_meta_data_map, currentSpaceID,
     const postData = {
       block_meta_data_map,
       block_name_array,
-      root_package_block_id
+      root_package_block_id,
+      root_package_name
     }
 
     const shieldHeader = getShieldHeader()
