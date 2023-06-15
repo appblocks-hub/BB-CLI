@@ -263,15 +263,7 @@ async function checkAndSetGitConfigNameEmail(dirPath, configData) {
       stdio: 'ignore',
     })
   } catch (err) {
-    let gitUserEmail = ''
-    let gitUserName = ''
-
-    if (!configData) {
-      console.log(chalk.dim('Git username and email not set!'))
-      ;({ gitUserName, gitUserEmail } = await getGitConfigNameEmail())
-    } else {
-      ;({ gitUserName, gitUserEmail } = configData)
-    }
+    const { gitUserName, gitUserEmail } = configData || (await getGitConfigNameEmail())
     try {
       execSync(`cd ${dirPath} && git config --local user.name ${gitUserName}`)
       execSync(`cd ${dirPath} && git config --local user.email ${gitUserEmail}`)
