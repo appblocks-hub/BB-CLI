@@ -101,6 +101,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       }
 
       core.spinnies.update('singleBuild', { text: `Starting elements emulator` })
+      await elementsBlocks[0]?.portKey?.abort()
       emData = await emulateElements(emEleFolder, emElPort)
 
       if (emData.exitCode === null) {
@@ -127,6 +128,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
 
     let containerProcessData = {}
     if (containerBlock) {
+      await containerBlock.portKey?.abort()
       containerProcessData = await startJsProgram(core, containerBlock, containerPort)
     }
 

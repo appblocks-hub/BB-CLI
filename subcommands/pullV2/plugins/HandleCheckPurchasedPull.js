@@ -13,7 +13,7 @@ const PullCore = require('../pullCore')
 const deployConfigManager = require('../../deploy/manager')
 const { checkBlockAssignedToApp, assignBlockToApp } = require('../../../utils/api')
 const { post } = require('../../../utils/axios')
-const { configstore } = require('../../../configstore')
+const { headLessConfigStore } = require('../../../configstore')
 const { confirmationPrompt } = require('../../../utils/questionPrompts')
 
 class HandleCheckPurchasedPull {
@@ -48,7 +48,7 @@ class HandleCheckPurchasedPull {
         const { error: checkErr, data: checkD } = await post(checkBlockAssignedToApp, {
           block_id: blockDetails.block_id,
           app_id: appData.app_id,
-          space_id: configstore.get('currentSpaceId'),
+          space_id: headLessConfigStore().get('currentSpaceId'),
         })
         core.spinnies.remove('bp')
         if (checkErr) throw checkErr
@@ -72,7 +72,7 @@ class HandleCheckPurchasedPull {
           const { error: assignErr } = await post(assignBlockToApp, {
             block_id: blockDetails.block_id,
             app_id: appData.app_id,
-            space_id: configstore.get('currentSpaceId'),
+            space_id: headLessConfigStore().get('currentSpaceId'),
           })
           core.spinnies.remove('bp')
           if (assignErr) throw assignErr

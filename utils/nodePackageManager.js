@@ -10,7 +10,8 @@ const { checkPnpm } = require('./pnpmUtils')
 const getNodePackageInstaller = () => {
   let installer = 'npm i'
   const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager === 'pnpm' || (!nodePackageManager && checkPnpm())
+  global.usePnpm = nodePackageManager === 'pnpm' && checkPnpm()
+
   if (global.usePnpm) installer = 'pnpm i'
 
   let installPackage = ''

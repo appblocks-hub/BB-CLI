@@ -49,17 +49,18 @@ async function setupTemplateV2(options) {
           currentBlock.parentBlockIDs = [...packageParentBlockIDs, b.blockId]
           currentBlock.source.branch = `block_${newBlockName}`
 
+          await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
+
           // NOTE: Find a better solution for below.
           if (currentBlock.type === 'ui-elements') {
             const oldDataPath = path.resolve(newBlockPath, 'src', 'remote', `${templateBlockName}.js`)
             const newDataPath = path.resolve(newBlockPath, 'src', 'remote', `${newBlockName}.js`)
-            
+
             const appJsPath = path.resolve(newBlockPath, 'src', 'App.js')
             const oldData = await readFile(oldDataPath, 'utf8')
 
             let newData = oldData
             const oldAppJsData = await readFile(appJsPath, 'utf8')
-            console.log({ oldAppJsData })
             let newAppJsData = oldAppJsData
             templateBlocks.forEach((oldBlockName) => {
               newAppJsData = newAppJsData.replaceAll(oldBlockName, `${packageName}_${oldBlockName}`)
@@ -77,7 +78,7 @@ async function setupTemplateV2(options) {
           } else if (currentBlock.type === 'ui-container') {
             await Promise.allSettled(
               ['Home', 'TodoInput', 'TodoItem'].forEach(async (cmp) => {
-                const pathVal = path.resolve(newBlockPath, 'components', cmp, 'index.js')
+                const pathVal = path.resolve(newBlockPath, 'src', 'remote', 'components', cmp, 'index.js')
                 const oldData = await readFile(pathVal, 'utf8')
                 let newData = oldData
                 templateBlocks.forEach((oldBlockName) => {
@@ -87,8 +88,6 @@ async function setupTemplateV2(options) {
               })
             )
           }
-
-          await writeFile(blockConfigPath, JSON.stringify(currentBlock, null, 2))
         }
       })
     )

@@ -10,7 +10,7 @@ const { axiosGet } = require('../../utils/axios')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
-const { configstore } = require('../../configstore')
+const { headLessConfigStore } = require('../../configstore')
 
 const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   // eslint-disable-next-line no-async-promise-executor
@@ -208,7 +208,7 @@ async function get(blockname) {
     spacename = spacename.replace('@', '')
   }
   if (!name) {
-    spacename = configstore.get('currentSpaceName')
+    spacename = headLessConfigStore().get('currentSpaceName')
   }
 
   /**
