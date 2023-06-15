@@ -11,7 +11,7 @@ const { createRepo } = require('../../utils/createRepoV2')
 // const { confirmationPrompt } = require('../../utils/questionPrompts')
 const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
 const { spinnies } = require('../../loader')
-const { tryGitInit, isInGitRepository } = require('../../utils/gitCheckUtils')
+const { tryGitInit, isInGitRepository, checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
 const { generateGitIgnore } = require('../../templates/createTemplates/function-templates')
 const { initializeConfig, updateAllMemberConfig } = require('./util')
 const { GitManager } = require('../../utils/gitManagerV2')
@@ -64,10 +64,10 @@ const connectRemote = async (cmdOptions) => {
       https: convertGitSshUrlToHttps(sourceUrl.trim()),
     }
 
-    spinnies.add('cr', { text: 'Adding source to blocks' })
-
     const Git = new GitManager(manager.directory, source.ssh)
 
+    await checkAndSetGitConfigNameEmail(manager.directory)
+    spinnies.add('cr', { text: 'Adding source to blocks' })
     let { prefersSsh } = headLessConfigStore().store
     if (prefersSsh == null) prefersSsh = configstore.get('prefersSsh')
 
