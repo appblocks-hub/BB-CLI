@@ -93,6 +93,17 @@ class HandleBlockGrouping {
           },
         }
 
+        core.subPackages = {
+          ...core.subPackages,
+          *[Symbol.iterator]() {
+            for (const packageBlock in this) {
+              if (Object.hasOwnProperty.call(this, packageBlock)) {
+                yield { packageBlock, packageManager: this[packageBlock] }
+              }
+            }
+          },
+        }
+
         // grouping middleware for blocks
         this.middlewares = []
         for (const { type, blocks } of core.blockStartGroups) {

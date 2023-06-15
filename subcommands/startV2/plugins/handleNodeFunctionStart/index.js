@@ -6,8 +6,6 @@ const { mkdir, writeFile } = require('fs/promises')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
 const { generateEmFolder } = require('./generateEmulator')
-// eslint-disable-next-line no-unused-vars
-const PackageConfigManager = require('../../../../utils/configManagers/packageConfigManager')
 const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = require('./mergeData')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
@@ -146,7 +144,14 @@ class HandleNodeFunctionStart {
         const rootPackageName = core.packageConfig.name.toUpperCase()
         const { environment } = core.cmdOpts
         await upsertEnv('function', {}, environment, rootPackageName)
-        const updateEnvValue = { [`BB_FUNCTION_URL`]: `http://localhost:${this.port}` }
+        const updateEnvValue = { [`BB_${rootPackageName}_FUNCTION_URL`]: `http://localhost:${this.port}` }
+
+        for (const { packageManager } of core.subPackages) {
+          const pName = packageManager.config.name.toUpperCase()
+          const relativePath = path.relative(path.resolve(), packageManager.directory)
+          updateEnvValue[`BB_${pName}_FUNCTION_URL`] = `http://localhost:${this.port}/${relativePath}`
+        }
+
         await upsertEnv('view', updateEnvValue, environment, rootPackageName)
 
         // start node
@@ -190,6 +195,7 @@ class HandleNodeFunctionStart {
 
         spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
       } catch (err) {
+        console.log(err)
         spinnies.fail('emBuild', { text: `Failed to start emulator: ${err.message}` })
         return
       }

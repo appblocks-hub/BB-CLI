@@ -30,16 +30,6 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
     }
 
-    let containerBlock = containerBlocks[0]
-    for (const block of containerBlocks) {
-      if (path.dirname(block.directory) !== path.resolve()) continue
-      containerBlock = block
-    }
-
-    if (containerBlocks.length > 1) {
-      console.log(chalk.yellow(`Found multiple container blocks, Continuing with ${containerBlock.config.name} block`))
-    }
-
     let depLib = depLibBlocks[0]
     for (const block of depLibBlocks) {
       if (path.dirname(block.directory) !== path.resolve()) continue
@@ -51,23 +41,41 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       )
     }
 
-    const containerPort = ports?.container[0]
+    const pbName = core.packageManager.config.name.toUpperCase()
+
     let emData = {}
     let errorBlocks = []
     if (elementsBlocks?.length) {
       const emElPort = ports?.emElements[0]
 
+      const envUpdateData = {
+        [`BB_${pbName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        // [`BB_${pbName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+      }
+
+      for (const { packageManager } of core.subPackages) {
+        const pName = packageManager.config.name.toUpperCase()
+        // const relPath = path.relative(path.resolve(), pack.directory)
+        envUpdateData[`BB_${pName}_ELEMENTS_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
+        // envUpdateData[`BB_${pName}_DEP_LIB_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
+      }
+
+      for (const block of containerBlocks) {
+        const containerUrl = `http://localhost:${block.availablePort}`
+        if (path.dirname(block.directory) !== path.resolve()) {
+          const { err, data } = await block.findMyParentPackage()
+          if (err) console.log(chalk.dim(`Error getting parent package of block ${block.config.name}`))
+          else {
+            const subPackageName = data.parentPackageConfig.name.toUpperCase()
+            envUpdateData[`BB_${subPackageName}_CONTAINER_URL`] = containerUrl
+          }
+        } else {
+          envUpdateData[`BB_${pbName}_CONTAINER_URL`] = containerUrl
+        }
+      }
+
       const rootPackageName = core.packageConfig.name.toUpperCase()
-      const updatedEnv = await upsertEnv(
-        'view',
-        {
-          [`BB_CONTAINER_URL`]: `http://localhost:${containerPort}/remoteEntry.js`,
-          [`BB_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-          [`BB_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-        },
-        env,
-        rootPackageName
-      )
+      const updatedEnv = await upsertEnv('view', envUpdateData, env, rootPackageName)
 
       const emEleFolderName = '._ab_em_elements'
       const emEleFolder = path.join(relativePath, emEleFolderName)
@@ -77,7 +85,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
 
       if (updatedEnv?.envString) {
         writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
-        writeFileSync(path.join(containerBlock.directory, '.env'), updatedEnv.envString)
+        for (const block of containerBlocks) {
+          writeFileSync(path.join(block.directory, '.env'), updatedEnv.envString)
+        }
       }
 
       core.spinnies.update('singleBuild', { text: `Merging elements` })
@@ -96,7 +106,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
         return {
           elementsBuildFolder: path.join(emEleFolder, 'dist'),
           emEleFolder,
-          containerBlock,
+          containerBlocks,
         }
       }
 
@@ -127,9 +137,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
     }
 
     let containerProcessData = {}
-    if (containerBlock) {
-      await containerBlock.portKey?.abort()
-      containerProcessData = await startJsProgram(core, containerBlock, containerPort)
+    for (const block of containerBlocks) {
+      await block.portKey?.abort()
+      containerProcessData = await startJsProgram(core, block, block.availablePort)
     }
 
     return { emData, containerProcessData, errorBlocks }

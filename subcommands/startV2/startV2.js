@@ -37,10 +37,10 @@ async function start(blockName, options) {
   } catch (error) {
     await Start.cleanUp()
     logger.error(error)
-    spinnies.stopAll()
     spinnies.add('start', { text: error.message })
     spinnies.fail('start', { text: chalk.red(error.message) })
   }
+  spinnies.stopAll()
 }
 
 module.exports = start

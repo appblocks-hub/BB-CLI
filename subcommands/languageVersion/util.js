@@ -254,7 +254,7 @@ const getLanguageVersionData = async ({
   const choices = langVersions.data?.reduce((acc, lang) => {
     if (sysSupportLangVersion && lang.id !== sysSupportLangVersion.id) return acc
     if (!lang.name.includes(blockLang)) return acc
-    
+
     langSupportedAppblockVersions[lang.appblock_version] = lang.appblock_version_id
     acc.push({ ...lang, name: lang.name.includes('@') ? lang.name : `${lang.name}@${lang.version}`, value: lang.id })
 
@@ -297,66 +297,71 @@ const languageVersionCheckCommand = {
 }
 
 const checkLanguageVersionExistInSystem = async ({ supportedAppblockVersions, blockLanguages }) => {
-  if (!supportedAppblockVersions?.length) {
-    console.log(chalk.yellow(`No linked appblock versions found to check language support`))
-    return []
-  }
+  try {
+    if (!supportedAppblockVersions?.length) {
+      console.log(chalk.yellow(`No linked appblock versions found to check language support`))
+      return []
+    }
 
-  spinnies.add('langVersion', { text: `Getting language versions` })
-  const langVersionData = await langVersionsLinkedToAbVersion({ supportedAppblockVersions })
-  spinnies.remove('langVersion')
-  const bkLangs = langVersionData?.data?.reduce((acc, { name, version }) => {
-    const [langName] = name.split('@')
-    if (!blockLanguages.some((l) => langName.includes(l))) return acc
+    spinnies.add('langVersion', { text: `Getting language versions` })
+    const langVersionData = await langVersionsLinkedToAbVersion({ supportedAppblockVersions })
+    spinnies.remove('langVersion')
+    const bkLangs = langVersionData?.data?.reduce((acc, { name, version }) => {
+      const [langName] = name.split('@')
+      if (!blockLanguages.some((l) => langName.includes(l))) return acc
 
-    const [langVer] = version.split('.')
-    if (!acc[langName]) acc[langName] = [langVer]
-    else acc[langName].push(langVer)
+      const [langVer] = version.split('.')
+      if (!acc[langName]) acc[langName] = [langVer]
+      else acc[langName].push(langVer)
 
-    return acc
-  }, {})
+      return acc
+    }, {})
 
-  if (Object.keys(bkLangs)?.length < 1) {
-    throw new Error(
-      `Appblocks versions (${supportedAppblockVersions}) doesn't support given languages (${blockLanguages})`
-    )
-  }
+    if (Object.keys(bkLangs)?.length < 1) {
+      throw new Error(
+        `Appblocks versions (${supportedAppblockVersions}) doesn't support given languages (${blockLanguages})`
+      )
+    }
 
-  const errors = []
+    const errors = []
 
-  await Promise.all(
-    Object.entries(bkLangs).map(async ([name, versions]) => {
-      const prmRes = await new Promise((resolve) => {
-        exec(`${languageVersionCheckCommand[name] || `${name} -v`} `, (err, stdout) => {
-          if (err) {
-            errors.push(`${name} language not found in system`)
+    await Promise.all(
+      Object.entries(bkLangs).map(async ([name, versions]) => {
+        const prmRes = await new Promise((resolve) => {
+          exec(`${languageVersionCheckCommand[name] || `${name} -v`} `, (err, stdout) => {
+            if (err) {
+              errors.push(`${name} language not found in system`)
+              resolve(true)
+              return
+            }
+
+            const localLangVer = stdout.match(/([0-9]+([.][0-9]+)+)/g)?.[0]?.split('.')[0]
+
+            if (!versions.includes(localLangVer)) {
+              errors.push(`Appblocks versions (${supportedAppblockVersions}) doesn't support ${name}@${localLangVer}*`)
+            }
             resolve(true)
-            return
-          }
-
-          const localLangVer = stdout.match(/([0-9]+([.][0-9]+)+)/g)?.[0]?.split('.')[0]
-
-          if (!versions.includes(localLangVer)) {
-            errors.push(`Appblocks versions (${supportedAppblockVersions}) doesn't support ${name}@${localLangVer}*`)
-          }
-          resolve(true)
+          })
         })
+        return prmRes
       })
-      return prmRes
-    })
-  )
+    )
 
-  if (errors.length) {
-    console.log(chalk.yellow(errors))
-    const goAhead = await readInput({
-      type: 'confirm',
-      name: 'goAhead',
-      message: `Do you want to start with above warning ? `,
-    })
+    if (errors.length) {
+      console.log(chalk.yellow(errors))
+      const goAhead = await readInput({
+        type: 'confirm',
+        name: 'goAhead',
+        message: `Do you want to start with above warning ? `,
+      })
 
-    if (!goAhead) throw new Error('Cancelled start with warning')
+      if (!goAhead) throw new Error('Cancelled start with warning')
+    }
+  } catch (error) {
+    spinnies.add('langVersion')
+    spinnies.remove('langVersion')
+    console.log(chalk.dim('Error checking language version support'))
   }
-
   return []
 }
 

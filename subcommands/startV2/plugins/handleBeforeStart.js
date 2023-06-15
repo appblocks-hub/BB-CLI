@@ -1,7 +1,5 @@
 const { checkLanguageVersionExistInSystem } = require('../../languageVersion/util')
 // eslint-disable-next-line no-unused-vars
-const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-// eslint-disable-next-line no-unused-vars
 const StartCore = require('../startCore')
 const { treeKillSync } = require('../../../utils')
 
@@ -20,7 +18,7 @@ class HandleBeforeStart {
 
         const { blockName } = core.cmdArgs
         const { blockType } = core.cmdOpts
-        
+
         // If name exist check with config and dependencies
         if (blockName && !(await core.packageManager.has(blockName))) {
           throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
@@ -53,6 +51,7 @@ class HandleBeforeStart {
           ? [await core.packageManager.getBlock(blockName).config?.language]
           : [...new Set([...(await core.packageManager.getAllBlockLanguages())])]
         const supportedAppblockVersions = core.packageManager.config?.supportedAppblockVersions
+
         await checkLanguageVersionExistInSystem({ supportedAppblockVersions, blockLanguages })
 
         /**
@@ -64,8 +63,8 @@ class HandleBeforeStart {
         for (const block of liveBlocks) {
           const livePid = block.liveDetails.pid
 
-          if (blockName && block.config.name !== blockName) continue 
-          if (blockType && block.config.type !== blockType) continue 
+          if (blockName && block.config.name !== blockName) continue
+          if (blockType && block.config.type !== blockType) continue
 
           try {
             await treeKillSync(livePid)
