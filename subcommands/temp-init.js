@@ -94,7 +94,7 @@ const init = async (packageName) => {
     await setupTemplateV2({ DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName })
   }
   console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
-  console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
+  // console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
 }
 
 module.exports = init

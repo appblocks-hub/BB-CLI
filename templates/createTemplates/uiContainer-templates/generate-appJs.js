@@ -3,7 +3,7 @@
 const generateUiContainerAppJs = () => `
 import React from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import AppRoute from '../common/routes/appRoute'
+import AppRoute from './remote/common/routes/appRoute'
 
 const App = () => {
   const handleError = (error, errorInfo) => {
