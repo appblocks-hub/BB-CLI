@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.28.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.7...v0.28.0) (2023-06-15)
+
+
+### Features
+
+* **ls:** show block status in multiple tables ([#176](https://github.com/appblocks-hub/BB-CLI/issues/176)) ([f13cfa3](https://github.com/appblocks-hub/BB-CLI/commit/f13cfa32da09aff7dbf586e3fdc827a6b5140184))
+
+
+### Bug Fixes
+
+* **connect-remote:** cli stuck on git config name and email error ([f13cfa3](https://github.com/appblocks-hub/BB-CLI/commit/f13cfa32da09aff7dbf586e3fdc827a6b5140184))
+
 ## [0.27.7](https://github.com/appblocks-hub/BB-CLI/compare/v0.27.6...v0.27.7) (2023-06-14)
 
 
