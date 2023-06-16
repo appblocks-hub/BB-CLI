@@ -123,13 +123,14 @@ class ConfigManager {
       const { data, err } = await readJsonAsync(path.join(parent, filename))
       if (err) continue
       if (data.type !== 'package') continue
+      if (!data.dependencies) continue
       if (!Object.prototype.hasOwnProperty.call(data.dependencies, name)) continue
       parentPackageFound = true
       parentPackageConfig = { ...data }
     }
 
     return {
-      data: { parent, parentPackageConfig,parentPackageFound },
+      data: { parent, parentPackageConfig, parentPackageFound },
       err:
         currentPath === parent ? `Path exhausted! Couldn't find a package block with ${name} in dependencies` : false,
     }

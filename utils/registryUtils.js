@@ -42,13 +42,14 @@ const addANewBlockVariant = ({ block_id, parent_id, version_id }) =>
     { headers: getShieldHeader() }
   )
 
-const getBlockFromStoreFn = async (blockName, spaceName) => {
+const getBlockFromStoreFn = async (blockName, spaceName, rootPackageName) => {
   try {
     const { status, data } = await axios.post(
       getBlockFromStore,
       {
         block_name: blockName,
         space_name: spaceName,
+        root_package_name: rootPackageName,
       },
       { headers: getShieldHeader() }
     )
