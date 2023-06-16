@@ -129,17 +129,23 @@ class HandleNodeFunctionStart {
       const headlessConfig = headLessConfigStore().store
       const currentPackEnvPrefix = core.packageConfig.name.toUpperCase()
       const envPrefixes = [currentPackEnvPrefix]
+      const subPackageNames = []
+      for (const { packageManager } of core.subPackages) {
+        subPackageNames.push(packageManager.config.name)
+      }
 
       if (headlessConfig.prismaSchemaFolderPath) {
         const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
         if (ie.err) throw new Error(ie.err)
 
-        const envPath = path.join(path.resolve(), `.env.function.${environment}`)
+        const envPath = path.join(path.resolve(), `.env.function${environment ? `.${environment}` : ''}`)
         const existEnvData = await readEnvAsObject(envPath)
-        const dbEnv = existEnvData[`BB_${currentPackEnvPrefix}_DATABASE_URL`]
-        if (dbEnv) {
-          execSync(`export BB_${currentPackEnvPrefix}_DATABASE_URL=${dbEnv}`)
-        }
+
+        const subPackagePrefix = subPackageNames.find((s) => headlessConfig.prismaSchemaFolderPath.includes(s))
+        let dbEnv = existEnvData[`BB_${currentPackEnvPrefix}_DATABASE_URL`]
+        if (subPackagePrefix) dbEnv = existEnvData[`BB_${subPackagePrefix.toUpperCase()}_DATABASE_URL`]
+
+        if (dbEnv) execSync(`export BB_${currentPackEnvPrefix}_DATABASE_URL=${dbEnv}`)
       }
 
       spinnies.update('emBuild', { text: 'Starting emulator' })

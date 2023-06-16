@@ -52,7 +52,7 @@ const updateEnvWith = (envData, customData, packPrefixes, customEnv) => {
   if (warnKeys.length > 0) {
     console.log(
       chalk.yellow(
-        `Starting from the next version, we will no longer support environment keys that don't start with BB_<package>.\nEg: ${prefixes
+        `Beginning with the upcoming version, we will exclusively support environment keys that begin with "BB_<package>"\nFor example ${prefixes
           .map((pre) => `${pre}_${warnKeys[0]}`)
           .join(' or ')}.\nKeys affected: ${warnKeys}`
       )
