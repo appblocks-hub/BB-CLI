@@ -20,10 +20,13 @@ const syncOrphanBranch = require('./syncOrphanBranches')
 const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
 const { spinnies } = require('../../loader')
 const syncBlocks = require('../../utils/syncBlocks')
+const { Logger } = require('../../utils/loggerV2')
 // eslint-disable-next-line prefer-const
 let syncLogs = {}
 
 const tempSync = async (blockName, options) => {
+  const { logger } = new Logger('sync')
+  logger.info('Sync started')
   const { returnOnError } = options || {}
   try {
     const rootConfigPath = path.resolve('block.config.json')

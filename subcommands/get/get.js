@@ -1,16 +1,18 @@
+/* eslint-disable prefer-destructuring */
 const { nanoid } = require('nanoid')
 const decompress = require('decompress')
 const { execSync } = require('child_process')
 const path = require('path')
 const { createWriteStream } = require('fs')
 const { tmpdir } = require('os')
+const chalk = require('chalk')
 const { Logger } = require('../../utils/loggerV2')
 const { getBlockFromStoreFn } = require('../../utils/registryUtils')
 const { axiosGet } = require('../../utils/axios')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
-const { headLessConfigStore } = require('../../configstore')
+// const { headLessConfigStore } = require('../../configstore')
 
 const downloadSourceCode = async (url, blockFolderPath, blockName) =>
   // eslint-disable-next-line no-async-promise-executor
@@ -130,11 +132,13 @@ class Bootstrap {
       /**
        * All block name should be prependend with the root package block name
        */
-      const modifiedChildName = `${this.rootParentManager.config.name}_${child.child_block_name}`
-      const modifiedChildPath = this.config.dependencies[child.child_block_name].directory.replace(
-        child.child_block_name,
-        modifiedChildName
-      )
+      // const modifiedChildName = `${this.rootParentManager.config.name}_${child.child_block_name}`
+      // const modifiedChildPath = this.config.dependencies[child.child_block_name].directory.replace(
+      //   child.child_block_name,
+      //   modifiedChildName
+      //   )
+      const modifiedChildName = child.child_block_name
+      const modifiedChildPath = this.config.dependencies[child.child_block_name].directory
 
       /**
        * Initialize a new child
@@ -171,20 +175,26 @@ class Bootstrap {
     res.forEach(({ value: { err, msg, name } }) => {
       console.log(`${err ? `ERROR:${msg}` : msg}`)
       if (!err) {
-        const [_, ...originalNameArray] = name.split('_')
-        const originalName = originalNameArray.join('_')
-        configmanager.updateConfigDependencies({
-          [name]: {
-            directory: this.config.dependencies[originalName].directory.replace(originalName, name),
-          },
-        })
-        configmanager.removeBlock(originalName)
+        // const [_, ...originalNameArray] = name.split('_')
+        // const originalName = originalNameArray.join('_')
+        // const originalName = name
+        // configmanager.updateConfigDependencies({
+        //   [name]: {
+        //     directory: this.config.dependencies[originalName].directory.replace(originalName, name),
+        //   },
+        // })
+        // configmanager.removeBlock(originalName)
+      }
+      if (err) {
+        console.log(`Error getting ${name}, removing from config`)
+        configmanager.removeBlock(name)
       }
     })
 
     if (this.parentManager.id !== configmanager.id) {
-      const [_, ...originalNameArray] = this.name.split('_')
-      const originalName = originalNameArray.join('_')
+      // const [_, ...originalNameArray] = this.name.split('_')
+      // const originalName = originalNameArray.join('_')
+      const originalName = this.name
       const newPath = this.parentManager.has(originalName)
         ? this.parentManager.config.dependencies[originalName].directory.replace(originalName, this.name)
         : path.relative(path.resolve(), path.resolve(this.name))
@@ -193,7 +203,7 @@ class Bootstrap {
           directory: newPath,
         },
       })
-      this.parentManager.removeBlock(originalName)
+      // this.parentManager.removeBlock(originalName)
     }
     return { err: false, msg: '', name: this.name }
   }
@@ -201,15 +211,38 @@ class Bootstrap {
 
 async function get(blockname) {
   const { logger } = new Logger('get')
-
   // eslint-disable-next-line prefer-const
-  let [spacename, name] = blockname.split('/')
+  const s = blockname.split('/')
+  let rootBlockName = ''
+  let spacename = ''
+  let name = ''
+  if (s.length === 1) {
+    // rootname and blockname is same
+    name = s[0]
+    rootBlockName = s[0]
+  } else if (s.length >= 2) {
+    if (s[0][0] === '@') {
+      spacename = s[0]
+      rootBlockName = s[1]
+      name = s[s.length - 1]
+    } else {
+      rootBlockName = s[0]
+      name = s[s.length - 1]
+    }
+  }
   if (spacename) {
     spacename = spacename.replace('@', '')
   }
-  if (!name) {
-    spacename = headLessConfigStore().get('currentSpaceName')
+  if (!spacename) {
+    console.log(`Must provide a space name`)
+    console.log(chalk.dim('bb get @<spacename>/blockname'))
+    return
+    // spacename = headLessConfigStore().get('currentSpaceName')
   }
+
+  // console.log({ spacename })
+  // console.log({ rootBlockName })
+  // console.log({ name })
 
   /**
    * To store the inner root nodes of tree
@@ -235,10 +268,12 @@ async function get(blockname) {
 
   const {
     data: { err, data },
-  } = await getBlockFromStoreFn(name, spacename)
+  } = await getBlockFromStoreFn(name, spacename, rootBlockName)
   if (err) {
+    console.log(err)
+    console.log('Here')
     console.log(err.message)
-    logger.error(err.message)
+    logger.error(err)
     process.exit(1)
   }
 
@@ -265,9 +300,9 @@ async function get(blockname) {
   }
 
   const p = new Bootstrap(
-    manager ? `${rootParentManager.config.name}_${block_name}` : block_name,
+    block_name,
     block_version_id,
-    manager ? path.resolve(`${rootParentManager.config.name}_${block_name}`) : path.resolve(block_name),
+    path.resolve(block_name),
     signed_urls[block_version_id],
     child_blocks,
     manager,
@@ -301,8 +336,8 @@ async function get(blockname) {
   manager?.updateConfig({
     dependencies: {
       ...manager.config.dependencies,
-      [`${rootParentManager.config.name}_${block_name}`]: {
-        directory: path.relative(path.resolve(), path.resolve(`${rootParentManager.config.name}_${block_name}`)),
+      [block_name]: {
+        directory: path.relative(path.resolve(), path.resolve(block_name)),
       },
     },
   })
