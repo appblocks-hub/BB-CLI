@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.28.1...v0.29.0) (2023-06-16)
+
+
+### Features
+
+* update appblock sdk versions ([820f230](https://github.com/appblocks-hub/BB-CLI/commit/820f23088b62d48e1c1fea64aa84960ccc1fea8d))
+
 ## [0.28.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.28.0...v0.28.1) (2023-06-15)
 
 
