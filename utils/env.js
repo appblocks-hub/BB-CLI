@@ -37,7 +37,10 @@ const upsertEnv = async (envPath, envData) => {
       const existingEnvDataFile = await fsPromise.readFile(envPath, 'utf8')
 
       const existingEnvData = existingEnvDataFile.split('\n').reduce((a, eData) => {
-        const [key, value] = eData.split('=')
+        const equalIndex = eData.indexOf('=')
+        const key = eData.substring(0, equalIndex)
+        const value = eData.substring(equalIndex + 1)
+
         if (!key?.length) return a
         return { ...a, [key]: value }
       }, {})

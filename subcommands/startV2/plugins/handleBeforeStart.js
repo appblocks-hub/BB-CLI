@@ -20,6 +20,11 @@ class HandleBeforeStart {
         const { blockType } = core.cmdOpts
 
         // If name exist check with config and dependencies
+        if (blockType && !['ui', 'function'].some((t) => t === blockType)) {
+          throw new Error(`Block type (--block-type) passed should be "ui" or "function"`)
+        }
+
+        // If name exist check with config and dependencies
         if (blockName && !(await core.packageManager.has(blockName))) {
           throw new Error(`Block ${blockName} not found in package ${core.packageConfig.name}`)
         }
