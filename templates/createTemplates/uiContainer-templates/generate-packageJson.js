@@ -25,7 +25,7 @@ const generateUiContainerPackageJson = (name) => `
     ]
   },
   "dependencies": {
-    "@appblocks/js-sdk": "^0.0.11",
+    "@appblocks/js-sdk": "^0.0.14",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^3.1.4",
@@ -36,7 +36,7 @@ const generateUiContainerPackageJson = (name) => `
     "state-pool": "^0.8.1"
   },
   "devDependencies": {
-    "@appblocks/node-sdk": "0.0.4",
+    "@appblocks/node-sdk": "0.0.6",
     "@babel/core": "7.15.0",
     "@babel/eslint-parser": "^7.21.3",
     "@babel/preset-env": "^7.21.4",
@@ -83,7 +83,7 @@ const generateUiContainerPackageJsonWithoutLint = (name) => `
       "serve": "webpack-cli serve"
     },
     "dependencies": {
-      "@appblocks/js-sdk": "^0.0.11",
+      "@appblocks/js-sdk": "^0.0.14",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
       "react-error-boundary": "^3.1.4",
@@ -104,7 +104,7 @@ const generateUiContainerPackageJsonWithoutLint = (name) => `
       "webpack": "5.52.0",
       "webpack-cli": "4.10.0",
       "webpack-dev-server": "4.1.0",
-      "@appblocks/node-sdk": "0.0.4"
+      "@appblocks/node-sdk": "0.0.6"
     }
   }
     `
