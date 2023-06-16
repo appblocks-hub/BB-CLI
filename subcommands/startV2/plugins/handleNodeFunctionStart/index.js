@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 const path = require('path')
-const { spawn } = require('child_process')
+const { spawn, execSync } = require('child_process')
 const { openSync, existsSync } = require('fs')
 const { mkdir, writeFile } = require('fs/promises')
 const { spinnies } = require('../../../../loader')
@@ -9,7 +9,7 @@ const { generateEmFolder } = require('./generateEmulator')
 const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = require('./mergeData')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
-const { upsertEnv } = require('../../../../utils/envManager')
+const { upsertEnv, readEnvAsObject } = require('../../../../utils/envManager')
 
 class HandleNodeFunctionStart {
   constructor() {
@@ -125,10 +125,27 @@ class HandleNodeFunctionStart {
         this.depsInstallReport = await Promise.allSettled(pArray)
       }
 
+      const { environment } = core.cmdOpts
       const headlessConfig = headLessConfigStore().store
+      const currentPackEnvPrefix = core.packageConfig.name.toUpperCase()
+      const envPrefixes = [currentPackEnvPrefix]
+      const subPackageNames = []
+      for (const { packageManager } of core.subPackages) {
+        subPackageNames.push(packageManager.config.name)
+      }
+
       if (headlessConfig.prismaSchemaFolderPath) {
         const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
         if (ie.err) throw new Error(ie.err)
+
+        const envPath = path.join(path.resolve(), `.env.function${environment ? `.${environment}` : ''}`)
+        const existEnvData = await readEnvAsObject(envPath)
+
+        const subPackagePrefix = subPackageNames.find((s) => headlessConfig.prismaSchemaFolderPath.includes(s))
+        let dbEnv = existEnvData[`BB_${currentPackEnvPrefix}_DATABASE_URL`]
+        if (subPackagePrefix) dbEnv = existEnvData[`BB_${subPackagePrefix.toUpperCase()}_DATABASE_URL`]
+
+        if (dbEnv) execSync(`export BB_${currentPackEnvPrefix}_DATABASE_URL=${dbEnv}`)
       }
 
       spinnies.update('emBuild', { text: 'Starting emulator' })
@@ -141,18 +158,17 @@ class HandleNodeFunctionStart {
         this.fnBlocks[0]?.portKey.abort()
 
         // handle environments
-        const rootPackageName = core.packageConfig.name.toUpperCase()
-        const { environment } = core.cmdOpts
-        await upsertEnv('function', {}, environment, rootPackageName)
-        const updateEnvValue = { [`BB_${rootPackageName}_FUNCTION_URL`]: `http://localhost:${this.port}` }
+        const updateEnvValue = { [`BB_${currentPackEnvPrefix}_FUNCTION_URL`]: `http://localhost:${this.port}` }
 
         for (const { packageManager } of core.subPackages) {
-          const pName = packageManager.config.name.toUpperCase()
+          const pEnvPrefix = packageManager.config.name.toUpperCase()
           const relativePath = path.relative(path.resolve(), packageManager.directory)
-          updateEnvValue[`BB_${pName}_FUNCTION_URL`] = `http://localhost:${this.port}/${relativePath}`
+          updateEnvValue[`BB_${pEnvPrefix}_FUNCTION_URL`] = `http://localhost:${this.port}/${relativePath}`
+          envPrefixes.push(pEnvPrefix)
         }
 
-        await upsertEnv('view', updateEnvValue, environment, rootPackageName)
+        await upsertEnv('function', {}, environment, envPrefixes)
+        await upsertEnv('view', updateEnvValue, environment, envPrefixes)
 
         // start node
         const child = spawn('node', ['index.js'], {

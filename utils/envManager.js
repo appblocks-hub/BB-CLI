@@ -14,7 +14,10 @@ const readEnvAsObject = async (envPath) => {
   try {
     const envFileData = await readFile(envPath, 'utf8')
     return envFileData.split('\n').reduce((a, eData) => {
-      const [key, value] = eData.split('=')
+      const equalIndex = eData.indexOf('=')
+      const key = eData.substring(0, equalIndex)
+      const value = eData.substring(equalIndex + 1)
+
       if (!key?.length) return a
       return { ...a, [key]: value }
     }, {})
@@ -23,14 +26,21 @@ const readEnvAsObject = async (envPath) => {
   }
 }
 
-const updateEnvWith = (envData, customData, prefix, customEnv) => {
+const updateEnvWith = (envData, customData, packPrefixes, customEnv) => {
+  const prefixes =
+    Array.isArray(packPrefixes) && packPrefixes.length > 0 ? packPrefixes.map((prefix) => `BB_${prefix}`) : null
+
   const updatedData = envData
+  const warnKeys = []
+  const isEnvHasPrefix = (key) => prefixes?.some((pre) => key.startsWith(pre))
+
+  Object.entries(updatedData).forEach(([key]) => {
+    if (key === 'NODE_ENV' || isEnvHasPrefix(key)) return
+    warnKeys.push(key)
+  })
 
   Object.entries(customData).forEach(([key, value]) => {
-    if (prefix && !key.startsWith(prefix) && !key.startsWith(`BB_`)) {
-      console.log(chalk.yellow(`Discarded ${key} env: Env key should start with ${prefix}`))
-      return
-    }
+    if (!isEnvHasPrefix(key)) warnKeys.push(key)
 
     if (envData[key] !== undefined && customEnv) {
       console.log(chalk.yellow(`Replacing ${key} with custom env value from ${customEnv}.`))
@@ -38,6 +48,16 @@ const updateEnvWith = (envData, customData, prefix, customEnv) => {
 
     updatedData[key] = value
   })
+
+  if (warnKeys.length > 0) {
+    console.log(
+      chalk.yellow(
+        `Beginning with the upcoming version, we will exclusively support environment keys that begin with "BB_<package>"\nFor example ${prefixes
+          .map((pre) => `${pre}_${warnKeys[0]}`)
+          .join(' or ')}.\nKeys affected: ${warnKeys}`
+      )
+    )
+  }
 
   return updatedData
 }
@@ -52,21 +72,20 @@ const saveToEnvFile = (envObject, envPath) => {
   return { envString, envObject }
 }
 
-const upsertEnv = async (type, envData, customEnv, prefix) => {
+const upsertEnv = async (type, envData, customEnv, prefixes) => {
   try {
     const customEnvPath = path.join(path.resolve(), `.env.${type}.${customEnv}`)
     const envPath = path.join(path.resolve(), `.env.${type}`)
     let updateEnvData = envData || {}
-    const prefixName = prefix ? prefix.toUpperCase() : null
 
     if (existsSync(envPath)) {
       const existEnvData = await readEnvAsObject(envPath)
-      updateEnvData = updateEnvWith(existEnvData, updateEnvData, prefixName)
+      updateEnvData = updateEnvWith(existEnvData, updateEnvData, prefixes)
     }
 
     if (customEnv && existsSync(customEnvPath)) {
       const customEnvData = await readEnvAsObject(customEnvPath)
-      updateEnvData = updateEnvWith(updateEnvData, customEnvData, prefixName, customEnv)
+      updateEnvData = updateEnvWith(updateEnvData, customEnvData, prefixes, customEnv)
     }
 
     return saveToEnvFile(updateEnvData, envPath)
