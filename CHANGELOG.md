@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.29.0...v0.29.1) (2023-06-16)
+
+
+### Bug Fixes
+
+* get fixes ([e000ec7](https://github.com/appblocks-hub/BB-CLI/commit/e000ec7be2cf060ac63fa8c3ea06fc75771855b2))
+
 ## [0.29.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.28.1...v0.29.0) (2023-06-16)
 
 
