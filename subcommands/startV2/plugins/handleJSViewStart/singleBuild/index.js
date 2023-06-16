@@ -41,7 +41,8 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       )
     }
 
-    const pbName = core.packageManager.config.name.toUpperCase()
+    const packageEnvPrefix = core.packageManager.config.name.toUpperCase()
+    const envPrefixes = [packageEnvPrefix]
 
     let emData = {}
     let errorBlocks = []
@@ -49,15 +50,16 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       const emElPort = ports?.emElements[0]
 
       const envUpdateData = {
-        [`BB_${pbName}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-        // [`BB_${pbName}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        [`BB_${packageEnvPrefix}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        // [`BB_${packageEnvPrefix}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
       }
 
       for (const { packageManager } of core.subPackages) {
-        const pName = packageManager.config.name.toUpperCase()
+        const pkEnvPrefix = packageManager.config.name.toUpperCase()
+        envPrefixes.push(pkEnvPrefix)
         // const relPath = path.relative(path.resolve(), pack.directory)
-        envUpdateData[`BB_${pName}_ELEMENTS_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
-        // envUpdateData[`BB_${pName}_DEP_LIB_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
+        envUpdateData[`BB_${pkEnvPrefix}_ELEMENTS_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
+        // envUpdateData[`BB_${pkEnvPrefix}_DEP_LIB_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
       }
 
       for (const block of containerBlocks) {
@@ -70,12 +72,11 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
             envUpdateData[`BB_${subPackageName}_CONTAINER_URL`] = containerUrl
           }
         } else {
-          envUpdateData[`BB_${pbName}_CONTAINER_URL`] = containerUrl
+          envUpdateData[`BB_${packageEnvPrefix}_CONTAINER_URL`] = containerUrl
         }
       }
 
-      const rootPackageName = core.packageConfig.name.toUpperCase()
-      const updatedEnv = await upsertEnv('view', envUpdateData, env, rootPackageName)
+      const updatedEnv = await upsertEnv('view', envUpdateData, env, envPrefixes)
 
       const emEleFolderName = '._ab_em_elements'
       const emEleFolder = path.join(relativePath, emEleFolderName)
