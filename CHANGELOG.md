@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.30.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.29.1...v0.30.0) (2023-06-16)
+
+
+### Features
+
+* env prefix with BB_PACKAGE ([68bd0ad](https://github.com/appblocks-hub/BB-CLI/commit/68bd0ade1a6817dca4a801cc5b319d39d13d8c3c))
+
+
+### Bug Fixes
+
+* prisma env export ([f15b70e](https://github.com/appblocks-hub/BB-CLI/commit/f15b70e03cb967e5bcfac06bed4406c4b3cdaa72))
+
 ## [0.29.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.29.0...v0.29.1) (2023-06-16)
 
 
