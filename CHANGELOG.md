@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.30.0...v0.30.1) (2023-06-19)
+
+
+### Bug Fixes
+
+* push package block even if no member block present ([ddd8bfb](https://github.com/appblocks-hub/BB-CLI/commit/ddd8bfba715c87fcaa8964eea65807e3c5648adc))
+
 ## [0.30.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.29.1...v0.30.0) (2023-06-16)
 
 
