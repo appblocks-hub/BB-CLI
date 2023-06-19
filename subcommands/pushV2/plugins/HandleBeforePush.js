@@ -94,10 +94,6 @@ class HandleBeforePush {
           console.log(chalk.yellow(`No git source found for ${nonSourceBlock}.`))
         }
 
-        if (!blocksToPush.length) {
-          throw new Error(`No blocks to push`)
-        }
-
         core.blocksToPush = blocksToPush
         core.gitUserName = gitUserName
         core.gitUserEmail = gitUserEmail
