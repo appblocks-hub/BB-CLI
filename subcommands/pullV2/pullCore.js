@@ -10,18 +10,20 @@ const { tmpdir } = require('os')
 const { existsSync, cp, rm } = require('fs')
 const { AsyncSeriesHook } = require('tapable')
 
-const { appConfig } = require('../../utils/appconfigStore')
 // eslint-disable-next-line no-unused-vars
 const { feedback } = require('../../utils/cli-feedback')
 // eslint-disable-next-line no-unused-vars
 const { Logger } = require('../../utils/loggerV2')
 // eslint-disable-next-line no-unused-vars
 const { spinnies } = require('../../loader')
+const { BB_CONFIG_NAME } = require('../../utils/constants')
+const ConfigFactory = require('../../utils/configManagers/configFactory')
+const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 
 class PullCore {
-  constructor(pullByBlock, cmdOptions, options) {
-    this.cmdArgs = { pullByBlock }
-    this.cmdOpts = { ...cmdOptions }
+  constructor(cmdArguments, cmdOptions, options) {
+    this.cmdArgs = cmdArguments
+    this.cmdOpts = cmdOptions
 
     /**
      * @type {logger}
@@ -41,6 +43,12 @@ class PullCore {
     this.blockDetails = {}
     this.tempPath = tmpdir()
     this.tempAppblocksFolder = `${this.tempPath}/_appblocks_/`
+    this.isOutOfContext = false
+    this.blockPullKeys = {}
+    this.pullBlockName = ''
+
+    this.packageManager = null
+    this.packageConfig = {}
 
     this.hooks = {
       beforePull: new AsyncSeriesHook(['core']),
@@ -48,16 +56,19 @@ class PullCore {
     }
   }
 
-  async initializeAppConfig() {
-    if (!this.cmdArgs.pullByBlock) {
-      this.cwd = path.dirname(this.cwd)
-    }
-
-    await appConfig.initV2(this.cwd, null, 'pull')
-    this.appConfig = appConfig || {}
+  async initializeConfig() {
+    const configPath = path.resolve(BB_CONFIG_NAME)
+    const { manager: configManager, error } = await ConfigFactory.create(configPath)
+    if (error) {
+      if (error.type !== 'OUT_OF_CONTEXT') throw error
+      this.isOutOfContext = true
+    } else if (configManager instanceof PackageConfigManager) {
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
+    } else throw new Error('Not inside a package context')
   }
 
-  async pullBlock() {
+  async pullTheBlock() {
     try {
       await this.hooks.beforePull?.promise(this)
 

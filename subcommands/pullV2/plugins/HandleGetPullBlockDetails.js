@@ -8,14 +8,14 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 
-const path = require('path')
-const { existsSync, readFileSync, cp, rm } = require('fs')
 const { getBlockPermissionsApi } = require('../../../utils/api')
 const { post } = require('../../../utils/axios')
+const { blockTypeInverter } = require('../../../utils/blockTypeInverter')
 const { confirmationPrompt } = require('../../../utils/questionPrompts')
-const { getBlockDetails, getBlockMetaData, getAllBlockVersions } = require('../../../utils/registryUtils')
+const { getBlockMetaData, getAllBlockVersions, getBlockDetailsV2 } = require('../../../utils/registryUtils')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
+const { getBlockPullKeys } = require('../utils')
 
 class HandleGetPullBlockDetails {
   /**
@@ -31,70 +31,26 @@ class HandleGetPullBlockDetails {
          */
         core
       ) => {
-        const hasBlockId = core.cmdOpts.id
-        let pullId = hasBlockId && core.cmdArgs.pullByBlock
+        const { pullBlock } = core.cmdArgs
+        const { id: hasBlockId, force } = core.cmdOpts
+        let pullId = hasBlockId && pullBlock
 
         let metaData = {}
 
         try {
-          // eslint-disable-next-line prefer-const
-          let [componentName, componentVersion] = core.cmdArgs.pullByBlock?.startsWith('@')
-            ? core.cmdArgs.pullByBlock?.replace('@', '')?.split('@') || []
-            : core.cmdArgs.pullByBlock?.split('@') || []
+          core.blockPullKeys = getBlockPullKeys(pullBlock)
+          core.pullBlockName = core.blockPullKeys.blockName
 
-          core.pullBlockName = componentName
-          core.pullBlockVersion = componentVersion
-
-          if (!core.pullBlockName && !hasBlockId) {
-            if (!existsSync(core.appConfig.blockConfigName)) {
-              throw new Error('Block name or Block config not found')
-            }
-            const config = JSON.parse(readFileSync(core.appConfig.blockConfigName))
-            if (!config.blockId) throw new Error('Block ID not found in block config')
-
-            core.pullBlockName = config.name
-
-            const goAhead = await confirmationPrompt({
-              message: `You are trying to pull ${core.pullBlockName} by config ?`,
-              default: false,
-              name: 'goAhead',
-            })
-
-            if (!goAhead) {
-              core.feedback({ type: 'error', message: `Process cancelled` })
-              throw new Error('Process cancelled')
-            }
-
-            pullId = config.blockId
-            metaData.pull_by_config = true
-            metaData.block_config = config
-            const pullByConfigFolderName = path.basename(path.resolve())
-            metaData.pull_by_config_folder_name = pullByConfigFolderName
-            core.blockDetails = metaData
-
-            process.chdir('../')
-            cp(
-              pullByConfigFolderName,
-              path.join(core.tempAppblocksFolder, pullByConfigFolderName),
-              { recursive: true },
-              (err) => {
-                if (err) throw err
-                rm(pullByConfigFolderName, { recursive: true, force: true }, () => {})
-              }
-            )
-            core.pullBlockVersion = config.version
-            core.cwd = path.resolve('.')
-            await core.appConfig.init(core.cwd, null, 'pull', { reConfig: true })
+          if (!core.blockPullKeys.rootPackageName) {
+            core.blockPullKeys.rootPackageName = core.pullBlockName
           }
 
-          core.logger.info(`pull ${core.pullBlockName} in cwd:${core.cwd}`)
-          /**
-           * @type {import('../../utils/jsDoc/types').blockDetailsdataFromRegistry}
-           */
-
-          /**
-           * @type {{status:number,data:{err:string,data:import('../../utils/jsDoc/types').blockDetailsdataFromRegistry,msg:string}}}
-           */
+          // TODO pull by config
+          // if (!core.pullBlockName && !hasBlockId) {
+          //   const res =  await pullByConfigSetup(core, metaData)
+          //   if (res.pullId) pullId = res.pullId
+          //   if (res.metaData) metaData = res.metaData
+          // }
 
           core.spinnies.add('blockExistsCheck', { text: `Searching for ${core.pullBlockName}` })
 
@@ -103,7 +59,7 @@ class HandleGetPullBlockDetails {
             const {
               status,
               data: { err, data: blockDetails },
-            } = await getBlockDetails(core.pullBlockName)
+            } = await getBlockDetailsV2(core.blockPullKeys)
 
             if (status === 204) {
               throw new Error(`${core.pullBlockName} doesn't exists in block repository`)
@@ -154,12 +110,19 @@ class HandleGetPullBlockDetails {
 
           if (!hasBlockAccess && !hasPullBlockAccess) {
             if (blockVisibility === 4) {
-              throw new Error(`Please use get command to get free ${componentName}`)
+              throw new Error(`Please use get command to get free ${core.blockPullKeys.blockName}`)
             }
-            throw new Error(`Access denied for block ${componentName}`)
+            throw new Error(`Access denied for block ${core.blockPullKeys.blockName}`)
           }
 
           metaData.parent_id = metaData.purchased_parent_block_id || metaData.block_id
+
+          const blockType = blockTypeInverter(core.blockDetails.block_type)
+          if (core.isOutOfContext && blockType !== 'package') {
+            throw new Error(
+              `You are trying to pull a ${blockType} block outside package context.\n Please create a package or pull into an existing package context`
+            )
+          }
 
           let statusFilter = hasBlockAccess ? undefined : [4]
           let versionOf = metaData.block_id
@@ -179,9 +142,11 @@ class HandleGetPullBlockDetails {
             throw new Error('No version found for the block to pull')
           }
 
+          core.blockDetails = metaData
+
           const blockVersions = bv.data.data
           const latestVersion = blockVersions?.[0]
-          if (!latestVersion) {
+          if (!latestVersion && !force) {
             const continueWithLatest = await confirmationPrompt({
               name: 'continueWithLatest',
               message: `Block version not specified. Do you want to pull the latest code?`,
@@ -191,25 +156,15 @@ class HandleGetPullBlockDetails {
             return
           }
 
-          if (componentVersion && componentVersion !== 'latest') {
-            metaData.version_id = blockVersions.find((v) => v.version_number === componentVersion)?.id
-            metaData.version_number = componentVersion
-          } else {
-            if (componentVersion !== 'latest') {
-              const continueWithLatest = await confirmationPrompt({
-                name: 'continueWithLatest',
-                message: `Block version not specified. Do you want to pull the latest versions ${latestVersion.version_number}?`,
-              })
-              if (!continueWithLatest) throw new Error('No version specified')
-            }
+          const bVersionToPull = core.blockPullKeys.blockVersion
 
+          if (bVersionToPull && bVersionToPull !== 'latest') {
+            metaData.version_id = blockVersions.find((v) => v.version_number === bVersionToPull)?.id
+            metaData.version_number = bVersionToPull
+          } else {
             // get the latest version of parent
             metaData.version_id = latestVersion?.id
             metaData.version_number = latestVersion?.version_number
-          }
-
-          if (!metaData.version_id) {
-            throw new Error(`${componentVersion} version not found `)
           }
 
           core.blockDetails = metaData

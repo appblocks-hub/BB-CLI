@@ -7,8 +7,7 @@
 
 /* eslint-disable class-methods-use-this */
 
-const { appConfig } = require('../../../utils/appconfigStore')
-const { confirmationPrompt } = require('../../../utils/questionPrompts')
+// const { confirmationPrompt } = require('../../../utils/questionPrompts')
 
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
@@ -29,18 +28,18 @@ class HandleNoVariant {
       ) => {
         if (core.createCustomVariant) return
 
-        const { blockDetails } = core
+        // TODO pull by config
+        // const { blockDetails } = core
+        // if (blockDetails.pull_by_config && core.pullByConfigFolderName !== blockDetails.block_name) {
+        //   const goAhead = await confirmationPrompt({
+        //     name: 'goAhead',
+        //     message: `Block name and folder name should be same. Do you want to rename ${core.pullByConfigFolderName} to ${blockDetails.block_name} ?`,
+        //   })
+        //   if (!goAhead) throw new Error('Cannot proceed with different name')
+        // }
 
-        if (blockDetails.pull_by_config && core.pullByConfigFolderName !== blockDetails.block_name) {
-          const goAhead = await confirmationPrompt({
-            name: 'goAhead',
-            message: `Block name and folder name should be same. Do you want to rename ${core.pullByConfigFolderName} to ${blockDetails.block_name} ?`,
-          })
+        const existingBlock = core.packageManager?.getAnyBlock(core.pullBlockName)
 
-          if (!goAhead) throw new Error('Cannot proceed with different name')
-        }
-
-        const existingBlock = appConfig.getBlock(core.pullBlockName)
         if (existingBlock) {
           throw new Error(`${core.pullBlockName} already exists at ${existingBlock.directory}`)
         }

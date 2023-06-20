@@ -8,8 +8,6 @@
  */
 
 const { spinnies } = require('../../../loader')
-const { appBlockGetAppConfig } = require('../../../utils/api')
-const { post } = require('../../../utils/axios')
 const { cloneBlock } = require('../utils')
 
 // eslint-disable-next-line no-unused-vars
@@ -30,22 +28,10 @@ class HandlePackagePull {
         core
       ) => {
         const { blockDetails } = core
-        if (blockDetails.blockType !== 'package') return
+        if (blockDetails.block_type !== 1) return
 
         // Handle package block
 
-        spinnies.add('pab', { text: 'Getting package config data ' })
-        const { data: appConfigData, error } = await post(appBlockGetAppConfig, {
-          block_id: blockDetails.block_id,
-          block_version_id: blockDetails.version_id,
-        })
-        spinnies.remove('pab')
-        if (error) throw error
-        const packageConfigData = appConfigData?.data?.app_config
-        if (!packageConfigData) throw new Error('Error getting app config data')
-
-        const { dependencies, repoType } = packageConfigData
-        const { blockTypes } = core.cmdOpts
 
         if (core.blockDetails.is_purchased_variant) {
           // Block source code will be downloaded form s3
@@ -53,23 +39,39 @@ class HandlePackagePull {
         }
 
         const { cloneFolder: packageFolderPath } = await cloneBlock({
-          block_name: blockDetails.block_name,
-          git_url: blockDetails.git_url,
+          blockName: blockDetails.block_name,
+          blockClonePath: core.blockClonePath,
+          blockVersion: core.blockPullKeys.blockVersion,
+          gitUrl: blockDetails.git_url,
           rootPath: core.cwd,
+          isRoot: core.blockPullKeys.rootPackageName === core.blockPullKeys.blockName,
         })
 
         core.blockClonePath = packageFolderPath
 
-        if (dependencies && repoType !== 'mono') {
-          await Promise.all(
-            Object.values(dependencies).map(async (dep) => {
-              const { type, name, source } = dep.meta
-              if (blockTypes?.length && !blockTypes.includes(type)) return false
-              await cloneBlock({ block_name: name, git_url: source.ssh, rootPath: packageFolderPath })
-              return true
-            })
-          )
-        }
+        // spinnies.add('pab', { text: 'Getting package config data ' })
+        // const { data: appConfigData, error } = await post(appBlockGetAppConfig, {
+        //   block_id: blockDetails.block_id,
+        //   block_version_id: blockDetails.version_id,
+        // })
+        // spinnies.remove('pab')
+        // if (error) throw error
+        // const packageConfigData = appConfigData?.data?.app_config
+        // if (!packageConfigData) throw new Error('No pull package block config found')
+
+        // const { dependencies, repoType } = packageConfigData
+        // const { blockTypes } = core.cmdOpts
+
+        // if (dependencies && repoType !== 'mono') {
+        //   await Promise.all(
+        //     Object.values(dependencies).map(async (dep) => {
+        //       const { type, name, source } = dep.meta
+        //       if (blockTypes?.length && !blockTypes.includes(type)) return false
+        //       await cloneBlock({ blockName: name, gitUrl: source.ssh, rootPath: packageFolderPath })
+        //       return true
+        //     })
+        //   )
+        // }
 
         spinnies.add('pbp', { text: 'Pulled package block successfully ' })
         spinnies.succeed('pbp', { text: 'Pulled package block successfully ' })

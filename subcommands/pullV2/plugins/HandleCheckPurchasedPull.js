@@ -35,7 +35,7 @@ class HandleCheckPurchasedPull {
 
         // Pulling purchased block code
 
-        await deployConfigManager.init()
+        deployConfigManager.init()
         const appData = deployConfigManager.deployAppConfig
 
         if (!appData?.app_id) {

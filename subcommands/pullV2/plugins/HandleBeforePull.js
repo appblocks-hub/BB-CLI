@@ -8,6 +8,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 const chalk = require('chalk')
+const path = require('path')
 const { existsSync } = require('fs')
 const { confirmationPrompt, wantToCreateNewVersion, getBlockName } = require('../../../utils/questionPrompts')
 const { getAllAppblockVersions } = require('../../publish/util')
@@ -28,17 +29,19 @@ class HandleBeforePull {
          */
         core
       ) => {
-        const { blockDetails } = core
+        const { blockDetails, cmdOpts, cmdArgs } = core
+        const { force } = cmdOpts
+        const { pullBlockNewName } = cmdArgs
 
         core.spinnies.add('at', { text: `Checking appblock versions support` })
         const abVers = await getAllAppblockVersions({ block_version_id: blockDetails.version_id })
         core.spinnies.remove('at')
         const bSab = abVers.data?.map(({ version }) => version) || []
-        const pbSab = core.appConfig.config?.supportedAppblockVersions
+        const pbSab = core.packageConfig.supportedAppblockVersions
         if (bSab?.length && pbSab?.length) {
           const isSupported = bSab.some((version) => pbSab.includes(version))
-          if (!isSupported) {
-            const msg = `${core.appConfig.config.name} supported versions : ${pbSab}\n${blockDetails.block_name} supported versions : ${bSab}`
+          const msg = `${core.packageConfig.name} supported versions : ${pbSab}\n${blockDetails.block_name} supported versions : ${bSab}`
+          if (!isSupported && !force) {
             console.log(chalk.yellow(msg))
             const goAhead = await confirmationPrompt({
               name: 'goAhead',
@@ -50,45 +53,58 @@ class HandleBeforePull {
           }
         }
 
-        const { addVariant, variant } = core.cmdOpts
-
+        // default value of variant will be true
+        const { variant } = core.cmdOpts
         const { block_visibility: blockVisibility, is_purchased_variant: isPurchasedVariant } = blockDetails
+        core.createCustomVariant = variant ?? false
 
-        core.createCustomVariant = false
-        if (isPurchasedVariant && blockVisibility !== 5) {
-          // FOR NOW: No variant allowed for purchased variant
-          core.createCustomVariant = false
-        } else if (addVariant === true || (isPurchasedVariant && blockVisibility === 5)) {
+        if (isPurchasedVariant) {
+          // set variant true if block is temp block
+          core.createCustomVariant = blockVisibility === 5
+        } else if (!core.isOutOfContext) {
           core.createCustomVariant = true
-        } else if (variant === false) core.createCustomVariant = false
-        else {
-          core.createCustomVariant = await wantToCreateNewVersion(blockDetails.block_name)
+        } else if (!force && variant == null) {
+          await wantToCreateNewVersion(blockDetails.block_name)
         }
 
         if (!core.blockDetails.version_id && core.createCustomVariant) {
-          throw new Error(`Variant can't be created under block without version`)
+          if (isPurchasedVariant) throw new Error(`Variant can't be created under block without version`)
+          console.log(
+            chalk.yellow(
+              `No version found, new block will not be considered as variant of ${core.blockDetails.block_name}`
+            )
+          )
         }
+
+        const checkBlockName = (core.createCustomVariant && pullBlockNewName) || core.blockDetails.block_name
+        core.blockDetails.new_variant_block_name = core.createCustomVariant && pullBlockNewName
+        const clonePath = path.join(core.cwd, checkBlockName)
+        core.blockClonePath = clonePath
+        core.pullBlockName = checkBlockName
+
+        // repoType !== 'mono'
 
         // check if block exist
         let blockExistMsg = ''
-        if (core.appConfig.has(core.blockDetails.block_name)) {
-          blockExistMsg = `Block already exists in local`
-        } else if (existsSync(core.blockClonePath)) {
-          blockExistMsg = `Folder with block name already exists`
+        if (core.packageManager?.has(checkBlockName)) {
+          blockExistMsg = `Block ${checkBlockName} already exists in local`
+        } else if (existsSync(clonePath)) {
+          blockExistMsg = `Folder ${checkBlockName} already exists`
         }
+        if (!blockExistMsg) return
 
-        if (blockExistMsg) {
-          if (core.createCustomVariant) {
+        if (core.createCustomVariant) {
+          if (!force) {
             const goAhead = await confirmationPrompt({
-              message: `${blockExistMsg}, Do you want to continue with new name ?`,
+              message: `${blockExistMsg}! Do you want to continue with new name ?`,
               name: 'goAhead',
             })
             if (!goAhead) throw new Error(blockExistMsg)
-
-            core.blockDetails.new_variant_block_name = await getBlockName()
-          } else {
-            throw new Error(blockExistMsg)
           }
+
+          core.blockDetails.new_variant_block_name = await getBlockName()
+        } else {
+          throw new Error(blockExistMsg)
         }
       }
     )

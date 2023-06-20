@@ -19,9 +19,9 @@ const HandleBeforePull = require('./plugins/HandleBeforePull')
 const HandleCheckPurchasedPull = require('./plugins/HandleCheckPurchasedPull')
 const HandleAfterPull = require('./plugins/HandleAfterPull')
 
-async function pull(pullByBlock, cmdOptions) {
+async function pull(pullBlock, pullBlockNewName, cmdOptions) {
   const { logger } = new Logger('pull')
-  const Pull = new PullCore(pullByBlock, cmdOptions, { logger, spinnies, feedback })
+  const Pull = new PullCore({ pullBlock, pullBlockNewName }, cmdOptions, { logger, spinnies, feedback })
   try {
     new HandleGetPullBlockDetails().apply(Pull)
     new HandleOutOfContext().apply(Pull)
@@ -34,10 +34,10 @@ async function pull(pullByBlock, cmdOptions) {
 
     new HandleAfterPull().apply(Pull)
 
-    await Pull.initializeAppConfig()
-    await Pull.pullBlock()
+    await Pull.initializeConfig()
+    await Pull.pullTheBlock()
   } catch (error) {
-    console.log(error)
+    console.log(error.response?.data || error)
     logger.error(error)
     spinnies.add('err', { text: error.message })
     spinnies.fail('err', { text: error.message })
