@@ -6,7 +6,7 @@
  */
 const envConfig = require('../envConfig')
 
-const { BLOCK_REG_BASE_URL, SHIELD_BASE_URL, APP_REG_BASE_URL, SPACES_API_BASE_URL, SPACES_BASE_URL, CLIENT_ID } =
+const { BLOCK_REG_BASE_URL, SHIELD_BASE_URL, APP_REG_BASE_URL, SPACES_API_BASE_URL, SPACES_BASE_URL, CLIENT_ID,PAYMENTS_API_BASE_URL } =
   envConfig
 
 const clientId = CLIENT_ID
@@ -86,6 +86,12 @@ api.appBlockListSpaces = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/list-space
 api.setInUseStatusForBlock = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/set-inuse-block-in-app/invoke`
 api.checkBlockAssignedToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/check-assigned-block-to-app/invoke`
 api.assignBlockToApp = `${api.appBlockSpacesOrigin}/api/spaces/v0.1/assign-block-to-app/invoke`
+
+// PAYMENTS
+api.appBlockPaymentsOrigin = PAYMENTS_API_BASE_URL
+api.appBlockListLicenses = `${api.appBlockPaymentsOrigin}/api/payment/v0.1/list-licenses/invoke`
+api.appBlockSellFreeBlock = `${api.appBlockPaymentsOrigin}/api/payment/v0.1/sell-free-block/invoke`
+
 
 // SPACES UI
 api.appBlockSpacesUIOrigin = SPACES_BASE_URL

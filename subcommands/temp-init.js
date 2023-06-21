@@ -7,6 +7,7 @@ const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
 const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
+const { DEFAULT_REPO_TYPE } = require('../utils/constants')
 
 /**
  * Action for bb-temp-init
@@ -33,15 +34,16 @@ const init = async (packageName) => {
    * Get the repo type, "Mono" or "Multi"
    * @type {string<'mono'|'multi'}
    */
-  const repoType = await readInput({
-    type: 'list',
-    name: 'repoType',
-    message: 'Select the repository type',
-    choices: [
-      { name: 'Mono Repo', value: 'mono' },
-      { name: 'Multi Repo', value: 'multi' },
-    ],
-  })
+  // const repoType = await readInput({
+  //   type: 'list',
+  //   name: 'repoType',
+  //   message: 'Select the repository type',
+  //   choices: [
+  //     { name: 'Mono Repo', value: 'mono' },
+  //     { name: 'Multi Repo', value: 'multi' },
+  //   ],
+  // })
+  const repoType=DEFAULT_REPO_TYPE
 
   const blockVisibility = await readInput({
     type: 'list',
