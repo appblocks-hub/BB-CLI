@@ -9,7 +9,6 @@
 /* eslint-disable class-methods-use-this */
 
 const path = require('path')
-const { tmpdir } = require('os')
 const { existsSync, cpSync, mkdirSync, rmSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { pullSourceCodeFromAppblock } = require('../utils/sourceCodeUtil')
@@ -81,14 +80,14 @@ class HandleBlockPull {
         //   cpSync(tmpClonePath, clonePath)
         // }
 
-        const tmpClonePath = path.resolve(tmpdir(), '_appblocks_', core.pullBlockName)
+        const tmpClonePath = path.join(core.tempAppblocksFolder, core.pullBlockName)
         if (existsSync(tmpClonePath)) rmSync(tmpClonePath, { recursive: true })
         if (!existsSync(path.dirname(tmpClonePath))) mkdirSync(path.dirname(tmpClonePath), { recursive: true })
 
         await git.clone(tmpClonePath)
+        git.cd(tmpClonePath)
 
         const configPath = path.join(tmpClonePath, BB_CONFIG_NAME)
-        console.log(configPath)
         const { manager: configManager, error } = await ConfigFactory.create(configPath)
         if (error) {
           throw new Error('Pulling block is not in appblock standard structure. Pull aborted!')
@@ -101,17 +100,20 @@ class HandleBlockPull {
         }
 
         const block = await configManager.getAnyBlock(core.blockDetails.block_name)
+        let copyDir = block.directory
 
         if (core.blockPullKeys.blockVersion) {
           // if mono repo
-          git.checkoutBranch(core.blockPullKeys.blockVersion)
-
+          const releaseBranch = `block_${core.blockPullKeys.blockName}@${core.blockPullKeys.blockVersion}`
+          await git.fetch([`origin ${releaseBranch}`])
+          await git.checkoutBranch(releaseBranch)
+          copyDir = tmpClonePath
           // TODO handle multi
           // await git.fetch('--all --tags')
           // await git.checkoutTag(core.blockPullKeys.blockVersion)
         }
 
-        cpSync(block.directory, clonePath, { recursive: true })
+        cpSync(copyDir, clonePath, { recursive: true })
         rmSync(tmpClonePath, { recursive: true })
 
         core.spinnies.succeed('pull', { text: `Block ${core.blockDetails.block_name} cloned successfully` })

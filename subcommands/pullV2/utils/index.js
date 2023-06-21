@@ -5,37 +5,42 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { path } = require('path')
-const { tmpdir } = require('os')
+const path = require('path')
 const { mkdirSync, existsSync, cpSync, rmSync } = require('fs')
 const { spinnies } = require('../../../loader')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { headLessConfigStore } = require('../../../configstore')
 const { BB_CONFIG_NAME } = require('../../../utils/constants')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
-const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 const { readJsonAsync } = require('../../../utils')
 
-const checkOutAllBlocks = async ({ git, tmpClonePath, clonePath, blockName, blockVersion }) => {
-  git.checkoutBranch(`block_${blockName}@${blockVersion}`)
+const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName, blockVersion }) => {
+  const releaseBranch = `block_${blockName}@${blockVersion}`
+  await git.fetch([`origin ${releaseBranch}`])
+  await git.checkoutBranch(releaseBranch)
 
   const configPath = path.join(tmpClonePath, BB_CONFIG_NAME)
+
   const { data, err } = await readJsonAsync(configPath)
   if (err) throw err
 
-  const members = Object.entries(data.dependencies).map(([name, dt]) => ({
-    name,
-    directory: dt.directory,
-    version: dt.version,
-  }))
+  cpSync(tmpClonePath, blockClonePath, { recursive: true })
+  await git.undoCheckout()
 
-  if (members?.length) {
+  const dependencies = Object.entries(data.dependencies ?? {})
+  if (dependencies?.length > 0) {
+    const members = dependencies.map(([name, dt]) => ({
+      name,
+      directory: dt.directory,
+      version: dt.version,
+    }))
+
     await Promise.all(
       members.map(async ({ name, directory, version }) => {
         await checkOutAllBlocks({
           git,
-          tmpClonePath: path.join(tmpClonePath, directory),
-          clonePath: path.join(clonePath, directory),
+          tmpClonePath,
+          blockClonePath: path.join(blockClonePath, directory),
           blockName: name,
           blockVersion: version,
         })
@@ -43,19 +48,17 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, clonePath, blockName, bloc
       })
     )
   }
-
-  cpSync(tmpClonePath, clonePath, { recursive: true })
 }
 
-const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, rootPath, isRoot }) => {
+const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, rootPath, isRoot, tmpPath }) => {
   spinnies.add(blockName, { text: `Pulling ${blockName}` })
   const git = new GitManager(rootPath, gitUrl)
-
-  let tmpClonePath = blockVersion ? `${path.resolve(tmpdir(), '_appblocks_', blockName)}_latest` : blockClonePath
+  let tmpClonePath = blockVersion ? path.join(tmpPath, blockName) : blockClonePath
   if (isRoot) {
     await git.clone(tmpClonePath)
-    
+
     if (blockVersion) {
+      git.cd(tmpClonePath)
       await checkOutAllBlocks({ git, tmpClonePath, blockName, blockClonePath, blockVersion })
       rmSync(tmpClonePath, { recursive: true })
     }
@@ -64,10 +67,19 @@ const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, roo
     return { cloneFolder: blockClonePath }
   }
 
-  tmpClonePath = path.resolve(tmpdir(), '_appblocks_', blockName)
+  tmpClonePath = path.join(tmpPath, blockName)
 
-  if (existsSync(path.dirname(tmpClonePath))) mkdirSync(path.dirname(tmpClonePath), { recursive: true })
+  if (!existsSync(path.dirname(tmpClonePath))) {
+    mkdirSync(path.dirname(tmpClonePath), { recursive: true })
+  }
+
+  if (existsSync(tmpClonePath)) {
+    rmSync(tmpClonePath, { recursive: true })
+  }
+
   await git.clone(tmpClonePath)
+
+  git.cd(tmpClonePath)
 
   if (blockVersion) {
     // if mono repo
@@ -79,17 +91,18 @@ const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, roo
   } else {
     const configPath = path.join(tmpClonePath, BB_CONFIG_NAME)
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
+
     if (error) {
       throw new Error('Pulling block is not in appblock standard structure. Pull aborted!')
     }
     // TODO multi repo
 
     // if mono repo
-    if (configManager instanceof PackageConfigManager) {
+    if (configManager.isBlockConfigManager) {
       throw new Error(`Couldn't find package config in root. Pull aborted!`)
     }
 
-    const pk = configManager.getAnyBlock(blockName)
+    const pk = await configManager.getAnyBlock(blockName)
 
     cpSync(pk.directory, blockClonePath, { recursive: true })
     rmSync(tmpClonePath, { recursive: true })

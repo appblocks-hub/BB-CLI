@@ -32,7 +32,6 @@ class HandlePackagePull {
 
         // Handle package block
 
-
         if (core.blockDetails.is_purchased_variant) {
           // Block source code will be downloaded form s3
           throw new Error('Purchased package pull is still in progress!!!')
@@ -45,6 +44,7 @@ class HandlePackagePull {
           gitUrl: blockDetails.git_url,
           rootPath: core.cwd,
           isRoot: core.blockPullKeys.rootPackageName === core.blockPullKeys.blockName,
+          tmpPath: core.tempAppblocksFolder,
         })
 
         core.blockClonePath = packageFolderPath

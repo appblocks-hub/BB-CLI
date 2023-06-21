@@ -7,7 +7,7 @@
 
 const path = require('path')
 const { tmpdir } = require('os')
-const { existsSync, cp, rm } = require('fs')
+const { existsSync, cp, rmSync } = require('fs')
 const { AsyncSeriesHook } = require('tapable')
 
 // eslint-disable-next-line no-unused-vars
@@ -42,10 +42,11 @@ class PullCore {
     this.blockToPull = null
     this.blockDetails = {}
     this.tempPath = tmpdir()
-    this.tempAppblocksFolder = `${this.tempPath}/_appblocks_/`
+    this.tempAppblocksFolder = path.join(this.tempPath, '_appblocks_')
     this.isOutOfContext = false
     this.blockPullKeys = {}
     this.pullBlockName = ''
+    this.blockClonePath = ''
 
     this.packageManager = null
     this.packageConfig = {}
@@ -81,9 +82,13 @@ class PullCore {
         if (this.blockDetails.pull_by_config && existsSync(tmpPath)) {
           cp(tmpPath, this.blockDetails.pull_by_config_folder_name, { recursive: true }, (err) => {
             if (err) feedback({ type: 'info', err })
-            rm(tmpPath, { recursive: true, force: true }, () => {})
+            rmSync(tmpPath, { recursive: true, force: true })
           })
         }
+      }
+
+      if (this.blockClonePath && existsSync(this.blockClonePath)) {
+        rmSync(this.blockClonePath, { recursive: true, force: true })
       }
 
       throw error
