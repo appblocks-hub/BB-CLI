@@ -1,4 +1,5 @@
 const chalk = require('chalk')
+const semver = require('semver')
 const { exec } = require('child_process')
 const { readFile } = require('fs/promises')
 const isRunning = require('is-running')
@@ -64,4 +65,38 @@ const treeKillSync = async (livePid) => {
   })
 }
 
-module.exports = { readJsonAsync, logFail, sleep, isEmptyObject, domainRegex, pExec, logErr, treeKillSync }
+const checkEngineSupport = async (packageJson) => {
+  const { engines } = packageJson
+
+  if (engines.node) {
+    const nodeVersion = process.version.slice(1) // Remove the 'v' prefix
+    if (!semver.satisfies(nodeVersion, engines.node)) {
+      console.log(chalk.dim(`current system node version: ${nodeVersion}`))
+      console.log(chalk.red(`bb cli requires nodejs version to be within the range of ${engines.node.replace(' ', ' and ')}`))
+      process.exit()
+    }
+  }
+
+  if (engines.npm) {
+    const { err, out } = await pExec('npm -v')
+    if (err) throw err
+    const currentNpmVersion = out.trim()
+    if (!semver.satisfies(currentNpmVersion, engines.node)) {
+      console.log(chalk.dim(`current system npm version: ${currentNpmVersion}`))
+      console.log(chalk.red(`bb cli requires npm version to be within the range of ${engines.npm.replace(' ', ' and ')}`))
+      process.exit()
+    }
+  }
+}
+
+module.exports = {
+  readJsonAsync,
+  logFail,
+  sleep,
+  isEmptyObject,
+  domainRegex,
+  pExec,
+  logErr,
+  treeKillSync,
+  checkEngineSupport,
+}

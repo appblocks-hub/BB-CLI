@@ -10,6 +10,7 @@
 const { Command } = require('commander')
 
 const packageJson = require('../package.json')
+const { checkEngineSupport } = require('../utils')
 
 process.global = { cwd: process.cwd() }
 
@@ -73,4 +74,8 @@ cmd('connect-remote', 'To add remote for package block')
 
 cmd('get', 'To get free blocks from the store')
 
-program.parseAsync(process.argv)
+// eslint-disable-next-line no-unused-expressions
+;(async () => {
+  await checkEngineSupport(packageJson)
+  program.parseAsync(process.argv)
+})()
