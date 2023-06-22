@@ -26,10 +26,12 @@ class HandleOutOfContext {
          */
         core
       ) => {
+        if (!core.isOutOfContext) return
+
         const blockType = blockTypeInverter(core.blockDetails.block_type)
-        if (core.appConfig.isOutOfContext && blockType !== 'package') {
+        if (blockType !== 'package') {
           throw new Error(
-            `You are trying to pull a ${blockType} block outside package context. Please create a package or pull into an existing package context`
+            `You are trying to pull a ${blockType} block outside package context.\nPlease create a package or pull into an existing package context`
           )
         }
       }

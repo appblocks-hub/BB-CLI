@@ -79,6 +79,20 @@ const getBlockDetails = (componentName) => {
     { headers: getShieldHeader() }
   )
 }
+
+// This api will check the block name against default space_id if space_name is not passed
+const getBlockDetailsV2 = ({ spaceName, blockName, blockVersion, rootPackageName }) => {
+  const postData = {
+    block_name: blockName,
+    space_name: spaceName,
+  }
+
+  if (rootPackageName) postData.root_package_name = rootPackageName
+  if (blockVersion) postData.block_version = blockVersion
+
+  return axios.post(appBlockGetBlockDetails, postData, { headers: getShieldHeader() })
+}
+
 const getBlockMetaData = (block_id) =>
   axios.post(
     appBlockGetBlockMetadata,
@@ -132,4 +146,5 @@ module.exports = {
   updateReadme,
   getAppConfigFromRegistry,
   getBlockFromStoreFn,
+  getBlockDetailsV2,
 }

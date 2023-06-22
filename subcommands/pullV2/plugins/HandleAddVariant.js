@@ -28,7 +28,11 @@ class HandleAddVariant {
          */
         core
       ) => {
-        const { blockDetails } = core
+        const { blockDetails, packageConfig } = core
+
+        // No forking is repoType is not multi
+        if (packageConfig?.repoType !== 'multi') return
+
         if (!core.createCustomVariant || blockDetails.is_purchased_variant) return
 
         let newVariantType = ['fork', 'clone'].includes(core.variantType?.toLowerCase()) && core.variantType

@@ -30,7 +30,7 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
   ): Generator<PackageConfigManager | BlockConfigManager> | []
 
   /**
-   * 
+   *
    * @param block Name of block to check
    */
   public has(block: string): boolean
@@ -80,18 +80,31 @@ declare class PackageConfigManager extends ConfigManager<PackageConfig> {
 
   /**
    * To get immediate member blocks
-   * @param configPath
+   * @param blockName
    */
-  public getBlock(configPath: PathLike): Promise<BlockConfigManager | null>
+  public getBlock(blockName: string): Promise<BlockConfigManager | null>
 
   /**
-   * To traverse and get get any level oh member blocks
-   * @param configPath
+   * To traverse and get member/package block at any level with name
+   * @param blockName
    */
   public getAnyBlock(
-    configPath: PathLike,
+    blockName: string,
     tLevel: Number | null
   ): Promise<BlockConfigManager | PackageConfigManager | null>
+
+  /**
+   * To traverse and get all member/package block at any level
+   * @param configPath
+   */
+  public getAllLevelAnyBlock(): Promise<BlockConfigManager[] | PackageConfigManager[] | []>
+
+  /**
+   * To traverse and get all member block at any level
+   * NOTE: the list will not include sub level package blocks
+   * @param configPath
+   */
+  public getAllLevelMemberBlock(): Promise<BlockConfigManager[] | []>
 
   /**
    *

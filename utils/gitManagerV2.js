@@ -32,14 +32,14 @@ class GitManager {
     this._createRemote(sshUrl)
   }
 
-
   /**
    * Selects and sets remote sshUrl from block meta data
    * @param {String} sshUrl
    */
   _createRemote(sshUrl) {
-    this.remote = this.ssh ? sshUrl : sshUrl.replace('git@github.com:', `https://${this.token}:x-oauth-basic@github.com/`)
-
+    this.remote = this.ssh
+      ? sshUrl
+      : sshUrl.replace('git@github.com:', `https://${this.token}:x-oauth-basic@github.com/`)
   }
 
   /* ********************************
@@ -62,6 +62,18 @@ class GitManager {
     return this._run('clone', [this.remote, destination])
   }
 
+  sparseClone(destination) {
+    return this._run('clone --depth 1 --filter=blob:none --sparse ', [this.remote, destination])
+  }
+
+  sparseCheckout(cmd, optionsArray) {
+    return this._run('sparse-checkout ', [cmd || 'init', optionsArray])
+  }
+
+  readTree() {
+    return this._run('read-tree -mu HEAD', [])
+  }
+
   init() {
     return this._run('init', [])
   }
@@ -76,6 +88,11 @@ class GitManager {
 
   checkRemoteBranch(branchName) {
     return this._run(`ls-remote --heads ${this.remote} ${branchName}`, [])
+  }
+
+  async findDefaultBranch() {
+    const result = await this._run(`remote show ${this.remote} | sed -n '/HEAD branch/s/.*: //p'`, [])
+    return result.out?.trim()
   }
 
   checkoutTag(tag, branch = 'main') {

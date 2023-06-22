@@ -9,11 +9,14 @@
 /* eslint-disable class-methods-use-this */
 
 const path = require('path')
-const { existsSync } = require('fs')
+const { existsSync, cpSync, mkdirSync, rmSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
 const { pullSourceCodeFromAppblock } = require('../utils/sourceCodeUtil')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
+const { BB_CONFIG_NAME } = require('../../../utils/constants')
+const ConfigFactory = require('../../../utils/configManagers/configFactory')
+const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 
 class HandleBlockPull {
   /**
@@ -29,16 +32,13 @@ class HandleBlockPull {
          */
         core
       ) => {
-        if (core.blockDetails.blockType === 'package') return
+        if (core.blockDetails.block_type === 1) return
 
         const cloneGitUrl = core.blockDetails.forked_git_url || core.blockDetails.git_url
-        const cloneBlockName = core.blockDetails.new_variant_block_name || core.blockDetails.block_name
-        const clonePath = path.join(core.cwd, cloneBlockName)
+        const clonePath = core.blockClonePath
 
         // check if clone folder already exist
-        if (existsSync(clonePath)) {
-          throw new Error(`Folder already exist`)
-        }
+        if (existsSync(clonePath)) throw new Error(`Folder already exist`)
 
         if (core.blockDetails.is_purchased_variant && core.blockDetails.block_visibility === 5) {
           // Block source code will be downloaded form s3
@@ -53,17 +53,70 @@ class HandleBlockPull {
         }
 
         // Clone repo from git
-        core.spinnies.add('fork', { text: `Cloning repo ${core.blockDetails.block_name}` })
+        core.spinnies.add('pull', { text: `Cloning repo ${core.blockDetails.block_name}` })
 
         const git = new GitManager(core.cwd, cloneGitUrl)
-        await git.clone(clonePath)
 
-        if (core.blockDetails.version_number) {
-          await git.fetch('--all --tags')
-          await git.checkoutTag(core.blockDetails.version_number)
+        // TODO: find a better approach to clone block sparse checkout
+
+        // const tmpClonePath = path.join(tmpdir(), '_appblocks_', '')
+        // await git.sparseClone(tmpClonePath)
+        // git.cd(tmpClonePath)
+
+        // const { data, error } = await readJsonAsync(path.join(tmpClonePath, 'block.config.json'))
+        // let repoType = core.packageConfig?.repoType
+        // if (!error && data) {
+        //   repoType = data.repoType
+        // }
+
+        // if (repoType === 'mono') {
+        //   await git.sparseCheckout('init', '--cone')
+        //   // check if blockExist()
+        //   await git.sparseCheckout('set', core.blockDetails.block_name)
+        //   cpSync(path.join(tmpClonePath), clonePath)
+        // } else {
+        //   await git.sparseCheckout('disable')
+        //   await git.readTree()
+        //   cpSync(tmpClonePath, clonePath)
+        // }
+
+        const tmpClonePath = path.join(core.tempAppblocksFolder, core.pullBlockName)
+        if (existsSync(tmpClonePath)) rmSync(tmpClonePath, { recursive: true })
+        if (!existsSync(path.dirname(tmpClonePath))) mkdirSync(path.dirname(tmpClonePath), { recursive: true })
+
+        await git.clone(tmpClonePath)
+        git.cd(tmpClonePath)
+
+        const configPath = path.join(tmpClonePath, BB_CONFIG_NAME)
+        const { manager: configManager, error } = await ConfigFactory.create(configPath)
+        if (error) {
+          throw new Error('Pulling block is not in appblock standard structure. Pull aborted!')
+        }
+        // TODO multi repo
+
+        // if mono repo
+        if (!(configManager instanceof PackageConfigManager)) {
+          throw new Error('Pulling block is not in appblock standard structure. No root config found. Pull aborted!')
         }
 
-        core.spinnies.succeed('fork', { text: `Block ${core.blockDetails.block_name} cloned successfully` })
+        const block = await configManager.getAnyBlock(core.blockDetails.block_name)
+        let copyDir = block.directory
+
+        if (core.blockPullKeys.blockVersion) {
+          // if mono repo
+          const releaseBranch = `block_${core.blockPullKeys.blockName}@${core.blockPullKeys.blockVersion}`
+          await git.fetch([`origin ${releaseBranch}`])
+          await git.checkoutBranch(releaseBranch)
+          copyDir = tmpClonePath
+          // TODO handle multi
+          // await git.fetch('--all --tags')
+          // await git.checkoutTag(core.blockPullKeys.blockVersion)
+        }
+
+        cpSync(copyDir, clonePath, { recursive: true })
+        rmSync(tmpClonePath, { recursive: true })
+
+        core.spinnies.succeed('pull', { text: `Block ${core.blockDetails.block_name} cloned successfully` })
         core.blockDetails.final_block_path = clonePath
         core.blockClonePath = clonePath
       }

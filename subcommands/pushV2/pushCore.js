@@ -55,7 +55,10 @@ class PushCore {
     } else if (configManager instanceof PackageConfigManager) {
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
-    } else throw new Error('Not inside a package context')
+    } else throw new Error('Not inside a root package context')
+
+    const { data } = await configManager.findMyParentPackage()
+    if (data?.parentPackageFound !== false) throw new Error('Not inside a root package context')
   }
 
   async pushBlocks() {
