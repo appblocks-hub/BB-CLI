@@ -21,6 +21,7 @@ program
   .option('--multi-instance', 'multi instance')
   .option('-env, --environment <environment>', 'environment')
   .option('-bt, --block-type <block-type>', 'Block type to start')
+  .option('-pm2, --pm2', 'Start functions with pm2')
   .action(start)
 
 program.parse(process.argv)

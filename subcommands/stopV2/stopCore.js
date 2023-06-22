@@ -1,4 +1,5 @@
 const path = require('path')
+const { execSync } = require('child_process')
 const { AsyncSeriesHook } = require('tapable')
 
 const ConfigFactory = require('../../utils/configManagers/configFactory')
@@ -38,19 +39,32 @@ class StopCore {
   async stop() {
     await this.hooks.beforeStop.promise(this)
 
+    const updateConfigData = {
+      pid: null,
+      isOn: false,
+      singleInstance: false,
+      pm2InstanceName: null,
+    }
+    let killedPm2Instance
     for (const blockManager of this.blocksToStop) {
-      const { pid } = blockManager.liveDetails
+      const { pid, pm2InstanceName } = blockManager.liveDetails
       const { name } = blockManager.config
 
       try {
-        await treeKillSync(pid)
-        blockManager.updateLiveConfig({
-          pid: null,
-          isOn: false,
-          singleInstance: false,
-        })
+        if (pm2InstanceName && pm2InstanceName !== killedPm2Instance) {
+          execSync(`pm2 delete ${pm2InstanceName}`, { stdio: ['ignore'] })
+          killedPm2Instance = pm2InstanceName
+        } else {
+          await treeKillSync(pid)
+        }
+
+        blockManager.updateLiveConfig(updateConfigData)
       } catch (error) {
-        console.log(`Error stopping ${name} block process with pid `, pid)
+        if (error.message.includes('not found')) {
+          blockManager.updateLiveConfig(updateConfigData)
+        } else {
+          console.log(`Error stopping ${name} block process ${pid ? `with pid ${pid}` : pm2InstanceName || ''}`)
+        }
       }
     }
     console.log(`Blocks stopped successfully!`)

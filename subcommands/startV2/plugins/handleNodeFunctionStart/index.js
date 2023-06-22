@@ -10,6 +10,7 @@ const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = re
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
 const { upsertEnv, readEnvAsObject } = require('../../../../utils/envManager')
+const { readJsonAsync } = require('../../../../utils')
 
 class HandleNodeFunctionStart {
   constructor() {
@@ -170,15 +171,42 @@ class HandleNodeFunctionStart {
         await upsertEnv('function', {}, environment, envPrefixes)
         await upsertEnv('view', updateEnvValue, environment, envPrefixes)
 
-        // start node
-        const child = spawn('node', ['index.js'], {
-          cwd: emPath,
-          detached: true,
-          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-          env: { ...process.env, parentPath: core.cwd },
-        })
-        child.unref()
-        this.pid = child.pid
+        let child = { pid: 0 }
+        let pm2InstanceName
+        if (core.cmdOpts.pm2) {
+          try {
+            execSync('pm2 -v', { stdio: 'ignore' })
+          } catch {
+            throw new Error('Please install pm2 and try again')
+          }
+
+          const command = 'pm2'
+          pm2InstanceName = core.cmdArgs.blockName || core.packageConfig.name
+          let args = ['start', 'index.js', '-i', 'max', '--name', pm2InstanceName]
+
+          if (existsSync('pm2.json')) {
+            const { data, err } = await readJsonAsync('pm2.json')
+            if (err) throw err
+            pm2InstanceName = data.apps?.[0]?.name || pm2InstanceName
+            args = ['start', path.join(emPath, '..', 'pm2.json'), '-f']
+          }
+
+          execSync(`${command} ${args.join(' ')}`, {
+            cwd: emPath,
+            stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+            env: { ...process.env, parentPath: core.cwd },
+          })
+        } else {
+          // start node
+          child = spawn('node', ['index.js'], {
+            cwd: emPath,
+            detached: true,
+            stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+            env: { ...process.env, parentPath: core.cwd },
+          })
+          child.unref()
+          this.pid = child.pid
+        }
         await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
 
         const updateConfig = {
@@ -186,6 +214,7 @@ class HandleNodeFunctionStart {
           singleInstance: true,
           pid: this.pid || null,
           port: this.port || null,
+          pm2InstanceName,
           log: {
             out: logOutPath,
             err: logErrPath,
