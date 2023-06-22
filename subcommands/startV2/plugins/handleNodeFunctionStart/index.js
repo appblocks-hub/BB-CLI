@@ -10,6 +10,7 @@ const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = re
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
 const { upsertEnv, readEnvAsObject } = require('../../../../utils/envManager')
+const { readJsonAsync } = require('../../../../utils')
 
 class HandleNodeFunctionStart {
   constructor() {
@@ -173,7 +174,6 @@ class HandleNodeFunctionStart {
         let child = { pid: 0 }
         let pm2InstanceName
         if (core.cmdOpts.pm2) {
-          
           try {
             execSync('pm2 -v', { stdio: 'ignore' })
           } catch {
@@ -184,7 +184,12 @@ class HandleNodeFunctionStart {
           pm2InstanceName = core.cmdArgs.blockName || core.packageConfig.name
           let args = ['start', 'index.js', '-i', 'max', '--name', pm2InstanceName]
 
-          if (existsSync('pm2.json')) args = ['start', path.resolve('pm2.json'), '-f']
+          if (existsSync('pm2.json')) {
+            const { data, err } = await readJsonAsync('pm2.json')
+            if (err) throw err
+            pm2InstanceName = data.apps?.[0]?.name || pm2InstanceName
+            args = ['start', path.join(emPath, '..', 'pm2.json'), '-f']
+          }
 
           execSync(`${command} ${args.join(' ')}`, {
             cwd: emPath,
