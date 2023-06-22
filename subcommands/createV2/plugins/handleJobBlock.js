@@ -33,6 +33,8 @@ class handleJobBlock {
 
         const { blockName } = core.cmdArgs
 
+        core.spinnies.remove('create')
+
         core.blockDetails.jobConfig = await getJobConfig()
         core.blockDetails.language = core.blockDetails.language || 'nodejs'
         core.blockDetails.start = core.blockDetails.start || 'node index.js'
@@ -52,6 +54,8 @@ class handleJobBlock {
         writeFileSync(`${core.blockFolderPath}/.eslintrc.json`, eslintrcString)
         writeFileSync(`${core.blockFolderPath}/.prettierrc.json`, prettierrcString)
         writeFileSync(`${core.blockFolderPath}/.commitlintrc.json`, commitlintRcString)
+
+        core.spinnies.add('create', { text: `creating block` })
       }
     )
   }
