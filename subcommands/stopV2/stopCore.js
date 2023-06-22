@@ -39,6 +39,12 @@ class StopCore {
   async stop() {
     await this.hooks.beforeStop.promise(this)
 
+    const updateConfigData = {
+      pid: null,
+      isOn: false,
+      singleInstance: false,
+      pm2InstanceName: null,
+    }
     let killedPm2Instance
     for (const blockManager of this.blocksToStop) {
       const { pid, pm2InstanceName } = blockManager.liveDetails
@@ -46,22 +52,19 @@ class StopCore {
 
       try {
         if (pm2InstanceName && pm2InstanceName !== killedPm2Instance) {
-          // kill
-          execSync(`pm2 stop ${pm2InstanceName}`)
-          execSync(`pm2 delete ${pm2InstanceName}`)
+          execSync(`pm2 delete ${pm2InstanceName}`, { stdio: ['ignore'] })
           killedPm2Instance = pm2InstanceName
         } else {
           await treeKillSync(pid)
         }
 
-        blockManager.updateLiveConfig({
-          pid: null,
-          isOn: false,
-          singleInstance: false,
-          pm2InstanceName: null,
-        })
+        blockManager.updateLiveConfig(updateConfigData)
       } catch (error) {
-        console.log(`Error stopping ${name} block process with pid `, pid)
+        if (error.message.includes('not found')) {
+          blockManager.updateLiveConfig(updateConfigData)
+        } else {
+          console.log(`Error stopping ${name} block process ${pid ? `with pid ${pid}` : pm2InstanceName || ''}`)
+        }
       }
     }
     console.log(`Blocks stopped successfully!`)
