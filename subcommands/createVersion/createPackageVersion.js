@@ -103,13 +103,14 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   const latestVersion = pkBlockVersion.data?.data?.[0]?.version_number
   if (latestVersion) console.log(`Latest created version is ${latestVersion}`)
 
+  spinnies.stopAll()
   const version =
     cmdOptions.version ||
     (await readInput({
       name: 'version',
       message: 'Enter the package version',
       validate: (ans) => {
-        if (!semver.valid(ans)) return 'Invalid version'
+        if (!semver.valid(ans)) return 'Invalid version! Please use semantic versioning (major.minor.patch)'
         if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
           return `New version should be greater than last published version ${latestVersion}`
         }
@@ -117,6 +118,10 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       },
       default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
     }))
+
+  if (!semver.valid(cmdOptions.version)) {
+    throw new Error('Invalid version! Please use semantic versioning (major.minor.patch)')
+  }
 
   const versionNote =
     cmdOptions.versionNote ||

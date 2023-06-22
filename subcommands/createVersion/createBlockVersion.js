@@ -52,13 +52,14 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   // ========= check language & dependencies support ========================
   await checkLangDepSupport({ force, blockManager, appblockVersionIds, supportedAppblockVersions })
 
+  spinnies.stopAll()
   const version =
     cmdOptions.version ||
     (await readInput({
       name: 'version',
       message: 'Enter the version',
       validate: (ans) => {
-        if (!semver.valid(ans)) return 'Invalid versioning'
+        if (!semver.valid(ans)) return 'Invalid version! Please use semantic versioning (major.minor.patch)'
         if (latestVersion && semver.lt(semver.clean(ans), semver.clean(latestVersion))) {
           return `Last created version is ${latestVersion}`
         }
@@ -66,6 +67,10 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
       },
       default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
     }))
+
+  if (!semver.valid(cmdOptions.version)) {
+    throw new Error('Invalid version! Please use semantic versioning (major.minor.patch)')
+  }
 
   const versionNote =
     cmdOptions.versionNote ||
