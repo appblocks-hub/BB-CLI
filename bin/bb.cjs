@@ -56,6 +56,8 @@ cmd('ls', 'List all running blocks')
 
 cmd('publish', 'Publish block or appblock')
 
+cmd('publish-to-store', 'Publish block to store')
+
 cmd('pull', 'to pull blocks')
 
 cmd('push', 'To commit and push blocks')
