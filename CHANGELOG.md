@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.31.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.30.1...v0.31.0) (2023-06-22)
+
+
+### Features
+
+* bb start with pm2 ([926c326](https://github.com/appblocks-hub/BB-CLI/commit/926c3269394419996610b5280d4aa42ccab42409))
+
+
+### Bug Fixes
+
+* delete pm2 list ([298454d](https://github.com/appblocks-hub/BB-CLI/commit/298454d9ab51385a58c0fe8cb6cbb2b9e8b14ea1))
+* engine check ([79e7924](https://github.com/appblocks-hub/BB-CLI/commit/79e7924549f7ff9ad473d2884c35b5528ce65074))
+* invalid version message issue ([c898b6d](https://github.com/appblocks-hub/BB-CLI/commit/c898b6d926d4c2d4a8523252edf9d0361331359b))
+* pm2 start with pm2.json ([4ab11a0](https://github.com/appblocks-hub/BB-CLI/commit/4ab11a0bd44f9ea86ffb4e505bf7f99a81db49e1))
+* pull with version issues ([a1fa0b6](https://github.com/appblocks-hub/BB-CLI/commit/a1fa0b674a945e4ef669dc864efb4e4374280036))
+* stop issue ([1b7d858](https://github.com/appblocks-hub/BB-CLI/commit/1b7d8581ca1f82a9f5e4a16e14a1bf6f55a63733))
+
 ## [0.30.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.30.0...v0.30.1) (2023-06-19)
 
 
