@@ -81,7 +81,7 @@ const checkEngineSupport = async (packageJson) => {
     const { err, out } = await pExec('npm -v')
     if (err) throw err
     const currentNpmVersion = out.trim()
-    if (!semver.satisfies(currentNpmVersion, engines.node)) {
+    if (!semver.satisfies(currentNpmVersion, engines.npm)) {
       console.log(chalk.dim(`current system npm version: ${currentNpmVersion}`))
       console.log(chalk.red(`bb cli requires npm version to be within the range of ${engines.npm.replace(' ', ' and ')}`))
       process.exit()
