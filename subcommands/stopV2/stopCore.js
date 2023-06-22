@@ -48,6 +48,7 @@ class StopCore {
         if (pm2InstanceName && pm2InstanceName !== killedPm2Instance) {
           // kill
           execSync(`pm2 stop ${pm2InstanceName}`)
+          execSync(`pm2 delete ${pm2InstanceName}`)
           killedPm2Instance = pm2InstanceName
         } else {
           await treeKillSync(pid)
