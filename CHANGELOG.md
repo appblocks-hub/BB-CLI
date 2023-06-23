@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.31.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.0...v0.31.1) (2023-06-23)
+
+
+### Bug Fixes
+
+* copying git issue ([09b5f81](https://github.com/appblocks-hub/BB-CLI/commit/09b5f81581ad3210c5cd227a7e53104982a89190))
+* default branch diff check ([2803f4d](https://github.com/appblocks-hub/BB-CLI/commit/2803f4df5f2661018b648b15c5a6d774e68ca56e))
+* only sync if there is pull while calling from create version ([f669edf](https://github.com/appblocks-hub/BB-CLI/commit/f669edfdcf1f9c0d1fff1329cd94f7d1db56ff4c))
+* shield header fix ([c906218](https://github.com/appblocks-hub/BB-CLI/commit/c90621807b8fc1f680fff1f1aaa5f52ec241e738))
+
 ## [0.31.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.30.1...v0.31.0) (2023-06-22)
 
 
