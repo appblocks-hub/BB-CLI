@@ -12,7 +12,6 @@ const { writeFileSync } = require('fs')
 const { spinnies } = require('../../loader')
 const { appBlockAddVersion } = require('../../utils/api')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
-const { getShieldHeader } = require('../../utils/getHeaders')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { GitManager } = require('../../utils/gitManagerV2')
 const { readInput } = require('../../utils/questionPrompts')
@@ -100,7 +99,7 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
     delete reqBody.appblock_version_ids
   }
 
-  const { data, error } = await post(appBlockAddVersion, reqBody, { headers: getShieldHeader() })
+  const { data, error } = await post(appBlockAddVersion, reqBody)
   if (error) throw error
 
   const versionId = data.data?.id
