@@ -67,7 +67,7 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
       default: latestVersion ? semver.inc(latestVersion, 'patch') : '0.0.1',
     }))
 
-  if (!semver.valid(cmdOptions.version)) {
+  if (!semver.valid(version)) {
     throw new Error('Invalid version! Please use semantic versioning (major.minor.patch)')
   }
 
