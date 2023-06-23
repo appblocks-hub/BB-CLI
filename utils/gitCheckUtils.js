@@ -123,7 +123,9 @@ function isCleanBlock(dir, blockName) {
   if (modifiedFiles.length <= 0) return true
   if (blockName && !modifiedFiles.some((mF) => mF.includes(blockName))) return true
 
-  throw new Error(`${dir} has non-staged changes `)
+  const bName = path.basename(dir)
+  const inPath = path.relative(path.resolve(), dir)
+  throw new Error(`Error: ${bName} has non-staged changes ${inPath ? `in ${inPath}` : ''}. Please run bb push`)
 }
 
 function addTag(dir, tag, msg = ' ') {
