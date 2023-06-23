@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.32.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.2...v0.32.0) (2023-06-23)
+
+
+### Features
+
+* user settable pm2 name ([fa71576](https://github.com/appblocks-hub/BB-CLI/commit/fa71576912b577ddb3f79b1ba6c5e4d279d10746))
+
+
+### Bug Fixes
+
+* repo clean check error message format ([c3deac6](https://github.com/appblocks-hub/BB-CLI/commit/c3deac6a9a52e7183c27baae3d6a2e48c847ee4c))
+
 ## [0.31.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.1...v0.31.2) (2023-06-23)
 
 
