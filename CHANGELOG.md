@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.31.2](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.1...v0.31.2) (2023-06-23)
+
+
+### Bug Fixes
+
+* feedback on successful get ([caf5ce0](https://github.com/appblocks-hub/BB-CLI/commit/caf5ce07e9129cc85da14a075ebc77ba1164f46e))
+* issue with semver check ([6112e1b](https://github.com/appblocks-hub/BB-CLI/commit/6112e1bd3efa452fcbd1a109d93f759eb8215922))
+
 ## [0.31.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.0...v0.31.1) (2023-06-23)
 
 
