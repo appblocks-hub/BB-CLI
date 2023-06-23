@@ -181,7 +181,7 @@ class HandleNodeFunctionStart {
           }
 
           const command = 'pm2'
-          pm2InstanceName = core.cmdArgs.blockName || core.packageConfig.name
+          pm2InstanceName = process.env.BB_PM2_NAME || core.cmdArgs.blockName || core.packageConfig.name
           let args = ['start', 'index.js', '-i', 'max', '--name', pm2InstanceName]
 
           if (existsSync('pm2.json')) {
