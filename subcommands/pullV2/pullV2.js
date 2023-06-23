@@ -37,7 +37,6 @@ async function pull(pullBlock, pullBlockNewName, cmdOptions) {
     await Pull.initializeConfig()
     await Pull.pullTheBlock()
   } catch (error) {
-    console.log(error.response?.data || error)
     logger.error(error)
     spinnies.add('err', { text: error.message })
     spinnies.fail('err', { text: error.message })
