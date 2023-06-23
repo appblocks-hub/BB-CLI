@@ -113,7 +113,10 @@ class HandleBlockPull {
           // await git.checkoutTag(core.blockPullKeys.blockVersion)
         }
 
-        cpSync(copyDir, clonePath, { recursive: true })
+        cpSync(copyDir, clonePath, {
+          recursive: true,
+          filter: (s) => path.basename(s) !== '.git',
+        })
         rmSync(tmpClonePath, { recursive: true })
 
         core.spinnies.succeed('pull', { text: `Block ${core.blockDetails.block_name} cloned successfully` })

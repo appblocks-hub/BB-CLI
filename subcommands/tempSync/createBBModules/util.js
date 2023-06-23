@@ -7,9 +7,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { existsSync, rmSync, readdirSync, statSync } = require('fs')
 const path = require('path')
 const { prompt } = require('inquirer')
+const { execSync } = require('child_process')
+const { existsSync, rmSync, readdirSync, statSync } = require('fs')
 const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 const { getLatestCommits } = require('../syncOrphanBranches/util')
@@ -251,9 +252,7 @@ const promptAndSetSpace = async (Data, configstore) => {
 const getAndSetSpace = async (configstore) => {
   const currentSpaceId = configstore.get('currentSpaceId')
   // console.log('currentSpaceId', currentSpaceId);
-  if (currentSpaceId) {
-    return currentSpaceId
-  }
+  if (currentSpaceId) return currentSpaceId
   const res = await listSpaces()
   // console.log('res', res.data);
   if (res.data.err) {
@@ -269,74 +268,75 @@ const getAndSetSpace = async (configstore) => {
 }
 
 const setVisibilityAndDefaultBranch = async (options) => {
-  const { configstore, repoUrl, headLessConfigStore } = options
+  const { configstore, repoUrl, headLessConfigStore, cwd } = options
 
   let defaultBranch = headLessConfigStore.get('defaultBranch')
   // let repoVisibility = headLessConfigStore().get('repoVisibility')
 
-  if (defaultBranch) {
-    return { defaultBranch }
-  }
+  if (!defaultBranch) {
+    const githubUserName = configstore.get('githubUserName')
+    const repoHttpsUrl = repoUrl.replace('.git', '').split('/')
+    const repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
+    const orgName = repoHttpsUrl[repoHttpsUrl.length - 2]
+    // let defaultBranch
+    // let repoVisibility
 
-  const githubUserName = configstore.get('githubUserName')
-  const repoHttpsUrl = repoUrl.replace('.git', '').split('/')
-  const repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
-  const orgName = repoHttpsUrl[repoHttpsUrl.length - 2]
-  // let defaultBranch
-  // let repoVisibility
-
-  const axiosExistingRepoData = await axios.post(
-    githubGraphQl,
-    {
-      query: isInRepo.Q,
-      variables: {
-        user: githubUserName,
-        reponame: repoName,
-        orgname: orgName,
+    const axiosExistingRepoData = await axios.post(
+      githubGraphQl,
+      {
+        query: isInRepo.Q,
+        variables: {
+          user: githubUserName,
+          reponame: repoName,
+          orgname: orgName,
+        },
       },
-    },
-    { headers: getGitHeader() }
-  )
+      { headers: getGitHeader() }
+    )
 
-  const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
+    const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
 
-  defaultBranch = existingRepoData?.defaultBranchName ?? ''
-  // repoVisibility = existingRepoData?.visibility ?? ''
+    defaultBranch = existingRepoData?.defaultBranchName ?? ''
+    // repoVisibility = existingRepoData?.visibility ?? ''
 
-  // if (repoVisibility.length === 0) {
-  //   console.log('Error getting Repository visibility and main branch from git\n')
+    // if (repoVisibility.length === 0) {
+    //   console.log('Error getting Repository visibility and main branch from git\n')
 
-  //   const inputRepoVisibility = await readInput({
-  //     name: 'inputRepoVisibility',
-  //     type: 'checkbox',
-  //     message: 'Select the repo visibility',
-  //     choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
-  //     validate: (input) => {
-  //       if (!input || input?.length < 1) return `Please enter either public or private`
-  //       return true
-  //     },
-  //   })
+    //   const inputRepoVisibility = await readInput({
+    //     name: 'inputRepoVisibility',
+    //     type: 'checkbox',
+    //     message: 'Select the repo visibility',
+    //     choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
+    //     validate: (input) => {
+    //       if (!input || input?.length < 1) return `Please enter either public or private`
+    //       return true
+    //     },
+    //   })
 
-  //   repoVisibility = inputRepoVisibility
-  // }
+    //   repoVisibility = inputRepoVisibility
+    // }
 
-  // headLessConfigStore().set('repoVisibility', repoVisibility)
+    // headLessConfigStore().set('repoVisibility', repoVisibility)
 
-  if (defaultBranch.length === 0) {
-    console.log('entered repo main branch unavailable\n')
-    const inputRepoMainBranch = await readInput({
-      name: 'inputRepoMainBranch',
-      message: 'Enter the default branch name for the repository',
-      validate: (input) => {
-        if (!input?.length > 0) return `Please enter a non empty branch name`
-        return true
-      },
-    })
+    if (defaultBranch.length === 0) {
+      const inputRepoMainBranch = await readInput({
+        name: 'inputRepoMainBranch',
+        message: 'Enter the default branch name for the repository',
+        validate: (input) => {
+          if (!input?.length > 0) return `Please enter a non empty branch name`
+          return true
+        },
+      })
 
-    defaultBranch = inputRepoMainBranch
+      defaultBranch = inputRepoMainBranch
+    }
+    
+    headLessConfigStore.set('defaultBranch', defaultBranch)
   }
-
-  headLessConfigStore.set('defaultBranch', defaultBranch)
+  //  check origin exist
+  const cmdCheckMain = `git ls-remote --heads --quiet origin ${defaultBranch}`
+  const existBranch = execSync(cmdCheckMain, { cwd }).toString().trim() !== ''
+  if (!existBranch) throw new Error(`Remote ${defaultBranch} branch not found! Please run bb push and try again`)
 
   return { defaultBranch }
 }

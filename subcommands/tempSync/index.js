@@ -8,6 +8,7 @@
 /* eslint-disable no-continue */
 
 const path = require('path')
+const chalk = require('chalk')
 const { existsSync } = require('fs')
 // const { execSync } = require('child_process')
 // const { logFail } = require('../../utils')
@@ -39,7 +40,7 @@ const tempSync = async (blockName, options) => {
 
     const repoUrl = configManager.config.source.https
 
-    if (!repoUrl) throw new Error('No git source found. Please run bb connect-remote and try again')
+    if (!repoUrl) throw new Error('No git source found. Please run bb connect-remote and bb push and try again.')
 
     const parent = await configManager.findMyParentPackage()
 
@@ -47,14 +48,10 @@ const tempSync = async (blockName, options) => {
       throw new Error('Please call sync from the root package block..')
     }
 
-    //  check origin exist
-    // const cmdCheckMain = 'git ls-remote --heads --quiet origin main'
-    // const existBranch = execSync(cmdCheckMain, { cwd: configManager.directory }).toString().trim() !== ''
-    // if (!existBranch) throw new Error('Remote main branch not found! Please run bb push -f and try again')
-
     const { defaultBranch } = await setVisibilityAndDefaultBranch({
       configstore,
       repoUrl,
+      cwd: configManager.directory,
       headLessConfigStore: headLessConfigStore(),
     })
 
@@ -65,7 +62,11 @@ const tempSync = async (blockName, options) => {
       rootConfig: configManager.config,
       bbModulesExists,
       defaultBranch,
+      returnOnError,
     })
+
+    // Return if there are nothing to pull
+    if (bbModulesData.noPullChanges && returnOnError) return
 
     await syncBlocks(
       bbModulesData.blockNameArray,
@@ -87,11 +88,12 @@ const tempSync = async (blockName, options) => {
 
     await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames })
   } catch (error) {
-    // returnOnError to throw error if called from other commands
     spinnies.stopAll()
+    // returnOnError to throw error if called from other commands
     if (returnOnError) {
       throw new Error(`Syncing failed! Please run bb sync and try again `)
     }
+    console.log(chalk.red(error.message))
   }
 }
 

@@ -19,6 +19,7 @@ const tempSync = require('../tempSync')
 const { confirmationPrompt } = require('../../utils/questionPrompts')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
+const { headLessConfigStore } = require('../../configstore')
 
 const createVersion = async (bkName, cmdOptions) => {
   try {
@@ -49,16 +50,16 @@ const createVersion = async (bkName, cmdOptions) => {
 
       const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
       isCleanBlock(manager.directory, isCleanBlockName)
-      
+
       // sync
       spinnies.add('sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
       spinnies.succeed('sync', { text: 'sync is up to date' })
-      console.log();
-      
+      console.log()
+
       if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
       isCleanBlock(orphanBranchFolder)
-      
+
       if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
       isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
 
@@ -66,21 +67,27 @@ const createVersion = async (bkName, cmdOptions) => {
       let aheadChanges = false
       const existBranchRes = execSync(`git ls-remote --heads --quiet origin ${curBranch}`, execOptions)
       const existBranch = existBranchRes.toString().trim() !== ''
+      const defaultBranch = headLessConfigStore().get('defaultBranch')
 
-      if (existBranch && curBranch !== 'main') {
-        // check changes in main branch and current branch
-        const changesExist = execSync(`git log origin/main..origin/${curBranch}`, execOptions).toString().trim() !== ''
+      if (!defaultBranch) {
+        throw new Error(`Error getting default branch. Please run bb sync and try again`)
+      }
+
+      if (existBranch && curBranch !== defaultBranch) {
+        // check changes in defaultBranch branch and current branch
+        const changesExist =
+          execSync(`git log origin/${defaultBranch}..origin/${curBranch}`, execOptions).toString().trim() !== ''
         if (changesExist) aheadChanges = true
       } else if (!existBranch) aheadChanges = true
 
       if (aheadChanges) {
-        console.log(chalk.dim('Your current branch changes are not synced to main'))
+        console.log(chalk.dim(`Your current branch changes are not synced to ${defaultBranch}`))
         if (cmdOptions?.force) {
-          console.log(chalk.dim('Version will be created from main branch code'))
+          console.log(chalk.yellow(`Version will be created from ${defaultBranch} branch code`))
         } else {
           const goAhead = await confirmationPrompt({
             name: 'goAhead',
-            message: 'Create version code will be considered from main branch only. Do you want to continue?',
+            message: `Version will be created from ${defaultBranch} branch code. Do you want to continue?`,
           })
 
           if (!goAhead) return
