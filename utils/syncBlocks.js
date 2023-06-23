@@ -83,7 +83,7 @@ function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap) {
   // Create the directory if it doesn't exist
   if (!existsSync(directoryPath)) {
     mkdirSync(directoryPath, { recursive: true })
-    console.log('sync logs created:', directoryPath)
+    console.log('sync logs created:', path.relative(path.resolve(), directoryPath))
   }
 
   const filePath = path.join(directoryPath, 'logs')

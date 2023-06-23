@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 const path = require('path')
+const chalk = require('chalk')
 
 const { rmdirSync, mkdirSync, existsSync } = require('fs')
 const { GitManager } = require('../../../utils/gitManagerV2')
@@ -12,19 +13,19 @@ const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questio
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
-const { headLessConfigStore } = require('../../../configstore')
+const { headLessConfigStore, configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
 
 const createBBModules = async (options) => {
   try {
-    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch } = options
+    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, returnOnError } = options
 
     const apiPayload = {}
     const blockMetaDataMap = {}
     const blockNameArray = []
 
     const workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
-     const repoUrl = rootConfig.source.ssh
+    const repoUrl = rootConfig.source.ssh
 
     const Git = new GitManager(workspaceDirectoryPath, repoUrl)
     if (!bbModulesExists) {
@@ -35,7 +36,19 @@ const createBBModules = async (options) => {
 
         await Git.clone('.')
 
-        const { gitUserName, gitUserEmail } = await getGitConfigNameEmailFromConfigStore(true, headLessConfigStore())
+        let gitUserName = headLessConfigStore().get('localGitName', '')
+        let gitUserEmail = headLessConfigStore().get('localGitEmail', '')
+
+        if (!gitUserName || !gitUserEmail) {
+          console.log(chalk.dim(`Please enter git username and email`))
+          const gitUser = await getGitConfigNameEmailFromConfigStore(false, configstore)
+          
+          gitUserName = gitUser.gitUserName
+          gitUserEmail = gitUser.gitUserEmail
+
+          headLessConfigStore().set('localGitName', gitUserName)
+          headLessConfigStore().set('localGitEmail', gitUserEmail)
+        }
 
         await checkAndSetGitConfigNameEmail(workspaceDirectoryPath, { gitUserEmail, gitUserName })
 
@@ -57,7 +70,15 @@ const createBBModules = async (options) => {
 
     spinnies.add('Config Manager', { text: 'Initialising config manager' })
 
-    await Git.pullBranch(defaultBranch)
+    const pullResult = await Git.pullBranch(defaultBranch)
+
+    // check if there are any changes in pull
+    const noPullChanges = pullResult.out.includes('Already up to date')
+    if (noPullChanges && returnOnError) {
+      spinnies.remove('Config Manager')
+      return { noPullChanges }
+    }
+
     // building initial package config manager inside bb_modules/workspace directory
     const searchFileData = searchFile(workspaceDirectoryPath, 'block.config.json')
     const { filePath: workSpaceConfigPath, directory: workSpaceConfigDirectoryPath } = searchFileData || {}
@@ -79,7 +100,6 @@ const createBBModules = async (options) => {
 
     await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
 
-
     // await checkAndPushChanges(Git, defaultBranch, workSpaceRemoteName)
     spinnies.succeed('Config Manager', { text: 'Config Manager initialised' })
 
@@ -90,8 +110,9 @@ const createBBModules = async (options) => {
       blockNameArray,
       apiPayload,
       currentSpaceID,
-      rootPackageBlockID:workSpaceConfigManager.config.blockId,
-      rootPackageName :workSpaceConfigManager.config.name
+      rootPackageBlockID: workSpaceConfigManager.config.blockId,
+      rootPackageName: workSpaceConfigManager.config.name,
+      noPullChanges,
     }
   } catch (err) {
     spinnies.add('Config Manager')
