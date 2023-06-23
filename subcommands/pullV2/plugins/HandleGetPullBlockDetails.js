@@ -146,28 +146,34 @@ class HandleGetPullBlockDetails {
 
           const blockVersions = bv.data.data
           const latestVersion = blockVersions?.[0]
-          if (!latestVersion && !force) {
-            const continueWithLatest = await confirmationPrompt({
-              name: 'continueWithLatest',
-              message: `Block version not specified. Do you want to pull the latest code?`,
-            })
-
-            if (!continueWithLatest) throw new Error('Cancelled Pulling block with latest code')
-            return
-          }
-
           const bVersionToPull = core.blockPullKeys.blockVersion
-
           if (bVersionToPull && bVersionToPull !== 'latest') {
-            metaData.version_id = blockVersions.find((v) => v.version_number === bVersionToPull)?.id
+            metaData.version_id = blockVersions?.find((v) => v.version_number === bVersionToPull)?.id
             metaData.version_number = bVersionToPull
-          } else {
-            // get the latest version of parent
+          } else if (bVersionToPull !== 'latest') {
             metaData.version_id = latestVersion?.id
             metaData.version_number = latestVersion?.version_number
           }
 
           core.blockDetails = metaData
+
+          if (metaData.version_id) return
+
+          if (force) {
+            if (bVersionToPull) throw new Error(`Block version ${bVersionToPull} not found`)
+            console.log('Pull the latest code')
+            return
+          }
+
+          let msg = `Block version not specified!`
+          if (bVersionToPull) msg = `Block version ${bVersionToPull} not found!`
+
+          const continueWithLatest = await confirmationPrompt({
+            name: 'continueWithLatest',
+            message: `${msg} Do you want to pull the latest code?`,
+          })
+
+          if (!continueWithLatest) throw new Error('Cancelled Pulling block without version')
         } catch (err) {
           if (err.response?.status === 401 || err.response?.status === 403) {
             throw new Error(`Access denied for block ${core.pullBlockName}`)

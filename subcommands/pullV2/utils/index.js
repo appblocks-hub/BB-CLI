@@ -24,7 +24,10 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName,
   const { data, err } = await readJsonAsync(configPath)
   if (err) throw err
 
-  cpSync(tmpClonePath, blockClonePath, { recursive: true })
+  cpSync(tmpClonePath, blockClonePath, {
+    recursive: true,
+    filter: (s) => path.basename(s) !== '.git',
+  })
   await git.undoCheckout()
 
   const dependencies = Object.entries(data.dependencies ?? {})
@@ -104,7 +107,10 @@ const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, roo
 
     const pk = await configManager.getAnyBlock(blockName)
 
-    cpSync(pk.directory, blockClonePath, { recursive: true })
+    cpSync(pk.directory, blockClonePath, {
+      recursive: true,
+      filter: (s) => path.basename(s) !== '.git',
+    })
     rmSync(tmpClonePath, { recursive: true })
   }
 
