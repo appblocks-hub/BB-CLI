@@ -341,6 +341,8 @@ async function get(blockname) {
       },
     },
   })
+
+  feedback({ message: 'SUCCESS', type: 'success' })
 }
 
 module.exports = get
