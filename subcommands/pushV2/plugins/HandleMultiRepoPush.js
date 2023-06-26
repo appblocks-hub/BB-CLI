@@ -28,11 +28,11 @@ class HandleMultiRepoPush {
         if (core.packageConfig?.repoType !== 'multi') return
 
         const { blockName } = core.cmdArgs
-        const { force } = core.cmdOpts
+        const { all } = core.cmdOpts
         
-        if (!force || blockName) return
+        if (!all || blockName) return
 
-        const memberBlocks = [...(await core.packageManager.getDependencies())]
+        const memberBlocks = await core.packageManager.getAllLevelAnyBlock()
         core.packageManager.gitAddIgnore = `-- ${memberBlocks.map(({ directory }) => `':!${directory}'`).join(' ')}`
 
         core.blocksToPush = [...core.blocksToPush, core.packageManager]

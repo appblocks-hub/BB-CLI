@@ -43,7 +43,7 @@ module.exports = {
 
   mark: 'To mark dependencies & composability.',
 
-  push: 'To push the changes to the repo for a block. With -f flag, it will push all the blocks in a package context.',
+  push: 'To push the changes to the repo for a block. With -all flag, it will push all the blocks in a package context.',
 
   'add-tags': 'To add a tag to a particular block. Tags are needed for discoverability in the block store.',
 

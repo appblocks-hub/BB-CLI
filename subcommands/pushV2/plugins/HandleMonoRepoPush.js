@@ -26,10 +26,10 @@ class HandleMonoRepoPush {
         core
       ) => {
         if (core.packageConfig?.repoType !== 'mono') return
-
         const { blockName } = core.cmdArgs
-        const { force } = core.cmdOpts
-        if (!force || blockName) return
+        const { all } = core.cmdOpts
+
+        if (!all || blockName) return
 
         core.blocksToPush = [core.packageManager]
       }
