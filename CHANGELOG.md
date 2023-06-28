@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.0...v0.32.1) (2023-06-28)
+
+
+### Bug Fixes
+
+* ls showing incorrect url for function ([a2e8f72](https://github.com/appblocks-hub/BB-CLI/commit/a2e8f7238c75b99088a7465640d0b9164d4b243c))
+
 ## [0.32.0](https://github.com/appblocks-hub/BB-CLI/compare/v0.31.2...v0.32.0) (2023-06-23)
 
 
