@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.1...v1.0.0-beta) (2023-06-28)
+
+
+### Miscellaneous Chores
+
+* release 1.0.0-beta ([c5aff3b](https://github.com/appblocks-hub/BB-CLI/commit/c5aff3b8f524e4b386815a66b994d2ed2c56e7b1))
+
 ## [0.32.1](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.0...v0.32.1) (2023-06-28)
 
 
