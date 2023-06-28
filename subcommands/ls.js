@@ -123,7 +123,7 @@ const head = ['Block Name', 'Type', 'PID', 'Port', 'Url', 'Log', 'Status', 'Sync
  */
 const rowGenerate = (isLive, g, synced) => {
   const { red, whiteBright, green } = chalk
-  const { name, type, directory, blockId } = g
+  const { name, type, directory, blockId, liveUrl } = g
   const blockDir = path.relative(path.resolve(), directory)
   if (type === 'package') {
     return [chalk.hex(colorMap.get(blockId)).bold(name), type, '...', '...', '...', '...', '...', synced]
@@ -133,7 +133,7 @@ const rowGenerate = (isLive, g, synced) => {
   let url = `localhost:${g.port}`
 
   if (type === 'shared-fn') url = ''
-  if (type === 'function') url = `localhost:${g.port}/${blockDir}`
+  if (type === 'function') url = liveUrl || `localhost:${g.port}/${blockDir}`
   if (type === 'job') url = `localhost:${g.port}/${blockDir}`
 
   const outPath = path.relative(path.resolve(), g.log.out)

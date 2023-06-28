@@ -41,11 +41,16 @@ class HandleBeforePush {
       ) => {
         const { blockName } = core.cmdArgs
 
-        // eslint-disable-next-line prefer-const
-        let { message, force } = core.cmdOpts
+        let { message, all } = core.cmdOpts
 
-        if (!force && !blockName) {
-          throw new Error(`Please provide a block name or use -f to push all..`)
+        // all will be true for mono repo
+        if (core.packageConfig?.repoType === 'mono') {
+          all = true
+          core.cmdOpts.all = all
+        }
+
+        if (!all && !blockName) {
+          throw new Error(`Please provide a block name or use -all to push all..`)
         }
 
         if (!message) message = await getCommitMessage()

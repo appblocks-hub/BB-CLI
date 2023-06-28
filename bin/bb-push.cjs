@@ -23,7 +23,7 @@ const program = new Command().hook('preAction', async () => {
 
 program
   .argument('[block name]', 'Name of block to push')
-  .option('-f, --force', 'commit and push all blocks')
+  .option('-all, --all', 'commit and push all blocks')
   .option('-m, --message <message>', 'commit message')
   .action(push)
 

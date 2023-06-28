@@ -222,11 +222,15 @@ class HandleNodeFunctionStart {
         }
 
         for (const blockManager of this.fnBlocks) {
+          const relativePath = path.relative(path.resolve(), blockManager.directory)
+          updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
           blockManager.updateLiveConfig(updateConfig)
         }
 
         // update middleware block as live to avoid issues of some blocks are not start
         for (const blockManager of core.middlewareBlockList) {
+          const relativePath = path.relative(path.resolve(), blockManager.directory)
+          updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
           blockManager.updateLiveConfig(updateConfig)
         }
 
