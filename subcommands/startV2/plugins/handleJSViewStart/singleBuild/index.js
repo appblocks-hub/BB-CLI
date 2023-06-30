@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * Copyright (c) Appblocks. and its affiliates.
  *
@@ -77,6 +78,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       }
 
       const updatedEnv = await upsertEnv('view', envUpdateData, env, envPrefixes)
+
+      core.envWarning.keys = core.envWarning.keys.concat(updatedEnv.envWarning.keys)
+      core.envWarning.prefixes = core.envWarning.prefixes.concat(updatedEnv.envWarning.prefixes)
 
       const emEleFolderName = '._ab_em_elements'
       const emEleFolder = path.join(relativePath, emEleFolderName)

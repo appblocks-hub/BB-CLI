@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 const path = require('path')
 const { spawn, execSync } = require('child_process')
@@ -168,8 +169,14 @@ class HandleNodeFunctionStart {
           envPrefixes.push(pEnvPrefix)
         }
 
-        await upsertEnv('function', {}, environment, envPrefixes)
-        await upsertEnv('view', updateEnvValue, environment, envPrefixes)
+        const updatedFnEnv = await upsertEnv('function', {}, environment, envPrefixes)
+        const updatedViewEnv = await upsertEnv('view', updateEnvValue, environment, envPrefixes)
+        core.envWarning.keys = core.envWarning.keys
+          .concat(updatedFnEnv.envWarning.keys)
+          .concat(updatedViewEnv.envWarning.keys)
+        core.envWarning.prefixes = core.envWarning.prefixes
+          .concat(updatedFnEnv.envWarning.prefixes)
+          .concat(updatedViewEnv.envWarning.prefixes)
 
         let child = { pid: 0 }
         let pm2InstanceName

@@ -3,6 +3,7 @@
  */
 
 const path = require('path')
+const chalk = require('chalk')
 const { AsyncSeriesHook } = require('tapable')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
@@ -30,6 +31,10 @@ class StartCore {
     this.cwd = process.cwd()
 
     this.subPackages = {}
+    this.envWarning = {
+      keys: [],
+      prefixes: [],
+    }
 
     /**
      * @type {Logger}
@@ -82,7 +87,20 @@ class StartCore {
     await this.hooks.beforeStart?.promise(this, this.packageManager)
 
     // common core functionality if any
+    if (this.envWarning.keys?.length > 0) {
+      const keys = [...new Set(this.envWarning.keys)]
+      const prefixes = [...new Set(this.envWarning.prefixes)]
 
+      const affectedKeys = chalk.dim(`Environment keys affected: ${keys}`)
+      const egString = chalk.dim(
+        `Example: ${prefixes.map((pre) => `${pre}_${keys[0]} instead of ${keys[0]}`).join(' or ')}.`
+      )
+      const warnMessage = chalk.yellow(
+        `Beginning with the upcoming version,\nbb cli exclusively support environment keys that begin with "BB_<package>"`
+      )
+
+      console.log(`\n${warnMessage}\n\n${egString}\n\n${affectedKeys}`)
+    }
     // beforeCreate hook
     await this.hooks.afterStart?.promise(this, this.packageManager)
   }
