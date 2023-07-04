@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.0.0-beta...v1.0.1-beta) (2023-07-04)
+
+
+### Bug Fixes
+
+* evn warning duplicate issue ([6443927](https://github.com/appblocks-hub/BB-CLI/commit/64439274ad900964d19da66075e6aa6e25cd6d95))
+
 ## [1.0.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.1...v1.0.0-beta) (2023-06-28)
 
 
