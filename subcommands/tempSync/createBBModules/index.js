@@ -15,6 +15,7 @@ const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace }
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
+const { BB_FILES } = require('../../../utils/bbFolders')
 
 const createBBModules = async (options) => {
   try {
@@ -24,7 +25,7 @@ const createBBModules = async (options) => {
     const blockMetaDataMap = {}
     const blockNameArray = []
 
-    const workspaceDirectoryPath = path.join(bbModulesPath, 'workspace')
+    const workspaceDirectoryPath = path.join(bbModulesPath, BB_FILES.WORKSPACE)
     const repoUrl = rootConfig.source.ssh
 
     const Git = new GitManager(workspaceDirectoryPath, repoUrl)

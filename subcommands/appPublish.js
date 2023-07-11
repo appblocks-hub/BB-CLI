@@ -20,6 +20,7 @@ const { getPublishedVersion } = require('./publish/util')
 const { appConfig } = require('../utils/appconfigStore')
 const { createZip, uploadToServer } = require('./upload/util')
 const { logFail } = require('../utils')
+const { getBBFolderPath, BB_FOLDERS } = require('../utils/bbFolders')
 
 const appPublish = async () => {
   deployConfig.init()
@@ -152,6 +153,8 @@ const appPublish = async () => {
     uploadStatus.push({ ...uploadedRes, blockName: bData.blockName })
   }
 
+  const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
+
   try {
     // TODO handle unsuccessful blocks
     if (uploadStatus.some((v) => v.success === false)) {
@@ -179,14 +182,14 @@ const appPublish = async () => {
     const { deploy_id } = uploadedDataRes.data.data
 
     // rm tmp file
-    rm(path.resolve('./.tmp'), { recursive: true }, () => {})
+    rm(bbTempPath, { recursive: true }, () => {})
 
     spinnies.succeed('up', {
       text: `App uploaded successfully. ID : ${deploy_id} `,
     })
   } catch (error) {
     // rm tmp file
-    rm(path.resolve('./.tmp'), { recursive: true }, () => {})
+    rm(bbTempPath, { recursive: true }, () => {})
 
     spinnies.fail('up', { text: 'Error saving upload block' })
   }

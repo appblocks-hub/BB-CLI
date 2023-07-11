@@ -12,6 +12,7 @@ const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { headLessConfigStore } = require('../../../configstore')
+const { BB_EXCLUDE_FILES_FOLDERS } = require('../../../utils/bbFolders')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
@@ -48,7 +49,7 @@ const generateOrphanBranch = async (options) => {
   const orphanRemoteName = 'origin'
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
-  let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs', 'headless-config.json']
+  let exclusions = ['.git', ...BB_EXCLUDE_FILES_FOLDERS]
   const orphanCommitMessage = ''
 
   if (blockConfig.type === 'package') {
@@ -108,7 +109,7 @@ const generateOrphanBranch = async (options) => {
     await Git.checkoutBranch(orphanBranchName)
 
     await Git.pullBranch(orphanBranchName)
-   
+
     // compare code from the existing workspace folder and the orphan branch folder
 
     let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)

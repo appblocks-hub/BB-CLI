@@ -1,5 +1,6 @@
 const { mkdir, writeFile } = require('fs/promises')
 const path = require('path')
+const { BB_FOLDERS } = require('../../../../utils/bbFolders')
 
 const packageJson = () => `
 {
@@ -131,7 +132,7 @@ async function generateEmFolder(emPath, blockList, port, middlewareBlockList) {
   const res = { err: false, data: '' }
   try {
     await mkdir(emPath, { recursive: true })
-    await writeFile(path.join(emPath, '.gitignore'), '._ab_em/*')
+    await writeFile(path.join(emPath, '.gitignore'), BB_FOLDERS.BB)
     await writeFile(path.join(emPath, 'index.js'), emulatorCode(port))
     await writeFile(path.join(emPath, 'package.json'), packageJson())
     await writeFile(path.join(emPath, 'middlewareHandler.js'), generateMiddlewareHandler())

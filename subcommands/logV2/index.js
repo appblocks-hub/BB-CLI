@@ -13,6 +13,7 @@ const { appConfig } = require('../../utils/appconfigStore')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
+const { BB_FILES, generateOutLogPath, generateErrLogPath } = require('../../utils/bbFolders')
 
 const log = async (blockName, { err, out }) => {
   try {
@@ -29,13 +30,13 @@ const log = async (blockName, { err, out }) => {
       throw new Error('Please run the command inside package context ')
     }
 
-    const logOutRoot = path.resolve('logs', 'out')
-    const fnOutLogs = path.join(logOutRoot, 'functions.log')
-    const eleOutLogs = path.join(logOutRoot, 'elements.log')
+    const { ELEMENTS_LOG, FUNCTIONS_LOG } = BB_FILES
 
-    const logErrRoot = path.resolve('logs', 'err')
-    const fnErrLogs = path.join(logErrRoot, 'functions.log')
-    const eleErrLogs = path.join(logErrRoot, 'elements.log')
+    const fnOutLogs = generateOutLogPath(FUNCTIONS_LOG)
+    const fnErrLogs = generateErrLogPath(FUNCTIONS_LOG)
+    
+    const eleOutLogs = generateOutLogPath(ELEMENTS_LOG)
+    const eleErrLogs = generateErrLogPath(ELEMENTS_LOG)
 
     const filesToWatch = []
 

@@ -9,11 +9,8 @@
 
 const { Command } = require('commander')
 const start = require('../subcommands/startV2')
-const { checkLogDirs } = require('../utils/preActionMethods/preAction-start')
 
-const program = new Command().hook('preAction', async () => {
-  checkLogDirs()
-})
+const program = new Command()
 
 program
   .argument('[name]', 'Name of block to start')

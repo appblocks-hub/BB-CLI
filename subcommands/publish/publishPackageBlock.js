@@ -13,6 +13,7 @@ const { publishBlockApi, createSourceCodeSignedUrl } = require('../../utils/api'
 const { post } = require('../../utils/axios')
 const { getLanguageVersionData } = require('../languageVersion/util')
 const { createZip } = require('./util')
+const {  BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
 
 const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => {
   const {
@@ -30,19 +31,7 @@ const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => 
 
   if (repoType === 'multi') {
     spinnies.add('p1', { text: `Uploading new version ${versionData.version_number}` })
-    const ignoresApCreated = [
-      '._ab_em/*',
-      '_bb_modules/*',
-      '._ab_em_elements/*',
-      '.env.function',
-      '.env.view',
-      '.tmp/*',
-      '.deploy/*',
-      '.deploy.config.json/*',
-      'cliruntimelogs/*',
-      'logs/*',
-      'pushlogs/*',
-    ]
+    const ignoresApCreated = BB_EXCLUDE_FILES_FOLDERS
     const gitignorePath = path.join('.', '.gitignore')
     const gitignoreData = readFileSync(gitignorePath).toString()
     const ignoreDependencies = Object.values(dependencies).map((v) => `${v.directory}/`)

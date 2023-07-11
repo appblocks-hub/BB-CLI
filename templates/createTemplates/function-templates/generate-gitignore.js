@@ -1,16 +1,12 @@
 const generateGitIgnore = () => `
 #
-._ab_*
-bb_*
-.deploy
+._bb_*
 .deployed.config.json
 headless-config.json
 
 # Logs
 logs
 *.log
-pushlogs
-cliruntimelogs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -7,12 +7,13 @@
 
 const path = require('path')
 const { prompt } = require('inquirer')
-const {  headLessConfigStore } = require('../configstore')
+const { headLessConfigStore } = require('../configstore')
 const { feedback } = require('./cli-feedback')
 const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
 const ConfigFactory = require('./configManagers/configFactory')
+const { BB_FOLDERS, getBBFolderPath, BB_FILES } = require('./bbFolders')
 
 async function checkSpaceLinkedToPackageBlock(cmd) {
   if (cmd === 'pull') return true
@@ -34,7 +35,8 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
     packageManager = rootManager
 
     // check with synced workspace
-    const workSpaceFolder = path.join(packageManager.directory, 'bb_modules', 'workspace')
+    const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, packageManager.directory)
+    const workSpaceFolder = path.join(bbModulesPath, BB_FILES.WORKSPACE)
 
     const { manager: mc, error: wErr } = await ConfigFactory.create(
       path.join(workSpaceFolder, packageManager.configName)

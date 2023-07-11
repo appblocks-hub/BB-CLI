@@ -7,6 +7,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { transports } = require('winston')
 const { configstore } = require('../configstore')
 const convertGitSshUrlToHttps = require('./convertGitUrl')
@@ -15,12 +16,14 @@ const { GitError } = require('./errors/gitError')
 const { ensureReadMeIsPresent } = require('./fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, gitCommitWithMsg, gitStageAllIn } = require('./gitCheckUtils')
 const { GitManager } = require('./gitmanager')
-const { logger } = require('./logger')
+const { logger } = require('./logger_ARCHIVED')
+const { BB_FOLDERS, getBBFolderPath } = require('./bbFolders')
 
 const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUserName, gitUserEmail }) => {
   try {
     process.send({ failed: false, message: 'Starting to push..' })
-    logger.add(new transports.File({ filename: `./pushlogs/${blockName}.log` }))
+    const pushLogsPath = getBBFolderPath(BB_FOLDERS.PUSH_LOGS)
+    logger.add(new transports.File({ filename: path.join(pushLogsPath, `${blockName}.log`) }))
 
     if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
     // setup GitManager

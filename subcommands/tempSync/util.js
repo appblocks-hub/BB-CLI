@@ -18,8 +18,10 @@ const { getShieldHeader } = require('../../utils/getHeaders')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 const { spinnies } = require('../../loader')
 const { logFail } = require('../../utils')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
-const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
+const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
+const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD)
 const EXCLUDE_IN_ZIP = ['node_modules', '.git'].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')
 
 const uploadToServer = ({ blockType, blockId, appId, blockName, zipFile, version, blockFolder, environmentId }) => {

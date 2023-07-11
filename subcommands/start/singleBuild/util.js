@@ -3,26 +3,19 @@ const { promisify } = require('util')
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
 const { symlink } = require('fs/promises')
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
-const { createFileSync } = require('../../../utils/fileAndFolderHelpers')
+const { existsSync,  readFileSync, writeFileSync } = require('fs')
 const { runBashLongRunning, runBash } = require('../../bash')
 const { checkPnpm } = require('../../../utils/pnpmUtils')
 const { pexec } = require('../../../utils/execPromise')
 const { configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
+const { getBBFolderPath, BB_FOLDERS, generateOutLogPath, generateErrLogPath, BB_FILES } = require('../../../utils/bbFolders')
 
 const emulateElements = async (emEleFolder, port) => {
-  const logOutPath = path.resolve('./logs/out/elements.log')
-  const logErrPath = path.resolve('./logs/err/elements.log')
 
-  if (!existsSync(logErrPath)) {
-    mkdirSync(path.join('./logs', 'err'), { recursive: true })
-    createFileSync(logErrPath, '')
-  }
-  if (!existsSync(logOutPath)) {
-    mkdirSync(path.join('./logs', 'out'), { recursive: true })
-    createFileSync(logOutPath, '')
-  }
+  const { ELEMENTS_LOG } = BB_FILES
+  const logOutPath = generateOutLogPath(ELEMENTS_LOG)
+  const logErrPath = generateErrLogPath(ELEMENTS_LOG)
 
   const child = runBashLongRunning(`npm start -- --port=${port}`, { out: logOutPath, err: logErrPath }, emEleFolder)
 
@@ -35,7 +28,7 @@ const emulateElements = async (emEleFolder, port) => {
 async function stopEmulatedElements(options) {
   const { rootPath = '.', hard } = options
 
-  const emPath = path.join(rootPath, '._ab_em_elements')
+  const emPath = getBBFolderPath(BB_FOLDERS.ELEMENTS_EMULATOR, rootPath)
   const emConfigPath = path.join(emPath, '.emconfig.json')
   if (existsSync(emConfigPath)) {
     const processData = JSON.parse(readFileSync(emConfigPath, 'utf8').toString())

@@ -8,6 +8,7 @@
 const { execSync } = require('child_process')
 const { readdirSync } = require('fs')
 const path = require('path')
+const { BB_FOLDERS } = require('../utils/bbFolders')
 
 const extensionOf = (fname) =>
   // eslint-disable-next-line no-bitwise
@@ -16,7 +17,7 @@ const extensionOf = (fname) =>
 const flush = () => {
   const filesToDelete = readdirSync('.').reduce((acc, curr) => {
     if (extensionOf(curr) === 'log') return acc.concat(path.resolve(curr))
-    if (curr === 'logs') return acc.concat(path.resolve(curr))
+    if (curr === BB_FOLDERS.LOGS) return acc.concat(path.resolve(curr))
     return acc
   }, [])
 

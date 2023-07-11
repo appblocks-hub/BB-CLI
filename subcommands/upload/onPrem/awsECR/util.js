@@ -15,10 +15,12 @@ const { getNodePackageInstaller } = require('../../../../utils/nodePackageManage
 const { readInput } = require('../../../../utils/questionPrompts')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 const { BB_CONFIG_NAME } = require('../../../../utils/constants')
+const { BB_FOLDERS, getBBFolderPath } = require('../../../../utils/bbFolders')
 
 const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   // eslint-disable-next-line no-param-reassign
   if (!version) version = process.version.replace('v', '')
+  const emRelativePath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
 
   const envPath = existsSync(`.env.function.${env}`) ? `.env.function.${env}` : `.env.function`
 
@@ -41,8 +43,10 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
   ENV NODE_ENV production
   
   WORKDIR .
+
+  RUN mkdir ${BB_FOLDERS.BB}
   
-  COPY ._ab_em ./._ab_em/
+  COPY ${emRelativePath} ./${emRelativePath}
   COPY package.json .
   ${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
   COPY ${envPath} .env.function
@@ -59,7 +63,7 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
 
   # USER node
   
-  CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
+  CMD ["pm2-runtime", "${emRelativePath}/index.js", "-i max"]
   
   `
   writeFileSync('./Dockerfile', fileData)
@@ -68,6 +72,7 @@ const generateDockerFile = ({ ports, dependencies, version, env, config }) => {
 const generateRootPackageJsonFile = ({ appName, dependencies }) => {
   // const npmInstallCmd = "npm ci --only=production"
   const nodePackageManager = configstore.get('nodePackageManager')
+  const emRelativePath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
 
   const npmInstallCmd = nodePackageManager === 'pnpm' ? `${nodePackageManager} i` : 'npm i'
   const postinstall = dependencies.map(({ directory }) => `(cd ${directory} && ${npmInstallCmd})`).join(';')
@@ -77,7 +82,7 @@ const generateRootPackageJsonFile = ({ appName, dependencies }) => {
       "name": "${appName}",
       "version": "1.0.0",
       "scripts": {
-        "postinstall": "(cd ._ab_em && ${npmInstallCmd});${postinstall}"
+        "postinstall": "(cd ${emRelativePath} && ${npmInstallCmd});${postinstall}"
       }
   }
       `
@@ -138,6 +143,8 @@ const updateEmulatorPackageSingleBuild = async ({ dependencies, emulatorPath }) 
 }
 
 const generateDockerFileSingleBuild = ({ ports, dependencies, version, env, config }) => {
+  const emRelativePath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
+
   // eslint-disable-next-line no-param-reassign
   if (!version) version = process.version.replace('v', '')
 
@@ -163,12 +170,12 @@ ENV NODE_ENV production
 
 WORKDIR .
 
-COPY ._ab_em ./._ab_em/
+COPY ${emRelativePath} ./${emRelativePath}/
 ${dependencies.map((dep) => `COPY ${dep.directory} ./${dep.directory}/`).join('\n')}
 COPY ${envPath} .env.function
 COPY ${BB_CONFIG_NAME} .
 
-WORKDIR ./._ab_em/
+WORKDIR ./${emRelativePath}/
 ${runPackageManager}
 RUN node setSymlink.js
 WORKDIR ../
@@ -182,7 +189,7 @@ ${beforeDockerStartCommand.map((c) => c).join('\n')}
 
 # USER node
 
-CMD ["pm2-runtime", "._ab_em/index.js", "-i max"]
+CMD ["pm2-runtime", "${emRelativePath}/index.js", "-i max"]
 
 `
   writeFileSync('./Dockerfile', fileData.trim())
@@ -211,19 +218,20 @@ for (const dir of dependenciesDirectories) {
 }
 
 const generateDockerIgnoreFile = (dependencies, config) => {
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
   let fileData = Object.values(dependencies).map((d) => path.join(d.directory, 'node_modules'))
 
   if (config.dockerIgnore?.length > 0) {
     fileData = fileData.concat(config.dockerIgnore)
   }
 
-  fileData.push(`._ab_em/node_modules`)
+  fileData.push(`${emulatorPath}/node_modules`)
 
   writeFileSync('.dockerignore', fileData.join('\n'))
 }
 
 const beSingleBuildDeployment = async ({ container_ports, dependencies, env, config }) => {
-  const emulatorPath = '._ab_em'
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
   await copyEmulatorCode(container_ports, dependencies)
   await setSymlinkCode(dependencies, emulatorPath)
   await updateEmulatorPackageSingleBuild({ dependencies, emulatorPath })
