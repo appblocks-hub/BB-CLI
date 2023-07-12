@@ -1,4 +1,5 @@
 const { existsSync, mkdirSync } = require('fs')
+const { tmpdir } = require('os')
 const path = require('path')
 const { createFileSync } = require('./fileAndFolderHelpers')
 
@@ -32,6 +33,12 @@ const getBBFolderPath = (folderName, root) => {
   return path.resolve(BB_FOLDERS.BB, folderName)
 }
 
+const getSystemTempFolderPath = (folderName) => {
+  const tmpPath = path.resolve(tmpdir(), BB_FOLDERS.BB, folderName)
+  if (!existsSync(tmpPath)) mkdirSync(tmpPath, { recursive: true })
+  return tmpPath
+}
+
 const generateErrLogPath = (fileName, root) => {
   const logsPath = getBBFolderPath(BB_FOLDERS.LOGS, root)
   const errLogPath = path.resolve(logsPath, BB_FOLDERS.ERR, fileName)
@@ -63,4 +70,5 @@ module.exports = {
   BB_EXCLUDE_FILES_FOLDERS,
   generateErrLogPath,
   generateOutLogPath,
+  getSystemTempFolderPath,
 }
