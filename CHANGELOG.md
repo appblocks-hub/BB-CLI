@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.0.0-beta...v1.1.0-beta) (2023-07-12)
+
+
+### Features
+
+* move all appblocks generated folder into single folder ._bb_ ([5d4f747](https://github.com/appblocks-hub/BB-CLI/commit/5d4f74744c9a42992f4f1fd854edd75b5398488a))
+
+
+### Bug Fixes
+
+* evn warning duplicate issue ([6443927](https://github.com/appblocks-hub/BB-CLI/commit/64439274ad900964d19da66075e6aa6e25cd6d95))
+* publish a package block even without having any Member block ([7e665ac](https://github.com/appblocks-hub/BB-CLI/commit/7e665ac4e90df189f62ced3ff87cb4a728193c0f))
+* update appblocks logo ([f6adcdf](https://github.com/appblocks-hub/BB-CLI/commit/f6adcdf191d73001003f542a285ff34d871f4140))
+
 ## [1.0.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.1...v1.0.0-beta) (2023-06-28)
 
 
