@@ -12,7 +12,6 @@ const chalk = require('chalk')
 const { nanoid } = require('nanoid')
 const { existsSync, rm, readFileSync, writeFileSync, rmSync } = require('fs')
 const { blockTypeInverter } = require('../../../utils/blockTypeInverter')
-const convertGitSshUrlToHttps = require('../../../utils/convertGitUrl')
 
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
@@ -29,11 +28,10 @@ class HandleAfterPull {
     const { isOutOfContext, packageManager } = options
     for await (const manager of packageManager.getDependencies()) {
       if (!manager?.config) continue
+
       const newConfig = {
         blockId: nanoid(),
-        source: {
-          branch: `block_${manager.config.name}`,
-        },
+        source: { branch: `block_${manager.config.name}` },
       }
 
       if (!isOutOfContext) {
@@ -104,7 +102,6 @@ class HandleAfterPull {
           }
         } else {
           if (blockDetails.version_number) blockConfig.version = blockDetails.version_number
-          blockConfig.source = { https: convertGitSshUrlToHttps(blockDetails.git_url), ssh: blockDetails.git_url }
           blockConfig.name = blockDetails.block_name
         }
 
@@ -121,7 +118,7 @@ class HandleAfterPull {
           core.packageManager.addBlock(blockConfigPath)
         }
 
-        if (core.blockDetails.block_type === 1) {
+        if (core.blockDetails.block_type === 1 && core.createCustomVariant) {
           const { manager: pkManager, error } = await ConfigFactory.create(blockConfigPath)
           if (error) throw error
           if (!(pkManager instanceof PackageConfigManager)) {
