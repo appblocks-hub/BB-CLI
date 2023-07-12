@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.0-beta...v1.1.1-beta) (2023-07-12)
+
+
+### Bug Fixes
+
+* move command run time logs to system temp folder ([e3115ad](https://github.com/appblocks-hub/BB-CLI/commit/e3115ad9476d6921944ca047f1c77bb37ef3bd7c))
+* public block created as private in repository ([28064eb](https://github.com/appblocks-hub/BB-CLI/commit/28064eb53446e4a4e2ebd14e3ee10d11a1fd0013))
+* pull access issue from diff space with access ([93c923c](https://github.com/appblocks-hub/BB-CLI/commit/93c923c5a5d0100308e4440f2ffd4b60aaf97c6e))
+
 ## [1.1.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.0.0-beta...v1.1.0-beta) (2023-07-12)
 
 
