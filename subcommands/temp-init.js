@@ -8,6 +8,7 @@ const { getBlockName, readInput, setWithTemplate } = require('../utils/questionP
 const setupTemplateV2 = require('./init/setupTemplateV2')
 const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
 const { DEFAULT_REPO_TYPE } = require('../utils/constants')
+const { headLessConfigStore } = require('../configstore')
 
 /**
  * Action for bb-temp-init
@@ -43,7 +44,7 @@ const init = async (packageName) => {
   //     { name: 'Multi Repo', value: 'multi' },
   //   ],
   // })
-  const repoType=DEFAULT_REPO_TYPE
+  const repoType = DEFAULT_REPO_TYPE
 
   const blockVisibility = await readInput({
     type: 'list',
@@ -60,6 +61,8 @@ const init = async (packageName) => {
    */
   const DIR_PATH = path.join(path.resolve(packageName))
   await mkdir(DIR_PATH, { recursive: true })
+
+  headLessConfigStore(DIR_PATH).set('gitVisibility', blockVisibility ? 'PUBLIC' : 'PRIVATE')
 
   /**
    * Write the package config to newly created directory

@@ -9,7 +9,7 @@ const path = require('path')
 const { createLogger, transports, config, format } = require('winston')
 const curlirize = require('./curlirize/main')
 const { axios } = require('./axiosInstances')
-const { BB_FOLDERS, getBBFolderPath } = require('./bbFolders')
+const { BB_FOLDERS,  getSystemTempFolderPath } = require('./bbFolders')
 
 /**
  *
@@ -23,7 +23,7 @@ class Logger {
   constructor(service) {
     this.service = service
 
-    const cliRunTimeLogsPath = getBBFolderPath(BB_FOLDERS.RUN_TIME_LOGS)
+    const cliRunTimeLogsPath = getSystemTempFolderPath(BB_FOLDERS.RUN_TIME_LOGS)
 
     this.logger = createLogger({
       defaultMeta: { service },

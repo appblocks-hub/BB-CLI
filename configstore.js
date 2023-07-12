@@ -72,10 +72,10 @@ const config = new Conf({
 /**
  * @type {Conf}
  */
-const headLessConfig = () => {
+const headLessConfig = (cwd) => {
   const hConfig = new Conf({
     configName: 'headless-config',
-    cwd: path.resolve(),
+    cwd: cwd || path.resolve(),
     schema: headlessSCHEMA,
   })
   return hConfig
