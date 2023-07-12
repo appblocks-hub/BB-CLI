@@ -7,6 +7,7 @@ const { readFile } = require('fs/promises')
 const { readJsonAsync } = require('..')
 const { BB_CONFIG_NAME } = require('../constants')
 const { getBlockDetails } = require('../registryUtils')
+const { getBBFolderPath, BB_FOLDERS } = require('../bbFolders')
 
 class ConfigManager {
   constructor(config, configPath) {
@@ -30,14 +31,16 @@ class ConfigManager {
       path.resolve(this.directory),
       '.block.live.json'
     )
+
+    const logPath = getBBFolderPath(BB_FOLDERS.LOGS)
+    const outLogPath = path.join(logPath, BB_FOLDERS.OUT, `${config.name}.log`)
+    const errLogPath = path.join(logPath, BB_FOLDERS.ERR, `${config.name}.log`)
+
     this.liveDetails = {
       isOn: false,
       port: null,
       pid: null,
-      log: {
-        out: `./logs/out/${config.name}.log`,
-        err: `./logs/err/${config.name}.log`,
-      },
+      log: { out: outLogPath, err: errLogPath },
     }
 
     this.events.on('write', () => this._write.call(this, this.configPath, this.config))

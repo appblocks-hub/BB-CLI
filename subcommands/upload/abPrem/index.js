@@ -8,7 +8,6 @@
 /* eslint-disable no-continue */
 
 const { rm } = require('fs')
-const path = require('path')
 const chalk = require('chalk')
 const { default: axios } = require('axios')
 const { createZip, uploadToServer } = require('../util')
@@ -20,6 +19,7 @@ const { getPublishedVersion } = require('../../publish/util')
 const { logFail } = require('../../../utils')
 const { blockTypes } = require('../../../utils/blockTypes')
 const { getBBConfig } = require('../../../utils/config-manager')
+const { BB_FOLDERS, getBBFolderPath } = require('../../../utils/bbFolders')
 
 const abPremUpload = async ({ blockName, envData, appData, environment, appConfig }) => {
   const preparedForUpload = []
@@ -189,8 +189,10 @@ const abPremUpload = async ({ blockName, envData, appData, environment, appConfi
       data: updateAppData,
     }
 
+  const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
+
     // rm tmp file
-    rm(path.resolve('./.tmp'), { recursive: true }, () => {})
+    rm(bbTempPath, { recursive: true }, () => {})
 
     spinnies.succeed('up', {
       text: `Uploading completed successfully - ${deploy_id}`,

@@ -9,11 +9,9 @@
 const fs = require('fs')
 const fsPromise = require('fs/promises')
 const isRunning = require('is-running')
-const path = require('path')
-// const { readdirSync, readFileSync, existsSync } = require('fs')
-// const { execSync } = require('child_process')
 
 const { runBash } = require('../subcommands/bash')
+const { getBBFolderPath, BB_FOLDERS } = require('./bbFolders')
 
 /**
  *
@@ -22,6 +20,8 @@ const { runBash } = require('../subcommands/bash')
  * @returns
  */
 async function copyEmulatorCode(PORTS, dependencies) {
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
+
   // const blocks = appConfig.dependencies
   const blocksData = Object.values(dependencies).reduce((acc, bl) => {
     acc[bl.meta.name] = { type: bl.meta.type, dir: bl.directory }
@@ -196,37 +196,39 @@ async function copyEmulatorCode(PORTS, dependencies) {
   // console.log(packageJson)
 
   const gitignoreAddEm = `
-  if grep -R "._ab_em" .gitignore
+  if grep -R "${emulatorPath}" .gitignore
 then
     echo "found emulator in gitignore"
 else
-    echo "._ab_em/*" >> .gitignore
+    echo "${emulatorPath}/*" >> .gitignore
 fi
 `
-  await runBash('mkdir -p ._ab_em && cd ._ab_em && touch index.js && touch package.json')
-  fs.writeFileSync('./._ab_em/index.js', emulatorCode)
-  fs.writeFileSync('./._ab_em/package.json', packageJson)
+  await runBash(`mkdir -p ${emulatorPath} && cd ${emulatorPath} && touch index.js && touch package.json`)
+  fs.writeFileSync(`./${emulatorPath}/index.js`, emulatorCode)
+  fs.writeFileSync(`./${emulatorPath}/package.json`, packageJson)
   await runBash(gitignoreAddEm)
 
   return emulatorData
 }
 
 async function getEmulatorProcessData(rootDir) {
-  // console.log(`Getting emulator data from ${rootDir}`)
   const root = rootDir || '.'
-  const emulatorProcessData = JSON.parse(await fsPromise.readFile(`${root}/._ab_em/.emconfig.json`, 'utf8'))
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, root)
+  const emulatorProcessData = JSON.parse(await fsPromise.readFile(`${emulatorPath}/.emconfig.json`, 'utf8'))
   return emulatorProcessData
 }
 
 function addEmulatorProcessData(processData) {
-  fs.writeFileSync('./._ab_em/.emconfig.json', JSON.stringify(processData))
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
+  fs.writeFileSync(`./${emulatorPath}/.emconfig.json`, JSON.stringify(processData))
 }
 
 async function stopEmulator(rootPath, hard) {
+  const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, rootPath)
   // if (localRegistry) {
   //   await Promise.all(
   //     Object.entries(localRegistry).map(async ([k, { rootPath }]) => {
-  //       const emDir = `${rootPath}/._ab_em`
+  //       const emDir = emulatorPath
   //       if (!fs.existsSync(emDir)) return true
 
   //       const processData = await getEmulatorProcessData(rootPath)
@@ -239,13 +241,13 @@ async function stopEmulator(rootPath, hard) {
   //     })
   //   )
   // } else {
-  if (fs.existsSync(path.join(rootPath, '._ab_em'))) {
+  if (fs.existsSync(emulatorPath)) {
     const processData = await getEmulatorProcessData(rootPath)
     if (processData && processData.pid && isRunning(processData.pid)) {
       await runBash(`kill ${processData.pid}`)
     }
 
-    if (hard) await runBash(`rm -rf ${path.join(rootPath, '._ab_em')}`)
+    if (hard) await runBash(`rm -rf ${emulatorPath}`)
     console.log('emulator stopped successfully!')
   }
   // }

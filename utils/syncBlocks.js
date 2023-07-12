@@ -13,6 +13,7 @@ const { axios } = require('./axiosInstances')
 const { blocksSync } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { feedback } = require('./cli-feedback')
+const { getBBFolderPath, BB_FOLDERS } = require('./bbFolders')
 
 /**
  *
@@ -35,8 +36,9 @@ async function syncBlocks(
   root_package_name
 ) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
-  const logOutRoot = path.resolve('logs', 'out')
-  const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
+  const { LOGS, OUT, SYNC_LOGS } = BB_FOLDERS
+  const logsPath = getBBFolderPath(LOGS)
+  const syncLogDirectory = path.join(logsPath, OUT, SYNC_LOGS)
   try {
     const postData = {
       block_meta_data_map,
@@ -86,7 +88,7 @@ function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap) {
     console.log('sync logs created:', path.relative(path.resolve(), directoryPath))
   }
 
-  const filePath = path.join(directoryPath, 'logs')
+  const filePath = path.join(directoryPath, BB_FOLDERS.LOGS)
 
   writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap, null, 2), 'utf8', { flag: 'w' })
 }

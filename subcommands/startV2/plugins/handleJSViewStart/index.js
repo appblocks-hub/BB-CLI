@@ -87,7 +87,6 @@ class HandleJSViewStart {
           // handle env
         }
         const eleReportRaw = await Promise.allSettled(promiseArray)
-        console.log(eleReportRaw)
         handleReportLog(eleReportRaw)
       }
 

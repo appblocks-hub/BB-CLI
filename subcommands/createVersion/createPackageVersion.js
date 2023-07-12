@@ -10,6 +10,7 @@ const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { uploadBlockReadme } = require('./utils')
+const { BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -196,18 +197,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       }
     }
   } else if (repoType === 'multi') {
-    const ignoresApCreated = [
-      '._ab_em/*',
-      '._ab_em_elements/*',
-      '.env.function',
-      '.env.view',
-      '.tmp/*',
-      '.deploy/*',
-      '.deploy.config.json/*',
-      'cliruntimelogs/*',
-      'logs/*',
-      'pushlogs/*',
-    ]
+    const ignoresApCreated = BB_EXCLUDE_FILES_FOLDERS
 
     const gitignorePath = path.join('.', '.gitignore')
     const gitignoreData = existsSync(gitignorePath) ? readFileSync(gitignorePath).toString() : ''

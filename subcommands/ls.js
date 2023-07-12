@@ -12,6 +12,7 @@ const PackageConfigManager = require('../utils/configManagers/packageConfigManag
 const ConfigFactory = require('../utils/configManagers/configFactory')
 const { BB_CONFIG_NAME } = require('../utils/constants')
 const { readJsonAsync } = require('../utils')
+const { getBBFolderPath, BB_FOLDERS } = require('../utils/bbFolders')
 
 const colors = [
   '#FFB6C1',
@@ -229,7 +230,9 @@ const ls = async ({ multi }) => {
   const { rootManager } = await manager.findMyParents()
 
   // try reading the sync logs
-  const { data } = await readJsonAsync(path.join(rootManager.directory, 'logs', 'out', 'sync-logs', 'logs'))
+  const { LOGS, OUT, SYNC_LOGS } = BB_FOLDERS
+  const logsPath = getBBFolderPath(LOGS, rootManager.directory)
+  const { data } = await readJsonAsync(path.join(logsPath, OUT, SYNC_LOGS, LOGS))
   const syncFailList = data?.apiLogs?.non_available_block_names || {}
 
   if (manager instanceof PackageConfigManager) {

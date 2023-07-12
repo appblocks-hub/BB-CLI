@@ -20,6 +20,7 @@ const { confirmationPrompt } = require('../../utils/questionPrompts')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const { headLessConfigStore } = require('../../configstore')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
 const createVersion = async (bkName, cmdOptions) => {
   try {
@@ -45,8 +46,9 @@ const createVersion = async (bkName, cmdOptions) => {
       if (err) throw err
       rootManager = rm
 
-      orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
-      workSpaceFolder = path.join(rootManager.directory, 'bb_modules', 'workspace')
+      const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
+      orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
+      workSpaceFolder = path.join(bbModulesPath, BB_FILES.WORKSPACE)
 
       const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
       isCleanBlock(manager.directory, isCleanBlockName)

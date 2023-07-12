@@ -15,6 +15,7 @@ const generateElementsEmulator = require('./generateElementsEmulator')
 const { mergeDatas } = require('./mergeDatas')
 const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
 const { upsertEnv } = require('../../../../../utils/envManager')
+const { BB_FOLDERS, getBBFolderPath } = require('../../../../../utils/bbFolders')
 
 const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
   const relativePath = path.resolve()
@@ -82,8 +83,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       core.envWarning.keys = core.envWarning.keys.concat(updatedEnv.envWarning.keys)
       core.envWarning.prefixes = core.envWarning.prefixes.concat(updatedEnv.envWarning.prefixes)
 
-      const emEleFolderName = '._ab_em_elements'
-      const emEleFolder = path.join(relativePath, emEleFolderName)
+      const emEleFolder = getBBFolderPath(BB_FOLDERS.ELEMENTS_EMULATOR, relativePath)
 
       core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
       await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })

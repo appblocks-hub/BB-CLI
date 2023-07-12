@@ -3,10 +3,10 @@ const path = require('path')
 const chalk = require('chalk')
 const readline = require('readline')
 const { Stream } = require('stream')
-const { createReadStream, watchFile, existsSync, mkdirSync } = require('fs')
+const { createReadStream, watchFile } = require('fs')
 const { runBash, runBashLongRunning } = require('../../../bash')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
-const { createFileSync } = require('../../../../utils/fileAndFolderHelpers')
+const { generateOutLogPath, generateErrLogPath } = require('../../../../utils/bbFolders')
 
 /**
  * @typedef watchCompilationReport
@@ -91,17 +91,8 @@ async function startJsProgram(core, blockManager, port) {
   const { name } = blockManager.config
   core.spinnies.add(name, { text: `Starting ${name}` })
 
-  const logOutPath = path.join('logs', 'out', `${name}.log`)
-  const logErrPath = path.join('logs', 'err', `${name}.log`)
-
-  if (!existsSync(path.dirname(logErrPath))) {
-    mkdirSync(path.join('logs', 'err'), { recursive: true })
-    createFileSync(logErrPath, '')
-  }
-  if (!existsSync(path.dirname(logOutPath))) {
-    mkdirSync(path.join('logs', 'out'), { recursive: true })
-    createFileSync(logOutPath, '')
-  }
+  const logOutPath = generateOutLogPath(`${name}.log`)
+  const logErrPath = generateErrLogPath(`${name}.log`)
 
   blockManager.log = { err: logErrPath, out: logOutPath }
 

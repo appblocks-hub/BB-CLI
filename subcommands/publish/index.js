@@ -18,6 +18,7 @@ const { GitManager } = require('../../utils/gitManagerV2')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { getBlockVersions, createZip } = require('./util')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
+const { getBBFolderPath, BB_FOLDERS } = require('../../utils/bbFolders')
 
 const publish = async (bkName, cmdOptions) => {
   const configPath = path.resolve(BB_CONFIG_NAME)
@@ -43,7 +44,8 @@ const publish = async (bkName, cmdOptions) => {
       if (err) throw err
       rootManager = rm
 
-      orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
+      const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
+      orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
 
       let bManger
       if (blockName === rootManager.config.name) {
@@ -80,7 +82,7 @@ const publish = async (bkName, cmdOptions) => {
       } catch (e) {
         if (isCheckOut) await Git.undoCheckout()
         if (e.type === 'CREATE_ZIP') throw e
-        console.log(`Error checkout to ${checkOutVersion} in bb_modules/block_${blockName}`)
+        console.log(`Error checkout to ${checkOutVersion} in ${orphanBranchFolder}`)
         throw new Error(`Please run bb sync and try again`)
       }
     } else if (manager.config.repoType === 'multi') {

@@ -22,6 +22,7 @@ const { setVisibilityAndDefaultBranch } = require('./createBBModules/util')
 const { spinnies } = require('../../loader')
 const syncBlocks = require('../../utils/syncBlocks')
 const { Logger } = require('../../utils/loggerV2')
+const { BB_FOLDERS, getBBFolderPath } = require('../../utils/bbFolders')
 // eslint-disable-next-line prefer-const
 let syncLogs = {}
 
@@ -31,7 +32,7 @@ const tempSync = async (blockName, options) => {
   const { returnOnError } = options || {}
   try {
     const rootConfigPath = path.resolve('block.config.json')
-    const bbModulesPath = path.resolve('bb_modules')
+    const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES)
     const { manager: configManager, error } = await ConfigFactory.create(rootConfigPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error

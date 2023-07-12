@@ -12,6 +12,7 @@ const generateElementsEmulator = require('./generateElementsEmulator')
 const { mergeDatas } = require('./mergeDatas')
 const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
 const { spinnies } = require('../../../loader')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES, generateOutLogPath, generateErrLogPath } = require('../../../utils/bbFolders')
 
 const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
   const relativePath = path.resolve()
@@ -30,8 +31,7 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
     const emElPort = ports?.emElements[0] || 4200
     const containerPort = ports?.container[0] || 3000
 
-    const emEleFolderName = '._ab_em_elements'
-    const emEleFolder = path.join(relativePath, emEleFolderName)
+    const emEleFolder = getBBFolderPath(BB_FOLDERS.ELEMENTS_EMULATOR, relativePath)
 
     spinnies.update('singleBuild', { text: `Generating elements emulator` })
     await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
@@ -58,6 +58,9 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
 
     spinnies.update('singleBuild', { text: `Starting elements emulator` })
     const emData = await emulateElements(emEleFolder, emElPort)
+    const { ELEMENTS_LOG } = BB_FILES
+    const outLogPath = generateOutLogPath(ELEMENTS_LOG)
+    const errLogPath = generateErrLogPath(ELEMENTS_LOG)
 
     if (emData.exitCode === null) {
       elementBlocks.forEach((bk) => {
@@ -70,8 +73,8 @@ const singleBuild = async ({ appConfig, ports, buildOnly = false, env }) => {
           singleBuild: true,
           port: emElPort || null,
           log: {
-            out: `./logs/out/elements.log`,
-            err: `./logs/err/elements.log`,
+            out: outLogPath,
+            err: errLogPath,
           },
         }
       })
