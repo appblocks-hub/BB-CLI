@@ -87,6 +87,8 @@ class PullCore {
         }
       }
 
+      if (error.message.includes('already exist')) throw error
+
       if (this.blockClonePath && existsSync(this.blockClonePath)) {
         rmSync(this.blockClonePath, { recursive: true, force: true })
       }

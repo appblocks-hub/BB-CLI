@@ -64,7 +64,7 @@ class HandleBeforePull {
         } else if (!core.isOutOfContext) {
           core.createCustomVariant = true
         } else if (!force && variant == null) {
-          await wantToCreateNewVersion(blockDetails.block_name)
+          core.createCustomVariant = await wantToCreateNewVersion(blockDetails.block_name)
         }
 
         if (!core.blockDetails.version_id && core.createCustomVariant) {
@@ -91,6 +91,7 @@ class HandleBeforePull {
         } else if (existsSync(clonePath)) {
           blockExistMsg = `Folder ${checkBlockName} already exists`
         }
+      
         if (!blockExistMsg) return
 
         if (core.createCustomVariant) {
@@ -103,6 +104,7 @@ class HandleBeforePull {
           }
 
           core.blockDetails.new_variant_block_name = await getBlockName()
+          core.blockClonePath = path.join(core.cwd, core.blockDetails.new_variant_block_name)
         } else {
           throw new Error(blockExistMsg)
         }
