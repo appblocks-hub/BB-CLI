@@ -10,7 +10,7 @@
 const path = require('path')
 const { transports } = require('winston')
 const { configstore } = require('../configstore')
-const convertGitSshUrlToHttps = require('./convertGitUrl')
+const convertGitUrl = require('./convertGitUrl')
 const { BlockPushError } = require('./errors/blockPushError')
 const { GitError } = require('./errors/gitError')
 const { ensureReadMeIsPresent } = require('./fileAndFolderHelpers')
@@ -28,7 +28,7 @@ const start = async ({ blockName, blockPath, blockSource, commitMessage, gitUser
     if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
     // setup GitManager
     const prefersSsh = configstore.get('prefersSsh')
-    const repoUrl = prefersSsh ? blockSource.ssh : convertGitSshUrlToHttps(blockSource.ssh)
+    const repoUrl = convertGitUrl(blockSource.ssh, prefersSsh ? 'ssh' : 'https')
     const Git = new GitManager(blockPath, blockName, repoUrl, prefersSsh)
 
     // ------------------------------------------ //

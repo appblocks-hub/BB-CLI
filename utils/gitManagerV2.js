@@ -9,6 +9,7 @@ const path = require('path')
 const { pExec } = require('.')
 const { configstore } = require('../configstore')
 const { GitError } = require('./errors/gitError')
+const convertGitUrl = require('./convertGitUrl')
 
 /**
  * @typedef pExecResolveObject
@@ -28,8 +29,8 @@ class GitManager {
     this.ssh = configstore.get('prefersSsh')
     this.username = configstore.get('githubUserName')
     this.token = configstore.get('gitPersonalAccessToken')
-    this.sshUrl = sshUrl
-    this._createRemote(sshUrl)
+    this.sshUrl = convertGitUrl(sshUrl, 'ssh')
+    this._createRemote(this.sshUrl)
   }
 
   /**
