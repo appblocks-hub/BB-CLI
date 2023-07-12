@@ -36,7 +36,7 @@ const tempSync = async (blockName, options) => {
     const { manager: configManager, error } = await ConfigFactory.create(rootConfigPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
-      throw new Error('Cannot run bb command outside of bb context')
+      throw new Error('Please run the command inside root package context ')
     }
 
     const repoUrl = configManager.config.source.https

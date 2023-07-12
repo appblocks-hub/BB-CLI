@@ -105,7 +105,7 @@ class AppblockConfigManager {
        * TODO: Find a way to get package block name here, if calling from inside a block,
        * and let user run from inside a block.
        */
-      console.log('Cannot run from inside a block. Move up to a package block context and re-run')
+      console.log('Please run the command inside package context ')
       process.exit(1)
     }
     const pckname = this.getName()
