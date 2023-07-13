@@ -9,7 +9,7 @@ const { existsSync } = require('fs')
 const { writeFile } = require('fs/promises')
 const { createRepo } = require('../../utils/createRepoV2')
 // const { confirmationPrompt } = require('../../utils/questionPrompts')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
+const convertGitUrl = require('../../utils/convertGitUrl')
 const { spinnies } = require('../../loader')
 const { tryGitInit, isInGitRepository, checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
 const { generateGitIgnore } = require('../../templates/createTemplates/function-templates')
@@ -60,8 +60,8 @@ const connectRemote = async (cmdOptions) => {
 
     const source = {
       ...manager.config.source,
-      ssh: sourceUrl.trim(),
-      https: convertGitSshUrlToHttps(sourceUrl.trim()),
+      ssh: convertGitUrl(sourceUrl, 'ssh'),
+      https: convertGitUrl(sourceUrl),
     }
 
     const Git = new GitManager(manager.directory, source.ssh)

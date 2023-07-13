@@ -4,7 +4,7 @@ const path = require('path')
 
 const { configstore } = require('../../configstore')
 const { spinnies } = require('../../loader')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
+const convertGitUrl = require('../../utils/convertGitUrl')
 const { createDirForType } = require('../../utils/fileAndFolderHelpers')
 const { confirmationPrompt, readInput } = require('../../utils/questionPrompts')
 const { pullSourceCodeFromAppblock } = require('./sourceCodeUtil')
@@ -208,7 +208,7 @@ async function purchasedPull(options) {
   }
   blockConfig.name = blockFinalName
   blockConfig.blockId = metaData.block_id
-  blockConfig.source = { https: convertGitSshUrlToHttps(sshUrl), ssh: sshUrl }
+  blockConfig.source = { https: convertGitUrl(sshUrl), ssh: convertGitUrl(sshUrl, 'ssh') }
   writeFileSync(blockConfigPath, JSON.stringify(blockConfig, null, 2))
 
   spinnies.add('pab', { text: 'updating repository' })

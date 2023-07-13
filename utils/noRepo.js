@@ -1,5 +1,5 @@
 const { feedback } = require('./cli-feedback')
-const convertGitSshUrlToHttps = require('./convertGitUrl')
+const convertGitUrl = require('./convertGitUrl')
 const { sourceUrlOptions, readInput } = require('./questionPrompts')
 
 /**
@@ -12,7 +12,7 @@ async function getRepoUrl() {
   const o = await sourceUrlOptions()
   if (o === 1) {
     const s = await readInput({ message: 'Enter source ssh url here', name: 'sUrl' })
-    return { ssh: s.trim(), https: convertGitSshUrlToHttps(s.trim()) }
+    return { ssh: convertGitUrl(s, 'ssh'), https: convertGitUrl(s) }
   }
   if (o === 0) {
     feedback({ type: 'error', message: 'Cannot continue without a repo url' })

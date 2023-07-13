@@ -6,13 +6,24 @@
  */
 
 /**
- * Converts git@github.com:<username>/<repo-name>.git ->
- * https://github.com/<username>/<repo-name>.git
- * @param {String} url Git SSH url
- * @returns {String} Https git url
+ * Converts git@github.com:<username>/<repo-name>.git
+ * <-> https://github.com/<username>/<repo-name>.git
+ * @param {String} url Git url
+ * @param {String} type  (ssh, https) default https
+ * @returns {String} https git url by default, if ssh is passed then shh git url
  */
-function convertGitSshUrlToHttps(url) {
-  return `https://github.com/${url.split(':')[1]}`
+function convertGitUrl(url, type) {
+  
+  const httpsPrefix = 'https://github.com/'
+  const sshPrefix = 'git@github.com:'
+
+  if (type === 'ssh') {
+    if (url.includes('git@')) return url
+    return url.trim().replace(httpsPrefix, sshPrefix)
+  }
+
+  if (url.includes('https')) return url
+  return url.trim().replace(sshPrefix, httpsPrefix)
 }
 
-module.exports = convertGitSshUrlToHttps
+module.exports = convertGitUrl

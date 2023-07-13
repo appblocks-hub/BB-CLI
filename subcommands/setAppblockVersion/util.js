@@ -18,7 +18,7 @@ const checkIsAllBlockSupportDependencies = async (blocks, supportedAppblockVersi
       // Commented since not adding support for existing versions for now
       // if (version) {
       //   const prefersSsh = configstore.get('prefersSsh')
-      //   const originUrl = prefersSsh ? source.ssh : convertGitSshUrlToHttps(source.ssh)
+      //   const originUrl = convertGitUrl(source.ssh, prefersSsh ? 'ssh' : 'https')
       //   const Git = new GitManager(path.resolve(), directory, originUrl, prefersSsh)
       //   Git.cd(directory)
       //   await Git.fetch('--all --tags')

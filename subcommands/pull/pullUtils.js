@@ -12,7 +12,7 @@ const { spinnies } = require('../../loader')
 const { isValidBlockName } = require('../../utils/blocknameValidator')
 const checkBlockNameAvailability = require('../../utils/checkBlockNameAvailability')
 const { feedback } = require('../../utils/cli-feedback')
-const convertGitSshUrlToHttps = require('../../utils/convertGitUrl')
+const convertGitUrl = require('../../utils/convertGitUrl')
 const createBlock = require('../../utils/createBlock')
 const { createDirForType } = require('../../utils/fileAndFolderHelpers')
 const { GitManager } = require('../../utils/gitmanager')
@@ -199,7 +199,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
       const localDirName = `${metaData.BlockName}`
 
       const prefersSsh = configstore.get('prefersSsh')
-      const originUrl = prefersSsh ? metaData.GitUrl : convertGitSshUrlToHttps(metaData.GitUrl)
+      const originUrl = convertGitUrl(metaData.GitUrl, prefersSsh ? 'ssh' : 'https')
       const Git = new GitManager(path.resolve(), localDirName, originUrl, prefersSsh)
 
       await Git.clone(path.resolve(clonePath, localDirName))
@@ -236,7 +236,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
         }
       }
       blockConfig.name = metaData.BlockName
-      blockConfig.source = { https: convertGitSshUrlToHttps(metaData.GitUrl), ssh: metaData.GitUrl }
+      blockConfig.source = { https: convertGitUrl(metaData.GitUrl), ssh: convertGitUrl(metaData.GitUrl, 'ssh') }
       writeFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
 
       console.log(chalk.dim('Succesfully updated block config..'))
