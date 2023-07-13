@@ -230,9 +230,9 @@ const ls = async ({ multi }) => {
   const { rootManager } = await manager.findMyParents()
 
   // try reading the sync logs
-  const { LOGS, OUT, SYNC_LOGS } = BB_FOLDERS
-  const logsPath = getBBFolderPath(LOGS, rootManager.directory)
-  const { data } = await readJsonAsync(path.join(logsPath, OUT, SYNC_LOGS, LOGS))
+  const { LOGS, SYNC_LOGS } = BB_FOLDERS
+  const logsPath = getBBFolderPath(SYNC_LOGS, rootManager.directory)
+  const { data } = await readJsonAsync(path.join(logsPath, LOGS))
   const syncFailList = data?.apiLogs?.non_available_block_names || {}
 
   if (manager instanceof PackageConfigManager) {

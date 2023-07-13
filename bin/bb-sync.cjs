@@ -26,8 +26,9 @@ const program = new Command().hook('preAction', async (_, actionCommand) => {
   await checkAndSetGitConnectionPreference()
 })
 
-program.action(tempSync)
+program
+  .action(tempSync)
+  .argument('[name]', 'Name of block to sync')
+  .option('-cc, --clear-cache ', 'Clear sync bb_modules')
 
 program.parse(process.argv)
-
-

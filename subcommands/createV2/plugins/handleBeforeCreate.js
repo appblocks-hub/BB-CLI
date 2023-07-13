@@ -32,7 +32,7 @@ class handleBeforeCreate {
         if (err) throw err
 
         const allExistingBlocks = await rootManager.getAllLevelAnyBlock()
-        const allExistingBlockNames = allExistingBlocks.map((m) => m.config?.name)
+        const allExistingBlockNames = allExistingBlocks.map((m) => m?.config?.name)
         if (allExistingBlockNames.includes(blockName)) {
           throw new Error('Block name already exist')
         }

@@ -59,10 +59,10 @@ const createVersion = async (bkName, cmdOptions) => {
       spinnies.succeed('sync', { text: 'sync is up to date' })
       console.log()
 
-      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
+      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}. Please run bb sync and try again`)
       isCleanBlock(orphanBranchFolder)
 
-      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
+      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace. Please run bb sync and try again`)
       isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
 
       const execOptions = { cwd: manager.directory }

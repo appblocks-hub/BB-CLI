@@ -9,9 +9,7 @@
 
 const path = require('path')
 const chalk = require('chalk')
-const { existsSync } = require('fs')
-// const { execSync } = require('child_process')
-// const { logFail } = require('../../utils')
+const { existsSync, rmSync } = require('fs')
 const createBBModules = require('./createBBModules')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
@@ -29,10 +27,17 @@ let syncLogs = {}
 const tempSync = async (blockName, options) => {
   const { logger } = new Logger('sync')
   logger.info('Sync started')
-  const { returnOnError } = options || {}
+  const { returnOnError, clearCache } = options || {}
+
   try {
     const rootConfigPath = path.resolve('block.config.json')
     const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES)
+
+    // clear bb modules if clearCache is true
+    if (clearCache && existsSync(bbModulesPath)) {
+      rmSync(bbModulesPath, { recursive: true })
+    }
+
     const { manager: configManager, error } = await ConfigFactory.create(rootConfigPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
@@ -78,23 +83,31 @@ const tempSync = async (blockName, options) => {
       bbModulesData.rootPackageBlockID,
       bbModulesData.rootPackageName
     )
+
     if (syncLogs?.apiLogs?.error) {
-      console.log('Appblocks sync failed')
-      throw new Error('')
-    }
-    const nonAvailableBlockNames = syncLogs?.apiLogs?.non_available_block_names ?? {}
-    if (Object.keys(nonAvailableBlockNames).length > 0) {
-      console.log(`Appblocks sync failed for ${Object.keys(nonAvailableBlockNames).join(',')}`)
+      throw new Error(
+        `${syncLogs?.apiLogs?.message}\n${chalk.gray(
+          `Please check ${BB_FOLDERS.BB}/${BB_FOLDERS.SYNC_LOGS} for more details`
+        )}`
+      )
     }
 
-    await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames })
+    const nonAvailableBlockNames = syncLogs?.apiLogs?.non_available_block_names ?? {}
+    const errors = await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames })
+
+    if (errors.length > 0) {
+      throw new Error(chalk.gray(`Malformed bb_modules found. Please run bb sync --clear-cache`))
+    }
   } catch (error) {
     spinnies.stopAll()
-    // returnOnError to throw error if called from other commands
+
     if (returnOnError) {
+      // returnOnError to throw error if called from other commands
       throw new Error(`Syncing failed! Please run bb sync and try again `)
     }
-    console.log(chalk.red(error.message))
+
+    spinnies.add('sync')
+    spinnies.fail('sync', { text: chalk.red(error.message) })
   }
 }
 
