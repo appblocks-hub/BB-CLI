@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.1-beta...v1.1.2-beta) (2023-07-13)
+
+
+### Bug Fixes
+
+* git url http ssh convertion issue ([04dcdd6](https://github.com/appblocks-hub/BB-CLI/commit/04dcdd6b6cc4fbe2662e25d40920d23f3a7b0be7))
+* sync error format ([da14308](https://github.com/appblocks-hub/BB-CLI/commit/da14308b90393a9e5c4bac23a6bfc9e145e12018))
+
 ## [1.1.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.0-beta...v1.1.1-beta) (2023-07-12)
 
 
