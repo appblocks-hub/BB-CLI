@@ -54,9 +54,9 @@ const createVersion = async (bkName, cmdOptions) => {
       isCleanBlock(manager.directory, isCleanBlockName)
 
       // sync
-      spinnies.add('sync', { text: 'Checking sync status' })
+      spinnies.add('cv_sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
-      spinnies.succeed('sync', { text: 'sync is up to date' })
+      spinnies.succeed('cv_sync', { text: 'sync is up to date' })
       console.log()
 
       if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}. Please run bb sync and try again`)
