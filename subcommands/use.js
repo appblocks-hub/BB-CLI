@@ -31,13 +31,10 @@ const promptAndSetSpace = async (Data, isOutOfContext) => {
     spaceSelect: { name, id },
   } = await prompt(question)
 
-  if (isOutOfContext) {
-    configstore.set('currentSpaceName', name)
-    configstore.set('currentSpaceId', id)
-  } else {
-    headLessConfigStore().set('currentSpaceName', name)
-    headLessConfigStore().set('currentSpaceId', id)
-  }
+  configstore.set('currentSpaceName', name)
+  configstore.set('currentSpaceId', id)
+  headLessConfigStore(null, isOutOfContext).set('currentSpaceName', name)
+  headLessConfigStore(null, isOutOfContext).set('currentSpaceId', id)
 
   feedback({ type: 'success', message: `${name} set` })
 }
@@ -48,7 +45,8 @@ const promptAndSetSpace = async (Data, isOutOfContext) => {
  */
 const use = async (spaceName) => {
   // check space is linked with block
-  const currentSpaceName = headLessConfigStore().get('currentSpaceName')
+  const currentSpaceName =
+    headLessConfigStore(null, true).get('currentSpaceName') || configstore.get('currentSpaceName')
   let isOutOfContext = false
 
   const configPath = path.resolve(BB_CONFIG_NAME)
@@ -88,13 +86,10 @@ const use = async (spaceName) => {
       feedback({ type: 'error', message: `${spaceName} doesn't exist` })
       await promptAndSetSpace(Data, isOutOfContext)
     } else {
-      if (isOutOfContext) {
-        configstore.set('currentSpaceName', spaceDetails.spaceName)
-        configstore.set('currentSpaceId', spaceDetails.space_id)
-      } else {
-        headLessConfigStore().set('currentSpaceName', spaceDetails.spaceName)
-        headLessConfigStore().set('currentSpaceId', spaceDetails.space_id)
-      }
+      configstore.set('currentSpaceName', spaceDetails.spaceName)
+      configstore.set('currentSpaceId', spaceDetails.space_id)
+      headLessConfigStore(null, isOutOfContext).set('currentSpaceName', spaceDetails.spaceName)
+      headLessConfigStore(null, isOutOfContext).set('currentSpaceId', spaceDetails.space_id)
       feedback({ type: 'success', message: `${spaceName} set` })
     }
   } catch (err) {

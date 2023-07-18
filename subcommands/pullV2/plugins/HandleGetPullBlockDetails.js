@@ -178,7 +178,8 @@ class HandleGetPullBlockDetails {
           if (!continueWithLatest) throw new Error('Cancelled Pulling block without version')
         } catch (err) {
           if (err.response?.status === 401 || err.response?.status === 403) {
-            throw new Error(`Access denied for block ${core.pullBlockName}`)
+            const eMsg = err.response.data.msg || `Access denied for block`
+            throw new Error(`${eMsg} ${core.pullBlockName}`)
           }
           throw err
         }

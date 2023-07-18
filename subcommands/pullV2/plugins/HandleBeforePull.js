@@ -14,6 +14,7 @@ const { confirmationPrompt, wantToCreateNewVersion, getBlockName } = require('..
 const { getAllAppblockVersions } = require('../../publish/util')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
+const { headLessConfigStore, configstore } = require('../../../configstore')
 
 class HandleBeforePull {
   /**
@@ -58,10 +59,15 @@ class HandleBeforePull {
         const { block_visibility: blockVisibility, is_purchased_variant: isPurchasedVariant } = blockDetails
         core.createCustomVariant = variant ?? false
 
+        const currentSpaceId =
+          headLessConfigStore(null, true).get('currentSpaceId', '') || configstore.get('currentSpaceId', '')
+
         if (isPurchasedVariant) {
           // set variant true if block is temp block
           core.createCustomVariant = blockVisibility === 5
         } else if (!core.isOutOfContext) {
+          core.createCustomVariant = true
+        } else if (currentSpaceId !== core.blockDetails.space_id) {
           core.createCustomVariant = true
         } else if (!force && variant == null) {
           core.createCustomVariant = await wantToCreateNewVersion(blockDetails.block_name)
@@ -91,7 +97,7 @@ class HandleBeforePull {
         } else if (existsSync(clonePath)) {
           blockExistMsg = `Folder ${checkBlockName} already exists`
         }
-      
+
         if (!blockExistMsg) return
 
         if (core.createCustomVariant) {
@@ -106,6 +112,7 @@ class HandleBeforePull {
           core.blockDetails.new_variant_block_name = await getBlockName()
           core.blockClonePath = path.join(core.cwd, core.blockDetails.new_variant_block_name)
         } else {
+          console.log(chalk.dim(`Create as custom variant to pull with different name`))
           throw new Error(blockExistMsg)
         }
       }

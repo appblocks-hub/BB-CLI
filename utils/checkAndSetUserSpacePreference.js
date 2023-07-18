@@ -36,8 +36,8 @@ const chooseSpace = async () => {
   const {
     spaceSelect: { name, id },
   } = await prompt(question)
-  headLessConfigStore().set('currentSpaceName', name)
-  headLessConfigStore().set('currentSpaceId', id)
+  headLessConfigStore(null, true).set('currentSpaceName', name)
+  headLessConfigStore(null, true).set('currentSpaceId', id)
 
   configstore.set('currentSpaceName', name)
   configstore.set('currentSpaceId', id)
@@ -46,20 +46,26 @@ const chooseSpace = async () => {
 async function checkSpaceLinkedToPackageBlock(cmd) {
   if (cmd === 'pull') {
     const spaceId = configstore.get('currentSpaceId')
-    const headlessSpaceId = headLessConfigStore().get('currentSpaceId')
+    const headlessSpaceId = headLessConfigStore(null, true).get('currentSpaceId')
 
     if (!spaceId && !headlessSpaceId) {
       await chooseSpace()
       return true
     }
 
+    let currentSpaceName = configstore.get('currentSpaceName')
+
     if (!spaceId) {
-      configstore.set('currentSpaceName', headLessConfigStore().get('currentSpaceName'))
+      currentSpaceName = headLessConfigStore(null, true).get('currentSpaceName')
+      configstore.set('currentSpaceName', currentSpaceName)
       configstore.set('currentSpaceId', headlessSpaceId)
     } else if (!headlessSpaceId) {
-      headLessConfigStore().set('currentSpaceName', configstore.get('currentSpaceName'))
-      headLessConfigStore().set('currentSpaceId', spaceId)
+      headLessConfigStore(null, true).set('currentSpaceName', currentSpaceName)
+      headLessConfigStore(null, true).set('currentSpaceId', spaceId)
     }
+
+    feedback({ type: 'success', message: `Current Space: ${currentSpaceName}` })
+
     return true
   }
 
@@ -73,7 +79,7 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
   let packageManager = manager
 
-  const spaceId = headLessConfigStore().get('currentSpaceId')
+  const spaceId = headLessConfigStore(null, true).get('currentSpaceId')
 
   if (cmd === 'create-version') {
     const { rootManager } = await manager.findMyParents()
@@ -119,20 +125,20 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
     }
 
     // TODO: Check for space existence
-    headLessConfigStore().set('currentSpaceName', space_name)
-    headLessConfigStore().set('currentSpaceId', space_id)
+    headLessConfigStore(null, true).set('currentSpaceName', space_name)
+    headLessConfigStore(null, true).set('currentSpaceId', space_id)
 
     configstore.set('currentSpaceName', space_name)
     configstore.set('currentSpaceId', space_id)
 
-    feedback({ type: 'success', message: `Current Space: ${headLessConfigStore().get('currentSpaceName')}` })
+    feedback({ type: 'success', message: `Current Space: ${headLessConfigStore(null, true).get('currentSpaceName')}` })
   }
 
   return true
 }
 
 async function checkAndSetUserSpacePreference(cmd) {
-  const currentSpaceName = headLessConfigStore().get('currentSpaceName')
+  const currentSpaceName = headLessConfigStore(null, true).get('currentSpaceName')
 
   if (!currentSpaceName) {
     try {
