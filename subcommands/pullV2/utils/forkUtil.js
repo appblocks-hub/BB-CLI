@@ -17,6 +17,7 @@ const { getGitHeader } = require('../../../utils/getHeaders')
 const { updateRepository } = require('../../../utils/Mutations')
 const { getOrgId } = require('../../../utils/questionPrompts')
 const { spinnies } = require('../../../loader')
+const convertGitUrl = require('../../../utils/convertGitUrl')
 
 /**
  *
@@ -155,9 +156,11 @@ const forkRepo = (metaData) =>
       const { orgName, userName, defaultBranchOnly } = userInputs
 
       const {
-        data: { description, visibility, svn_url: url, ssh_url: sshUrl, name },
+        data: { description, visibility, svn_url: url, ssh_url, name },
         blockFinalName,
       } = await forkRepoPost(userRepo, metaData.block_name, orgName, defaultBranchOnly)
+
+      const sshUrl = convertGitUrl(ssh_url, 'ssh')
 
       if (name !== blockFinalName) {
         throw new Error(`Fork already exists as ${orgName || userName}/${name}`)

@@ -5,15 +5,21 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { existsSync, mkdirSync } = require('fs')
+const { getBBFolderPath, BB_FOLDERS } = require('../bbFolders')
 
 const checkLogDirs = () => {
   try {
-    if (!existsSync('logs/out')) {
-      mkdirSync('logs/out', { recursive: true })
+    const logsPath = getBBFolderPath(BB_FOLDERS.LOGS)
+    const outLogPath = path.join(logsPath, BB_FOLDERS.OUT)
+    const errLogPath = path.join(logsPath, BB_FOLDERS.ERR)
+
+    if (!existsSync(outLogPath)) {
+      mkdirSync(outLogPath, { recursive: true })
     }
-    if (!existsSync('logs/err')) {
-      mkdirSync('logs/err', { recursive: true })
+    if (!existsSync(errLogPath)) {
+      mkdirSync(errLogPath, { recursive: true })
     }
   } catch (err) {
     console.log('Error in creating log dirs', err.message)

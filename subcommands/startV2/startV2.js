@@ -11,6 +11,7 @@ const HandleOutOfContext = require('./plugins/handleOutOfContext')
 const HandleBeforeStart = require('./plugins/handleBeforeStart')
 const HandleBlockGrouping = require('./plugins/handleBlockGrouping')
 const chalk = require('chalk')
+const { sleep } = require('../../utils')
 
 async function start(blockName, options) {
   const { logger } = new Logger('start')
@@ -27,7 +28,7 @@ async function start(blockName, options) {
     new HandleBeforeStart().apply(Start)
     new HandleBlockGrouping().apply(Start)
     new LockAndAssignPorts().apply(Start)
-
+    
     new HandleNodeFunctionStart().apply(Start)
     new HandleJSViewStart().apply(Start)
 

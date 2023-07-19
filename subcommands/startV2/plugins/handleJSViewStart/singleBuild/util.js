@@ -2,26 +2,24 @@ const path = require('path')
 const { promisify } = require('util')
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
-const { existsSync, mkdirSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync } = require('fs')
+const { existsSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync } = require('fs')
 const net = require('net')
-const { createFileSync } = require('../../../../../utils/fileAndFolderHelpers')
 const { runBashLongRunning, runBash } = require('../../../../bash')
 const { pexec } = require('../../../../../utils/execPromise')
 const { spinnies } = require('../../../../../loader')
 const { getNodePackageInstaller } = require('../../../../../utils/nodePackageManager')
+const {
+  getBBFolderPath,
+  BB_FOLDERS,
+  BB_FILES,
+  generateOutLogPath,
+  generateErrLogPath,
+} = require('../../../../../utils/bbFolders')
 
 const emulateElements = async (emEleFolder, port) => {
-  const logOutPath = path.resolve('./logs/out/elements.log')
-  const logErrPath = path.resolve('./logs/err/elements.log')
-
-  if (!existsSync(logErrPath)) {
-    mkdirSync(path.join('./logs', 'err'), { recursive: true })
-    createFileSync(logErrPath, '')
-  }
-  if (!existsSync(logOutPath)) {
-    mkdirSync(path.join('./logs', 'out'), { recursive: true })
-    createFileSync(logOutPath, '')
-  }
+  const { ELEMENTS_LOG } = BB_FILES
+  const logOutPath = generateOutLogPath(ELEMENTS_LOG)
+  const logErrPath = generateErrLogPath(ELEMENTS_LOG)
 
   const logPaths = { out: logOutPath, err: logErrPath }
   const child = runBashLongRunning(`npm start -- --port=${port}`, logPaths, emEleFolder)
@@ -35,7 +33,7 @@ const emulateElements = async (emEleFolder, port) => {
 async function stopEmulatedElements(options) {
   const { rootPath = '.', hard } = options
 
-  const emPath = path.join(rootPath, '._ab_em_elements')
+  const emPath = getBBFolderPath(BB_FOLDERS.ELEMENTS_EMULATOR, rootPath)
   const emConfigPath = path.join(emPath, '.emconfig.json')
   if (existsSync(emConfigPath)) {
     const processData = JSON.parse(readFileSync(emConfigPath, 'utf8').toString())

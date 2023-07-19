@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.1.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.2-beta...v1.1.3-beta) (2023-07-18)
+
+
+### Bug Fixes
+
+* bb pull access issue ([e64e072](https://github.com/appblocks-hub/BB-CLI/commit/e64e0725b1d1bc44a1e236475949e9abe93a7dc3))
+* spinnies issue in create version ([83005a2](https://github.com/appblocks-hub/BB-CLI/commit/83005a221bc6c6e98d05163b0fa3bacdc58693db))
+
+## [1.1.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.1-beta...v1.1.2-beta) (2023-07-13)
+
+
+### Bug Fixes
+
+* git url http ssh convertion issue ([04dcdd6](https://github.com/appblocks-hub/BB-CLI/commit/04dcdd6b6cc4fbe2662e25d40920d23f3a7b0be7))
+* sync error format ([da14308](https://github.com/appblocks-hub/BB-CLI/commit/da14308b90393a9e5c4bac23a6bfc9e145e12018))
+
+## [1.1.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.0-beta...v1.1.1-beta) (2023-07-12)
+
+
+### Bug Fixes
+
+* move command run time logs to system temp folder ([e3115ad](https://github.com/appblocks-hub/BB-CLI/commit/e3115ad9476d6921944ca047f1c77bb37ef3bd7c))
+* public block created as private in repository ([28064eb](https://github.com/appblocks-hub/BB-CLI/commit/28064eb53446e4a4e2ebd14e3ee10d11a1fd0013))
+* pull access issue from diff space with access ([93c923c](https://github.com/appblocks-hub/BB-CLI/commit/93c923c5a5d0100308e4440f2ffd4b60aaf97c6e))
+
+## [1.1.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.0.0-beta...v1.1.0-beta) (2023-07-12)
+
+
+### Features
+
+* move all appblocks generated folder into single folder ._bb_ ([5d4f747](https://github.com/appblocks-hub/BB-CLI/commit/5d4f74744c9a42992f4f1fd854edd75b5398488a))
+
+
+### Bug Fixes
+
+* evn warning duplicate issue ([6443927](https://github.com/appblocks-hub/BB-CLI/commit/64439274ad900964d19da66075e6aa6e25cd6d95))
+* publish a package block even without having any Member block ([7e665ac](https://github.com/appblocks-hub/BB-CLI/commit/7e665ac4e90df189f62ced3ff87cb4a728193c0f))
+* update appblocks logo ([f6adcdf](https://github.com/appblocks-hub/BB-CLI/commit/f6adcdf191d73001003f542a285ff34d871f4140))
+
 ## [1.0.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v0.32.1...v1.0.0-beta) (2023-06-28)
 
 

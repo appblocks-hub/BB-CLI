@@ -11,7 +11,7 @@ const { readFileSync, writeFileSync } = require('fs')
 const path = require('path')
 const { configstore } = require('../configstore')
 const { blockTypeInverter } = require('./blockTypeInverter')
-const convertGitSshUrlToHttps = require('./convertGitUrl')
+const convertGitUrl = require('./convertGitUrl')
 const createComponent = require('./createComponent')
 const { createDirForType } = require('./fileAndFolderHelpers')
 const { GitManager } = require('./gitmanager')
@@ -34,7 +34,7 @@ const { BB_CONFIG_NAME } = require('./constants')
  * @param {String} blockName Name of block to be created
  * @param {String} blockShortName Name of block to be created
  * @param {Number} blockTypeNo Type number of block
- * @param {String} createFromExistinURL If a source is provided, a new repo is created from the source IMP:always should be ssh url
+ * @param {String} createFromExistingURL If a source is provided, a new repo is created from the source IMP:always should be ssh url
  * @param {Boolean} callingFromPullNoCreateNewRefactorMelater To stop halfway and return cloned directory path
  * @param {String} cwd To pass to directory creation function
  * @param {Boolean?} isAStandAloneBlock If user is trying to create a block outside appblock context
@@ -45,7 +45,7 @@ async function createBlock(
   blockName,
   blockShortName,
   blockTypeNo,
-  createFromExistinURL,
+  createFromExistingURL,
   callingFromPullNoCreateNewRefactorMelater,
   cwd,
   // eslint-disable-next-line default-param-last
@@ -69,13 +69,13 @@ async function createBlock(
     sshUrl,
     name: cloneDirName,
     blockFinalName,
-  } = await createComponent(blockShortName, createFromExistinURL, clonePath)
+  } = await createComponent(blockShortName, createFromExistingURL, clonePath)
 
-  if (createFromExistinURL) {
+  if (createFromExistingURL) {
     try {
       // git username try
       const prefersSsh = configstore.get('prefersSsh')
-      const parentRepoUrl = prefersSsh ? createFromExistinURL : convertGitSshUrlToHttps(createFromExistinURL)
+      const parentRepoUrl = convertGitUrl(createFromExistingURL, prefersSsh ? 'ssh' : 'https')
       const sourceUrl = prefersSsh ? sshUrl : url
       const Git = new GitManager(`${clonePath}/${cloneDirName}`, cloneDirName, sourceUrl, prefersSsh)
       try {
@@ -113,7 +113,7 @@ async function createBlock(
       await Git.commit('happy hacking from appblock team!', '--allow-empty')
       await Git.push('main')
 
-      // createFromExistinURL is always ssh url, if user doesnt prefer ssh, convert it to https
+      // createFromExistingURL is always ssh url, if user doesnt prefer ssh, convert it to https
 
       // execSync(
       //   `cd ${clonePath}/${cloneDirName} &&

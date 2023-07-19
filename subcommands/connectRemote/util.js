@@ -29,7 +29,7 @@ async function initializeConfig() {
   const { manager: configManager, error } = await ConfigFactory.create(configPath)
   if (error) {
     if (error.type !== 'OUT_OF_CONTEXT') throw error
-    throw new Error('Cannot run bb command outside of bb context')
+    throw new Error('Please run the command inside package context ')
   }
   return configManager
 }

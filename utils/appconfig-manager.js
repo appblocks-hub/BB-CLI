@@ -17,6 +17,7 @@ const { getBlockDirsIn } = require('./fileAndFolderHelpers')
 const { lrManager } = require('./locaRegistry/manager')
 const { configstore } = require('../configstore')
 const { BB_CONFIG_NAME } = require('./constants')
+const { generateOutLogPath, generateErrLogPath } = require('./bbFolders')
 
 // eslint-disable-next-line no-unused-vars
 function debounce(func, wait, immediate) {
@@ -104,7 +105,7 @@ class AppblockConfigManager {
        * TODO: Find a way to get package block name here, if calling from inside a block,
        * and let user run from inside a block.
        */
-      console.log('Cannot run from inside a block. Move up to a package block context and re-run')
+      console.log('Please run the command inside package context ')
       process.exit(1)
     }
     const pckname = this.getName()
@@ -490,6 +491,7 @@ class AppblockConfigManager {
       // } else {
       // existingLiveConfig = JSON.parse(readFileSync(path.resolve(this.cwd, this.liveConfigName)))
       // }
+
       for (const block of this.dependencies) {
         // TODO -- if there are more blocks in liveconfig json,
         // Log the details and if they are on, kill the processes
@@ -504,8 +506,8 @@ class AppblockConfigManager {
 
           const liveData = {
             log: log || {
-              out: `./logs/out/${name}.log`,
-              err: `./logs/err/${name}.log`,
+              out: generateOutLogPath(`${name}.log`),
+              err: generateErrLogPath(`${name}.log`),
             },
             isOn: !!blockRunning,
             singleBuild,
@@ -533,8 +535,8 @@ class AppblockConfigManager {
 
           const liveData = {
             log: {
-              out: `./logs/out/${name}.log`,
-              err: `./logs/err/${name}.log`,
+              out: generateOutLogPath(`${name}.log`),
+              err: generateErrLogPath(`${name}.log`),
             },
             isOn: false,
             pid: null,
@@ -562,8 +564,8 @@ class AppblockConfigManager {
           // console.log(p)
           this.liveDetails[blockname] = {
             log: {
-              out: `./logs/out/${blockname}.log`,
-              err: `./logs/err/${blockname}.log`,
+              out: generateOutLogPath(`${blockname}.log`),
+              err: generateErrLogPath(`${blockname}.log`),
             },
             isOn: false,
             port: p,

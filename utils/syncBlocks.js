@@ -13,6 +13,7 @@ const { axios } = require('./axiosInstances')
 const { blocksSync } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { feedback } = require('./cli-feedback')
+const { getBBFolderPath, BB_FOLDERS } = require('./bbFolders')
 
 /**
  *
@@ -35,8 +36,8 @@ async function syncBlocks(
   root_package_name
 ) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
-  const logOutRoot = path.resolve('logs', 'out')
-  const syncLogDirectory = path.join(logOutRoot, 'sync-logs')
+  const { SYNC_LOGS } = BB_FOLDERS
+  const syncLogDirectory = getBBFolderPath(SYNC_LOGS)
   try {
     const postData = {
       block_meta_data_map,
@@ -69,7 +70,11 @@ async function syncBlocks(
     updateSyncLogs(syncLogDirectory, syncLogs, returnOnError)
   } catch (err) {
     // eslint-disable-next-line no-param-reassign
-    syncLogs.apiLogs = { error: true, message: 'Sync Api Failed', non_available_block_names: {} }
+    syncLogs.apiLogs = {
+      error: true,
+      message: err.response?.data?.msg ?? 'Sync Api Failed',
+      non_available_block_names: {},
+    }
     updateSyncLogs(syncLogDirectory, syncLogs, returnOnError)
     if (returnOnError) {
       throw new Error('BB Sync failed.')
@@ -86,7 +91,7 @@ function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap) {
     console.log('sync logs created:', path.relative(path.resolve(), directoryPath))
   }
 
-  const filePath = path.join(directoryPath, 'logs')
+  const filePath = path.join(directoryPath, BB_FOLDERS.OUT)
 
   writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap, null, 2), 'utf8', { flag: 'w' })
 }

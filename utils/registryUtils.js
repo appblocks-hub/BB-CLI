@@ -93,20 +93,17 @@ const getBlockDetailsV2 = ({ spaceName, blockName, blockVersion, rootPackageName
   return axios.post(appBlockGetBlockDetails, postData, { headers: getShieldHeader() })
 }
 
-const getBlockMetaData = (block_id) =>
-  axios.post(
-    appBlockGetBlockMetadata,
-    {
-      block_id,
-    },
-    { headers: getShieldHeader() }
-  )
+const getBlockMetaData = (block_id, space_name) => {
+  const postData = { block_id }
+  if (space_name) postData.space_name = space_name
+  return axios.post(appBlockGetBlockMetadata, postData, { headers: getShieldHeader() })
+}
 
-const updateReadme = (blockId, blockVerionId, key) =>
+const updateReadme = (blockId, blockVersionId, key) =>
   axios.post(
     appBlockUpdateReadme,
     {
-      block_version_id: blockVerionId,
+      block_version_id: blockVersionId,
       block_id: blockId,
       readme_url: key,
     },

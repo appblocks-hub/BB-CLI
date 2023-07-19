@@ -7,15 +7,67 @@
 
 const path = require('path')
 const { prompt } = require('inquirer')
-const {  headLessConfigStore } = require('../configstore')
+const { headLessConfigStore, configstore } = require('../configstore')
 const { feedback } = require('./cli-feedback')
 const { lrManager } = require('./locaRegistry/manager')
 const { confirmationPrompt } = require('./questionPrompts')
 const { listSpaces } = require('./spacesUtils')
 const ConfigFactory = require('./configManagers/configFactory')
+const { BB_FOLDERS, getBBFolderPath, BB_FILES } = require('./bbFolders')
+
+const chooseSpace = async () => {
+  const res = await listSpaces()
+  if (res.data.err) {
+    feedback({ type: 'error', message: res.data.msg })
+    process.exit(1)
+  }
+  /**
+   * @type {Array<import('./jsDoc/types').spaceDetails>}
+   */
+  const Data = res.data.data
+  const question = [
+    {
+      type: 'list',
+      message: 'Choose a space to continue',
+      choices: Data.map((v) => ({ name: v.space_name, value: { id: v.space_id, name: v.space_name } })),
+      name: 'spaceSelect',
+    },
+  ]
+  const {
+    spaceSelect: { name, id },
+  } = await prompt(question)
+  headLessConfigStore(null, true).set('currentSpaceName', name)
+  headLessConfigStore(null, true).set('currentSpaceId', id)
+
+  configstore.set('currentSpaceName', name)
+  configstore.set('currentSpaceId', id)
+}
 
 async function checkSpaceLinkedToPackageBlock(cmd) {
-  if (cmd === 'pull') return true
+  if (cmd === 'pull') {
+    const spaceId = configstore.get('currentSpaceId')
+    const headlessSpaceId = headLessConfigStore(null, true).get('currentSpaceId')
+
+    if (!spaceId && !headlessSpaceId) {
+      await chooseSpace()
+      return true
+    }
+
+    let currentSpaceName = configstore.get('currentSpaceName')
+
+    if (!spaceId) {
+      currentSpaceName = headLessConfigStore(null, true).get('currentSpaceName')
+      configstore.set('currentSpaceName', currentSpaceName)
+      configstore.set('currentSpaceId', headlessSpaceId)
+    } else if (!headlessSpaceId) {
+      headLessConfigStore(null, true).set('currentSpaceName', currentSpaceName)
+      headLessConfigStore(null, true).set('currentSpaceId', spaceId)
+    }
+
+    feedback({ type: 'success', message: `Current Space: ${currentSpaceName}` })
+
+    return true
+  }
 
   // check space is linked with package block
   const configPath = path.resolve('block.config.json')
@@ -27,14 +79,15 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
   let packageManager = manager
 
-  const spaceId = headLessConfigStore().get('currentSpaceId')
+  const spaceId = headLessConfigStore(null, true).get('currentSpaceId')
 
   if (cmd === 'create-version') {
     const { rootManager } = await manager.findMyParents()
     packageManager = rootManager
 
     // check with synced workspace
-    const workSpaceFolder = path.join(packageManager.directory, 'bb_modules', 'workspace')
+    const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, packageManager.directory)
+    const workSpaceFolder = path.join(bbModulesPath, BB_FILES.WORKSPACE)
 
     const { manager: mc, error: wErr } = await ConfigFactory.create(
       path.join(workSpaceFolder, packageManager.configName)
@@ -72,45 +125,27 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
     }
 
     // TODO: Check for space existence
-    headLessConfigStore().set('currentSpaceName', space_name)
-    headLessConfigStore().set('currentSpaceId', space_id)
+    headLessConfigStore(null, true).set('currentSpaceName', space_name)
+    headLessConfigStore(null, true).set('currentSpaceId', space_id)
 
-    feedback({ type: 'success', message: `Current Space: ${headLessConfigStore().get('currentSpaceName')}` })
+    configstore.set('currentSpaceName', space_name)
+    configstore.set('currentSpaceId', space_id)
+
+    feedback({ type: 'success', message: `Current Space: ${headLessConfigStore(null, true).get('currentSpaceName')}` })
   }
 
   return true
 }
 
 async function checkAndSetUserSpacePreference(cmd) {
-  const currentSpaceName = headLessConfigStore().get('currentSpaceName')
+  const currentSpaceName = headLessConfigStore(null, true).get('currentSpaceName')
 
   if (!currentSpaceName) {
     try {
       const isLinked = await checkSpaceLinkedToPackageBlock(cmd)
       if (isLinked) return
 
-      const res = await listSpaces()
-      if (res.data.err) {
-        feedback({ type: 'error', message: res.data.msg })
-        process.exit(1)
-      }
-      /**
-       * @type {Array<import('./jsDoc/types').spaceDetails>}
-       */
-      const Data = res.data.data
-      const question = [
-        {
-          type: 'list',
-          message: 'Choose a space to continue',
-          choices: Data.map((v) => ({ name: v.space_name, value: { id: v.space_id, name: v.space_name } })),
-          name: 'spaceSelect',
-        },
-      ]
-      const {
-        spaceSelect: { name, id },
-      } = await prompt(question)
-      headLessConfigStore().set('currentSpaceName', name)
-      headLessConfigStore().set('currentSpaceId', id)
+      await chooseSpace()
     } catch (err) {
       // TODO: feedback here
       feedback({ type: 'error', message: err.message })

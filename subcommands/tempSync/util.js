@@ -10,16 +10,16 @@
 
 const { readFileSync, existsSync, mkdirSync } = require('fs')
 const { execSync } = require('child_process')
-const chalk = require('chalk')
 const path = require('path')
 const { axios } = require('../../utils/axiosInstances')
-const { appRegistryCreateDeployPresignedUrl, appRegistryCheckAppEnvExist } = require('../../utils/api')
+const { appRegistryCreateDeployPresignedUrl } = require('../../utils/api')
 const { getShieldHeader } = require('../../utils/getHeaders')
 const { blockTypeInverter } = require('../../utils/blockTypeInverter')
 const { spinnies } = require('../../loader')
-const { logFail } = require('../../utils')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
-const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
+const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
+const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD)
 const EXCLUDE_IN_ZIP = ['node_modules', '.git'].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')
 
 const uploadToServer = ({ blockType, blockId, appId, blockName, zipFile, version, blockFolder, environmentId }) => {
@@ -68,8 +68,7 @@ const uploadToServer = ({ blockType, blockId, appId, blockName, zipFile, version
 
 const checkIfDistExist = (folder, blockName) => {
   if (!existsSync(`${folder}/dist`)) {
-    console.log(chalk.red(`\nNo dist folder found in ${blockName}. Please build the ${blockName} app and try again`))
-    process.exit(1)
+    throw new Error(`No dist folder found in ${blockName}. Please build the ${blockName} app and try again`)
   }
   return true
 }
@@ -92,53 +91,8 @@ const createZip = async ({ directory, blockName, type }) => {
   return zipFile
 }
 
-const checkIfAppAndEnvExist = async ({ appData, environment }) => {
-  const envData = appData.environments[environment]
-  envData.environment_name = environment
-  if (!envData) {
-    logFail(`${environment} environment not exist. Please create-env and try again\n`)
-
-    const envs = Object.keys(appData.environments)
-    if (envs.length) {
-      console.log(chalk.gray(`Existing environments are ${envs}\n`))
-    }
-
-    process.exit(1)
-  }
-
-  spinnies.add('up', { text: `Checking app details` })
-
-  // Check if app and env exist in server
-  try {
-    const { data } = await axios.post(
-      appRegistryCheckAppEnvExist,
-      {
-        app_id: appData.app_id,
-        environment_id: envData.environment_id,
-      },
-      {
-        headers: getShieldHeader(),
-      }
-    )
-
-    const resData = data.data
-
-    if (!resData) throw new Error(`Invalid response`)
-
-    if (!resData.app_exist || !resData.env_exist) {
-      spinnies.fail('up', { text: ` ${!resData.app_exist ? 'App' : 'Environment'} does not exist` })
-    }
-  } catch (error) {
-    console.log(error)
-    spinnies.fail('up', { text: 'Error checking app data' })
-    process.exit(1)
-  }
-  spinnies.remove('up')
-  return envData
-}
 
 module.exports = {
-  checkIfAppAndEnvExist,
   checkIfDistExist,
   uploadToServer,
   createZip,

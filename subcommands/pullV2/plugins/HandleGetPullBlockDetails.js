@@ -62,7 +62,7 @@ class HandleGetPullBlockDetails {
             } = await getBlockDetailsV2(core.blockPullKeys)
 
             if (status === 204) {
-              throw new Error(`${core.pullBlockName} doesn't exists in block repository`)
+              throw new Error(`${core.pullBlockName} doesn't exists in block repository under given space`)
             }
             if (err) throw new Error(err)
 
@@ -72,12 +72,12 @@ class HandleGetPullBlockDetails {
             core.blockDetails = metaData
           }
 
-          const c = await getBlockMetaData(pullId)
+          const c = await getBlockMetaData(pullId, core.blockPullKeys.spaceName)
 
           if (c.data.err) throw new Error(c.data.msg)
 
           if (c.status === 204) {
-            throw new Error(`${core.pullBlockName} doesn't exists in block repository`)
+            throw new Error(`${core.pullBlockName} doesn't exists in block repository under given space`)
           }
 
           core.spinnies.succeed('blockExistsCheck', { text: `${core.pullBlockName} is available` })
@@ -93,6 +93,7 @@ class HandleGetPullBlockDetails {
           core.spinnies.add('pab', { text: 'checking block permission ' })
           const { data: pData, error: pErr } = await post(getBlockPermissionsApi, {
             block_id: metaData.block_id,
+            space_name: core.blockPullKeys.spaceName,
           })
           core.spinnies.remove('pab')
           if (pErr) throw pErr
@@ -132,6 +133,7 @@ class HandleGetPullBlockDetails {
           }
           const bv = await getAllBlockVersions(versionOf, {
             status: statusFilter,
+            space_name: core.blockPullKeys.spaceName,
           })
 
           if (bv.data.err) {
@@ -176,7 +178,8 @@ class HandleGetPullBlockDetails {
           if (!continueWithLatest) throw new Error('Cancelled Pulling block without version')
         } catch (err) {
           if (err.response?.status === 401 || err.response?.status === 403) {
-            throw new Error(`Access denied for block ${core.pullBlockName}`)
+            const eMsg = err.response.data.msg || `Access denied for block`
+            throw new Error(`${eMsg} ${core.pullBlockName}`)
           }
           throw err
         }

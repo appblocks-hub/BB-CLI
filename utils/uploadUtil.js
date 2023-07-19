@@ -17,8 +17,10 @@ const { appRegistryCreateDeployPresignedUrl } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { blockTypeInverter } = require('./blockTypeInverter')
 const { spinnies } = require('../loader')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('./bbFolders')
 
-const ZIP_TEMP_FOLDER = path.resolve(`./.tmp/upload`)
+const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
+const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD)
 const EXCLUDE_IN_ZIP = ['node_modules', '.git'].reduce((acc, ele) => `${acc} -x '${ele}/*'`, '')
 
 const uploadToServer = ({ blockType, blockId, appId, blockName, zipFile, version, blockFolder, environmentId }) => {

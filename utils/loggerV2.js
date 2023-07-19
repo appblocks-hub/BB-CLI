@@ -5,9 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { createLogger, transports, config, format } = require('winston')
 const curlirize = require('./curlirize/main')
 const { axios } = require('./axiosInstances')
+const { BB_FOLDERS,  getSystemTempFolderPath } = require('./bbFolders')
 
 /**
  *
@@ -20,24 +22,24 @@ const myFormat = format.printf(({ level, message, label, timestamp }) => `${time
 class Logger {
   constructor(service) {
     this.service = service
+
+    const cliRunTimeLogsPath = getSystemTempFolderPath(BB_FOLDERS.RUN_TIME_LOGS)
+
     this.logger = createLogger({
       defaultMeta: { service },
       level: 'debug',
       levels: config.syslog.levels,
-      // write all messages with levels in ('error','emerg','crit','alert') to errr.log
-      // write all messages with levels in ('warning','notice','info')
-      // write all messages with levels 'debug' to debug.log
       transports: [
         new transports.File({
-          filename: 'cliruntimelogs/error.log',
+          filename: path.join(cliRunTimeLogsPath, 'error.log'),
           level: 'error',
         }),
         new transports.File({
-          filename: 'cliruntimelogs/combined.log',
+          filename: path.join(cliRunTimeLogsPath, 'combined.log'),
           format: format.combine(levelFilter(['warning', 'notice', 'info']), format.json()),
         }),
         new transports.File({
-          filename: 'cliruntimelogs/debug.log',
+          filename: path.join(cliRunTimeLogsPath, 'debug.log'),
           format: format.combine(levelFilter(['debug']), myFormat),
         }),
       ],

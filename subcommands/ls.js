@@ -11,7 +11,9 @@ const Table = require('cli-table3')
 const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
 const ConfigFactory = require('../utils/configManagers/configFactory')
 const { BB_CONFIG_NAME } = require('../utils/constants')
-const { readJsonAsync } = require('../utils')
+const { axios } = require('../utils/axiosInstances')
+const { checkBlocksSyncedApi } = require('../utils/api')
+const { spinnies } = require('../loader')
 
 const colors = [
   '#FFB6C1',
@@ -150,7 +152,12 @@ const rowGenerate = (isLive, g, synced) => {
   ]
 }
 
-async function singleTableFn(manager, syncFailList) {
+const getSyncStatus = (syncedBlockIds, manager) => {
+  if (!syncedBlockIds) return '...'
+  return syncedBlockIds.includes(manager.config.blockId) ? chalk.green('synced') : chalk.red('not synced')
+}
+
+async function singleTableFn(manager, syncedBlockIds) {
   const table = new Table({
     head: head.map((v) => chalk.cyanBright(v)),
   })
@@ -164,20 +171,20 @@ async function singleTableFn(manager, syncFailList) {
           ...blockManager.config,
           directory: blockManager.directory,
         },
-        syncFailList[blockManager.config.name] ? 'not synced' : 'synced'
+        getSyncStatus(syncedBlockIds, blockManager)
       )
     )
   }
   console.log(table.toString())
 }
 
-async function multiTableFn(manager, syncFailList) {
+async function multiTableFn(manager, syncedBlockIds) {
   const roots = []
   roots.push(manager)
   for (; roots.length > 0; ) {
     const root = roots.pop()
     const table = new Table({})
-    const myColour = colorMap.get(root.config.blockId)
+    const myColor = colorMap.get(root.config.blockId)
     /**
      * Set the header
      */
@@ -185,7 +192,7 @@ async function multiTableFn(manager, syncFailList) {
       [
         {
           colSpan: head.length,
-          content: myColour ? chalk.hex(myColour).bold(root.config.name) : `${root.config.name}`,
+          content: `${myColor ? chalk.hex(myColor).bold(root.config.name) : root.config.name} (${getSyncStatus(syncedBlockIds, root)})`,
         },
       ],
       head.map((v) => chalk.cyanBright(v))
@@ -193,12 +200,12 @@ async function multiTableFn(manager, syncFailList) {
     for await (const m of root.getDependencies()) {
       if (m instanceof PackageConfigManager) {
         /**
-         * Refresh config to remove any referencees to non existent folders
+         * Refresh config to remove any references to non existent folders
          */
         await m.refreshConfig()
         roots.push(m)
         /**
-         * Set a colour for the package from the list
+         * Set a color for the package from the list
          */
         colorMap.set(m.config.blockId, colors[Math.floor(Math.random() * colors.length)])
       }
@@ -210,7 +217,7 @@ async function multiTableFn(manager, syncFailList) {
             ...m.config,
             directory: m.directory,
           },
-          syncFailList[m.config.name] ? 'not synced' : 'synced'
+          getSyncStatus(syncedBlockIds, m)
         )
       )
     }
@@ -228,18 +235,28 @@ const ls = async ({ multi }) => {
   const { manager } = await ConfigFactory.create(configPath)
   const { rootManager } = await manager.findMyParents()
 
-  // try reading the sync logs
-  const { data } = await readJsonAsync(path.join(rootManager.directory, 'logs', 'out', 'sync-logs', 'logs'))
-  const syncFailList = data?.apiLogs?.non_available_block_names || {}
+  let syncedBlockIds = null
+  try {
+    spinnies.add('syncStatus', { text: 'Checking blocks sync status' })
+    // check blocks are synced
+    const memberBlocks = await rootManager.getAllLevelAnyBlock()
+    const blockIds = [ ...memberBlocks].map((m) => m?.config.blockId)
+    const checkRes = await axios.post(checkBlocksSyncedApi, { block_ids: blockIds })
+    syncedBlockIds = checkRes.data?.data?.map((b) => b.id) || []
+    spinnies.succeed('syncStatus', { text: 'Sync status retrieved successfully' })
+  } catch (error) {
+    spinnies.add('syncStatus')
+    spinnies.fail('syncStatus', { text: 'Error getting block synced status' })
+  }
 
   if (manager instanceof PackageConfigManager) {
     await manager.refreshConfig()
     if (!multiTable) {
-      await singleTableFn(manager, syncFailList)
+      await singleTableFn(manager, syncedBlockIds)
       return
     }
 
-    await multiTableFn(manager, syncFailList)
+    await multiTableFn(manager, syncedBlockIds)
   }
 }
 

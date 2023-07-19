@@ -76,6 +76,8 @@ cmd('connect-remote', 'To add remote for package block')
 
 cmd('get', 'To get free blocks from the store')
 
+cmd('rename', 'To rename block')
+
 // eslint-disable-next-line no-unused-expressions
 ;(async () => {
   await checkEngineSupport(packageJson)

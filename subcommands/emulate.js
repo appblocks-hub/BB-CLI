@@ -6,14 +6,14 @@
  */
 
 const path = require('path')
-const { existsSync, mkdirSync, unlinkSync, lstat, rmSync, symlinkSync } = require('fs')
+const { unlinkSync, lstat, rmSync, symlinkSync } = require('fs')
 const { runBashLongRunning } = require('./bash')
 const { copyEmulatorCode, addEmulatorProcessData } = require('../utils/emulator-manager')
-const { createFileSync } = require('../utils/fileAndFolderHelpers')
 const { updateEmulatorPackageSingleBuild, emPackageInstall } = require('./upload/onPrem/awsECR/util')
 const { pexec } = require('../utils/execPromise')
 const { configstore, headLessConfigStore } = require('../configstore')
 const { checkPnpm } = require('../utils/pnpmUtils')
+const { getBBFolderPath, BB_FILES, BB_FOLDERS, generateOutLogPath, generateErrLogPath } = require('../utils/bbFolders')
 
 global.rootDir = process.cwd()
 
@@ -40,7 +40,7 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       return acc
     }, {})
 
-    const emulatorPath = '._ab_em'
+    const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
 
     if (singleInstance) {
       await updateEmulatorPackageSingleBuild({ dependencies: depBlocks, emulatorPath })
@@ -75,17 +75,9 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       if (i.err) throw new Error(i.err)
     }
 
-    const logOutPath = path.resolve('./logs/out/functions.log')
-    const logErrPath = path.resolve('./logs/err/functions.log')
-
-    if (!existsSync(logErrPath)) {
-      mkdirSync(path.join('./logs', 'err'), { recursive: true })
-      createFileSync(logErrPath, '')
-    }
-    if (!existsSync(logOutPath)) {
-      mkdirSync(path.join('./logs', 'out'), { recursive: true })
-      createFileSync(logOutPath, '')
-    }
+    const { FUNCTIONS_LOG } = BB_FILES
+    const logOutPath = generateOutLogPath(FUNCTIONS_LOG)
+    const logErrPath = generateErrLogPath(FUNCTIONS_LOG)
 
     const headlessConfig = headLessConfigStore().store
     if (headlessConfig.prismaSchemaFolderPath) {
@@ -93,7 +85,7 @@ const emulateNode = async (ports, dependencies, singleInstance) => {
       if (ie.err) throw new Error(ie.err)
     }
 
-    const child = runBashLongRunning('node index.js', { out: logOutPath, err: logErrPath }, './._ab_em')
+    const child = runBashLongRunning('node index.js', { out: logOutPath, err: logErrPath }, emulatorPath)
     if (child.exitCode !== null) {
       throw new Error('Error starting emulator')
     }

@@ -25,6 +25,7 @@ const { checkLanguageVersionExistInSystem } = require('../languageVersion/util')
 const { startBlock } = require('./util')
 const singleBuild = require('./singleBuild')
 const { configstore } = require('../../configstore')
+const { BB_FILES, generateOutLogPath, generateErrLogPath } = require('../../utils/bbFolders')
 
 global.rootDir = process.cwd()
 
@@ -127,6 +128,9 @@ const start = async (blockName, { usePnpm, multiInstance = false, blockType }) =
 async function startAllBlock({ singleInstance, startBlockType }) {
   // Build env for all blocks
   const PORTS = await getFreePorts(appConfig, null, startBlockType)
+  const { FUNCTIONS_LOG } = BB_FILES
+  const outLogPath = generateOutLogPath(FUNCTIONS_LOG)
+  const errLogPath = generateErrLogPath(FUNCTIONS_LOG)
 
   // IF FUNCTION BLOCK EXIST
   if (
@@ -162,8 +166,8 @@ async function startAllBlock({ singleInstance, startBlockType }) {
           isOn: true,
           port: null,
           log: {
-            out: `./logs/out/functions.log`,
-            err: `./logs/err/functions.log`,
+            out: outLogPath,
+            err: errLogPath,
           },
         }
       }
@@ -186,8 +190,8 @@ async function startAllBlock({ singleInstance, startBlockType }) {
           isOn: true,
           port: emData.data.port[meta.type] || emData.data.port || null,
           log: {
-            out: `./logs/out/functions.log`,
-            err: `./logs/err/functions.log`,
+            out: outLogPath,
+            err: errLogPath,
           },
         }
       }
@@ -209,8 +213,8 @@ async function startAllBlock({ singleInstance, startBlockType }) {
           isOn: true,
           port: emData.data.port[meta.type] || emData.data.port || null,
           log: {
-            out: `./logs/out/functions.log`,
-            err: `./logs/err/functions.log`,
+            out: outLogPath,
+            err: errLogPath,
           },
         }
       }

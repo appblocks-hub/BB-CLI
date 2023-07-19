@@ -7,6 +7,7 @@ const { post } = require('../../utils/axios')
 const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
 const { readInput } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
 const getPublishedVersion = (name, directory) => {
   try {
@@ -26,7 +27,8 @@ const createZip = async ({ blockName, directory, version, excludePaths = [], roo
   try {
     const dir = `${directory}`
     const rootDirectory = rootDir || path.resolve('.')
-    const ZIP_TEMP_FOLDER = path.join(rootDirectory, '._ab_tmp', 'upload', blockName || '')
+    const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP, rootDirectory)
+    const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD, blockName || '')
     const EXCLUDE_IN_ZIP = [
       'node_modules/*',
       '.git/*',

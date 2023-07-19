@@ -5,13 +5,14 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const { existsSync, mkdirSync, rmdirSync, readdirSync, statSync, copyFileSync, unlinkSync, rmSync } = require('fs')
+const { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, unlinkSync, rmSync } = require('fs')
 const path = require('path')
 
 const { GitManager } = require('../../../utils/gitManagerV2')
-const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
+const { checkAndSetGitConfigNameEmail, gitCommitWithMsg } = require('../../../utils/gitCheckUtils')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { headLessConfigStore } = require('../../../configstore')
+const { BB_EXCLUDE_FILES_FOLDERS } = require('../../../utils/bbFolders')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
@@ -48,7 +49,7 @@ const generateOrphanBranch = async (options) => {
   const orphanRemoteName = 'origin'
   const orphanBranchPath = path.resolve(bbModulesPath, orphanBranchName)
   const orphanBranchFolderExists = existsSync(orphanBranchPath)
-  let exclusions = ['.git', '._ab_em', '._ab_em_elements', 'cliruntimelogs', 'logs', 'headless-config.json']
+  let exclusions = ['.git', ...BB_EXCLUDE_FILES_FOLDERS]
   const orphanCommitMessage = ''
 
   if (blockConfig.type === 'package') {
@@ -71,7 +72,7 @@ const generateOrphanBranch = async (options) => {
 
   if (!orphanBranchFolderExists) {
     try {
-      mkdirSync(orphanBranchPath)
+      mkdirSync(orphanBranchPath, { recursive: true })
 
       await Git.init()
 
@@ -83,7 +84,7 @@ const generateOrphanBranch = async (options) => {
 
       await Git.fetch()
     } catch (err) {
-      rmdirSync(orphanBranchPath, { recursive: true, force: true })
+      rmSync(orphanBranchPath, { recursive: true, force: true })
       throw err
     }
   }
@@ -108,7 +109,7 @@ const generateOrphanBranch = async (options) => {
     await Git.checkoutBranch(orphanBranchName)
 
     await Git.pullBranch(orphanBranchName)
-   
+
     // compare code from the existing workspace folder and the orphan branch folder
 
     let orphanBranchCommits = await getLatestCommits(orphanBranchName, 1, Git)
@@ -123,9 +124,7 @@ const generateOrphanBranch = async (options) => {
       copyDirectory(block.blockManager.directory, orphanBranchPath, exclusions)
 
       await Git.stageAll()
-
-      await Git.commit(buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage))
-
+      await gitCommitWithMsg(Git.cwd, buildCommitMessage(block.workSpaceCommitID, orphanCommitMessage), 'mono')
       await Git.push(orphanBranchName)
     }
   }
@@ -194,7 +193,7 @@ function clearDirectory(directoryPath, exclusions) {
       }
     }
     if (!isFirstDirectory) {
-      rmSync(currentPath)
+      if (existsSync(currentPath)) rmSync(currentPath)
     }
   }
 }

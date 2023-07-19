@@ -38,7 +38,7 @@ class HandleBlockPull {
         const clonePath = core.blockClonePath
 
         // check if clone folder already exist
-        if (existsSync(clonePath)) throw new Error(`Folder already exist`)
+        if (existsSync(clonePath)) throw new Error(`Folder already exist for clone`)
 
         if (core.blockDetails.is_purchased_variant && core.blockDetails.block_visibility === 5) {
           // Block source code will be downloaded form s3

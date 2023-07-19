@@ -10,6 +10,7 @@ const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { uploadBlockReadme } = require('./utils')
+const { BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -41,63 +42,67 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
     memberBlockIds.push(blockManager.config.blockId)
   }
 
-  spinnies.add('cv', { text: 'Getting all block versions' })
-  const { data, error } = await post(getAllBlocksVersions, {
-    latest_only: latest,
-    block_ids: memberBlockIds,
-    status: [2, 4, 7],
-  })
-  spinnies.remove('cv')
+  let updatedDependencies = {}
 
-  if (error) throw error
+  if (memberBlockIds.length > 0) {
+    spinnies.add('cv', { text: 'Getting all block versions' })
+    const { data, error } = await post(getAllBlocksVersions, {
+      latest_only: latest,
+      block_ids: memberBlockIds,
+      status: [2, 4, 7],
+    })
+    spinnies.remove('cv')
 
-  const bVersions = data.data || []
-  const selectedBlockVersions = {}
+    if (error) throw error
 
-  if (bVersions.length === 0) {
-    console.log(chalk.yellow(`\nNo release-ready/approved versions found for any member blocks`))
-    throw new Error(chalk.red(`Please create and publish version for all member blocks and try again.`))
-  }
+    const bVersions = data.data || []
+    const selectedBlockVersions = {}
 
-  if (bVersions.length !== memberBlocks.length) {
-    const bVersionBlocks = bVersions.map((bv) => bv.block_id)
-
-    const noVersionBlocks = memberBlocks
-      .map((bManger) => {
-        if (bVersionBlocks.includes(bManger.config.blockId)) return null
-        return bManger.config.name
-      })
-      .filter((n) => n !== null)
-      .join(', ')
-
-    console.log(
-      chalk.yellow(`\nNo release ready/approved versions found for ${chalk.gray(noVersionBlocks)} member blocks`)
-    )
-    throw new Error(`Please create and publish version for all member blocks and try again.`)
-  }
-
-  const updatedDependencies = packageConfig.dependencies
-
-  for await (const bkVer of bVersions) {
-    const choices = bkVer.block_versions.map((b) => ({ name: b.version_number, value: b }))
-    if (!latest) {
-      const blockVersion = await readInput({
-        type: 'list',
-        name: 'blockVersion',
-        message: `Select the block version of ${bkVer.block_name}`,
-        choices,
-      })
-
-      selectedBlockVersions[bkVer.block_id] = { ...blockVersion, block_name: bkVer.block_name }
-    } else {
-      selectedBlockVersions[bkVer.block_id] = { ...choices[0]?.value, block_name: bkVer.block_name }
+    if (bVersions.length === 0) {
+      console.log(chalk.yellow(`\nNo release-ready/approved versions found for any member blocks`))
+      throw new Error(chalk.red(`Please create and publish version for all member blocks and try again.`))
     }
 
-    updatedDependencies[bkVer.block_name].versionId = selectedBlockVersions[bkVer.block_id].id
-    updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
+    if (bVersions.length !== memberBlocks.length) {
+      const bVersionBlocks = bVersions.map((bv) => bv.block_id)
+
+      const noVersionBlocks = memberBlocks
+        .map((bManger) => {
+          if (bVersionBlocks.includes(bManger.config.blockId)) return null
+          return bManger.config.name
+        })
+        .filter((n) => n !== null)
+        .join(', ')
+
+      console.log(
+        chalk.yellow(`\nNo release ready/approved versions found for ${chalk.gray(noVersionBlocks)} member blocks`)
+      )
+      throw new Error(`Please create and publish version for all member blocks and try again.`)
+    }
+
+    updatedDependencies = packageConfig.dependencies
+
+    for await (const bkVer of bVersions) {
+      const choices = bkVer.block_versions.map((b) => ({ name: b.version_number, value: b }))
+      if (!latest) {
+        const blockVersion = await readInput({
+          type: 'list',
+          name: 'blockVersion',
+          message: `Select the block version of ${bkVer.block_name}`,
+          choices,
+        })
+
+        selectedBlockVersions[bkVer.block_id] = { ...blockVersion, block_name: bkVer.block_name }
+      } else {
+        selectedBlockVersions[bkVer.block_id] = { ...choices[0]?.value, block_name: bkVer.block_name }
+      }
+
+      updatedDependencies[bkVer.block_name].versionId = selectedBlockVersions[bkVer.block_id].id
+      updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
+    }
   }
 
-  spinnies.add('bv', { text: `Checking block versions` })
+  spinnies.add('bv', { text: `Checking package versions` })
   const pkBlockVersion = await getAllBlockVersions(pkBlockId)
   spinnies.remove('bv')
   const latestVersion = pkBlockVersion.data?.data?.[0]?.version_number
@@ -130,7 +135,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       message: 'Enter version note for package (default to empty)',
     }))
 
-  if (!force && latest) {
+  if (!force && latest && memberBlockIds.length > 0) {
     const goAhead = await confirmationPrompt({
       message: `${`Continue ${
         packageConfig.name
@@ -192,18 +197,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       }
     }
   } else if (repoType === 'multi') {
-    const ignoresApCreated = [
-      '._ab_em/*',
-      '._ab_em_elements/*',
-      '.env.function',
-      '.env.view',
-      '.tmp/*',
-      '.deploy/*',
-      '.deploy.config.json/*',
-      'cliruntimelogs/*',
-      'logs/*',
-      'pushlogs/*',
-    ]
+    const ignoresApCreated = BB_EXCLUDE_FILES_FOLDERS
 
     const gitignorePath = path.join('.', '.gitignore')
     const gitignoreData = existsSync(gitignorePath) ? readFileSync(gitignorePath).toString() : ''

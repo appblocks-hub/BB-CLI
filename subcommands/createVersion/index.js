@@ -20,6 +20,7 @@ const { confirmationPrompt } = require('../../utils/questionPrompts')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const { headLessConfigStore } = require('../../configstore')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
 const createVersion = async (bkName, cmdOptions) => {
   try {
@@ -45,22 +46,23 @@ const createVersion = async (bkName, cmdOptions) => {
       if (err) throw err
       rootManager = rm
 
-      orphanBranchFolder = path.join(rootManager.directory, 'bb_modules', `block_${blockName}`)
-      workSpaceFolder = path.join(rootManager.directory, 'bb_modules', 'workspace')
+      const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
+      orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
+      workSpaceFolder = path.join(bbModulesPath, BB_FILES.WORKSPACE)
 
       const isCleanBlockName = manager.isPackageConfigManager && !bkName ? null : blockName
       isCleanBlock(manager.directory, isCleanBlockName)
 
       // sync
-      spinnies.add('sync', { text: 'Checking sync status' })
+      spinnies.add('cv_sync', { text: 'Checking sync status' })
       await tempSync(null, { returnOnError: true })
-      spinnies.succeed('sync', { text: 'sync is up to date' })
+      spinnies.succeed('cv_sync', { text: 'sync is up to date' })
       console.log()
 
-      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}`)
+      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}. Please run bb sync and try again`)
       isCleanBlock(orphanBranchFolder)
 
-      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace`)
+      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace. Please run bb sync and try again`)
       isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
 
       const execOptions = { cwd: manager.directory }

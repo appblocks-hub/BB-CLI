@@ -4,21 +4,24 @@ const path = require('path')
 const { getOnPremConfigDetails } = require('./onPrem/util')
 const { isEmptyObject } = require('../../utils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
 
 /**
- * DeployblockConfigManager
+ * DeployConfigManager
  */
 
-class DeployblockConfigManager {
+class DeployConfigManager {
   constructor() {
     // eslint-disable-next-line no-bitwise
     this.configName = 'app.config.json'
     this.config = {}
     this.cwd = '.'
 
-    this.onPremDeployContentBackupFolder = '.deploy/on_prem'
-    this.onPremDeployConfigFile = 'deploy.config.json'
-    this.onPremDeployedContentFile = '.deployed.config.json'
+    const deployBkPath = getBBFolderPath(BB_FOLDERS.DEPLOY_BACKUP)
+    this.onPremDeployContentBackupFolder = path.join(deployBkPath, BB_FOLDERS.ON_PREMISE)
+    
+    this.onPremDeployConfigFile = BB_FILES.DEPLOY_CONFIG
+    this.onPremDeployedContentFile = BB_FILES.DEPLOYED_CONFIG
 
     this.events = new EventEmitter()
     this.events.on('write', (options) => this._write(options))
@@ -175,5 +178,5 @@ class DeployblockConfigManager {
   }
 }
 
-const deployblockConfigManager = new DeployblockConfigManager()
-module.exports = deployblockConfigManager
+const deployConfigManager = new DeployConfigManager()
+module.exports = deployConfigManager

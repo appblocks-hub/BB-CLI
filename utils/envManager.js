@@ -36,11 +36,11 @@ const updateEnvWith = (envData, customData, packPrefixes, customEnv) => {
 
   Object.entries(updatedData).forEach(([key]) => {
     if (key === 'NODE_ENV' || isEnvHasPrefix(key)) return
-    warnKeys.push(key)
+    warnKeys.push(key.trim())
   })
 
   Object.entries(customData).forEach(([key, value]) => {
-    if (!isEnvHasPrefix(key)) warnKeys.push(key)
+    if (!isEnvHasPrefix(key)) warnKeys.push(key.trim())
 
     if (envData[key] !== undefined && customEnv) {
       console.log(chalk.yellow(`Replacing ${key} with custom env value from ${customEnv}.`))
@@ -49,17 +49,7 @@ const updateEnvWith = (envData, customData, packPrefixes, customEnv) => {
     updatedData[key] = value
   })
 
-  if (warnKeys.length > 0) {
-    console.log(
-      chalk.yellow(
-        `Beginning with the upcoming version, we will exclusively support environment keys that begin with "BB_<package>"\nFor example ${prefixes
-          .map((pre) => `${pre}_${warnKeys[0]}`)
-          .join(' or ')}.\nKeys affected: ${warnKeys}`
-      )
-    )
-  }
-
-  return updatedData
+  return { updatedData, warnKeys, prefixes }
 }
 
 const saveToEnvFile = (envObject, envPath) => {
@@ -77,18 +67,30 @@ const upsertEnv = async (type, envData, customEnv, prefixes) => {
     const customEnvPath = path.join(path.resolve(), `.env.${type}.${customEnv}`)
     const envPath = path.join(path.resolve(), `.env.${type}`)
     let updateEnvData = envData || {}
+    const envWarning = { keys: [], prefixes: [] }
 
     if (existsSync(envPath)) {
       const existEnvData = await readEnvAsObject(envPath)
-      updateEnvData = updateEnvWith(existEnvData, updateEnvData, prefixes)
+      const { updatedData, warnKeys: wk, prefixes: pre } = updateEnvWith(existEnvData, updateEnvData, prefixes)
+      updateEnvData = updatedData
+      envWarning.keys = envWarning.keys.concat(wk)
+      envWarning.prefixes = envWarning.prefixes.concat(pre)
     }
 
     if (customEnv && existsSync(customEnvPath)) {
       const customEnvData = await readEnvAsObject(customEnvPath)
-      updateEnvData = updateEnvWith(updateEnvData, customEnvData, prefixes, customEnv)
+      const {
+        updatedData,
+        warnKeys: wk,
+        prefixes: pre,
+      } = updateEnvWith(updateEnvData, customEnvData, prefixes, customEnv)
+      updateEnvData = updatedData
+      envWarning.keys = envWarning.keys.concat(wk)
+      envWarning.prefixes = envWarning.prefixes.concat(pre)
     }
 
-    return saveToEnvFile(updateEnvData, envPath)
+    const { envString, envObject } = saveToEnvFile(updateEnvData, envPath)
+    return { envWarning, envString, envObject }
   } catch (err) {
     throw new Error(err.message)
   }

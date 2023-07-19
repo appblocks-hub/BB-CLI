@@ -1,8 +1,9 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 const path = require('path')
 const { spawn, execSync } = require('child_process')
 const { openSync, existsSync } = require('fs')
-const { mkdir, writeFile } = require('fs/promises')
+const { writeFile } = require('fs/promises')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
 const { generateEmFolder } = require('./generateEmulator')
@@ -11,6 +12,13 @@ const { getNodePackageInstaller } = require('../../../../utils/nodePackageManage
 const { headLessConfigStore } = require('../../../../configstore')
 const { upsertEnv, readEnvAsObject } = require('../../../../utils/envManager')
 const { readJsonAsync } = require('../../../../utils')
+const {
+  getBBFolderPath,
+  BB_FOLDERS,
+  generateOutLogPath,
+  BB_FILES,
+  generateErrLogPath,
+} = require('../../../../utils/bbFolders')
 
 class HandleNodeFunctionStart {
   constructor() {
@@ -44,10 +52,12 @@ class HandleNodeFunctionStart {
 
       if (!this.fnBlocks.length) return
 
-      const emPath = path.join(core.cwd, '._ab_em')
+      const emPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, core.cwd)
+
       const { installer } = getNodePackageInstaller()
-      const logOutPath = path.join(core.cwd, './logs/out/functions.log')
-      const logErrPath = path.resolve(core.cwd, './logs/err/functions.log')
+      const { FUNCTIONS_LOG } = BB_FILES
+      const logOutPath = generateOutLogPath(FUNCTIONS_LOG, core.cwd)
+      const logErrPath = generateErrLogPath(FUNCTIONS_LOG, core.cwd)
 
       spinnies.add('emBuild', { text: 'Building function emulator' })
       this.fnBlocks.forEach((block) => {
@@ -152,9 +162,6 @@ class HandleNodeFunctionStart {
       spinnies.update('emBuild', { text: 'Starting emulator' })
 
       try {
-        await mkdir(path.join(core.cwd, './logs', 'err'), { recursive: true })
-        await mkdir(path.join(core.cwd, './logs', 'out'), { recursive: true })
-
         // Release port before server start
         this.fnBlocks[0]?.portKey.abort()
 
@@ -168,8 +175,14 @@ class HandleNodeFunctionStart {
           envPrefixes.push(pEnvPrefix)
         }
 
-        await upsertEnv('function', {}, environment, envPrefixes)
-        await upsertEnv('view', updateEnvValue, environment, envPrefixes)
+        const updatedFnEnv = await upsertEnv('function', {}, environment, envPrefixes)
+        const updatedViewEnv = await upsertEnv('view', updateEnvValue, environment, envPrefixes)
+        core.envWarning.keys = core.envWarning.keys
+          .concat(updatedFnEnv.envWarning.keys)
+          .concat(updatedViewEnv.envWarning.keys)
+        core.envWarning.prefixes = core.envWarning.prefixes
+          .concat(updatedFnEnv.envWarning.prefixes)
+          .concat(updatedViewEnv.envWarning.prefixes)
 
         let child = { pid: 0 }
         let pm2InstanceName
@@ -215,10 +228,7 @@ class HandleNodeFunctionStart {
           pid: this.pid || null,
           port: this.port || null,
           pm2InstanceName,
-          log: {
-            out: logOutPath,
-            err: logErrPath,
-          },
+          log: { out: logOutPath, err: logErrPath },
         }
 
         for (const blockManager of this.fnBlocks) {

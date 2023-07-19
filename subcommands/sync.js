@@ -20,7 +20,7 @@ const registerBlock = require('../utils/registerBlock')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { diffObjects } = require('../utils/diff')
 const { diffShower, manualMerge } = require('../utils/syncUtils')
-const convertGitSshUrlToHttps = require('../utils/convertGitUrl')
+const convertGitUrl = require('../utils/convertGitUrl')
 const createBlock = require('../utils/createBlock')
 const { offerAndCreateBlock } = require('../utils/sync-utils')
 const { appblockConfigSchema } = require('../utils/schema')
@@ -737,7 +737,7 @@ const sync = async () => {
        * so create a new config with those
        */
       const { BlockName, GitUrl } = appblockDetails
-      const source = { ssh: GitUrl, https: convertGitSshUrlToHttps(GitUrl) }
+      const source = { ssh: convertGitUrl(GitUrl, 'ssh'), https: convertGitUrl(GitUrl) }
       const newAppblockConfig = { name: BlockName, type: 'package', source, dependencies: { ...deps } }
 
       // console.log(`${chalk.bgYellow('INFO')} Writing new config`)
