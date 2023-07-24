@@ -6,13 +6,13 @@
  */
 
 const axios = require('axios')
-const { githubGetDeviceCode, githubClientID } = require('../githubAPI')
+const { githubGetDeviceCode, githubClientID } = require('./githubAPI')
 
-function getGithubDeviceCode() {
+function getDeviceCode() {
   return axios.post(githubGetDeviceCode, {
     client_id: githubClientID,
     scope: 'repo,read:org,delete_repo',
   })
 }
 
-module.exports = getGithubDeviceCode
+module.exports = getDeviceCode

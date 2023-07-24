@@ -103,7 +103,6 @@ const userOrgsTR = ({ data: { data } }) => {
   }))
   return { list, ...data.user.organizations.pageInfo }
 }
-
 /**
  * @typedef {object} userOrgsNode
  * @property {string} id
@@ -139,7 +138,6 @@ const getRepoDetailsTR = ({ data: { data } }) => {
   const { repository } = data || {}
   return { repository }
 }
-
 /**
  * @property {string} repoOwner
  * @property {string} repoName

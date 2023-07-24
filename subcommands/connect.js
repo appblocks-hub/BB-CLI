@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -7,36 +6,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { configstore } = require('../configstore')
-const getGithubDeviceCode = require('../utils/getGithubDeviceCode')
-const { getGithubSignedInUser } = require('../utils/getSignedInUser')
-const handleGithubAuth = require('../utils/handleGithubAuth')
+const chalk = require('chalk')
+const GitConfigFactory = require('../utils/gitManagers/gitConfigFactory')
 
 const connect = async (service, options) => {
-  const { force } = options
+  try {
+    const { error, manager } = await GitConfigFactory.init({ gitVendor: service })
+    if (error) throw error
 
-  switch (service) {
-    case 'github':
-      if (force) {
-        configstore.delete('githubUserId')
-        configstore.delete('githubUserToken')
-      }
-      if (configstore.get('githubUserId')) {
-        const userToken = configstore.get('githubUserToken')
-        const {
-          user: { userName },
-        } = await getGithubSignedInUser(userToken)
-        // TODO -- if userName is null - handle
-        console.log(`Already logged in as ${userName} \ntry --force to delete user and add new user`)
-      } else {
-        const response = await getGithubDeviceCode()
-        await handleGithubAuth(response.data)
-      }
-      break
-
-    default:
-      console.log('Sorry no such service is supported!')
-      break
+    await manager.login(options)
+  } catch (err) {
+    console.log(chalk.red(err.message))
   }
 }
 

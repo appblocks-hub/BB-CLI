@@ -5,9 +5,16 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-const configstore = require('../../../../configstore')
+const { configstore } = require('../../../../configstore')
+const { axios } = require('../../../axiosInstances')
 const GitManager = require('../../gitManager')
+const { githubGraphQl } = require('./auth/githubAPI')
+const { getGitHeader } = require('./auth/githubHeaders')
+const handleAuth = require('./auth/handleAuth')
+const { userRepos, isRepoNameAvailable } = require('./graphQl/queries')
 const { convertGithubUrl, getGithubRemote } = require('./utils')
+const { NewLS } = require('../../utils/graphql/listandselectrepos')
+const GitPaginator = require('./utils/paginateGitRest')
 
 class GithubManager extends GitManager {
   /**
@@ -17,9 +24,9 @@ class GithubManager extends GitManager {
   constructor(config) {
     const { cwd, gitUrl, prefersSsh, gitVendor } = config
 
-    const ssh = convertGithubUrl(gitUrl, 'ssh')
+    const sshUrl = gitUrl ? convertGithubUrl(gitUrl, 'ssh') : null
     const githubUserToken = configstore.get('githubUserToken')
-    const remote = getGithubRemote(prefersSsh, ssh, githubUserToken)
+    const remote = getGithubRemote(prefersSsh, sshUrl, githubUserToken)
 
     super({ gitVendor, remote, cwd })
 
@@ -37,26 +44,61 @@ class GithubManager extends GitManager {
   }
 
   // Auth
-  login() {}
+  /**
+   *
+   * @param {*} options
+   */
+  async login(options) {
+    await handleAuth(options)
+  }
 
   // Queries
-  getOrganizations() {}
+  async getOrganizations() {
+    return new GitPaginator('user/orgs', (v) => ({
+      name: v.login,
+      // split("/") -- To get name of org so it can be used
+      // to get team list of organization in later prompt,
+      // TODO -- if possible change choice object of inquirer to accommodate this,
+      // and return ans with name and not just answer
+      value: `${v.login}/${v.node_id}`,
+    }))
+  }
 
-  getRepositories() {}
+  async getRepositories() {
+    return new NewLS(userRepos.Q, userRepos.Tr_t).sourceAll
+  }
 
-  getRepository() {}
+  // async getRepository() {}
 
-  checkRepositoryNameAvailability() {}
+  async checkRepositoryNameAvailability() {
+    return axios
+      .post(
+        githubGraphQl,
+        {
+          query: isRepoNameAvailable.Q,
+          variables: {
+            user: configstore.get('githubUserName'),
+            search: this.newNameToTry,
+          },
+        },
+        { headers: getGitHeader() }
+      )
+      .then((data) => isRepoNameAvailable.Tr(data))
+      .catch((err) => {
+        console.log(err)
+        return false
+      })
+  }
 
-  // Mutations
+  // // Mutations
 
-  createRepository() {}
+  // async createRepository() {}
 
-  updateRepository() {}
+  // async updateRepository() {}
 
-  cloneRepository() {}
+  // async cloneRepository() {}
 
-  createPullRequest() {}
+  // async createPullRequest() {}
 }
 
 module.exports = GithubManager

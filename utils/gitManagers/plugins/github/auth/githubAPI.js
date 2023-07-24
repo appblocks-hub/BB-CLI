@@ -12,6 +12,6 @@ github.githubLogin = 'https://github.com/login'
 github.githubDeviceLogin = `${github.githubLogin}/device`
 github.githubGetDeviceCode = `${github.githubLogin}/device/code`
 github.githubGetAccessToken = `${github.githubLogin}/oauth/access_token`
-github.githubClientID = '153dcfa12d7bdc87d283e429ef5eacce72aedb81'
+github.githubClientID = '5a77c38abd2e3e84d4e9'
 
 module.exports = github

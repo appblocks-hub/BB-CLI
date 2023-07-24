@@ -12,30 +12,49 @@ const clipCopy = require('../../../../clipcopy')
 const figletAsync = require('../../../../figletAsync')
 const OTPVerify = require('../../../../OTPConfirmation')
 const parseGitResponse = require('../../../../parseResponse')
+const getDeviceCode = require('./getDeviceCode')
+const getSignedInUser = require('./getSignedInUser')
+const { configstore } = require('../../../../../configstore')
 
-async function handleGithubAuth(data) {
-  const OTPresponse = parseGitResponse(data)
-  const userCode = OTPresponse.user_code
-  const expiresIn = OTPresponse.expires_in
-  console.log('\n')
-  console.log('Please go to https://github.com/login/device, and paste the below code.')
-  await figletAsync(userCode)
-  console.log('\n')
-  await clipCopy(userCode)
-  console.log('\n')
-  console.log(`Code expires in ${chalk.bold(expiresIn)} seconds `)
-  console.log('\n\n')
-  await open(githubDeviceLogin)
-  const Cdata = {
-    client_id: githubClientID,
-    device_code: OTPresponse.device_code,
-    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+async function handleAuth({ force }) {
+  try {
+    if (force) {
+      configstore.delete('githubUserId')
+      configstore.delete('githubUserToken')
+    }
+
+    if (configstore.get('githubUserId')) {
+      const userToken = configstore.get('githubUserToken')
+      const {
+        user: { userName },
+      } = await getSignedInUser(userToken)
+      // TODO -- if userName is null - handle
+      console.log(chalk.yellow(`Already logged in as ${userName}`))
+      console.log(chalk.dim(`try --force to reset user`))
+      return
+    }
+
+    const response = await getDeviceCode()
+    const OTPresponse = parseGitResponse(response.data)
+    const userCode = OTPresponse.user_code
+    const expiresIn = OTPresponse.expires_in
+    console.log('\nPlease go to https://github.com/login/device, and paste the below code.')
+    await figletAsync(userCode)
+    console.log('\n')
+    await clipCopy(userCode)
+    console.log(`\nCode expires in ${chalk.bold(expiresIn)} seconds \n\n`)
+    await open(githubDeviceLogin)
+    const Cdata = {
+      client_id: githubClientID,
+      device_code: OTPresponse.device_code,
+      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+    }
+    const done = await OTPVerify(Cdata, githubGetAccessToken)
+    if (done) return
+  } catch (error) {
+    console.log(error.message)
+    throw new Error('Something went wrong')
   }
-  const done = await OTPVerify(Cdata, githubGetAccessToken)
-  if (done) return
-
-  console.log('something went wrong')
-  process.exit(0)
 }
 
-module.exports = handleGithubAuth
+module.exports = handleAuth

@@ -1,14 +1,23 @@
-const { configstore } = require('../configstore')
+/**
+ * Copyright (c) Appblocks. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+const GitConfigFactory = require('../utils/gitManagers/gitConfigFactory')
 const { feedback } = require('../utils/cli-feedback')
 
 const disconnect = async (service) => {
-  if (service !== 'github') {
-    feedback({ type: 'error', message: 'Only github is supported' })
-    return
+  try {
+    const { error, manager } = await GitConfigFactory.init({ gitVendor: service })
+    if (error) throw error
+
+    await manager.disconnect()
+    feedback({ type: 'success', message: 'Disconnected git user' })
+  } catch (err) {
+    feedback({ type: 'error', message: err.message })
   }
-  configstore.delete('githubUserId')
-  configstore.delete('githubUserToken')
-  feedback({ type: 'success', message: 'removed git' })
 }
 
 module.exports = disconnect

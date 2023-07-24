@@ -11,11 +11,11 @@ const { getBlockName } = require('../../../utils/questionPrompts')
 
 /**
  * @implements {apply}
- * @property {boolean} nameIsavailabelocally
+ * @property {boolean} nameIsAvailableLocally
  */
 class IdentifyUniqueBlockName {
   constructor() {
-    this.nameIsavailabelocally = false
+    this.nameIsAvailableLocally = false
     this.availableName = null
     this.lastTriedRepoName = ''
     this.newNameToTry = ''
@@ -56,26 +56,20 @@ class IdentifyUniqueBlockName {
         this.lastTriedRepoName = this.newNameToTry, i += 1, await this.getNewName()
       ) {
         console.log('NEW NAME:', this.newNameToTry)
-        this.nameIsavailabelocally = !files.includes(this.newNameToTry)
-        console.log(this.nameIsavailabelocally)
-        if (!this.nameIsavailabelocally) continue
-        const nameAvailable = await axios
-          .post(
-            githubGraphQl,
-            {
-              query: isRepoNameAvailable.Q,
-              variables: {
-                user: configstore.get('githubUserName'),
-                search: this.newNameToTry,
-              },
-            },
-            { headers: getGitHeader() }
-          )
-          .then((data) => isRepoNameAvailable.Tr(data))
-          .catch((err) => {
-            console.log(err)
-            return false
-          })
+        this.nameIsAvailableLocally = !files.includes(this.newNameToTry)
+        console.log(this.nameIsAvailableLocally)
+        if (!this.nameIsAvailableLocally) continue
+
+        let nameAvailable = false
+        try {
+          const { error, manager } = await GitConfigFactory.init({ gitVendor: service })
+          if (error) throw error
+
+          nameAvailable = await manager.checkRepositoryNameAvailability()
+          feedback({ type: 'success', message: 'Disconnected git user' })
+        } catch (err) {
+          feedback({ type: 'error', message: err.message })
+        }
 
         if (nameAvailable) this.availableName = this.newNameToTry
       }

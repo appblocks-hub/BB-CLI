@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const path = require('path')
 const { readdirSync } = require('fs')
-const { path } = require('@babel/traverse/lib/cache')
 const { configstore } = require('../../configstore')
 
 class GitConfigFactory {
@@ -22,20 +22,21 @@ class GitConfigFactory {
       const { cwd, gitUrl, gitVendor } = options || {}
 
       const config = {
-        cwd: path.resolve(cwd),
+        cwd: path.resolve(cwd || '.'),
         prefersSsh: configstore.get('prefersSsh'),
         gitVendor: gitVendor || configstore.get('gitVendor'),
         gitUrl,
       }
 
-      const gitVendorPluginsPath = path.join('plugins')
+      const gitVendorPluginsPath = path.join(__dirname, 'plugins')
       const plugins = readdirSync(gitVendorPluginsPath)
 
-      for await (const plugin of plugins) {
+      for await (const pluginName of plugins) {
         // eslint-disable-next-line no-continue
-        if (plugin !== config.gitVendor) continue
+        if (pluginName !== config.gitVendor) continue
 
-        const manager = await import(path.join(gitVendorPluginsPath, plugin))
+        const { default: Plugin } = await import(path.join(gitVendorPluginsPath, pluginName, 'index.js'))
+        const manager = new Plugin(config)
         return { manager }
       }
 
