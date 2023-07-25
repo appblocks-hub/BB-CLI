@@ -14,8 +14,7 @@ const { noMethodImplementedError } = require('./utils')
 class GitManager {
   /**
    *
-   * @param {String} cwd The directory path where the command is to be run
-   * @param {String} url Source Url (git repo https or ssh)
+   * @param {import('./gitManager').GitManagerConfig} config
    */
   constructor(config) {
     const { gitVendor, remote, cwd } = config
@@ -24,14 +23,16 @@ class GitManager {
     this.cwd = cwd
   }
 
-  // vendor
+  /**
+   ================================================================================= 
+   ====================Vendor specific git manager functions======================== 
+   ================================================================================= 
+   */
 
-  // Auth
   login() {
     noMethodImplementedError(this.gitVendor)
   }
 
-  // Queries
   getOrganizations() {
     noMethodImplementedError(this.gitVendor)
   }
@@ -48,8 +49,6 @@ class GitManager {
     noMethodImplementedError(this.gitVendor)
   }
 
-  // Mutations
-
   createRepository() {
     noMethodImplementedError(this.gitVendor)
   }
@@ -65,6 +64,12 @@ class GitManager {
   createPullRequest() {
     noMethodImplementedError(this.gitVendor)
   }
+
+  /**
+   ================================================================================= 
+   ==========================Local git manager functions============================ 
+   ================================================================================= 
+   */
 
   addRemote(remoteName, parentRepo) {
     return this._run('remote', ['add', remoteName, parentRepo])
@@ -131,8 +136,8 @@ class GitManager {
     return this._run('checkout', ['-b', releaseBranch, parentBranch])
   }
 
-  fetch(opts) {
-    return this._run('fetch', [opts])
+  fetch(fetchOptions) {
+    return this._run('fetch', [fetchOptions])
   }
 
   getGlobalUsername() {
@@ -236,6 +241,8 @@ class GitManager {
   revListTag(tag) {
     return this._run('rev-list', ['--reverse', tag, '| git cherry-pick -n --stdin'])
   }
+
+  // ============================================ //
 
   async _run(operation, opts) {
     const r = await pExec(`git ${operation} ${opts.join(' ')}`, { cwd: this.cwd })

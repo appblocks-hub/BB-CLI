@@ -8,6 +8,7 @@
 const path = require('path')
 const { readdirSync } = require('fs')
 const { configstore } = require('../../configstore')
+const { GIT_VENDOR, PREFERS_SSH } = require('./utils/constant')
 
 class GitConfigFactory {
   static cache = {}
@@ -23,8 +24,8 @@ class GitConfigFactory {
 
       const config = {
         cwd: path.resolve(cwd || '.'),
-        prefersSsh: configstore.get('prefersSsh'),
-        gitVendor: gitVendor || configstore.get('gitVendor'),
+        prefersSsh: configstore.get(PREFERS_SSH),
+        gitVendor: gitVendor || configstore.get(GIT_VENDOR),
         gitUrl,
       }
 

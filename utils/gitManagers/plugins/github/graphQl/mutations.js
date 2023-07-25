@@ -34,7 +34,10 @@ const clone = `mutation($description:String, $templateRepo:ID!,$owner:ID!,$name:
 /**
  * @returns {FF}
  */
-const createTr = ({ data }) => data.createRepository.repository
+const createTr = ({ data: { data } }) => {
+  if (data.errors?.length > 0) throw data.errors
+  return data.createRepository.repository
+}
 const create = `mutation( $template:Boolean, $description:String, $team:ID,$owner:ID,$name:String!,$visibility:RepositoryVisibility!){
   createRepository(input: {template:$template, description:$description, ownerId: $owner, teamId: $team, name: $name, visibility: $visibility}){
     repository{
@@ -49,20 +52,25 @@ const create = `mutation( $template:Boolean, $description:String, $team:ID,$owne
   }
 }`
 
-const updateTr = ({ data }) => data.updateRepository.repository
-const update = `mutation($description:String, $repositoryId:ID!){
-  updateRepository(input: { description:$description, repositoryId: $ID}) {
-      repository {
-        id
-        resourcePath
-        description
-        visibility
-        url
-        sshUrl
-        name
+const updateTr = ({ data: { data } }) => {
+  if (data.errors?.length > 0) throw data.errors
+  return data.updateRepository.repository
+}
+const update = `
+    mutation UpdateRepository($repositoryId: ID!, $updateFields: UpdateRepositoryInput!) {
+      updateRepository(input: { repositoryId: $repositoryId, ...$updateFields }) {
+        repository {
+          id
+          name
+          description
+          resourcePath
+          visibility
+          url
+          sshUrl
+        }
       }
     }
-  }`
+  `
 
 const createPrTr = ({ data }) => data.createPullRequest.pullRequest
 const createPr = `mutation($baseRefName:String!, $body:String, $draft:Boolean, $headRefName:String!, $maintainerCanModify:Boolean, $repositoryId:ID!, $title:String!){

@@ -7,16 +7,16 @@
 
 const { configstore } = require('../../../../../configstore')
 
-const getGitHeader = (TOKEN) => ({
+const getGithubHeader = (TOKEN) => ({
   'Content-Type': 'application/json',
   Authorization: `bearer ${TOKEN || configstore.get('githubUserToken')}`,
   Accept: 'application/vnd.github.v4+json',
 })
 
-const getGitRestHeaders = () => ({
+const getGithubRestHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${configstore.get('githubUserToken')}`,
   Accept: 'application/vnd.github.v3+json',
 })
 
-module.exports = { getGitHeader, getGitRestHeaders }
+module.exports = { getGithubHeader, getGithubRestHeaders }

@@ -7,7 +7,7 @@
 
 import { PathLike } from 'fs'
 import { GitManager, GitManagerConfig, GitVendors } from './gitManager'
-
+import GithubManager from './plugins/github/githubManager'
 
 export interface GitFactoryConfig {
   gitVendor: GitVendors // git vendors
@@ -16,8 +16,8 @@ export interface GitFactoryConfig {
 }
 
 export type FactoryCreateResult = {
-  manager: GitManager<GitManagerConfig> | null
-  error: Error | null
+  manager:  GithubManager | GitManager
+  error: Error
 }
 
 declare class GitConfigFactory {
@@ -32,4 +32,3 @@ declare class GitConfigFactory {
 }
 
 export = GitConfigFactory
-

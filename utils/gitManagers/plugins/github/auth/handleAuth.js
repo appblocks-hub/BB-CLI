@@ -15,6 +15,7 @@ const parseGitResponse = require('../../../../parseResponse')
 const getDeviceCode = require('./getDeviceCode')
 const getSignedInUser = require('./getSignedInUser')
 const { configstore } = require('../../../../../configstore')
+const { GIT_VENDOR } = require('../../../utils/constant')
 
 async function handleAuth({ force }) {
   try {
@@ -50,7 +51,9 @@ async function handleAuth({ force }) {
       grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
     }
     const done = await OTPVerify(Cdata, githubGetAccessToken)
-    if (done) return
+    if (!done) throw new Error('Error verifying github login')
+
+    configstore.set(GIT_VENDOR, 'github')
   } catch (error) {
     console.log(error.message)
     throw new Error('Something went wrong')

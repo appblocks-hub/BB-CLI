@@ -8,7 +8,7 @@
 // TODO -- could retry 3 times.
 const { githubGraphQl } = require('./githubAPI')
 const { axios } = require('../../../../axiosInstances')
-const { getGitHeader } = require('../../../../getHeaders')
+const { getGithubHeader } = require('./githubHeaders')
 
 /**
  * @typedef getSignedInGitUserReturnPart
@@ -42,7 +42,7 @@ async function getSignedInUser(TOKEN) {
   }
 
   try {
-    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGitHeader(TOKEN) })).data
+    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGithubHeader(TOKEN) })).data
       .data.viewer
 
     result.user = {

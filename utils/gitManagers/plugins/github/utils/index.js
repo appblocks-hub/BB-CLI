@@ -7,9 +7,9 @@
 
 /**
  *
- * @param {*} prefersSsh
- * @param {*} sshUrl
- * @param {*} token
+ * @param {String} prefersSsh
+ * @param {String} sshUrl
+ * @param {String} token
  * @returns
  */
 const getGithubRemote = (prefersSsh, sshUrl, token) =>
@@ -17,8 +17,8 @@ const getGithubRemote = (prefersSsh, sshUrl, token) =>
 
 /**
  *
- * @param {*} url
- * @param {*} type
+ * @param {String} url
+ * @param {String} type
  * @returns
  */
 const convertGithubUrl = (url, type) => {

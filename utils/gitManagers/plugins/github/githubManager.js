@@ -6,15 +6,19 @@
  * LICENSE file in the root directory of this source tree.
  */
 const { configstore } = require('../../../../configstore')
-const { axios } = require('../../../axiosInstances')
 const GitManager = require('../../gitManager')
-const { githubGraphQl } = require('./auth/githubAPI')
-const { getGitHeader } = require('./auth/githubHeaders')
-const handleAuth = require('./auth/handleAuth')
-const { userRepos, isRepoNameAvailable } = require('./graphQl/queries')
 const { convertGithubUrl, getGithubRemote } = require('./utils')
-const { NewLS } = require('../../utils/graphql/listandselectrepos')
-const GitPaginator = require('./utils/paginateGitRest')
+// handlers
+const handleAuth = require('./auth/handleAuth')
+const handleCreateRepository = require('./handlers/handleCreateRepository')
+const handleCheckRepositoryNameAvailability = require('./handlers/handleCheckRepositoryNameAvailability')
+const handleGetUserRepositories = require('./handlers/handleGetUserRepositories')
+const handleGetUserOrganizations = require('./handlers/handleGetUserOrganizations')
+const handleUpdateRepository = require('./handlers/handleUpdateRepository')
+const handleCreatePullRequest = require('./handlers/handleCreatePullRequest')
+const handleCloneRepository = require('./handlers/handleCloneRepository')
+const handleGetRepository = require('./handlers/handleGetRepository')
+const handleForkRepository = require('./handlers/handleForkRepository')
 
 class GithubManager extends GitManager {
   /**
@@ -28,77 +32,108 @@ class GithubManager extends GitManager {
     const githubUserToken = configstore.get('githubUserToken')
     const remote = getGithubRemote(prefersSsh, sshUrl, githubUserToken)
 
+    const repoHttpsUrl = convertGithubUrl(gitUrl, 'http').replace('.git', '').split('/')
+    const repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
+    const ownerName = repoHttpsUrl[repoHttpsUrl.length - 2]
+
     super({ gitVendor, remote, cwd })
 
+    this.config = {}
     this.cwd = cwd
     this.remote = remote
+    this.repoName = repoName
+    this.ownerName = ownerName
     this.gitVendor = gitVendor
     this.prefersSsh = prefersSsh
-    this.githubUserToken = githubUserToken
-    this.githubUserId = configstore.get('githubUserId')
-    this.githubUserName = configstore.get('githubUserName')
+    this.userToken = githubUserToken
+    this.userId = configstore.get('githubUserId')
+    this.userName = configstore.get('githubUserName')
     this.localGitUserName = configstore.get('localGitUserName')
     this.localGitUserEmail = configstore.get('localGitUserEmail')
 
     this.isGithubManager = true
+
+    this._buildConfig()
   }
 
-  // Auth
+  _buildConfig() {
+    this.config = {
+      cwd: this.cwd,
+      remote: this.remote,
+      repoName: this.repoName,
+      ownerName: this.ownerName,
+      gitVendor: this.gitVendor,
+      prefersSsh: this.prefersSsh,
+      userToken: this.userToken,
+      userId: this.userId,
+      userName: this.userName,
+      localGitUserName: this.localGitUserName,
+      localGitUserEmail: this.localGitUserEmail,
+    }
+  }
+
   /**
-   *
-   * @param {*} options
+   * ==============================================
+   * =================== Auth =====================
+   * ==============================================
    */
+
   async login(options) {
-    await handleAuth(options)
+    await handleAuth(options, this.config)
   }
 
-  // Queries
-  async getOrganizations() {
-    return new GitPaginator('user/orgs', (v) => ({
-      name: v.login,
-      // split("/") -- To get name of org so it can be used
-      // to get team list of organization in later prompt,
-      // TODO -- if possible change choice object of inquirer to accommodate this,
-      // and return ans with name and not just answer
-      value: `${v.login}/${v.node_id}`,
-    }))
+  /**
+   * ==============================================
+   * ================== Queries ===================
+   * ==============================================
+   */
+
+  async getOrganizations(options) {
+    await handleGetUserOrganizations(options, this.config)
   }
 
-  async getRepositories() {
-    return new NewLS(userRepos.Q, userRepos.Tr_t).sourceAll
+  async getRepositories(options) {
+    await handleGetUserRepositories(options, this.config)
   }
 
-  // async getRepository() {}
-
-  async checkRepositoryNameAvailability() {
-    return axios
-      .post(
-        githubGraphQl,
-        {
-          query: isRepoNameAvailable.Q,
-          variables: {
-            user: configstore.get('githubUserName'),
-            search: this.newNameToTry,
-          },
-        },
-        { headers: getGitHeader() }
-      )
-      .then((data) => isRepoNameAvailable.Tr(data))
-      .catch((err) => {
-        console.log(err)
-        return false
-      })
+  async getRepository(options) {
+    await handleGetRepository(options, this.config)
   }
 
-  // // Mutations
+  async checkRepositoryNameAvailability(options) {
+    await handleCheckRepositoryNameAvailability(options, this.config)
+  }
 
-  // async createRepository() {}
+  /**
+   * ==============================================
+   * ================= Mutations ==================
+   * ==============================================
+   */
 
-  // async updateRepository() {}
+  async createRepository(options) {
+    await handleCreateRepository(options, this.config)
+  }
 
-  // async cloneRepository() {}
+  async updateRepository(options) {
+    await handleUpdateRepository(options, this.config)
+  }
 
-  // async createPullRequest() {}
+  async cloneRepository(options) {
+    await handleCloneRepository(options, this.config)
+  }
+
+  async createPullRequest(options) {
+    await handleCreatePullRequest(options, this.config)
+  }
+
+  /**
+   * ==============================================
+   * ================= Rest ==================
+   * ==============================================
+   */
+  async forkRepository(options) {
+    await handleForkRepository(options, this.config)
+  }
 }
 
 module.exports = GithubManager

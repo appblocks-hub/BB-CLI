@@ -8,14 +8,11 @@
 /* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable no-async-promise-executor */
 
-const { default: axios } = require('axios')
 const inquirer = require('inquirer')
 const { configstore } = require('../../../configstore')
-const { githubOrigin, githubRestOrigin, githubGraphQl } = require('../../../utils/api')
+const { githubOrigin,  } = require('../../../utils/api')
 const checkBlockNameAvailability = require('../../../utils/checkBlockNameAvailability')
-const { getGitHeader } = require('../../../utils/getHeaders')
-const { updateRepository } = require('../../../utils/Mutations')
-const { getOrgId } = require('../../../utils/questionPrompts')
+const { getOrgId } = require('../../../utils/questionPromptsV2')
 const { spinnies } = require('../../../loader')
 const convertGitUrl = require('../../../utils/convertGitUrl')
 
@@ -35,18 +32,18 @@ const getUserRepoName = (forkGitUrl) =>
  * @param {String} newBlockName
  * @returns {Object | String}
  */
-const forkRepoPost = async (userRepo, newBlockName, organization, branchType) => {
+const forkRepoPost = async (userRepo, newBlockName, organization, branchType, gitManager) => {
   try {
-    const postData = {
+    const requestData = {
       name: newBlockName,
       default_branch_only: branchType,
     }
 
     if (organization != null) {
-      postData.organization = organization
+      requestData.organization = organization
     }
 
-    const res = await axios.post(`${githubRestOrigin}/repos/${userRepo}/forks`, postData, { headers: getGitHeader() })
+    const res = await gitManager.forkRepository({ userRepo, requestData })
     return { data: res.data, blockFinalName: newBlockName }
   } catch (err) {
     if (err.response.status === 404) {
@@ -114,31 +111,6 @@ const getRepoInputs = async () => {
 
 /**
  *
- * @param {Object} ans
- * @returns
- */
-const updateRepo = async (ans) => {
-  const { data: innerData } = await axios.post(
-    githubGraphQl,
-    {
-      query: updateRepository.Q,
-      variables: {
-        description: ans.description,
-        visibility: ans.visibility,
-        team: ans.selectTeam || null,
-      },
-    },
-    { headers: getGitHeader() }
-  )
-  if (innerData.errors) {
-    throw new Error(`Something went wrong with query, \n${JSON.stringify(innerData)}`)
-  }
-
-  return innerData
-}
-
-/**
- *
  * @param {Object} metaData
  * @param {String} newBlockName
  * @param {String} clonePath
@@ -175,4 +147,4 @@ const forkRepo = (metaData) =>
     }
   })
 
-module.exports = { forkRepo, updateRepo }
+module.exports = { forkRepo }

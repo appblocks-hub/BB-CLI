@@ -135,8 +135,8 @@ query($first:Int,$last:Int,$before:String,$after:String,$user:String!){
  * @returns {QueryTransformReturn}
  */
 const getRepoDetailsTR = ({ data: { data } }) => {
-  const { repository } = data || {}
-  return { repository }
+  if (data.errors?.length > 0) throw data.errors
+  return { ...data.repository, defaultBranchName: data.repository.defaultBranchRef?.name }
 }
 /**
  * @property {string} repoOwner

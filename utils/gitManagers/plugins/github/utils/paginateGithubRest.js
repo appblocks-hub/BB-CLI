@@ -7,14 +7,14 @@
 
 const { default: axios } = require('axios')
 const parseLinkHeader = require('parse-link-header')
-const { getGitRestHeaders } = require('../auth/githubHeaders')
+const { getGithubRestHeaders } = require('../auth/githubHeaders')
 const { githubOrigin } = require('../auth/githubAPI')
 
-const headers = getGitRestHeaders()
+const headers = getGithubRestHeaders()
 
-class GitPaginator {
+class GithubPaginator {
   /**
-   * Creates a github v3 api REST GitPaginator
+   * Creates a github v3 api REST GithubPaginator
    * @param {String} endpoint Git API endpoint Eg: 'user/repos'
    * @param {Function} picker A picker function to extract required data from response
    * @param {Object} opts Query options to be passed to REST API
@@ -39,24 +39,24 @@ class GitPaginator {
   async getPage(page) {
     this.currentPage = page
     // check cache
-    if (GitPaginator.cache[page]) {
-      return GitPaginator.cache[page]
+    if (GithubPaginator.cache[page]) {
+      return GithubPaginator.cache[page]
     }
-    const res = await GitPaginator.makeCall.call(this)
+    const res = await GithubPaginator.makeCall.call(this)
     if (res.length === 0) {
       console.log('No organizations found!')
       process.exit(1)
     }
     if (this.hasPrev || this.hasNext) {
-      GitPaginator.cache[page] = [
+      GithubPaginator.cache[page] = [
         { name: 'LoadPrev', disabled: !this.hasPrev },
         ...res,
         { name: 'LoadMore', disabled: !this.hasNext },
       ]
     } else {
-      GitPaginator.cache[page] = res
+      GithubPaginator.cache[page] = res
     }
-    return GitPaginator.cache[page]
+    return GithubPaginator.cache[page]
   }
 
   /**
@@ -66,7 +66,7 @@ class GitPaginator {
     this.hasNext = true
     this.currentPage = 1
     while (this.hasNext) {
-      const res = await GitPaginator.makeCall.call(this)
+      const res = await GithubPaginator.makeCall.call(this)
       this.currentPage += 1
       yield res
     }
@@ -116,4 +116,4 @@ class GitPaginator {
   }
 }
 
-module.exports = GitPaginator
+module.exports = GithubPaginator

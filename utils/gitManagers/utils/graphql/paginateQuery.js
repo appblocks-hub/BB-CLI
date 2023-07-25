@@ -16,10 +16,8 @@ class PaginateQuery {
     this.Headers = headers
     this.Query = query
     this.QueryTransform = queryTransform
-    this.Variables = variables
-    // always pass owner and username also, graph doesn't mind
-    // user: configstore.get('githubUserName') || null,
-    // login: arguments[4] || null,
+    this.Variables = variables || {}
+   
 
     this.Next = false
     this.Previous = false

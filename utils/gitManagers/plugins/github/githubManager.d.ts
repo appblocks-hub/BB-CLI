@@ -7,8 +7,72 @@
 
 import { GitManager } from '../../gitManager'
 
-declare class GithubManager extends GitManager {
-  constructor(config: GitManagerConfig)
-  readonly isGithubManager: true
+export type Organization = object
+
+export type Repository = object
+
+export interface LoginOptions {
+  force: boolean
 }
+
+declare class GithubManager<C extends GitManagerConfig> extends GitManager {
+  constructor(config: C)
+
+  /**
+   * Log in user to the github.
+   * @param options - Login options.
+   */
+  public login(options: LoginOptions): Promise<void>
+
+  /**
+   * Log out user from the github.
+   */
+  public disconnect(): Promise<void>
+
+  /**
+   * Get a list of git user organizations.
+   */
+  public getOrganizations(): Promise<Organization[]>
+
+  /**
+   * Get a list of git user repositories.
+   */
+  public getRepositories(): Promise<Repository[]>
+
+  /**
+   * Get details of a specific repository.
+   */
+  public getRepository(): Promise<Repository>
+
+  /**
+   * Check if a repository name is available.
+   */
+  public checkRepositoryNameAvailability(): Promise<boolean>
+
+  /**
+   * Create a new repository.
+   */
+  public createRepository(): Promise<Repository>
+
+  /**
+   * Update an existing repository.
+   */
+  public updateRepository(): Promise<Repository>
+
+  /**
+   * Clone a repository.
+   */
+  public cloneRepository(): Promise<Repository>
+
+  /**
+   * Create a new pull request.
+   */
+  public createPullRequest(): Promise<Repository>
+
+  /**
+   * Fork a repository.
+   */
+  public forkRepository(): Promise<Repository>
+}
+
 export = GithubManager
