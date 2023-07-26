@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            screens: {
+              'md': '769px',
+              'md-lt': {
+                'max': '768px'
+              },
+            },
+          },
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .linear-300{
+          @apply transition-all duration-300 ease-linear;
+        }
+        .sidemenu-dropdown-container{
+          @apply w-[96%] md:w-80 absolute bottom-[72px] md:bottom-auto md:top-2 left-[2%] md:left-full md:ml-4 rounded-2xl z-30;
+        }
+        .notification-icon{
+          @apply relative after:content-[''] after:absolute after:w-[14px] after:h-[14px] after:right-[-4px] after:top-[-6.5px] after:rounded-full after:bg-[#EA4A5A] after:border-2 after:border-[#2F363D] md:after:border-[#F6F8FA];
+        }
+        .tooltip-arrow{
+          @apply after:content-[''] after:w-3 after:h-3 after:bg-[#24292E] after:absolute after:top-1/2 after:-translate-y-1/2 after:-left-1.5 after:-rotate-45;
+        }
+        .active-notify-bg{
+          @apply bg-gray-900 md:bg-gray-200;
+        }
+        .search-input{
+          @apply w-full text-sm border border-[#D1D5DA] rounded-md pl-9 pr-4 focus:outline-none;
+        }
+        .filter-chkbox{
+          @apply w-4 h-4 mr-3 border flex-shrink-0 rounded;
+        }
+      }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

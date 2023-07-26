@@ -12,8 +12,9 @@ function Watch() {
   })
   watcher.on('all', (_a, b) => {
     if (b.includes('node_modules')) return
+    if (b.slice(-3) !== '.ts') return
     if (b.slice(-3) === '.ts') {
-      exec('npx tsc index.ts --module esnext --target esnext', { cwd: path.dirname(b) })
+      exec('npx tsc index.ts --module nodenext --target esnext', { cwd: path.dirname(b) })
     }
   })
 }

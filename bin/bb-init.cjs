@@ -12,6 +12,10 @@ const init = require('../subcommands/temp-init')
 
 const program = new Command()
 
-program.argument('<package-name>', 'Name of app').description('create an appblock').action(init)
+program
+  .argument('<package-name>', 'Name of app')
+  .option('--typescript', 'use typescript templates')
+  .description('create an appblock')
+  .action(init)
 
 program.parse(process.argv)

@@ -117,13 +117,14 @@ class HandleNodeFunctionStart {
 
       if (core.cmdOpts.singleInstance) {
         spinnies.update('emBuild', { text: 'Configuring node modules' })
-        await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
+        const a = await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
         if (this.fnSharedBlocks?.length) {
-          await linkEmulatedNodeModulesToBlocks(
+          this.depsInstallReport = await linkEmulatedNodeModulesToBlocks(
             emPath,
-            this.fnSharedBlocks.map((m) => ({ directory: m.directory }))
+            this.fnSharedBlocks.map((m) => ({ directory: m.directory, name: m.name }))
           )
         }
+        this.depsInstallReport.push(...a)
       } else {
         spinnies.update('emBuild', { text: 'Installing dependencies in function blocks' })
         const pArray = []
@@ -264,16 +265,17 @@ class HandleNodeFunctionStart {
         if (existsSync(path.join(path.resolve(_v.value.data.directory), 'index.ts'))) {
           tsBlocks.push(path.resolve(_v.value.data.directory))
         }
-
         // console.log(`✓ installed deps in ${this.fnBlocks[i].name}`)
-        console.log(`✗ error installing deps in ${_v.value.data.config.name}`)
+        // console.log(`✗ error installing deps in ${_v.value.data.config.name}`)
         /**
          * TODO: write a proper plugin for typescript
          */
+        console.log(tsBlocks)
         const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
           detached: true,
           cwd: path.join(__dirname),
-          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+          // stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+          stdio: ['ignore', openSync('./out.log', 'w'), openSync('./err.log', 'w')],
         })
         await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
 
