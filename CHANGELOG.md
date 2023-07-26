@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.3-beta...v1.2.0-beta) (2023-07-26)
+
+
+### Features
+
+* typescript templates ([694ced9](https://github.com/appblocks-hub/BB-CLI/commit/694ced95e3579c757bda30aa48990eff7b2b51c2))
+
 ## [1.1.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.2-beta...v1.1.3-beta) (2023-07-18)
 
 
