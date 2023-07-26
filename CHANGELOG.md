@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.2-beta...v1.1.3-beta) (2023-07-18)
+
+
+### Bug Fixes
+
+* bb pull access issue ([e64e072](https://github.com/appblocks-hub/BB-CLI/commit/e64e0725b1d1bc44a1e236475949e9abe93a7dc3))
+* spinnies issue in create version ([83005a2](https://github.com/appblocks-hub/BB-CLI/commit/83005a221bc6c6e98d05163b0fa3bacdc58693db))
+
 ## [1.1.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.1-beta...v1.1.2-beta) (2023-07-13)
 
 

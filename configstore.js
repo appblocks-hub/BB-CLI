@@ -1,5 +1,7 @@
 const Conf = require('conf')
+const { existsSync } = require('fs')
 const path = require('path')
+const { BB_CONFIG_NAME } = require('./utils/constants')
 
 //  * @property {string} githubUserName
 //  * @property {string} appBlockUserToken
@@ -72,7 +74,18 @@ const config = new Conf({
 /**
  * @type {Conf}
  */
-const headLessConfig = (cwd) => {
+const headLessConfig = (cwd, updateIfRoot) => {
+  /**
+   * NOTE: Find a better approach for headless config
+   */
+
+  // TODO: remove this once headless config is moved to better approach
+  if (updateIfRoot) {
+    if (!existsSync(path.resolve(BB_CONFIG_NAME)) || existsSync(path.join('..', BB_CONFIG_NAME))) {
+      return { get: () => {}, set: () => {} }
+    }
+  }
+
   const hConfig = new Conf({
     configName: 'headless-config',
     cwd: cwd || path.resolve(),
