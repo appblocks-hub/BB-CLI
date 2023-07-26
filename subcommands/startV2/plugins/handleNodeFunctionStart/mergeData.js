@@ -1,5 +1,5 @@
 const path = require('path')
-const { writeFileSync, readFileSync, rmSync,  lstat, unlinkSync, symlinkSync } = require('fs')
+const { writeFileSync, readFileSync, rmSync, lstat, unlinkSync, symlinkSync } = require('fs')
 const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mergeDatas')
 
 /**
@@ -9,8 +9,10 @@ const { updatePackageVersionIfNeeded } = require('../../../start/singleBuild/mer
  */
 async function linkEmulatedNodeModulesToBlocks(emEleFolder, blockEmulateData) {
   const src = path.resolve(emEleFolder, 'node_modules')
+  const returnArray = []
   await Promise.all(
     Object.values(blockEmulateData).map(async (bk) => {
+      console.log(bk)
       try {
         const dest = path.resolve(bk.directory, 'node_modules')
         lstat(dest, (err, stats) => {
@@ -21,6 +23,7 @@ async function linkEmulatedNodeModulesToBlocks(emEleFolder, blockEmulateData) {
 
           symlinkSync(src, dest)
         })
+        returnArray.push({ value: { data: { directory: bk.directory, config: { ...bk } } } })
       } catch (e) {
         if (e.code !== 'ENOENT' && e.code !== 'EEXIST') {
           console.error(e.message, '\n')
@@ -28,6 +31,7 @@ async function linkEmulatedNodeModulesToBlocks(emEleFolder, blockEmulateData) {
       }
     })
   )
+  return returnArray
 }
 
 /**

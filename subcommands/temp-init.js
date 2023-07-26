@@ -9,12 +9,13 @@ const setupTemplateV2 = require('./init/setupTemplateV2')
 const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
 const { DEFAULT_REPO_TYPE } = require('../utils/constants')
 const { headLessConfigStore } = require('../configstore')
+const setupTsTemplate = require('./init/setupTsTemplate')
 
 /**
  * Action for bb-temp-init
  * @param {string} packageName Package name provided by user in command line
  */
-const init = async (packageName) => {
+const init = async (packageName, { typescript }) => {
   /**
    * Check if user provided name matches valid regex, else prompt for new name
    */
@@ -95,9 +96,27 @@ const init = async (packageName) => {
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) {
-    await setupTemplateV2({ DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName })
+  if (useTemplate && !!typescript) {
+    await setupTsTemplate({
+      DIR_PATH,
+      blockVisibility,
+      packageBlockId,
+      packageParentBlockIDs,
+      repoType,
+      packageName,
+      typescript: !!typescript,
+    })
   }
+
+  await setupTemplateV2({
+    DIR_PATH,
+    blockVisibility,
+    packageBlockId,
+    packageParentBlockIDs,
+    repoType,
+    packageName,
+    typescript: !!typescript,
+  })
   console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
   // console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
 }
