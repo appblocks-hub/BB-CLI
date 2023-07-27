@@ -90,7 +90,7 @@ class GithubManager extends GitManager {
    * ==============================================
    */
 
-  async login(options) {
+  async connect(options) {
     await handleAuth(options, this.config)
     this._buildConfig()
   }
@@ -176,6 +176,10 @@ class GithubManager extends GitManager {
       if (!configKeyName) console.log(chalk.warn(`${key} not found`))
       else configstore.delete(configKeyName)
     })
+    this._buildConfig()
+  }
+
+  refreshConfig() {
     this._buildConfig()
   }
 }

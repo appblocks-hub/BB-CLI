@@ -9,7 +9,22 @@
  * Throws method is not implemented error
  */
 const noMethodImplementedError = (gitVendor) => {
-  throw new Error(`Method not implemented ${gitVendor ? `in ${gitVendor}` : ''}`)
+  const fnName = getFunctionNameFromStackTrace()
+  throw new Error(`Method${fnName || ' '}not implemented ${gitVendor ? `for ${gitVendor}` : ''}`)
+}
+
+function getFunctionNameFromStackTrace() {
+  const errorStack = new Error().stack
+  const regex = /at\s+([\w.]+)/g;
+  const match = errorStack.match(regex)
+
+  if (match && match.length >= 2) {
+    const functionNameWithFilePath = match[2];
+    const functionName = functionNameWithFilePath.split('.').pop();
+    return ` ${functionName} `;
+  }
+
+  return null
 }
 
 module.exports = { noMethodImplementedError }

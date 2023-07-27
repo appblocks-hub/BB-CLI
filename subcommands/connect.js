@@ -6,17 +6,18 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const chalk = require('chalk')
 const GitConfigFactory = require('../utils/gitManagers/gitConfigFactory')
+const { feedback } = require('../utils/cli-feedback')
 
 const connect = async (service, options) => {
   try {
     const { error, manager } = await GitConfigFactory.init({ gitVendor: service })
     if (error) throw error
 
-    await manager.login(options)
+    await manager.connect(options)
+    feedback({ type: 'success', message: 'User connected successfully' })
   } catch (err) {
-    console.log(chalk.red(err.message))
+    feedback({ type: 'error', message: err.message })
   }
 }
 

@@ -111,6 +111,11 @@ declare class GitManager<C extends GitManagerConfig> {
   public deleteConfig(): Promise<Error>
 
   /**
+   * To refresh config to manager
+   */
+  public refreshConfig(): Promise<void>
+
+  /**
    * ================================================================================
    * ========================== Local git manager functions ==========================
    * ================================================================================

@@ -12,7 +12,7 @@ export type Organization = any
 
 export type Repository = any
 
-export interface LoginOptions {
+export interface ConnectOptions {
   force: boolean
 }
 
@@ -21,9 +21,9 @@ declare class GithubManager<C extends GitManagerConfig> extends GitManager {
 
   /**
    * Log in user to the github.
-   * @param options - Login options.
+   * @param options - Connect options.
    */
-  public login(options: LoginOptions): Promise<void>
+  public connect(options: ConnectOptions): Promise<void>
 
   /**
    * Log out user from the github.
@@ -84,6 +84,11 @@ declare class GithubManager<C extends GitManagerConfig> extends GitManager {
    * Delete github local config
    */
   public deleteConfig(keys: string[]): Promise<void>
+
+  /**
+   * To refresh github local config to manager
+   */
+  public refreshConfig(): Promise<void>
 }
 
 export = GithubManager
