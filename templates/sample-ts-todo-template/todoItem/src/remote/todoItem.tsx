@@ -2,7 +2,7 @@ import React from 'react'
 
 interface Props {
   id:number,
-  item:{name:string},
+  item:string,
   refetch: React.Dispatch<React.SetStateAction<boolean>>
 }
 
@@ -26,7 +26,7 @@ const TodoItem:React.FunctionComponent<Props> = ({ id, item, refetch }) => {
     <>
       <div id={id.toString()} className="px-3 py-2 my-2 border-dashed border-2 border-red-500 flex items-center justify-between">
         <div>
-          <p className="w-full text-grey-darkest text-xl">{item.name}</p>
+          <p className="w-full text-grey-darkest text-xl">{item}</p>
         </div>
         <div>
           <button
