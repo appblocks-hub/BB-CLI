@@ -6,8 +6,15 @@
  */
 const envConfig = require('../envConfig')
 
-const { BLOCK_REG_BASE_URL, SHIELD_BASE_URL, APP_REG_BASE_URL, SPACES_API_BASE_URL, SPACES_BASE_URL, CLIENT_ID,PAYMENTS_API_BASE_URL } =
-  envConfig
+const {
+  BLOCK_REG_BASE_URL,
+  SHIELD_BASE_URL,
+  APP_REG_BASE_URL,
+  SPACES_API_BASE_URL,
+  SPACES_BASE_URL,
+  CLIENT_ID,
+  PAYMENTS_API_BASE_URL,
+} = envConfig
 
 const clientId = CLIENT_ID
 
@@ -93,7 +100,6 @@ api.appBlockPaymentsOrigin = PAYMENTS_API_BASE_URL
 api.appBlockListLicenses = `${api.appBlockPaymentsOrigin}/api/payment/v0.1/list-licenses/invoke`
 api.appBlockSellFreeBlock = `${api.appBlockPaymentsOrigin}/api/payment/v0.1/sell-free-block/invoke`
 
-
 // SPACES UI
 api.appBlockSpacesUIOrigin = SPACES_BASE_URL
 api.publishRedirectApi = `${api.appBlockSpacesUIOrigin}/manage-blocks/own-blocks`
@@ -106,6 +112,6 @@ github.githubLogin = 'https://github.com/login'
 github.githubDeviceLogin = `${github.githubLogin}/device`
 github.githubGetDeviceCode = `${github.githubLogin}/device/code`
 github.githubGetAccessToken = `${github.githubLogin}/oauth/access_token`
-github.githubClientID = '5a77c38abd2e3e84d4e9'
+github.githubClientID = 'dba70ae3d0e1ef2a47d1'
 
 module.exports = { ...api, ...github, clientId }
