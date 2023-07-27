@@ -15,7 +15,6 @@ const connect = async (service, options) => {
     if (error) throw error
 
     await manager.connect(options)
-    feedback({ type: 'success', message: 'User connected successfully' })
   } catch (err) {
     feedback({ type: 'error', message: err.message })
   }

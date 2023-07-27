@@ -144,7 +144,6 @@ async function OTPVerify(data, url) {
               try {
                 const getTokenResponse = await axios.post(url, data)
                 const TokenData = parseResponse(decodeURIComponent(getTokenResponse.data))
-                // console.log('TokenData', TokenData);
                 // if there is a network call error, it will directly
                 // go to catch.. if any other error, status is 200 but response
                 // with have TokenDataError type, if so throw and catch.
@@ -155,8 +154,7 @@ async function OTPVerify(data, url) {
                   // if device code has expired - expired_token
                   throw new Error(TokenData.error)
                 }
-                // eslint-disable-next-line no-undef
-                const { user } = await handleGetSignedInUser(_, { userToken: TokenData.access_token })
+                const { user } = await handleGetSignedInUser({}, { userToken: TokenData.access_token })
                 if (user) {
                   // Remove the loading screen
                   process.env.TOKEN = TokenData.access_token
@@ -215,22 +213,12 @@ async function OTPVerify(data, url) {
             break
           case 'confirmUser':
             if (answer) {
-              // TODO--causes error- not access to TokenData
-              // TODO -- change from storing in env to a global variable
-              // const configData = {
-              //   token: process.env.TOKEN,
-              //   userId: process.env.USER_ID,
-              //   user: process.env.USER,
-              // }
               configstore.set(GITHUB_KEYS.userId, process.env.USER_ID)
               configstore.set(GITHUB_KEYS.userName, process.env.USER)
               configstore.set(GITHUB_KEYS.userToken, process.env.TOKEN)
+
               console.log(chalk.green(`\nSuccessfully logged in as ${process.env.USER}\n`))
-              // fs.writeFileSync(pathToJSON, JSON.stringify(configData))
-              // fs.writeFileSync(
-              //   pathToENV,
-              //   `TOKEN=${process.env.TOKEN}\nREFRESH=0\nUSER=${process.env.USER}\nUSER_ID=${process.env.USER_ID}`
-              // )
+
               Emitter.complete()
             } else {
               Abort('Diff user')
@@ -247,7 +235,6 @@ async function OTPVerify(data, url) {
         res(false)
       },
       complete: () => {
-        // console.log('Auth Completed')
         res(true)
       },
     })
