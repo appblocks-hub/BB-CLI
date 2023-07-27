@@ -9,12 +9,12 @@
 /* eslint-disable no-async-promise-executor */
 
 const inquirer = require('inquirer')
-const { configstore } = require('../../../configstore')
-const { githubOrigin,  } = require('../../../utils/api')
+const { githubOrigin } = require('../../../utils/api')
 const checkBlockNameAvailability = require('../../../utils/checkBlockNameAvailability')
 const { getOrgId } = require('../../../utils/questionPromptsV2')
 const { spinnies } = require('../../../loader')
 const convertGitUrl = require('../../../utils/convertGitUrl')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 /**
  *
@@ -96,8 +96,9 @@ const readRepoInputs = async () => {
 const getRepoInputs = async () => {
   const repoInputs = await readRepoInputs()
   if (repoInputs.gitType === 'my git') {
-    const userName = configstore.get('githubUserName')
-    const userId = configstore.get('githubUserId')
+    const { manager, error } = await GitConfigFactory.init()
+    if (error) throw error
+    const { userName, userId } = manager.config
     return {
       ...repoInputs,
       userName,

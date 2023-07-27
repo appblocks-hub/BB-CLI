@@ -5,7 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { GitManager } from '../../gitManager'
+import { PathLike } from 'fs'
+import { GitManager, GitManagerConfig } from '../../gitManager'
 
 export type Organization = any
 
@@ -73,6 +74,16 @@ declare class GithubManager<C extends GitManagerConfig> extends GitManager {
    * Fork a repository.
    */
   public forkRepository(): Promise<Repository>
+
+  /**
+   * Set or Update github local config
+   */
+  public setConfig(key: string, value: any): Promise<void>
+
+  /**
+   * Delete github local config
+   */
+  public deleteConfig(keys: string[]): Promise<void>
 }
 
 export = GithubManager

@@ -28,7 +28,7 @@ declare class GitConfigFactory {
   /**
    * Creates an instance
    */
-  public static init(options: GitFactoryConfig): Promise<FactoryCreateResult>
+  public static init(options: GitFactoryConfig | null): Promise<FactoryCreateResult>
 }
 
 export = GitConfigFactory

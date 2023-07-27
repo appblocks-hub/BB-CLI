@@ -33,7 +33,7 @@ async function createRepo(originalRepoName) {
 
   inputs.ownerId = orgData.id || manager.config.userId
   inputs.ownerName = orgData.name || manager.config.userName
-  inputs.description = gitDescription || (await getGitRepoDescription())
+  inputs.description = gitDescription ?? (await getGitRepoDescription())
   inputs.visibility = gitVisibility || (await getGitRepoVisibility())
 
   let repository

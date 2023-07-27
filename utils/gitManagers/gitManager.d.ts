@@ -19,9 +19,25 @@ export interface GitManagerConfig {
   cwd: PathLike // git repository path
 }
 
+export interface GitConfig {
+  cwd: PathLike
+  remote: string
+  repoName: string
+  gitVendor: string
+  prefersSsh: boolean
+  userToken: string
+  userPAT: string
+  userId: string
+  userName: string
+  localGitUserName: string
+  localGitUserEmail: string
+  ownerName: string
+}
 
 declare class GitManager<C extends GitManagerConfig> {
   constructor(config: C)
+
+  public config: GitConfig
 
   /**
    * ================================================================================
@@ -83,6 +99,16 @@ declare class GitManager<C extends GitManagerConfig> {
    * Fork a repository.
    */
   public forkRepository(): Promise<Error>
+
+  /**
+   * Set or Update config key data.
+   */
+  public setConfig(): Promise<Error>
+
+  /**
+   * Delete config keys data.
+   */
+  public deleteConfig(): Promise<Error>
 
   /**
    * ================================================================================

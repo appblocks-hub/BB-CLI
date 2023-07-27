@@ -28,7 +28,9 @@ const { getGithubHeader } = require('./githubHeaders')
  * Get the username and id of current signed in user from Github
  * @returns {Promise<getSignedInGitUserReturn>}
  */
-async function getSignedInUser(TOKEN) {
+async function handleGetSignedInUser(options, config) {
+  const { userToken } = config
+
   const QUERY = `query { 
         viewer { 
           login
@@ -42,8 +44,8 @@ async function getSignedInUser(TOKEN) {
   }
 
   try {
-    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGithubHeader(TOKEN) })).data
-      .data.viewer
+    const { login, id } = (await axios.post(githubGraphQl, { query: QUERY }, { headers: getGithubHeader(userToken) }))
+      .data.data.viewer
 
     result.user = {
       userId: id,
@@ -66,4 +68,4 @@ async function getSignedInUser(TOKEN) {
   return result
 }
 
-module.exports = getSignedInUser
+module.exports = handleGetSignedInUser

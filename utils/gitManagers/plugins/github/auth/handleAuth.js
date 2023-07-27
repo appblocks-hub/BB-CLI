@@ -13,22 +13,24 @@ const figletAsync = require('../../../../figletAsync')
 const OTPVerify = require('../../../../OTPConfirmation')
 const parseGitResponse = require('../../../../parseResponse')
 const getDeviceCode = require('./getDeviceCode')
-const getSignedInUser = require('./getSignedInUser')
+const handleGetSignedInUser = require('./handleGetSignedInUser')
 const { configstore } = require('../../../../../configstore')
 const { GIT_VENDOR } = require('../../../utils/constant')
+const { GITHUB_KEYS } = require('../utils/constant')
 
-async function handleAuth({ force }) {
+async function handleAuth(options, config) {
+  const { userId } = config
+
   try {
-    if (force) {
-      configstore.delete('githubUserId')
-      configstore.delete('githubUserToken')
+    if (options?.force) {
+      configstore.delete(GITHUB_KEYS.userId)
+      configstore.delete(GITHUB_KEYS.userToken)
     }
 
-    if (configstore.get('githubUserId')) {
-      const userToken = configstore.get('githubUserToken')
+    if (userId) {
       const {
         user: { userName },
-      } = await getSignedInUser(userToken)
+      } = await handleGetSignedInUser(options, config)
       // TODO -- if userName is null - handle
       console.log(chalk.yellow(`Already logged in as ${userName}`))
       console.log(chalk.dim(`try --force to reset user`))

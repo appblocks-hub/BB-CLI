@@ -69,6 +69,14 @@ class GitManager {
     noMethodImplementedError(this.gitVendor)
   }
 
+  setConfig() {
+    noMethodImplementedError(this.gitVendor)
+  }
+
+  deleteConfig() {
+    noMethodImplementedError(this.gitVendor)
+  }
+
   /**
    ================================================================================= 
    ==========================Local git manager functions============================ 

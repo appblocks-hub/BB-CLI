@@ -29,6 +29,10 @@ class GitConfigFactory {
         gitUrl,
       }
 
+      if (!config.gitVendor) {
+        throw new Error('No git vendor specified. Please run bb connect vendor and try again')
+      }
+
       const gitVendorPluginsPath = path.join(__dirname, 'plugins')
       const plugins = readdirSync(gitVendorPluginsPath)
 

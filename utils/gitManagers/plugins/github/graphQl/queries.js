@@ -178,7 +178,7 @@ query GetRepositoryDetails($owner: String!, $name: String!) {
  * @param {AxiosResponse<gitGraphResponseData<_xxc_,''>>} param0
  * @returns
  */
-const isRepoNameAvailableTr = ({ data: { data } }) => !data.user.repository
+const isRepoNameAvailableTr = ({ data: { data } }) => !data.user?.repository
 /**
  * @typedef {object} _xxc_
  * @property {string} id ID of user

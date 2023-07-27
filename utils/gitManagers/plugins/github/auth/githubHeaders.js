@@ -6,16 +6,17 @@
  */
 
 const { configstore } = require('../../../../../configstore')
+const { GITHUB_KEYS } = require('../utils/constant')
 
 const getGithubHeader = (TOKEN) => ({
   'Content-Type': 'application/json',
-  Authorization: `bearer ${TOKEN || configstore.get('githubUserToken')}`,
+  Authorization: `bearer ${TOKEN || configstore.get(GITHUB_KEYS.userToken)}`,
   Accept: 'application/vnd.github.v4+json',
 })
 
 const getGithubRestHeaders = () => ({
   'Content-Type': 'application/json',
-  Authorization: `Bearer ${configstore.get('githubUserToken')}`,
+  Authorization: `Bearer ${configstore.get(GITHUB_KEYS.userToken)}`,
   Accept: 'application/vnd.github.v3+json',
 })
 
