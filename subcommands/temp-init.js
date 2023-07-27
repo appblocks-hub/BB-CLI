@@ -7,15 +7,30 @@ const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
 const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
-const { DEFAULT_REPO_TYPE } = require('../utils/constants')
+const { DEFAULT_REPO_TYPE, BB_CONFIG_NAME } = require('../utils/constants')
 const { headLessConfigStore } = require('../configstore')
 const setupTsTemplate = require('./init/setupTsTemplate')
+const ConfigFactory = require('../utils/configManagers/configFactory')
+const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
+const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
 
 /**
  * Action for bb-temp-init
  * @param {string} packageName Package name provided by user in command line
  */
 const init = async (packageName, { typescript }) => {
+  const { manager } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
+  if (manager instanceof PackageConfigManager) {
+    feedback({
+      type: 'error',
+      message: 'Cannot init from inside a package context\nUse bb create instead with type package',
+    })
+    return
+  }
+  if (manager instanceof BlockConfigManager) {
+    feedback({ type: 'error', message: 'Cannot init from inside a block context\n' })
+    return
+  }
   /**
    * Check if user provided name matches valid regex, else prompt for new name
    */
