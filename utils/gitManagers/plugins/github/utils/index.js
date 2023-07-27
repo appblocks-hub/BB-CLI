@@ -22,6 +22,8 @@ const getGithubRemote = (prefersSsh, sshUrl, token) =>
  * @returns
  */
 const convertGithubUrl = (url, type) => {
+  if (!url) throw new Error('Error reading git url')
+  
   const httpsPrefix = 'https://github.com/'
   const sshPrefix = 'git@github.com:'
 

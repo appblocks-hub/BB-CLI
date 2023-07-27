@@ -10,6 +10,7 @@ const {
 const { CreateRepoError } = require('./errors/createRepoError')
 const { headLessConfigStore } = require('../configstore')
 const GitConfigFactory = require('./gitManagers/gitConfigFactory')
+const { spinnies } = require('../loader')
 
 async function createRepo(originalRepoName) {
   let repoName = originalRepoName
@@ -37,15 +38,17 @@ async function createRepo(originalRepoName) {
 
   let repository
   let newName = true
+
   while (newName) {
     try {
+      spinnies.add('cr', { text: `Creating new ${manager.gitVendor} repository` })
       repository = await manager.createRepository({
         name: repoName.toString(),
         description: inputs.description,
         visibility: inputs.visibility,
         owner: inputs.ownerId,
       })
-      
+      spinnies.remove('cr')
       newName = false
     } catch (err) {
       if (err[0]?.type !== 'UNPROCESSABLE') {
@@ -58,7 +61,7 @@ async function createRepo(originalRepoName) {
     }
   }
 
-  return { blockFinalName: repoName, ...repository}
+  return { blockFinalName: repoName, ...repository }
 }
 
 function prefixMyString(original, lastTried) {

@@ -82,7 +82,7 @@ declare class GitManager<C extends GitManagerConfig> {
   /**
    * Fork a repository.
    */
-  public forkRepository(): Promise<Repository>
+  public forkRepository(): Promise<Error>
 
   /**
    * ================================================================================

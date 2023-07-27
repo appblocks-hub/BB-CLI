@@ -257,7 +257,7 @@ function wantToCreateNewVersion(name) {
     .prompt({
       type: 'confirm',
       name: 'createNewBlockFrom',
-      message: `Do you wish to create a new block from ${name}?`,
+      message: `Do you wish to create a new variant from ${name}?`,
       default: false,
     })
     .then((ans) => ans.createNewBlockFrom)

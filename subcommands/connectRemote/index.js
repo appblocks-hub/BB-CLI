@@ -88,6 +88,7 @@ const connectRemote = async (cmdOptions) => {
 
     spinnies.succeed('cr', { text: 'Successfully added source to blocks' })
   } catch (error) {
+    console.log(error);
     spinnies.add('cr', { text: 'Adding source to blocks' })
     spinnies.fail('cr', { text: error.message })
   }

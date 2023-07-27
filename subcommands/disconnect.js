@@ -14,7 +14,7 @@ const disconnect = async (service) => {
     if (error) throw error
 
     await manager.disconnect()
-    feedback({ type: 'success', message: 'Disconnected git user' })
+    feedback({ type: 'success', message: 'User disconnected successfully' })
   } catch (err) {
     feedback({ type: 'error', message: err.message })
   }

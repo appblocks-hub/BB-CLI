@@ -33,6 +33,10 @@ class GitManager {
     noMethodImplementedError(this.gitVendor)
   }
 
+  disconnect() {
+    noMethodImplementedError(this.gitVendor)
+  }
+
   getOrganizations() {
     noMethodImplementedError(this.gitVendor)
   }

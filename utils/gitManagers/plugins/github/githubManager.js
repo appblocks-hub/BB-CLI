@@ -19,6 +19,7 @@ const handleCreatePullRequest = require('./handlers/handleCreatePullRequest')
 const handleCloneRepository = require('./handlers/handleCloneRepository')
 const handleGetRepository = require('./handlers/handleGetRepository')
 const handleForkRepository = require('./handlers/handleForkRepository')
+const handleDisconnect = require('./auth/handleDisconnect')
 
 class GithubManager extends GitManager {
   /**
@@ -28,13 +29,19 @@ class GithubManager extends GitManager {
   constructor(config) {
     const { cwd, gitUrl, prefersSsh, gitVendor } = config
 
-    const sshUrl = gitUrl ? convertGithubUrl(gitUrl, 'ssh') : null
+    let remote = ''
+    let repoName = ''
+    let ownerName = ''
     const githubUserToken = configstore.get('githubUserToken')
-    const remote = getGithubRemote(prefersSsh, sshUrl, githubUserToken)
 
-    const repoHttpsUrl = convertGithubUrl(gitUrl, 'http').replace('.git', '').split('/')
-    const repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
-    const ownerName = repoHttpsUrl[repoHttpsUrl.length - 2]
+    if (gitUrl) {
+      const sshUrl = gitUrl ? convertGithubUrl(gitUrl, 'ssh') : null
+      remote = getGithubRemote(prefersSsh, sshUrl, githubUserToken)
+
+      const repoHttpsUrl = convertGithubUrl(gitUrl, 'http').replace('.git', '').split('/')
+      repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
+      ownerName = repoHttpsUrl[repoHttpsUrl.length - 2]
+    }
 
     super({ gitVendor, remote, cwd })
 
@@ -42,7 +49,6 @@ class GithubManager extends GitManager {
     this.cwd = cwd
     this.remote = remote
     this.repoName = repoName
-    this.ownerName = ownerName
     this.gitVendor = gitVendor
     this.prefersSsh = prefersSsh
     this.userToken = githubUserToken
@@ -50,6 +56,7 @@ class GithubManager extends GitManager {
     this.userName = configstore.get('githubUserName')
     this.localGitUserName = configstore.get('localGitUserName')
     this.localGitUserEmail = configstore.get('localGitUserEmail')
+    this.ownerName = ownerName || this.userName
 
     this.isGithubManager = true
 
@@ -79,7 +86,11 @@ class GithubManager extends GitManager {
    */
 
   async login(options) {
-    await handleAuth(options, this.config)
+    return handleAuth(options, this.config)
+  }
+
+  async disconnect(options) {
+    return handleDisconnect(options, this.config)
   }
 
   /**
@@ -89,19 +100,19 @@ class GithubManager extends GitManager {
    */
 
   async getOrganizations(options) {
-    await handleGetUserOrganizations(options, this.config)
+    return handleGetUserOrganizations(options, this.config)
   }
 
   async getRepositories(options) {
-    await handleGetUserRepositories(options, this.config)
+    return handleGetUserRepositories(options, this.config)
   }
 
   async getRepository(options) {
-    await handleGetRepository(options, this.config)
+    return handleGetRepository(options, this.config)
   }
 
   async checkRepositoryNameAvailability(options) {
-    await handleCheckRepositoryNameAvailability(options, this.config)
+    return handleCheckRepositoryNameAvailability(options, this.config)
   }
 
   /**
@@ -111,28 +122,28 @@ class GithubManager extends GitManager {
    */
 
   async createRepository(options) {
-    await handleCreateRepository(options, this.config)
+    return handleCreateRepository(options, this.config)
   }
 
   async updateRepository(options) {
-    await handleUpdateRepository(options, this.config)
+    return handleUpdateRepository(options, this.config)
   }
 
   async cloneRepository(options) {
-    await handleCloneRepository(options, this.config)
+    return handleCloneRepository(options, this.config)
   }
 
   async createPullRequest(options) {
-    await handleCreatePullRequest(options, this.config)
+    return handleCreatePullRequest(options, this.config)
   }
 
   /**
    * ==============================================
-   * ================= Rest ==================
+   * =================== Rest =====================
    * ==============================================
    */
   async forkRepository(options) {
-    await handleForkRepository(options, this.config)
+    return handleForkRepository(options, this.config)
   }
 }
 

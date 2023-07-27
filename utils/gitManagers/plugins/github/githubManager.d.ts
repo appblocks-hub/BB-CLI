@@ -7,9 +7,9 @@
 
 import { GitManager } from '../../gitManager'
 
-export type Organization = object
+export type Organization = any
 
-export type Repository = object
+export type Repository = any
 
 export interface LoginOptions {
   force: boolean

@@ -38,7 +38,8 @@ const { AxiosResponse } = require('axios')
  *
  * @param {AxiosResponse} response
  */
-const userReposTr = ({ data: { data } }, sieve) => {
+const userReposTr = ({ data: { data, errors } }, sieve) => {
+  if (errors?.length > 0) throw errors
   const list = data.user.repositories.edges
     .filter(sieve || Boolean)
     .map((r) => ({ name: r.node.name, value: r.node.id }))
@@ -92,7 +93,9 @@ query($user:String!,$first:Int,$last:Int,$before:String,$after:String){
  * @param {AxiosResponse} data
  * @returns {QueryTransformReturn}
  */
-const userOrgsTR = ({ data: { data } }) => {
+const userOrgsTR = ({ data: { data, errors } }) => {
+  if (errors?.length > 0) throw errors
+
   const list = data.user.organizations.edges.map((v) => ({
     name: v.node.name,
     // split("/") -- To get name of org so it can be used
@@ -134,8 +137,8 @@ query($first:Int,$last:Int,$before:String,$after:String,$user:String!){
  * @param {AxiosResponse} data
  * @returns {QueryTransformReturn}
  */
-const getRepoDetailsTR = ({ data: { data } }) => {
-  if (data.errors?.length > 0) throw data.errors
+const getRepoDetailsTR = ({ data: { data, errors } }) => {
+  if (errors?.length > 0) throw errors
   return { ...data.repository, defaultBranchName: data.repository.defaultBranchRef?.name }
 }
 /**
