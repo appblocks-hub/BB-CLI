@@ -267,20 +267,19 @@ class HandleNodeFunctionStart {
         }
         // console.log(`✓ installed deps in ${this.fnBlocks[i].name}`)
         // console.log(`✗ error installing deps in ${_v.value.data.config.name}`)
-        /**
-         * TODO: write a proper plugin for typescript
-         */
-        console.log(tsBlocks)
-        const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
-          detached: true,
-          cwd: path.join(__dirname),
-          // stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-          stdio: ['ignore', openSync('./out.log', 'w'), openSync('./err.log', 'w')],
-        })
-        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
-
-        watcher.unref()
       }
+      /**
+       * TODO: write a proper plugin for typescript
+       */
+      const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
+        detached: true,
+        cwd: path.join(__dirname),
+        // stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+        stdio: ['ignore', openSync('./out.log', 'w'), openSync('./err.log', 'w')],
+      })
+      await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
+
+      watcher.unref()
     })
   }
 }

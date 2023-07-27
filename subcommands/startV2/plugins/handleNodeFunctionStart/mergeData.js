@@ -12,7 +12,6 @@ async function linkEmulatedNodeModulesToBlocks(emEleFolder, blockEmulateData) {
   const returnArray = []
   await Promise.all(
     Object.values(blockEmulateData).map(async (bk) => {
-      console.log(bk)
       try {
         const dest = path.resolve(bk.directory, 'node_modules')
         lstat(dest, (err, stats) => {
