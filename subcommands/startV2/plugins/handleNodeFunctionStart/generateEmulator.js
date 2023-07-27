@@ -51,7 +51,7 @@ const emulatorCode = (port) =>
       // Execute middleware functions
       await executeMiddleware(block.middlewares, { req, res, next });
   
-      const isDev = process.env.NODE_ENV === "development";
+      const isDev = process.env.NODE_ENV !== "production";
       const importPath = isDev ? route + "?update=" + Date.now() : route;
       const handler = await import(importPath);
   
@@ -79,7 +79,7 @@ import { getMiddlewareBlock } from "./utils.js";
 
 const executeMiddleware = async (middlewareList, event) => {
   for (const middlewareName of middlewareList) {
-    const isDev = process.env.NODE_ENV === "development";
+    const isDev = process.env.NODE_ENV !== "production";
     const { block, route } = getMiddlewareBlock(middlewareName);
     if (!block) {
       console.log("No block found for ", middlewareName);
