@@ -48,7 +48,7 @@ const generateUiContainerPackageJson = (name) => `
     "@types/eslint": "7.28.1",
     "@types/jest": "27.4.0",
     "@types/node": "16.9.6",
-    "babel-loader": "8.2.2",
+    "babel-loader": "8.3.0",
     "dotenv": "^16.0.0",
     "eslint": "8.13.0",
     "eslint-config-airbnb-base": "15.0.0",
@@ -64,9 +64,9 @@ const generateUiContainerPackageJson = (name) => `
     "prettier": "2.4.1",
     "serve": "12.0.0",
     "url-loader": "^4.1.1",
-    "webpack": "5.52.0",
-    "webpack-cli": "4.10.0",
-    "webpack-dev-server": "4.1.0"
+    "webpack": "5.88.2",
+    "webpack-cli": "5.1.4",
+    "webpack-dev-server": "4.15.1"
   }
 }
   `
@@ -96,15 +96,14 @@ const generateUiContainerPackageJsonWithoutLint = (name) => `
     "devDependencies": {
       "@babel/core": "7.15.0",
       "@babel/preset-react": "7.14.5",
-      "babel-loader": "8.2.2",
+      "babel-loader": "8.3.0",
       "dotenv": "^16.0.0",
       "html-webpack-plugin": "5.3.2",
       "serve": "12.0.0",
       "url-loader": "^4.1.1",
-      "webpack": "5.52.0",
-      "webpack-cli": "4.10.0",
-      "webpack-dev-server": "4.1.0",
-      "@appblocks/node-sdk": "0.0.6"
+      "webpack": "5.88.2",
+      "webpack-cli": "5.1.4",
+      "webpack-dev-server": "4.15.1"
     }
   }
     `

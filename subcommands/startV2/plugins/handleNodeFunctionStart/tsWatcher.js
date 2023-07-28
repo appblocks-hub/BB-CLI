@@ -8,7 +8,7 @@ function Watch() {
   const [_node, _script, ...watchList] = process.argv
   const watcher = chokidar.watch(watchList, {
     persistent: true,
-    ignoreInitial: true,
+    ignoreInitial: false,
   })
   watcher.on('all', (_a, b) => {
     if (b.includes('node_modules')) return

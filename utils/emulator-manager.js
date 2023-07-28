@@ -68,7 +68,7 @@ async function copyEmulatorCode(PORTS, dependencies) {
 
         const func_route = "../" + blockData.dir + "/index.js"
         let handler = await import(func_route);
-        if(process.env.NODE_ENV==="development"){
+        if(process.env.NODE_ENV!=="production"){
           handler = await import(func_route+"?update="+Date.now())
         }
 

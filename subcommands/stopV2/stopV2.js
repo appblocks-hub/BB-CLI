@@ -5,6 +5,7 @@ const { feedback } = require('../../utils/cli-feedback')
 const HandleBeforeStop = require('./plugins/handleBeforeStop')
 const StopCore = require('./stopCore')
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
+const KillTsWatcher = require('./plugins/killTsWatcher')
 
 async function stop(blockName, options) {
   const { logger } = new Logger('start')
@@ -12,6 +13,7 @@ async function stop(blockName, options) {
     const core = new StopCore(blockName, { ...options, logger, feedback, spinnies })
     new HandleOutOfContext().apply(core)
     new HandleBeforeStop().apply(core)
+    new KillTsWatcher().apply(core)
 
     await core.initializeConfigManager()
     await core.stop()

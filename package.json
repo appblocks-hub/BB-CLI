@@ -7,8 +7,8 @@
     "bb": "./bin/bb.cjs"
   },
   "engines": {
-    "npm": ">=8.0.0 <9.0.0",
-    "node": ">=15.0.0 <17.0.0"
+    "npm": ">=8.1.0",
+    "node": "16.13.0 - 16.20.1 || 18.12.0 - 18.17.0"
   },
   "scripts": {
     "prepare": "npx husky install",
