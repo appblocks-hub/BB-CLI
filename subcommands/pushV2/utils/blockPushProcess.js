@@ -13,9 +13,9 @@ const { BlockPushError } = require('../../../utils/errors/blockPushError')
 const { GitError } = require('../../../utils/errors/gitError')
 const { ensureReadMeIsPresent } = require('../../../utils/fileAndFolderHelpers')
 const { checkAndSetGitConfigNameEmail, gitCommitWithMsg, gitStageAllIn } = require('../../../utils/gitCheckUtils')
-const { GitManager } = require('../../../utils/gitManagerV2')
 const { Logger } = require('../../../utils/loggerV2')
 const { getBBFolderPath, BB_FOLDERS } = require('../../../utils/bbFolders')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const blockPushProcess = async (options) => {
   const {
@@ -39,7 +39,12 @@ const blockPushProcess = async (options) => {
     if (!blockSource.ssh) throw new BlockPushError(blockPath, blockName, 'no source url', false, 1)
 
     // setup GitManager
-    const Git = new GitManager(repoType === 'mono' ? blockParentPath : blockPath, blockSource.ssh)
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: repoType === 'mono' ? blockParentPath : blockPath,
+      gitUrl: blockSource.ssh,
+    })
+    if (gErr) throw gErr
+  
 
     const staged = await gitStageAllIn(blockPath, repoType, gitAddIgnore)
 

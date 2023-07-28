@@ -14,8 +14,8 @@ const { spinnies } = require('../../loader')
 const { tryGitInit, isInGitRepository, checkAndSetGitConfigNameEmail } = require('../../utils/gitCheckUtils')
 const { generateGitIgnore } = require('../../templates/createTemplates/function-templates')
 const { initializeConfig, updateAllMemberConfig } = require('./util')
-const { GitManager } = require('../../utils/gitManagerV2')
 const { headLessConfigStore, configstore } = require('../../configstore')
+const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
 
 const connectRemote = async (cmdOptions) => {
   try {
@@ -64,7 +64,8 @@ const connectRemote = async (cmdOptions) => {
       https: convertGitUrl(sourceUrl),
     }
 
-    const Git = new GitManager(manager.directory, source.ssh)
+    const { manager: Git, error } = await GitConfigFactory.init({ cwd: manager.directory, gitUrl: source.ssh })
+    if (error) throw error
 
     await checkAndSetGitConfigNameEmail(manager.directory)
     spinnies.add('cr', { text: 'Adding source to blocks' })
@@ -87,6 +88,7 @@ const connectRemote = async (cmdOptions) => {
 
     spinnies.succeed('cr', { text: 'Successfully added source to blocks' })
   } catch (error) {
+    console.log(error);
     spinnies.add('cr', { text: 'Adding source to blocks' })
     spinnies.fail('cr', { text: error.message })
   }

@@ -5,12 +5,12 @@ const semver = require('semver')
 const { spinnies } = require('../../loader')
 const { getAllBlocksVersions, appBlockAddVersion } = require('../../utils/api')
 const { post } = require('../../utils/axios')
-const { GitManager } = require('../../utils/gitManagerV2')
 const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { uploadBlockReadme } = require('./utils')
 const { BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
+const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
 
 /**
  * Copyright (c) Appblocks. and its affiliates.
@@ -180,7 +180,11 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       const parentBranch = packageConfig.source.branch
       const releaseBranch = `block_${packageName}@${version}`
 
-      const Git = new GitManager(orphanBranchFolder, packageConfig.source.ssh)
+      const { manager: Git, error } = await GitConfigFactory.init({
+        cwd: orphanBranchFolder,
+        gitUrl: packageConfig.source.ssh,
+      })
+      if (error) throw error
       await Git.createReleaseBranch(releaseBranch, parentBranch)
 
       writeFileSync(
@@ -211,7 +215,11 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
 
     spinnies.update('cv', { text: `Tagging new version ${version}` })
 
-    const Git = new GitManager('.', packageConfigData.source.ssh)
+    const { manager: Git, error } = await GitConfigFactory.init({
+      gitUrl: packageConfigData.source.ssh,
+    })
+    if (error) throw error
+
     await Git.addTag(version, versionNote)
     await Git.pushTags()
   }

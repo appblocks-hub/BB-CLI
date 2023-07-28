@@ -8,11 +8,11 @@
 const { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, unlinkSync, rmSync } = require('fs')
 const path = require('path')
 
-const { GitManager } = require('../../../utils/gitManagerV2')
 const { checkAndSetGitConfigNameEmail, gitCommitWithMsg } = require('../../../utils/gitCheckUtils')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { headLessConfigStore } = require('../../../configstore')
 const { BB_EXCLUDE_FILES_FOLDERS } = require('../../../utils/bbFolders')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
@@ -68,7 +68,11 @@ const generateOrphanBranch = async (options) => {
     return
   }
 
-  const Git = new GitManager(orphanBranchPath, repoUrl)
+  const { manager: Git, error: gErr } = await GitConfigFactory.init({
+    cwd: orphanBranchPath,
+    gitUrl: repoUrl,
+  })
+  if (gErr) throw gErr
 
   if (!orphanBranchFolderExists) {
     try {
