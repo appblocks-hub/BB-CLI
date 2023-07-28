@@ -10,13 +10,13 @@
 
 const path = require('path')
 const { existsSync, cpSync, mkdirSync, rmSync } = require('fs')
-const { GitManager } = require('../../../utils/gitManagerV2')
 const { pullSourceCodeFromAppblock } = require('../utils/sourceCodeUtil')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
 const { BB_CONFIG_NAME } = require('../../../utils/constants')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 class HandleBlockPull {
   /**
@@ -55,8 +55,12 @@ class HandleBlockPull {
         // Clone repo from git
         core.spinnies.add('pull', { text: `Cloning repo ${core.blockDetails.block_name}` })
 
-        const git = new GitManager(core.cwd, cloneGitUrl)
-
+        const { manager: git, error: gErr } = await GitConfigFactory.init({
+          cwd: core.cwd,
+          gitUrl: cloneGitUrl,
+        })
+        if (gErr) throw gErr
+    
         // TODO: find a better approach to clone block sparse checkout
 
         // const tmpClonePath = path.join(tmpdir(), '_appblocks_', '')

@@ -14,7 +14,7 @@ const { getDependencies, getDependencyIds } = require('./dependencyUtil')
 const { getLanguageVersionData } = require('../languageVersion/util')
 const { createZip } = require('./util')
 const { post } = require('../../utils/axios')
-const { GitManager } = require('../../utils/gitManagerV2')
+const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
 
 const publishBlock = async ({ blockManager, zipFile, versionData }) => {
   const { name: blockName, supportedAppblockVersions, source, repoType } = blockManager.config
@@ -53,7 +53,12 @@ const publishBlock = async ({ blockManager, zipFile, versionData }) => {
   spinnies.add('p1', { text: `Uploading new version ${version}` })
 
   if (repoType === 'multi') {
-    const Git = new GitManager(blockManager.directory, source.ssh)
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: blockManager.directory,
+      gitUrl: source.ssh,
+    })
+    if (gErr) throw gErr
+
     try {
       await Git.fetch('--all --tags')
       Git.checkoutTagWithNoBranch(version)

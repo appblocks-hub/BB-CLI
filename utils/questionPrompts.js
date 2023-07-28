@@ -12,7 +12,7 @@ const customList = require('./customList')
 const { blockTypes } = require('./blockTypes')
 const { configstore } = require('../configstore')
 const GitPaginator = require('./paginateGitRest')
-const CustomListV2 = require('./cutomListV2')
+const CustomListV2 = require('./customListV2')
 const customSelect = require('./multiSelect')
 const { isValidBlockName } = require('./blocknameValidator')
 
@@ -158,7 +158,7 @@ function getTemplate() {
  * @returns {String|Null}
  */
 // eslint-disable-next-line no-unused-vars
-function getOrgId() {
+async function getOrgId() {
   const question = [
     {
       // type: 'customList',

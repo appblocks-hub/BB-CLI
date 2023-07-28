@@ -1,11 +1,8 @@
 #!usr/bin/env node
 
+const chalk = require('chalk')
 const { Command } = require('commander')
-const { getGitHeader } = require('../utils/getHeaders')
-const { isRepoNameAvailable } = require('../utils/Queries')
-const { axios } = require('../utils/axiosInstances')
-const { githubGraphQl } = require('../utils/api')
-const { configstore } = require('../configstore')
+const GitConfigFactory = require('../utils/gitManagers/gitConfigFactory')
 
 const program = new Command().hook('preAction', async () => {})
 
@@ -14,18 +11,14 @@ program.argument('<name>', 'Name of block to start').action(test)
 program.parse(process.argv)
 
 async function test(name) {
-  const data = await axios.post(
-    githubGraphQl,
-    {
-      query: isRepoNameAvailable.Q,
-      variables: {
-        user: configstore.get('githubUserName'),
-        search: name,
-      },
-    },
-    { headers: getGitHeader() }
-  )
-  return isRepoNameAvailable.Tr(data)
+  try {
+    const { manager, error } = await GitConfigFactory.init()
+    if (error) throw error
+    const isAvailable = await manager.checkRepositoryNameAvailability({ repositoryName: name })
+    console.log(`${name}${isAvailable ? 'is' : 'is not'} available`)
+  } catch (error) {
+    console.log(chalk.red(error.message))
+  }
 }
 
 /**

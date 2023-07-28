@@ -8,7 +8,6 @@ const path = require('path')
 const chalk = require('chalk')
 
 const { mkdirSync, existsSync, rmSync } = require('fs')
-const { GitManager } = require('../../../utils/gitManagerV2')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
 const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
@@ -16,6 +15,7 @@ const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
 const { BB_FILES } = require('../../../utils/bbFolders')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const createBBModules = async (options) => {
   try {
@@ -28,7 +28,12 @@ const createBBModules = async (options) => {
     const workspaceDirectoryPath = path.join(bbModulesPath, BB_FILES.WORKSPACE)
     const repoUrl = rootConfig.source.ssh
 
-    const Git = new GitManager(workspaceDirectoryPath, repoUrl)
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: workspaceDirectoryPath,
+      gitUrl: repoUrl,
+    })
+    if (gErr) throw gErr
+
     if (!bbModulesExists) {
       try {
         if (!existsSync(bbModulesPath)) mkdirSync(bbModulesPath, { recursive: true })

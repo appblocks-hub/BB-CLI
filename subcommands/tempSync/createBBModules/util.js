@@ -16,10 +16,7 @@ const PackageConfigManager = require('../../../utils/configManagers/packageConfi
 const { getLatestCommits } = require('../syncOrphanBranches/util')
 const { listSpaces } = require('../../../utils/spacesUtils')
 const { feedback } = require('../../../utils/cli-feedback')
-const { axios } = require('../../../utils/axiosInstances')
-const { githubGraphQl } = require('../../../utils/api')
-const { isInRepo } = require('../../../utils/Queries')
-const { getGitHeader } = require('../../../utils/getHeaders')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const buildApiPayload = (currentConfig, apiPayload) => {
   if (currentConfig?.blockId && currentConfig?.type && currentConfig?.source) {
@@ -268,35 +265,17 @@ const getAndSetSpace = async (configstore) => {
 }
 
 const setVisibilityAndDefaultBranch = async (options) => {
-  const { configstore, repoUrl, headLessConfigStore, cwd } = options
+  const { repoUrl, headLessConfigStore, cwd } = options
 
   let defaultBranch = headLessConfigStore.get('defaultBranch')
   // let repoVisibility = headLessConfigStore().get('repoVisibility')
 
   if (!defaultBranch) {
-    const githubUserName = configstore.get('githubUserName')
-    const repoHttpsUrl = repoUrl.replace('.git', '').split('/')
-    const repoName = repoHttpsUrl[repoHttpsUrl.length - 1]
-    const orgName = repoHttpsUrl[repoHttpsUrl.length - 2]
-    // let defaultBranch
-    // let repoVisibility
+    const { manager, error } = await GitConfigFactory.init({ gitUrl: repoUrl })
+    if (error) throw error
+    const repository = manager.getRepository()
+    defaultBranch = repository?.defaultBranchName ?? ''
 
-    const axiosExistingRepoData = await axios.post(
-      githubGraphQl,
-      {
-        query: isInRepo.Q,
-        variables: {
-          user: githubUserName,
-          reponame: repoName,
-          orgname: orgName,
-        },
-      },
-      { headers: getGitHeader() }
-    )
-
-    const existingRepoData = await isInRepo.Tr(axiosExistingRepoData)
-
-    defaultBranch = existingRepoData?.defaultBranchName ?? ''
     // repoVisibility = existingRepoData?.visibility ?? ''
 
     // if (repoVisibility.length === 0) {
@@ -330,7 +309,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
 
       defaultBranch = inputRepoMainBranch
     }
-    
+
     headLessConfigStore.set('defaultBranch', defaultBranch)
   }
   //  check origin exist
