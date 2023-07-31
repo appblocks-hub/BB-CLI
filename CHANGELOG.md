@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.2-beta...v1.2.3-beta) (2023-07-31)
+
+
+### Bug Fixes
+
+* feedback msg updates ([c15f878](https://github.com/appblocks-hub/BB-CLI/commit/c15f8786e67e503a16959d487e722b4d1a784548))
+
 ## [1.2.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.1-beta...v1.2.2-beta) (2023-07-31)
 
 
