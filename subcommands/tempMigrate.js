@@ -147,7 +147,7 @@ const tempMigrate = async (options) => {
     rootConfig.source.https = url
     rootConfig.source.ssh = sshUrl
 
-    writeFileSync('./block.config.json', JSON.stringify(rootConfig), { encoding: 'utf8', flag: 'w' })
+    writeFileSync('./block.config.json', JSON.stringify(rootConfig, null, 2), { encoding: 'utf8', flag: 'w' })
 
     // initialising git for new main branch creation and pushing
 

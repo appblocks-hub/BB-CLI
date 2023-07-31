@@ -742,7 +742,7 @@ const sync = async () => {
 
       // console.log(`${chalk.bgYellow('INFO')} Writing new config`)
       // console.log(newAppblockConfig)
-      fs.writeSync('block.config.json', JSON.stringify(newAppblockConfig))
+      fs.writeSync('block.config.json', JSON.stringify(newAppblockConfig, null, 2))
       // console.log('New config written')
       console.log(`${chalk.bgCyan('WARN')} Appblock config not pushed.`)
       console.log('Please push the new config, If you have access')

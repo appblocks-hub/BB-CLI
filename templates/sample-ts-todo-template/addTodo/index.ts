@@ -22,7 +22,7 @@ const handler = async ({ req, res }) => {
     const newEntry = { id: newId, item: newItem }
     console.log('Request to add -', newItem)
     inmemDB.push(newEntry)
-    fs.writeFileSync(DB_FILE, JSON.stringify(inmemDB))
+    fs.writeFileSync(DB_FILE, JSON.stringify(inmemDB, null, 2))
     console.log('Updated DB:\n', inmemDB)
     console.log('\n')
     sendResponse(res, 200, newEntry || '[]')

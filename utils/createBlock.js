@@ -165,7 +165,7 @@ async function createBlock(
       }
       blockConfig.name = blockFinalName
       blockConfig.source = { https: url, ssh: sshUrl }
-      writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
+      writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig, null, 2))
 
       console.log(chalk.dim('Succesfully updated block config..'))
 

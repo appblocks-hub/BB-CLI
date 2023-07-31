@@ -88,20 +88,24 @@ const init = async (packageName, { typescript }) => {
 
   await writeFile(
     path.join(DIR_PATH, 'block.config.json'),
-    JSON.stringify({
-      name: packageName,
-      type: 'package',
-      blockId: packageBlockId,
-      source: {
-        https: null,
-        ssh: null,
-        branch: `block_${packageName}`,
+    JSON.stringify(
+      {
+        name: packageName,
+        type: 'package',
+        blockId: packageBlockId,
+        source: {
+          https: null,
+          ssh: null,
+          branch: `block_${packageName}`,
+        },
+        parentBlockIDs: packageParentBlockIDs,
+        isPublic: blockVisibility,
+        supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
+        repoType,
       },
-      parentBlockIDs: packageParentBlockIDs,
-      isPublic: blockVisibility,
-      supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
-      repoType,
-    })
+      null,
+      2
+    )
   )
 
   const readmeString = generateFunctionReadme(packageName)

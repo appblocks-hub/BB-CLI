@@ -237,7 +237,7 @@ async function pullBlock(da, appConfig, cwd, componentName) {
       }
       blockConfig.name = metaData.BlockName
       blockConfig.source = { https: convertGitUrl(metaData.GitUrl), ssh: convertGitUrl(metaData.GitUrl, 'ssh') }
-      writeFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
+      writeFileSync(path.resolve(clonePath, localDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig, null, 2))
 
       console.log(chalk.dim('Succesfully updated block config..'))
 

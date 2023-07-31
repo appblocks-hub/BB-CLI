@@ -30,7 +30,7 @@ const handler = async ({ req, res }) => {
 
     if (index !== -1) {
       inmemDB.splice(index, 1)
-      fs.writeFileSync(DB_FILE, JSON.stringify(inmemDB))
+      fs.writeFileSync(DB_FILE, JSON.stringify(inmemDB, null, 2))
     }
     console.log('Updated DB:\n', inmemDB)
     sendResponse(res, 200, { status: 'Success' })
