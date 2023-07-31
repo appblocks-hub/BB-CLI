@@ -25,7 +25,7 @@ const emulateElements = async (emEleFolder, port) => {
   const child = runBashLongRunning(`npm start -- --port=${port}`, logPaths, emEleFolder)
 
   const emConfigPath = path.join(emEleFolder, '.emconfig.json')
-  writeFileSync(emConfigPath, JSON.stringify(child))
+  writeFileSync(emConfigPath, JSON.stringify(child, null, 2))
 
   return { ...child, logPaths }
 }

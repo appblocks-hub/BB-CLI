@@ -188,7 +188,7 @@ const updateBlockConfig = async (options) => {
   blockConfig.blockId = blockId
   blockConfig.source = { https: url, ssh: sshUrl }
   blockConfig.isFork = true
-  writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig))
+  writeFileSync(path.resolve(clonePath, cloneDirName, BB_CONFIG_NAME), JSON.stringify(blockConfig, null, 2))
   spinnies.update('fork', { text: `Updated block config` })
   return true
 }

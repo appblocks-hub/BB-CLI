@@ -220,7 +220,7 @@ async function getEmulatorProcessData(rootDir) {
 
 function addEmulatorProcessData(processData) {
   const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
-  fs.writeFileSync(`./${emulatorPath}/.emconfig.json`, JSON.stringify(processData))
+  fs.writeFileSync(`./${emulatorPath}/.emconfig.json`, JSON.stringify(processData, null, 2))
 }
 
 async function stopEmulator(rootPath, hard) {
