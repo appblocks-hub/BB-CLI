@@ -136,6 +136,8 @@ const init = async (packageName, { typescript }) => {
     packageName,
     typescript: !!typescript,
   })
+  console.log('\nExcellent!! You are good to start.')
+  console.log(`New Appblocks project ${packageName} is created.`)
   console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
   // console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
 }
