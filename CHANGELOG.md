@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.1-beta...v1.2.2-beta) (2023-07-31)
+
+
+### Bug Fixes
+
+* json stringify formatted write ([729a0cc](https://github.com/appblocks-hub/BB-CLI/commit/729a0cce1605990bf8708c2cfa9b3c078b3d08f1))
+
 ## [1.2.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.0-beta...v1.2.1-beta) (2023-07-28)
 
 
