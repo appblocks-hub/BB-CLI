@@ -12,6 +12,11 @@ const log = require('../subcommands/logV2')
 
 const program = new Command()
 
-program.argument('[block-name]', 'Name of a live block').action(log)
+program
+  .argument('[block-name]', 'Name of a live block')
+  .option('-e,--err', 'Watch error logs')
+  .option('-o,--out', 'Watch out logs')
+  .option('-l,--lines <lines>', 'Previous lines of logs (default 15 lines)', 15)
+  .action(log)
 
 program.parse(process.argv)
