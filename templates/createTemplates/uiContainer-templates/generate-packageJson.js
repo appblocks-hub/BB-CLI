@@ -36,7 +36,7 @@ const generateUiContainerPackageJson = (name) => `
     "state-pool": "^0.8.1"
   },
   "devDependencies": {
-    "@appblocks/node-sdk": "0.0.6",
+    "@appblocks/node-sdk": "0.0.7",
     "@babel/core": "7.15.0",
     "@babel/eslint-parser": "^7.21.3",
     "@babel/preset-env": "^7.21.4",

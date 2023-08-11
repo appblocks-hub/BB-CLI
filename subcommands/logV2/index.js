@@ -122,7 +122,7 @@ const log = async (blockName, { err, out, lines }) => {
       stream.on('end', () => {
         const logDataLines = buffer.split('\n').filter((line) => line.trim() !== '')
         const lastNLines = logDataLines.slice(-lines).join('\n').trim()
-        if (!lastNLines.length) return
+        if (!lastNLines.length || lastNLines === '""') return
         const logType = logPath.includes('/err/') ? 'Error' : 'Log'
         const logMsg = `\n${logFileName
           .replace('.log', '')
