@@ -13,7 +13,7 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
-    "@appblocks/node-sdk": "0.0.6",
+    "@appblocks/node-sdk": "0.0.7",
     "typescript": "^5.1.6"
   }
 }

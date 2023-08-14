@@ -23,7 +23,7 @@
     "state-pool": "^0.8.1"
   },
   "devDependencies": {
-    "@appblocks/node-sdk": "0.0.6",
+    "@appblocks/node-sdk": "0.0.7",
     "@babel/core": "7.15.0",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "7.14.5",

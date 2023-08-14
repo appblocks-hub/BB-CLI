@@ -284,8 +284,7 @@ class HandleNodeFunctionStart {
       const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
         detached: true,
         cwd: path.join(__dirname),
-        // stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-        stdio: ['ignore', openSync('./out.log', 'w'), openSync('./err.log', 'w')],
+        stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
       })
       await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
 
