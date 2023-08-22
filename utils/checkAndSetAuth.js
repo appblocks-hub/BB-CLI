@@ -5,20 +5,19 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { configstore } = require('../configstore')
-const { getGithubSignedInUser } = require('./getSignedInUser')
+const GitConfigFactory = require('./gitManagers/gitConfigFactory')
 
 async function checkAndSetAuth() {
-  const token = configstore.get('githubUserToken', '')
+  const { manager, error } = await GitConfigFactory.init()
+  if (error) throw error
 
-  if (!token) return { redoAuth: true }
+  const { userToken, userName, userId } = manager.config
 
-  const { user } = await getGithubSignedInUser(token)
+  if (!userToken) return { redoAuth: true }
 
-  const name = configstore.get('githubUserName')
-  const id = configstore.get('githubUserId')
+  const { user } = await manager.getSignedInUser(userToken)
 
-  if (name === user?.userName && id === user?.userId) {
+  if (userName === user?.userName && userId === user?.userId) {
     return { redoAuth: false }
   }
 

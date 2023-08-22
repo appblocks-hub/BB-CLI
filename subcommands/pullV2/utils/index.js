@@ -8,11 +8,11 @@
 const path = require('path')
 const { mkdirSync, existsSync, cpSync, rmSync } = require('fs')
 const { spinnies } = require('../../../loader')
-const { GitManager } = require('../../../utils/gitManagerV2')
 const { headLessConfigStore } = require('../../../configstore')
 const { BB_CONFIG_NAME } = require('../../../utils/constants')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { readJsonAsync } = require('../../../utils')
+const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName, blockVersion }) => {
   const releaseBranch = `block_${blockName}@${blockVersion}`
@@ -55,7 +55,13 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName,
 
 const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, rootPath, isRoot, tmpPath }) => {
   spinnies.add(blockName, { text: `Pulling ${blockName}` })
-  const git = new GitManager(rootPath, gitUrl)
+
+  const { manager: git, error: gErr } = await GitConfigFactory.init({
+    cwd: rootPath,
+    gitUrl,
+  })
+  if (gErr) throw gErr
+
   let tmpClonePath = blockVersion ? path.join(tmpPath, blockName) : blockClonePath
   if (isRoot) {
     await git.clone(tmpClonePath)

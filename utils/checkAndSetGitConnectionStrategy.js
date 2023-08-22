@@ -7,43 +7,45 @@
 
 const chalk = require('chalk')
 const { exec } = require('child_process')
-const { configstore } = require('../configstore')
 const { readInput } = require('./questionPrompts')
+const GitConfigFactory = require('./gitManagers/gitConfigFactory')
 
 async function checkAndSetGitConnectionPreference() {
-  let pref = configstore.get('prefersSsh', '')
+  const { manager, error } = await GitConfigFactory.init()
+  if (error) throw error
+
+  let pref = manager.config.prefersSsh
 
   if (pref === '') {
     const p = await getConnectionStrategyPreference()
     pref = p === 'SSH'
-    configstore.set('prefersSsh', pref)
+    await manager.setConfig('prefersSsh', pref)
   }
 
   if (pref) {
     try {
-      const presentName = configstore.get('githubUserName')
+      const presentName = manager.config.userName
       const sshName = await checkSSH()
       if (sshName === presentName) return true
 
       console.log(chalk.blueBright(`Please sign into ${sshName}'s account for a seamless developer experience`))
       console.log(`Use ${chalk.blueBright('bb connect github -f')} to restart github login`)
-      configstore.delete('prefersSsh')
+      await manager.deleteConfig(['prefersSsh'])
       throw new Error('Key of different user')
     } catch (err) {
       console.log(err.message)
-      configstore.delete('prefersSsh')
+      await manager.deleteConfig(['prefersSsh'])
       process.exit(1)
     }
   }
 
   try {
-    const gitPat = configstore.get('gitPersonalAccessToken', '')
-    if (gitPat === '') await getAndSetGitPat()
+    const gitPat = manager.config.userPAT
+    if (gitPat === '') await getAndSetGitPat(manager)
   } catch (err) {
     console.log('Error on dealing with git PAT')
     console.log(err.message)
-    configstore.delete('prefersSsh')
-    configstore.delete('gitPersonalAccessToken')
+    await manager.deleteConfig(['prefersSsh', 'userPAT'])
     process.exit(1)
   }
 
@@ -59,7 +61,7 @@ async function getConnectionStrategyPreference() {
   })
   return p
 }
-async function getAndSetGitPat() {
+async function getAndSetGitPat(manager) {
   const token = await readInput({
     message: 'Drop PAT here..',
     name: 'gitPat',
@@ -68,7 +70,7 @@ async function getAndSetGitPat() {
       return 'Please enter a string here'
     },
   })
-  await configstore.set('gitPersonalAccessToken', `${token.trim()}`)
+  await manager.setConfig('userPAT', `${token.trim()}`)
 }
 /**
  * TODO -- this is repeated in createRepo

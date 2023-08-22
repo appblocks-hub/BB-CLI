@@ -7,14 +7,30 @@ const { feedback } = require('../utils/cli-feedback')
 const { getBlockName, readInput, setWithTemplate } = require('../utils/questionPrompts')
 const setupTemplateV2 = require('./init/setupTemplateV2')
 const { generateFunctionReadme } = require('../templates/createTemplates/function-templates')
-const { DEFAULT_REPO_TYPE } = require('../utils/constants')
+const { DEFAULT_REPO_TYPE, BB_CONFIG_NAME } = require('../utils/constants')
 const { headLessConfigStore } = require('../configstore')
+const setupTsTemplate = require('./init/setupTsTemplate')
+const ConfigFactory = require('../utils/configManagers/configFactory')
+const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
+const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
 
 /**
  * Action for bb-temp-init
  * @param {string} packageName Package name provided by user in command line
  */
-const init = async (packageName) => {
+const init = async (packageName, { typescript }) => {
+  const { manager } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
+  if (manager instanceof PackageConfigManager) {
+    feedback({
+      type: 'error',
+      message: 'Cannot init from inside a package context\nUse bb create instead with type package',
+    })
+    return
+  }
+  if (manager instanceof BlockConfigManager) {
+    feedback({ type: 'error', message: 'Cannot init from inside a block context\n' })
+    return
+  }
   /**
    * Check if user provided name matches valid regex, else prompt for new name
    */
@@ -72,20 +88,24 @@ const init = async (packageName) => {
 
   await writeFile(
     path.join(DIR_PATH, 'block.config.json'),
-    JSON.stringify({
-      name: packageName,
-      type: 'package',
-      blockId: packageBlockId,
-      source: {
-        https: null,
-        ssh: null,
-        branch: `block_${packageName}`,
+    JSON.stringify(
+      {
+        name: packageName,
+        type: 'package',
+        blockId: packageBlockId,
+        source: {
+          https: null,
+          ssh: null,
+          branch: `block_${packageName}`,
+        },
+        parentBlockIDs: packageParentBlockIDs,
+        isPublic: blockVisibility,
+        supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
+        repoType,
       },
-      parentBlockIDs: packageParentBlockIDs,
-      isPublic: blockVisibility,
-      supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
-      repoType,
-    })
+      null,
+      2
+    )
   )
 
   const readmeString = generateFunctionReadme(packageName)
@@ -95,9 +115,29 @@ const init = async (packageName) => {
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate) {
-    await setupTemplateV2({ DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName })
+  if (useTemplate && !!typescript) {
+    await setupTsTemplate({
+      DIR_PATH,
+      blockVisibility,
+      packageBlockId,
+      packageParentBlockIDs,
+      repoType,
+      packageName,
+      typescript: !!typescript,
+    })
   }
+
+  await setupTemplateV2({
+    DIR_PATH,
+    blockVisibility,
+    packageBlockId,
+    packageParentBlockIDs,
+    repoType,
+    packageName,
+    typescript: !!typescript,
+  })
+  console.log('\nExcellent!! You are good to start.')
+  console.log(`New Appblocks project ${packageName} is created.`)
   console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
   // console.log(chalk.dim(`run bb sync from ${packageName} to register templates as new block`))
 }

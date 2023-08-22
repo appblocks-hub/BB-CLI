@@ -68,7 +68,7 @@ async function copyEmulatorCode(PORTS, dependencies) {
 
         const func_route = "../" + blockData.dir + "/index.js"
         let handler = await import(func_route);
-        if(process.env.NODE_ENV==="development"){
+        if(process.env.NODE_ENV!=="production"){
           handler = await import(func_route+"?update="+Date.now())
         }
 
@@ -220,7 +220,7 @@ async function getEmulatorProcessData(rootDir) {
 
 function addEmulatorProcessData(processData) {
   const emulatorPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, '.')
-  fs.writeFileSync(`./${emulatorPath}/.emconfig.json`, JSON.stringify(processData))
+  fs.writeFileSync(`./${emulatorPath}/.emconfig.json`, JSON.stringify(processData, null, 2))
 }
 
 async function stopEmulator(rootPath, hard) {

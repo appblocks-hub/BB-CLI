@@ -1,94 +1,67 @@
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-unused-expressions */
-
-/**
- * Copyright (c) Appblocks. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-const { dim } = require('chalk')
 const path = require('path')
-const { createRepository } = require('./Mutations')
-const { githubGraphQl } = require('./api')
-const { getGitHeader } = require('./getHeaders')
-const { CreateRepoError } = require('./errors/createRepoError')
-const { axios } = require('./axiosInstances')
+const chalk = require('chalk')
 const {
-  getGitRepoDescription,
-  getGitTarget,
-  getOrgId,
-  getGitRepoVisibility,
   getBlockName,
-} = require('./questionPrompts')
-const { configstore, headLessConfigStore } = require('../configstore')
+  getGitTarget,
+  getGitRepoDescription,
+  getGitRepoVisibility,
+  getOrgId,
+} = require('./questionPromptsV2')
+const { CreateRepoError } = require('./errors/createRepoError')
+const { headLessConfigStore } = require('../configstore')
+const GitConfigFactory = require('./gitManagers/gitConfigFactory')
+const { spinnies } = require('../loader')
 
-/**
- * @param {String}  originalRepoName originalRepoName to try to create repo with
- */
 async function createRepo(originalRepoName) {
   let repoName = originalRepoName
-  const headersV4 = getGitHeader()
   const inputs = {}
-  // const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS === 'true'
-  const SHOULD_RUN_WITHOUT_PROMPTS = true
+
+  const { manager, error } = await GitConfigFactory.init()
+  if (error) throw error
+
+  const SHOULD_RUN_WITHOUT_PROMPTS = process.env.BB_CLI_RUN_HEADLESS !== 'false'
   global.HEADLESS_CONFIGS = headLessConfigStore().store
+  const { gitTarget, gitDescription, gitVisibility } = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS : {}
 
-  inputs.gitTarget = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS.gitTarget : await getGitTarget()
+  inputs.gitTarget = gitTarget || (await getGitTarget())
 
-  /**
-   * Default target is 'my git'
-   */
-  inputs.ownerName = configstore.get('githubUserName')
-  inputs.ownerId = configstore.get('githubUserId')
-
+  let orgData = {}
   if (inputs.gitTarget === 'org git') {
-    const _r = await getOrgId()
-    inputs.ownerName = _r[0]
-    inputs.ownerId = _r[1]
+    const [name, id] = await getOrgId()
+    orgData = { name, id }
   }
-  inputs.description = SHOULD_RUN_WITHOUT_PROMPTS
-    ? global.HEADLESS_CONFIGS.gitDescription
-    : await getGitRepoDescription()
-  inputs.visibility = SHOULD_RUN_WITHOUT_PROMPTS ? global.HEADLESS_CONFIGS.gitVisibility : await getGitRepoVisibility()
 
-  let createRepoRes
+  inputs.ownerId = orgData.id || manager.config.userId
+  inputs.ownerName = orgData.name || manager.config.userName
+  inputs.description = gitDescription ?? (await getGitRepoDescription())
+  inputs.visibility = gitVisibility || (await getGitRepoVisibility())
+
+  let repository
   let newName = true
+
   while (newName) {
-    const { data } = await axios.post(
-      githubGraphQl,
-      {
-        query: createRepository.Q,
-        variables: {
-          name: repoName.toString(),
-          owner: inputs.ownerId,
-          templateRepo: null,
-          template: false,
-          description: inputs.description,
-          visibility: inputs.visibility,
-          team: null,
-        },
-      },
-      { headers: headersV4 }
-    )
-    if (data.errors) {
-      if (data.errors.length === 1 && data.errors[0].type === 'UNPROCESSABLE') {
-        // throw new CreateRepoError(`Repository (${repoName}) already exists for ${inputs.ownerName} `, 0)
-        console.log(dim(`Repository (${repoName}) already exists for ${inputs.ownerName} `))
-        newName = true
-        repoName = await getNewName(originalRepoName, repoName)
-      } else {
-        newName = false
-        throw new CreateRepoError(data.errors, 1)
-      }
-    } else {
-      createRepoRes = data
+    try {
+      spinnies.add('cr', { text: `Creating new ${manager.gitVendor} repository` })
+      repository = await manager.createRepository({
+        name: repoName.toString(),
+        description: inputs.description,
+        visibility: inputs.visibility,
+        owner: inputs.ownerId,
+      })
+      spinnies.remove('cr')
       newName = false
+    } catch (err) {
+      if (err[0]?.type !== 'UNPROCESSABLE') {
+        newName = false
+        throw new CreateRepoError(err, 1)
+      }
+
+      console.log(chalk.dim(`Repository (${repoName}) already exists for ${inputs.ownerName} `))
+      repoName = await getNewName(originalRepoName, repoName)
     }
   }
 
-  return { blockFinalName: repoName, ...createRepository.Tr(createRepoRes) }
+  return { blockFinalName: repoName, ...repository }
 }
 
 function prefixMyString(original, lastTried) {

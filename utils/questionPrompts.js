@@ -12,7 +12,7 @@ const customList = require('./customList')
 const { blockTypes } = require('./blockTypes')
 const { configstore } = require('../configstore')
 const GitPaginator = require('./paginateGitRest')
-const CustomListV2 = require('./cutomListV2')
+const CustomListV2 = require('./customListV2')
 const customSelect = require('./multiSelect')
 const { isValidBlockName } = require('./blocknameValidator')
 
@@ -158,7 +158,7 @@ function getTemplate() {
  * @returns {String|Null}
  */
 // eslint-disable-next-line no-unused-vars
-function getOrgId() {
+async function getOrgId() {
   const question = [
     {
       // type: 'customList',
@@ -324,7 +324,7 @@ function getGitConfigNameEmail(defaultContinue) {
     .catch((err) => console.log(err))
 }
 
-function getGitConfigNameEmailFromConfigStore(defaultContinue,configStore) {
+function getGitConfigNameEmailFromConfigStore(defaultContinue, configStore) {
   const localGitName = configStore.get('localGitName', '')
   const localGitEmail = configStore.get('localGitEmail', '')
 
@@ -393,7 +393,7 @@ function getGitConfigNameEmailFromConfigStore(defaultContinue,configStore) {
 function setWithTemplate() {
   return inquirer.prompt({
     type: 'confirm',
-    message: 'Do you want to set a sample project',
+    message: 'Do you want to start with a sample template',
     name: 'useTemplate',
   })
 }
@@ -499,5 +499,5 @@ module.exports = {
   getGitTarget,
   getGitRepoDescription,
   getGitRepoVisibility,
-  getGitConfigNameEmailFromConfigStore
+  getGitConfigNameEmailFromConfigStore,
 }

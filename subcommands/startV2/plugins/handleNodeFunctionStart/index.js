@@ -1,8 +1,9 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 const path = require('path')
+const chalk = require('chalk')
 const { spawn, execSync } = require('child_process')
-const { openSync, existsSync } = require('fs')
+const { openSync, existsSync, symlinkSync, rmSync } = require('fs')
 const { writeFile } = require('fs/promises')
 const { spinnies } = require('../../../../loader')
 const { pexec } = require('../../../../utils/execPromise')
@@ -10,7 +11,7 @@ const { generateEmFolder } = require('./generateEmulator')
 const { updateEmulatorPackageSingleBuild, linkEmulatedNodeModulesToBlocks } = require('./mergeData')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { headLessConfigStore } = require('../../../../configstore')
-const { upsertEnv, readEnvAsObject } = require('../../../../utils/envManager')
+const { upsertEnv } = require('../../../../utils/envManager')
 const { readJsonAsync } = require('../../../../utils')
 const {
   getBBFolderPath,
@@ -39,6 +40,12 @@ class HandleNodeFunctionStart {
     StartCore.hooks.beforeStart.tapPromise('HandleNodeFunctionStart', async (/** @type {StartCore} */ core) => {
       if (core.cmdOpts.blockType && core.cmdOpts.blockType !== 'function') return
 
+      const emPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, core.cwd)
+
+      if (core.cmdOpts?.force) {
+        if (existsSync(emPath)) rmSync(emPath, { recursive: true })
+      }
+
       /**
        * Filter node fn blocks
        */
@@ -51,8 +58,6 @@ class HandleNodeFunctionStart {
       }
 
       if (!this.fnBlocks.length) return
-
-      const emPath = getBBFolderPath(BB_FOLDERS.FUNCTIONS_EMULATOR, core.cwd)
 
       const { installer } = getNodePackageInstaller()
       const { FUNCTIONS_LOG } = BB_FILES
@@ -117,13 +122,14 @@ class HandleNodeFunctionStart {
 
       if (core.cmdOpts.singleInstance) {
         spinnies.update('emBuild', { text: 'Configuring node modules' })
-        await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
+        const a = await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
         if (this.fnSharedBlocks?.length) {
-          await linkEmulatedNodeModulesToBlocks(
+          this.depsInstallReport = await linkEmulatedNodeModulesToBlocks(
             emPath,
-            this.fnSharedBlocks.map((m) => ({ directory: m.directory }))
+            this.fnSharedBlocks.map((m) => ({ directory: m.directory, name: m.name }))
           )
         }
+        this.depsInstallReport.push(...a)
       } else {
         spinnies.update('emBuild', { text: 'Installing dependencies in function blocks' })
         const pArray = []
@@ -146,17 +152,22 @@ class HandleNodeFunctionStart {
       }
 
       if (headlessConfig.prismaSchemaFolderPath) {
-        const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
-        if (ie.err) throw new Error(ie.err)
-
-        const envPath = path.join(path.resolve(), `.env.function${environment ? `.${environment}` : ''}`)
-        const existEnvData = await readEnvAsObject(envPath)
-
-        const subPackagePrefix = subPackageNames.find((s) => headlessConfig.prismaSchemaFolderPath.includes(s))
-        let dbEnv = existEnvData[`BB_${currentPackEnvPrefix}_DATABASE_URL`]
-        if (subPackagePrefix) dbEnv = existEnvData[`BB_${subPackagePrefix.toUpperCase()}_DATABASE_URL`]
-
-        if (dbEnv) execSync(`export BB_${currentPackEnvPrefix}_DATABASE_URL=${dbEnv}`)
+        const envName = `.env.function${environment ? `.${environment}` : ''}`
+        const envPath = path.join(path.resolve(), envName)
+        if (existsSync(envPath) && existsSync(headlessConfig.prismaSchemaFolderPath)) {
+          try {
+            const dest = path.resolve(headlessConfig.prismaSchemaFolderPath, envName)
+            symlinkSync(envPath, dest)
+          } catch (error) {
+            if (error.code !== 'EEXIST') throw error
+          }
+          const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
+          if (ie.err) throw new Error(ie.err)
+        } else {
+          console.log(
+            chalk.warn(`Path ${!existsSync(envPath) ? envPath : headlessConfig.prismaSchemaFolderPath} not found`)
+          )
+        }
       }
 
       spinnies.update('emBuild', { text: 'Starting emulator' })
@@ -264,21 +275,20 @@ class HandleNodeFunctionStart {
         if (existsSync(path.join(path.resolve(_v.value.data.directory), 'index.ts'))) {
           tsBlocks.push(path.resolve(_v.value.data.directory))
         }
-
         // console.log(`✓ installed deps in ${this.fnBlocks[i].name}`)
-        console.log(`✗ error installing deps in ${_v.value.data.config.name}`)
-        /**
-         * TODO: write a proper plugin for typescript
-         */
-        const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
-          detached: true,
-          cwd: path.join(__dirname),
-          stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-        })
-        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
-
-        watcher.unref()
+        // console.log(`✗ error installing deps in ${_v.value.data.config.name}`)
       }
+      /**
+       * TODO: write a proper plugin for typescript
+       */
+      const watcher = spawn('node', ['tsWatcher.js', ...tsBlocks], {
+        detached: true,
+        cwd: path.join(__dirname),
+        stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+      })
+      await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${this.pid},"watcherPid":${watcher.pid}}`)
+
+      watcher.unref()
     })
   }
 }

@@ -13,11 +13,11 @@ const { spinnies } = require('../../loader')
 const { appBlockAddVersion } = require('../../utils/api')
 const { ensureReadMeIsPresent } = require('../../utils/fileAndFolderHelpers')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
-const { GitManager } = require('../../utils/gitManagerV2')
 const { readInput } = require('../../utils/questionPrompts')
 const { checkLangDepSupport, uploadBlockReadme } = require('./utils')
 const { post } = require('../../utils/axios')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
+const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
 
 const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   const blockConfig = blockManager.config
@@ -112,7 +112,12 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
     const parentBranch = blockConfig.source.branch
     const releaseBranch = `block_${blockName}@${version}`
 
-    const Git = new GitManager(orphanBranchFolder, blockConfig.source.ssh)
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: orphanBranchFolder,
+      gitUrl: blockConfig.source.ssh,
+    })
+    if (gErr) throw gErr
+
     try {
       await Git.createReleaseBranch(releaseBranch, parentBranch)
 
@@ -131,7 +136,13 @@ const createBlockVersion = async ({ blockManager, cmdOptions }) => {
   } else if (repoType === 'multi') {
     // handle multi repo git flow
     // TODO check and setup the correct workflow
-    const Git = new GitManager(blockManager.directory, blockConfig.source.ssh)
+
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: blockManager.directory,
+      gitUrl: blockConfig.source.ssh,
+    })
+    if (gErr) throw gErr
+
     await Git.addTag(version, versionNote)
     await Git.pushTags()
   }

@@ -26,7 +26,7 @@ async function addBlock(name, blockData) {
     ...appConfig.dependencies,
     [name]: blockData,
   }
-  fs.writeFileSync(path.join(root, BB_CONFIG_NAME), JSON.stringify(appConfig), {
+  fs.writeFileSync(path.join(root, BB_CONFIG_NAME), JSON.stringify(appConfig, null, 2), {
     encoding: 'utf8',
   })
 }
@@ -35,7 +35,7 @@ async function upsertBBConfig(name, blockData) {
   const root = '.'
   const appConfig = await getBBConfig()
   appConfig[name] = blockData
-  fs.writeFileSync(path.join(root, BB_CONFIG_NAME), JSON.stringify(appConfig), {
+  fs.writeFileSync(path.join(root, BB_CONFIG_NAME), JSON.stringify(appConfig, null, 2), {
     encoding: 'utf8',
   })
 }

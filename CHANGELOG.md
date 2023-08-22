@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.2.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.2-beta...v1.2.3-beta) (2023-07-31)
+
+
+### Bug Fixes
+
+* feedback msg updates ([c15f878](https://github.com/appblocks-hub/BB-CLI/commit/c15f8786e67e503a16959d487e722b4d1a784548))
+
+## [1.2.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.1-beta...v1.2.2-beta) (2023-07-31)
+
+
+### Bug Fixes
+
+* json stringify formatted write ([729a0cc](https://github.com/appblocks-hub/BB-CLI/commit/729a0cce1605990bf8708c2cfa9b3c078b3d08f1))
+
+## [1.2.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.0-beta...v1.2.1-beta) (2023-07-28)
+
+
+### Bug Fixes
+
+* bug fixes ([1303b48](https://github.com/appblocks-hub/BB-CLI/commit/1303b48b4a8680520e2ec018785099b1a4cdae61))
+* config issues ([4645233](https://github.com/appblocks-hub/BB-CLI/commit/4645233fa6be05e2c404d372af63cb4903ac72dc))
+* configstore name issues ([8873ad8](https://github.com/appblocks-hub/BB-CLI/commit/8873ad8c38105669c37a053ec9bf3efdcad9e8f8))
+* make loading fn block on every req default ([bf65904](https://github.com/appblocks-hub/BB-CLI/commit/bf65904a0ca4cc0a163b45e5d41a13dd620644df))
+* multiple watcher is setup for typescript change detection ([a51a9db](https://github.com/appblocks-hub/BB-CLI/commit/a51a9db74d0e51acf8d280ac424c97431d248624))
+* otp issues ([2757128](https://github.com/appblocks-hub/BB-CLI/commit/2757128f9e4f5e4ce127c6926a6bd28f68875d1d))
+* prohibit init cmd inside block or package ([9ad3795](https://github.com/appblocks-hub/BB-CLI/commit/9ad3795cf87b82d0998e366791b049c7e61e35d8))
+* remove old test files ([2e73b7d](https://github.com/appblocks-hub/BB-CLI/commit/2e73b7df9401c526759b4fe0a6c516a98c0a82a9))
+* ts template todoItem empty ([bed2564](https://github.com/appblocks-hub/BB-CLI/commit/bed2564ca03cd13ab599057e59fae1152b5dd0d7))
+* ts watcher process is unkilled after stop ([f41f0bf](https://github.com/appblocks-hub/BB-CLI/commit/f41f0bf3b497ccff767102f60ca2eded2123eec8))
+* typescript for fn blocks not working ([a51a9db](https://github.com/appblocks-hub/BB-CLI/commit/a51a9db74d0e51acf8d280ac424c97431d248624))
+
+## [1.2.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.3-beta...v1.2.0-beta) (2023-07-26)
+
+
+### Features
+
+* typescript templates ([694ced9](https://github.com/appblocks-hub/BB-CLI/commit/694ced95e3579c757bda30aa48990eff7b2b51c2))
+
 ## [1.1.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.1.2-beta...v1.1.3-beta) (2023-07-18)
 
 

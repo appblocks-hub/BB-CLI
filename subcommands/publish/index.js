@@ -14,11 +14,11 @@ const publishBlock = require('./publishBlock')
 const { publishRedirectApi } = require('../../utils/api')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
-const { GitManager } = require('../../utils/gitManagerV2')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { getBlockVersions, createZip } = require('./util')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
 const { getBBFolderPath, BB_FOLDERS } = require('../../utils/bbFolders')
+const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
 
 const publish = async (bkName, cmdOptions) => {
   const configPath = path.resolve(BB_CONFIG_NAME)
@@ -63,7 +63,12 @@ const publish = async (bkName, cmdOptions) => {
 
       versionData = await getBlockVersions(bManger.config.blockId, cmdOptions.version)
       const checkOutVersion = `block_${blockName}@${versionData.version_number}`
-      const Git = new GitManager(orphanBranchFolder, rootManager.config.source.ssh)
+      const { manager: Git, error: gErr } = await GitConfigFactory.init({
+        cwd: orphanBranchFolder,
+        gitUrl: rootManager.config.source.ssh,
+      })
+      if (gErr) throw gErr
+
       let isCheckOut = false
       try {
         await Git.fetch('--all')

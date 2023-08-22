@@ -4,10 +4,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+const path = require('path')
 const { dim, bold } = require('chalk')
 const { createRepo } = require('./createRepoV2')
-const { GitManager } = require('./gitManagerV2')
 const { getGitConfigNameEmail } = require('./questionPrompts')
+const GitConfigFactory = require('./gitManagers/gitConfigFactory')
 
 /**
  * @typedef returnObject
@@ -43,7 +44,12 @@ async function createBlockV2(options) {
   const { name: cloneDirName, blockFinalName, sshUrl, url } = await createRepo(blockName)
 
   try {
-    const Git = new GitManager(`${clonePath}/${cloneDirName}`, sshUrl)
+    const { manager: Git, error: gErr } = await GitConfigFactory.init({
+      cwd: path.join(clonePath, cloneDirName),
+      gitUrl: sshUrl,
+    })
+    if (gErr) throw gErr
+
     await Git.init()
 
     try {
