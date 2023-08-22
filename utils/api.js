@@ -87,6 +87,7 @@ api.appRegistryCheckAppEnvExist = `${api.appBlockAppRegistryOrigin}/api/app-regi
 api.appRegistryCreateDeployPresignedUrl = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/create-deploy-signed-url/invoke`
 api.appRegistryCopyObject = `${api.appBlockAppRegistryOrigin}/api/app-registry/v0.1/copy-s3-object/invoke`
 api.blocksSync = `${api.appBlockRegistryOrigin}/api/registry/v0.1/sync-blocks/invoke`
+api.singleBlockSync = `${api.appBlockRegistryOrigin}/api/registry/v0.1/sync-block/invoke`
 
 // SPACES
 api.appBlockSpacesOrigin = SPACES_API_BASE_URL

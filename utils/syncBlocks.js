@@ -10,7 +10,7 @@ const { writeFileSync, existsSync, mkdirSync } = require('fs')
 const path = require('path')
 const { axios } = require('./axiosInstances')
 
-const { blocksSync } = require('./api')
+const { blocksSync,singleBlockSync } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { feedback } = require('./cli-feedback')
 const { getBBFolderPath, BB_FOLDERS } = require('./bbFolders')
@@ -33,7 +33,8 @@ async function syncBlocks(
   returnOnError,
   syncLogs,
   root_package_block_id,
-  root_package_name
+  root_package_name,
+  block_name
 ) {
   //   spinnies.add('syncBlocks', { text: `Creating Blocks ` })
   const { SYNC_LOGS } = BB_FOLDERS
@@ -50,9 +51,14 @@ async function syncBlocks(
 
     shieldHeader.space_id = currentSpaceID
 
-    const res = await axios.post(blocksSync, postData, {
+    let res
+    if(block_name){  res = await axios.post(singleBlockSync, postData, {
       headers: shieldHeader,
-    })
+    })}else{
+      res = await axios.post(blocksSync, postData, {
+        headers: shieldHeader,
+      })
+    }
 
     if (res.data.err) {
       feedback({ type: 'error', message: res.data.msg })
