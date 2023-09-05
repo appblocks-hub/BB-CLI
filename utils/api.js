@@ -67,6 +67,7 @@ api.submitForDependenciesReview = `${api.appBlockRegistryOrigin}/api/registry/v0
 api.linkAbVersionBlockVersion = `${api.appBlockRegistryOrigin}/api/registry/v0.1/link-ab-version-to-block-version/invoke`
 api.getBlockFromStore = `${api.appBlockRegistryOrigin}/api/registry/v0.1/get-block-from-store/invoke`
 api.checkBlocksSyncedApi = `${api.appBlockRegistryOrigin}/api/registry/v0.1/check-is-synced/invoke`
+api.upsertPreviewEnvVariable = `${api.appBlockRegistryOrigin}/api/registry/v0.1/upsert-preview-env-variables/invoke`
 
 // APP-REGISTRY
 api.appBlockAppRegistryOrigin = APP_REG_BASE_URL
