@@ -51,6 +51,7 @@ async function createRepo(originalRepoName) {
       spinnies.remove('cr')
       newName = false
     } catch (err) {
+      spinnies.remove('cr')
       if (err[0]?.type !== 'UNPROCESSABLE') {
         newName = false
         throw new CreateRepoError(err, 1)
