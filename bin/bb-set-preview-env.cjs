@@ -8,15 +8,13 @@
  */
 
 const { Command } = require('commander')
-const log = require('../subcommands/logV2')
+const setPreviewEnvVariable = require('../subcommands/setPreviewEnvVariable')
 
 const program = new Command()
 
 program
-  .argument('[block-name]', 'Name of a live block')
-  .option('-e,--err', 'Watch error logs')
-  .option('-o,--out', 'Watch out logs')
-  .option('-l,--lines <lines>', 'Previous lines of logs (default 15 lines)', 15)
-  .action(log)
+  .argument('[env...]', 'Environment variables (separated by spaces)')
+  .option('-fp, --file-path <file-path>', 'file-path of env', '.env.preview')
+  .action(setPreviewEnvVariable)
 
 program.parse(process.argv)

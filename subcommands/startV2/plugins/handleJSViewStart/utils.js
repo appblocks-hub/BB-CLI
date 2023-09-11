@@ -3,7 +3,7 @@ const path = require('path')
 const chalk = require('chalk')
 const readline = require('readline')
 const { Stream } = require('stream')
-const { createReadStream, watchFile } = require('fs')
+const { createReadStream, watchFile, existsSync, rmSync } = require('fs')
 const { runBash, runBashLongRunning } = require('../../../bash')
 const { getNodePackageInstaller } = require('../../../../utils/nodePackageManager')
 const { generateOutLogPath, generateErrLogPath } = require('../../../../utils/bbFolders')
@@ -98,6 +98,11 @@ async function startJsProgram(core, blockManager, port) {
 
   try {
     core.spinnies.update(name, { text: `Installing dependencies in ${name}` })
+
+    if (core.cmdOpts?.force) {
+      if (existsSync('./node_modules')) rmSync('./node_modules', { recursive: true })
+    }
+
     const { installer } = getNodePackageInstaller()
     const i = await runBash(installer, path.resolve(blockManager.directory))
     if (i.status === 'failed') throw new Error(i.msg)

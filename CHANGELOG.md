@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.4-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.3-beta...v1.2.4-beta) (2023-08-10)
+
+
+### Bug Fixes
+
+* set default to start all sub containers ([94478a3](https://github.com/appblocks-hub/BB-CLI/commit/94478a37c3fbae11929dda6deb72a4a68247aa9a))
+* start issue with sub package ([58cb14e](https://github.com/appblocks-hub/BB-CLI/commit/58cb14e2fc58bbae5323a9b3392568835f93781b))
+
 ## [1.2.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.2-beta...v1.2.3-beta) (2023-07-31)
 
 

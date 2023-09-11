@@ -8,7 +8,7 @@
 
 const path = require('path')
 const chalk = require('chalk')
-const { writeFileSync } = require('fs')
+const { writeFileSync, rmSync, existsSync } = require('fs')
 const { runBash } = require('../../../../bash')
 const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
@@ -30,6 +30,13 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       elementsBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
       depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')
       containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
+    }
+
+    if (!core.cmdOpts?.subContainer) {
+      for (const block of containerBlocks) {
+        if (path.dirname(block.directory) !== path.resolve()) continue
+        containerBlocks = [block]
+      }
     }
 
     let depLib = depLibBlocks[0]
@@ -84,6 +91,10 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       core.envWarning.prefixes = core.envWarning.prefixes.concat(updatedEnv.envWarning.prefixes)
 
       const emEleFolder = getBBFolderPath(BB_FOLDERS.ELEMENTS_EMULATOR, relativePath)
+
+      if (core.cmdOpts?.force) {
+        if (existsSync(emEleFolder)) rmSync(emEleFolder, { recursive: true })
+      }
 
       core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
       await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
