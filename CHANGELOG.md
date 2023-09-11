@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.4-beta...v1.3.0-beta) (2023-09-11)
+
+
+### Features
+
+* add env for preview ([60467e7](https://github.com/appblocks-hub/BB-CLI/commit/60467e703d4fac8ea3623da8b1fbdbb018a9f318))
+
+
+### Bug Fixes
+
+* crlf to lf ([baf82d5](https://github.com/appblocks-hub/BB-CLI/commit/baf82d5948a70dbd44ab9a75fbfeeb0ad3ebd3ee))
+* template and connect remote issues ([b7640ea](https://github.com/appblocks-hub/BB-CLI/commit/b7640ea4bcbe3e24bbeb90012f61dcf51507b8e3))
+* watcher pid null error ([0b4a850](https://github.com/appblocks-hub/BB-CLI/commit/0b4a850f5bc2f82645a1267c8edad4134f4715fe))
+
 ## [1.2.4-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.3-beta...v1.2.4-beta) (2023-08-10)
 
 
