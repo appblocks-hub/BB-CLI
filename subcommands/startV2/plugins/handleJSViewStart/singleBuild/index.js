@@ -13,7 +13,7 @@ const { runBash } = require('../../../../bash')
 const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
 const { mergeDatas } = require('./mergeDatas')
-const { emulateElements, stopEmulatedElements, packageInstall } = require('./util')
+const { emulateElements, stopEmulatedElements, packageInstall, buildBlock } = require('./util')
 const { upsertEnv } = require('../../../../../utils/envManager')
 const { BB_FOLDERS, getBBFolderPath } = require('../../../../../utils/bbFolders')
 
@@ -114,15 +114,29 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       if (buildOnly) {
         const bashRes = await runBash(`npm run build`, emEleFolder)
         if (bashRes.status !== 'success') {
-          core.spinnies.succeed('singleBuild', { text: `Error in build: ${bashRes.msg}` })
+          core.spinnies.fail('singleBuild', { text: `Error in build: ${bashRes.msg}` })
           return { error: bashRes.msg }
         }
 
         core.spinnies.succeed('singleBuild', { text: `Elements build success` })
+
+        const containerBuildData = []
+        for (const block of containerBlocks) {
+          core.spinnies.add('containerBuild', { text: `Building  ${block.config.name} container` })
+          const { blockBuildFolder, error } = await buildBlock(block, {}, env)
+          if (error) {
+            core.spinnies.fail('containerBuild', { text: `${block.config.name} build failed` })
+            return { error }
+          }
+          core.spinnies.succeed('containerBuild', { text: `${block.config.name} build success` })
+          containerBuildData.push({ blockBuildFolder, error })
+        }
+
         return {
           elementsBuildFolder: path.join(emEleFolder, 'dist'),
           emEleFolder,
           containerBlocks,
+          containerBuildData,
         }
       }
 

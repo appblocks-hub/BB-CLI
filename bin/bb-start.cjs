@@ -19,6 +19,7 @@ program
   .option('-env, --environment <environment>', 'environment')
   .option('-bt, --block-type <block-type>', 'Block type to start')
   .option('-pm2, --pm2', 'Start functions with pm2')
+  .option('-bo, --build-only', 'Just build view blocks')
   .option('-nsc, --no-sub-container', 'To start all sub container')
   .option('-f, --force', 'To clear cache and start')
   .action(start)
