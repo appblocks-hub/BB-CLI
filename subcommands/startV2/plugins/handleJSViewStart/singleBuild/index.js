@@ -8,7 +8,7 @@
 
 const path = require('path')
 const chalk = require('chalk')
-const { writeFileSync, rmSync, existsSync } = require('fs')
+const { writeFileSync, rmSync, existsSync, cpSync } = require('fs')
 const { runBash } = require('../../../../bash')
 const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
@@ -128,8 +128,13 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
             core.spinnies.fail('containerBuild', { text: `${block.config.name} build failed` })
             return { error }
           }
-          core.spinnies.succeed('containerBuild', { text: `${block.config.name} build success` })
+          if (block.config.id === containerBlocks[0].config.id) {
+            cpSync(path.join(blockBuildFolder), getBBFolderPath(BB_FOLDERS.CONTAINER_BUILD, relativePath), {
+              recursive: true,
+            })
+          }
           containerBuildData.push({ blockBuildFolder, error })
+          core.spinnies.succeed('containerBuild', { text: `${block.config.name} build success` })
         }
 
         return {
