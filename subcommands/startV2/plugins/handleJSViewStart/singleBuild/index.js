@@ -134,7 +134,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
             })
           }
           containerBuildData.push({ blockBuildFolder, error })
-          core.spinnies.succeed('containerBuild', { text: `${block.config.name} build success` })
+          core.spinnies.succeed('containerBuild', { text: `${block.config.name} container build success` })
         }
 
         return {
