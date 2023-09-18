@@ -16,15 +16,19 @@ class KillTsWatcher {
         core
       ) => {
         /**
-         * Kill the watcher process only if all fns will be stopped,
+         *  TODO:Kill the watcher process only if all fns will be stopped,
          *  if one fn is stoppping then don't kill the watcher
          */
-        if (core.packageManager instanceof PackageConfigManager) {
-          const fnEmPath = path.join(core.packageManager.directory, '._bb_', 'functions_emulator', '.emconfig.json')
-          const {
-            data: { watcherPid },
-          } = await readJsonAsync(fnEmPath)
-          treeKillSync(watcherPid)
+        try {
+          if (core.packageManager instanceof PackageConfigManager) {
+            const fnEmPath = path.join(core.packageManager.directory, '._bb_', 'functions_emulator', '.emconfig.json')
+            const {
+              data: { watcherPid },
+            } = await readJsonAsync(fnEmPath)
+            treeKillSync(watcherPid)
+          }
+        } catch (err) {
+          console.log('')
         }
       }
     )

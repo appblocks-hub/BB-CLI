@@ -115,27 +115,20 @@ const init = async (packageName, { typescript }) => {
    * If user wants template, setup sample template
    */
   const { useTemplate } = await setWithTemplate()
-  if (useTemplate && !!typescript) {
-    await setupTsTemplate({
+  if (useTemplate) {
+    const templateOptions = {
       DIR_PATH,
       blockVisibility,
       packageBlockId,
       packageParentBlockIDs,
       repoType,
       packageName,
-      typescript: !!typescript,
-    })
+      typescript,
+    }
+    if (typescript) await setupTsTemplate(templateOptions)
+    else await setupTemplateV2(templateOptions)
   }
 
-  await setupTemplateV2({
-    DIR_PATH,
-    blockVisibility,
-    packageBlockId,
-    packageParentBlockIDs,
-    repoType,
-    packageName,
-    typescript: !!typescript,
-  })
   console.log('\nExcellent!! You are good to start.')
   console.log(`New Appblocks project ${packageName} is created.`)
   console.log(chalk.dim(`\ncd ${packageName} and start hacking\n`))
