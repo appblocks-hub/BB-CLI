@@ -78,6 +78,8 @@ cmd('get', 'To get free blocks from the store')
 
 cmd('rename', 'To rename block')
 
+cmd('set-preview-env', 'To set preview environment variables')
+
 // eslint-disable-next-line no-unused-expressions
 ;(async () => {
   await checkEngineSupport(packageJson)

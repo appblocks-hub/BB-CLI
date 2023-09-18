@@ -60,7 +60,7 @@ const generateUiElementPackageJson = (name) => `{
     "url-loader": "^4.1.1",
     "webpack": "5.88.2",
     "webpack-cli": "5.1.4",
-    "webpack-dev-server": "4.15.1"
+    "webpack-dev-server": "4.15.1",
     "@appblocks/node-sdk": "0.0.7"
   }
 }
