@@ -61,6 +61,7 @@ class HandleJSViewStart {
             container: [this.containerPort],
           },
           env: core.cmdOpts.environment,
+          buildOnly: core.cmdOpts.buildOnly,
         })
 
         if (error) console.log(chalk.yellow(error))
