@@ -27,11 +27,30 @@ const emulatorCode = (port) =>
 import express from "express";
 import http from "http";
 import cors from "cors";
+import swaggerJSDoc from 'swagger-jsdoc'
+import swaggerUi from 'swagger-ui-express'
 import executeMiddleware from "./middlewareHandler.js";
-import { getBlock } from "./utils.js";
+import { getBlock,getFunctionEntryPaths } from "./utils.js";
 import { env } from "@appblocks/node-sdk";
 
 env.init()
+
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Open api documentation for appblocks',
+    version: '1.0.0',
+  },
+};
+
+const options = {
+  swaggerDefinition,
+  // Paths to files containing OpenAPI definitions
+  apis: getFunctionEntryPaths(),
+};
+
+const swaggerSpec = swaggerJSDoc(options);
 
 const appHandler = async (req, res, next) => {
   try {
@@ -68,6 +87,7 @@ const appHandler = async (req, res, next) => {
 
 const app = express();
 app.use(cors());
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.all("/*", appHandler);
 
 const server = http.createServer(app);
@@ -113,6 +133,18 @@ const getBlock = (url) => {
   return { route, block };
 };
 
+const getFunctionEntryPaths=()=>{
+  const blocks = ${JSON.stringify(blockList, null, 2)};
+  const functionEntryPaths=Object.keys(blocks).map(blockName=>{
+    const block=blocks[""+blockName]
+   return path.join(block["directory"], "index.js")})
+
+  
+  return functionEntryPaths
+}
+
+
+
 const getMiddlewareBlock = (url) => {
   const blocks = ${JSON.stringify(middlewareBlockList, null, 2)};
 
@@ -122,7 +154,7 @@ const getMiddlewareBlock = (url) => {
   return { route, block };
 };
 
-export { getBlock, getMiddlewareBlock };
+export { getBlock, getMiddlewareBlock,getFunctionEntryPaths };
 
 `.trim()
 

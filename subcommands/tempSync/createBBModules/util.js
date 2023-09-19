@@ -85,6 +85,112 @@ const buildApiPayload = (currentConfig, apiPayload) => {
 //   }
 // }
 
+const buildSinglePackageBlockConfig = async (options) => {
+  let { workSpaceConfigManager, blockMetaDataMap, blockNameArray, apiPayload } = options
+
+  let currentPackageMemberBlocks = {}
+
+  let packageMetaData = { blockManager: workSpaceConfigManager }
+
+  let packageConfig = workSpaceConfigManager.config
+
+  if (!(workSpaceConfigManager instanceof PackageConfigManager)) {
+    throw new Error('Error parsing package block')
+  }
+
+  blockNameArray.push(packageConfig.name)
+
+  for await (const blockManager of workSpaceConfigManager.getDependencies()) {
+    if (!blockManager?.config) continue
+
+    // copying package config parent block name for transferring to the next package block
+    blockManager.newParentBlockIDs = workSpaceConfigManager.newParentBlockIDs.slice()
+    blockManager.newParentBlockIDs.push(packageConfig.id)
+    let currentMetaData = {
+      blockManager,
+    }
+
+    let currentConfig = blockManager.config
+
+    currentMetaData.memberBlocks = []
+
+    if (!currentPackageMemberBlocks[currentConfig.name]) {
+      currentPackageMemberBlocks[currentConfig.name] = { blockID: currentConfig.id, directory: currentConfig.directory }
+    }
+  }
+  packageMetaData.memberBlocks = currentPackageMemberBlocks
+
+  buildApiPayload(workSpaceConfigManager.config, apiPayload)
+
+  // building metadata map for general purposes
+  if (!blockMetaDataMap[packageConfig.name]) {
+    blockMetaDataMap[packageConfig.name] = packageMetaData
+  }
+}
+
+// eslint-disable-next-line consistent-return
+const findBlockConfig = async (options) => {
+  let {
+    workSpaceConfigManager,
+    blockMetaDataMap,
+    blockNameArray,
+    rootPath,
+    apiPayload,
+    blockName,
+    blockConfigDetails,
+  } = options
+
+  let packageConfig = workSpaceConfigManager.config
+
+
+  if (!(workSpaceConfigManager instanceof PackageConfigManager)) {
+    throw new Error('Error parsing package block')
+  }
+
+  if (packageConfig.name === blockName) {
+    blockConfigDetails.configManager = workSpaceConfigManager
+    return
+  }
+
+  for await (const blockManager of workSpaceConfigManager.getDependencies()) {
+    if (!blockManager?.config) continue
+
+    // copying package config parent block name for transferring to the next package block
+    blockManager.newParentBlockIDs = workSpaceConfigManager.newParentBlockIDs.slice()
+    blockManager.newParentBlockIDs.push(packageConfig.id)
+    let currentMetaData = {
+      blockManager,
+    }
+
+    let currentConfig = blockManager.config
+
+    currentMetaData.memberBlocks = []
+
+
+    if (currentConfig.type === 'package') {
+      await findBlockConfig({
+        workSpaceConfigManager: blockManager,
+        blockMetaDataMap,
+        blockNameArray,
+        rootPath,
+        apiPayload,
+        blockName,
+        blockConfigDetails,
+      })
+    } else if (currentConfig.name === blockName) {
+
+      if (!blockMetaDataMap[currentConfig.name]) {
+        blockMetaDataMap[currentConfig.name] = currentMetaData
+        blockNameArray.push(currentConfig.name)
+      }
+
+      buildApiPayload(blockManager.config, apiPayload)
+      blockConfigDetails.configManager = blockManager
+      return
+    }
+  }
+}
+
 const buildBlockConfig = async (options) => {
   let { workSpaceConfigManager, blockMetaDataMap, blockNameArray, rootPath, apiPayload } = options
 
@@ -334,4 +440,6 @@ module.exports = {
   calculateDirectoryDifference,
   setVisibilityAndDefaultBranch,
   // checkAndPushChanges,
+  findBlockConfig,
+  buildSinglePackageBlockConfig,
 }

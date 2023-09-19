@@ -10,16 +10,25 @@ const chalk = require('chalk')
 const { mkdirSync, existsSync, rmSync } = require('fs')
 const { getGitConfigNameEmailFromConfigStore } = require('../../../utils/questionPrompts')
 const { checkAndSetGitConfigNameEmail } = require('../../../utils/gitCheckUtils')
-const { buildBlockConfig, searchFile, addBlockWorkSpaceCommits, getAndSetSpace } = require('./util')
+const {
+  buildBlockConfig,
+  searchFile,
+  addBlockWorkSpaceCommits,
+  getAndSetSpace,
+  findBlockConfig,
+  buildSinglePackageBlockConfig,
+} = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
 const { spinnies } = require('../../../loader')
 const { BB_FILES } = require('../../../utils/bbFolders')
 const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
+const { axios } = require('../../../utils/axiosInstances')
+const { checkBlocksSyncedApi } = require('../../../utils/api')
 
 const createBBModules = async (options) => {
   try {
-    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, returnOnError } = options
+    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, returnOnError, blockName } = options
 
     const apiPayload = {}
     const blockMetaDataMap = {}
@@ -99,13 +108,56 @@ const createBBModules = async (options) => {
 
     workSpaceConfigManager.newParentBlockIDs = []
 
-    await buildBlockConfig({
-      workSpaceConfigManager,
-      blockMetaDataMap,
-      blockNameArray,
-      rootPath: workSpaceConfigDirectoryPath,
-      apiPayload,
-    })
+    if (blockName) {
+      const blockConfigDetails = {}
+      await findBlockConfig({
+        workSpaceConfigManager,
+        blockMetaDataMap,
+        blockNameArray,
+        rootPath: workSpaceConfigDirectoryPath,
+        apiPayload,
+        blockName,
+        blockConfigDetails,
+      })
+
+      if (Object.keys(blockConfigDetails).length === 0) {
+        throw new Error('Invalid block Name')
+      }
+
+      let syncedBlockIds = null
+      // check if root block is synced
+      const blockIds = [workSpaceConfigManager.config.blockId]
+
+      const checkRes = await axios.post(checkBlocksSyncedApi, { block_ids: blockIds })
+      syncedBlockIds = checkRes.data?.data?.map((b) => b.id) || []
+
+      if (!syncedBlockIds?.includes(workSpaceConfigManager.config.blockId)) {
+        await buildSinglePackageBlockConfig({
+          workSpaceConfigManager,
+          blockMetaDataMap,
+          blockNameArray,
+          apiPayload,
+        })
+      }
+
+      if (blockConfigDetails.configManager.config.type === 'package') {
+        await buildBlockConfig({
+          workSpaceConfigManager: blockConfigDetails.configManager,
+          blockMetaDataMap,
+          blockNameArray,
+          rootPath: blockConfigDetails.configManager.directory,
+          apiPayload,
+        })
+      }
+    } else {
+      await buildBlockConfig({
+        workSpaceConfigManager,
+        blockMetaDataMap,
+        blockNameArray,
+        rootPath: workSpaceConfigDirectoryPath,
+        apiPayload,
+      })
+    }
 
     await addBlockWorkSpaceCommits(blockMetaDataMap, Git, workspaceDirectoryPath)
 

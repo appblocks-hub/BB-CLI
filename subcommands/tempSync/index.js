@@ -69,6 +69,7 @@ const tempSync = async (blockName, options) => {
       bbModulesExists,
       defaultBranch,
       returnOnError,
+      blockName,
     })
 
     // Return if there are nothing to pull
@@ -81,7 +82,8 @@ const tempSync = async (blockName, options) => {
       returnOnError,
       syncLogs,
       bbModulesData.rootPackageBlockID,
-      bbModulesData.rootPackageName
+      bbModulesData.rootPackageName,
+      blockName
     )
 
     if (syncLogs?.apiLogs?.error) {
@@ -94,6 +96,7 @@ const tempSync = async (blockName, options) => {
 
     const nonAvailableBlockNames = syncLogs?.apiLogs?.non_available_block_names ?? {}
     const errors = await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames })
+
 
     if (errors.length > 0) {
       throw new Error(chalk.gray(`Malformed bb_modules found. Please run bb sync --clear-cache`))
