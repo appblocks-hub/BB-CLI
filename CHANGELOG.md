@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.3.0-beta...v1.4.0-beta) (2023-09-19)
+
+
+### Features
+
+* add build only flag to start for views ([4a6798d](https://github.com/appblocks-hub/BB-CLI/commit/4a6798de6e643c7215eaf078ff5c3f48df4ca518))
+* add container build folder ([197e495](https://github.com/appblocks-hub/BB-CLI/commit/197e495f3b6e9edd44ad6097349d1d2c5de0d5d5))
+* added swagger documentation to generate emulator ([a89fba4](https://github.com/appblocks-hub/BB-CLI/commit/a89fba405185c03de7e243f9f1467fc3481103ab))
+
 ## [1.3.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.2.4-beta...v1.3.0-beta) (2023-09-11)
 
 
