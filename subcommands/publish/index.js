@@ -37,6 +37,7 @@ const publish = async (bkName, cmdOptions) => {
   let blockManager
   let zipFile
   let versionData
+  let directory
 
   try {
     if (manager.config.repoType === 'mono') {
@@ -45,7 +46,16 @@ const publish = async (bkName, cmdOptions) => {
       rootManager = rm
 
       const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
+      const preview=cmdOptions?.preview??false
+
       orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
+
+      if(preview){
+        directory=path.join(bbModulesPath,'workspace')
+      }else{
+        directory=orphanBranchFolder
+      }
+
 
       let bManger
       if (blockName === rootManager.config.name) {
@@ -80,8 +90,9 @@ const publish = async (bkName, cmdOptions) => {
         zipFile = await createZip({
           blockName,
           rootDir: rootManager.directory,
-          directory: orphanBranchFolder,
+          directory,
           version: versionData.version_number,
+          
         })
         if (isCheckOut) await Git.undoCheckout()
       } catch (e) {

@@ -25,10 +25,13 @@ const getPublishedVersion = (name, directory) => {
 
 const createZip = async ({ blockName, directory, version, excludePaths = [], rootDir }) => {
   try {
+  
     const dir = `${directory}`
     const rootDirectory = rootDir || path.resolve('.')
     const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP, rootDirectory)
     const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD, blockName || '')
+    
+
     const EXCLUDE_IN_ZIP = [
       'node_modules/*',
       '.git/*',
