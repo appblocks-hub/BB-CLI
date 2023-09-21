@@ -2,7 +2,7 @@ const path = require('path')
 const { promisify } = require('util')
 const treeKill = require('tree-kill')
 const isRunning = require('is-running')
-const { existsSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync } = require('fs')
+const { existsSync, readFileSync, writeFileSync, lstat, unlinkSync, rmSync, symlinkSync, cpSync } = require('fs')
 const net = require('net')
 const { runBashLongRunning, runBash } = require('../../../../bash')
 const { pexec } = require('../../../../../utils/execPromise')
@@ -15,6 +15,9 @@ const {
   generateOutLogPath,
   generateErrLogPath,
 } = require('../../../../../utils/bbFolders')
+const { removeSync } = require('../../../../upload/onPrem/awsS3/util')
+const { configstore } = require('../../../../../configstore')
+const { convertToEnv } = require('../../../../../utils/env')
 
 const emulateElements = async (emEleFolder, port) => {
   const { ELEMENTS_LOG } = BB_FILES
@@ -118,7 +121,52 @@ const portInUse = async (port) => {
   })
 }
 
+const buildBlock = async (block, envData, env) => {
+  const envType = ['ui-elements', 'ui-container'].includes(block.config.type) ? 'view' : 'function'
+
+  let envPath = path.resolve(`.env.${envType}.${env}`)
+  if (!existsSync(envPath)) {
+    envPath = path.resolve(`.env.${envType}`)
+  } else {
+    // eslint-disable-next-line no-param-reassign
+    envData = {}
+  }
+
+  const existingEnvDataFile = await readFileSync(envPath).toString()
+  const updatedEnv = convertToEnv(envData, existingEnvDataFile)
+
+  const nodePackageManager = configstore.get('nodePackageManager')
+  global.usePnpm = nodePackageManager === 'pnpm'
+
+  const blockDir = path.resolve(block.directory)
+  const blockBuildEnvPath = path.join(blockDir, '.env')
+  const blockBuildTmpEnvPath = path.join(blockDir, '.env_ab_tmp')
+
+  if (existsSync(blockBuildEnvPath)) {
+    cpSync(blockBuildEnvPath, blockBuildTmpEnvPath, { overwrite: true, recursive: true })
+  }
+
+  await writeFileSync(blockBuildEnvPath, updatedEnv)
+
+  const i = await runBash(global.usePnpm ? 'pnpm install' : block.config.postPull, blockDir)
+  if (i.status === 'failed') return { error: i.msg }
+
+  const bashRes = await runBash(`npm run build`, blockDir)
+  if (bashRes.status !== 'success') return { error: bashRes.msg }
+
+  if (existsSync(blockBuildTmpEnvPath)) {
+    cpSync(blockBuildTmpEnvPath, blockBuildEnvPath, { overwrite: true, recursive: true })
+  } else {
+    removeSync([blockBuildEnvPath])
+  }
+
+  return {
+    blockBuildFolder: path.join(blockDir, 'dist'),
+  }
+}
+
 module.exports = {
+  buildBlock,
   portInUse,
   emulateElements,
   stopEmulatedElements,

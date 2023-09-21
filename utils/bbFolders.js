@@ -17,6 +17,7 @@ const BB_FOLDERS = {
   RUN_TIME_LOGS: 'cli_run_time_logs',
   FUNCTIONS_EMULATOR: 'functions_emulator',
   ELEMENTS_EMULATOR: 'elements_emulator',
+  CONTAINER_BUILD: 'container_build'
 }
 
 const BB_FILES = {
