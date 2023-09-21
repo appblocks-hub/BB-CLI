@@ -33,6 +33,7 @@ async function start(blockName, options) {
 
     await Start.initializeConfigManager()
     await Start.start()
+    if (options.environment === 'preview') console.log(`\nStart process completed`)
     await Start.cleanUp()
   } catch (error) {
     await Start.cleanUp()
