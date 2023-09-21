@@ -18,7 +18,9 @@ const packageJson = () => `
     "express": "^4.17.2",
     "@appblocks/node-sdk": "^0.0.7",
     "http": "0.0.1-security",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   }
 }`
 
