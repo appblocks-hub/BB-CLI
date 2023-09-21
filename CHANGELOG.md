@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.4.0-beta...v1.5.0-beta) (2023-09-21)
+
+
+### Features
+
+* added preview option for publish command ([41428a7](https://github.com/appblocks-hub/BB-CLI/commit/41428a7ba5815d32a156a94a02948c4a8cc8a95a))
+
+
+### Bug Fixes
+
+* modified emulator code ([13c17ac](https://github.com/appblocks-hub/BB-CLI/commit/13c17acb0ce9c7ad7ca8e75ca233d879182b13de))
+
 ## [1.4.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.3.0-beta...v1.4.0-beta) (2023-09-19)
 
 
