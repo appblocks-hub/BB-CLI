@@ -12,8 +12,9 @@ const { spinnies } = require('../../loader')
 const { publishBlockApi, createSourceCodeSignedUrl } = require('../../utils/api')
 const { post } = require('../../utils/axios')
 const { getLanguageVersionData } = require('../languageVersion/util')
-const { createZip } = require('./util')
+const { createZip, buildBlockTypesMap } = require('./util')
 const {  BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
+
 
 const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => {
   const {
@@ -55,6 +56,12 @@ const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => 
     })
   }
 
+  const blockTypesMap ={}
+
+
+  await (buildBlockTypesMap({packageManager,blockTypesMap}))
+
+
   const { data: preSignedData, error } = await post(createSourceCodeSignedUrl, {
     block_type: 'package',
     block_id: pkBlockId,
@@ -81,6 +88,7 @@ const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => 
     block_version_id: versionData.id,
     appblock_versions: supportedAppblockVersions,
     language_version_ids: languageVersionIds,
+    block_types_map:blockTypesMap
   }
 
   spinnies.add('p1', { text: 'Publishing package block' })
