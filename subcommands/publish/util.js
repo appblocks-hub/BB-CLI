@@ -8,6 +8,7 @@ const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
 const { readInput } = require('../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../utils/registryUtils')
 const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
+const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 
 const getPublishedVersion = (name, directory) => {
   try {
@@ -132,4 +133,47 @@ const getBlockVersions = async (blockId, version) => {
   return versionData
 }
 
-module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions, getBlockVersions }
+const buildBlockTypesMap = async (options) => {
+  const { packageManager, blockTypesMap } = options
+
+
+
+  const packageConfig = packageManager.config
+
+  if (!(packageManager instanceof PackageConfigManager)) {
+    throw new Error('Error parsing package block')
+  }
+
+
+  if (!blockTypesMap[packageConfig.type]) {
+    blockTypesMap[packageConfig.type] = true
+  
+  }
+
+
+
+  for await (const blockManager of packageManager.getDependencies()) {
+    if (!blockManager?.config) continue
+
+    // copying package config parent block name for transferring to the next package block
+    const currentConfig = blockManager.config
+
+
+    if (currentConfig.type === 'package') {
+      await buildBlockTypesMap({
+        packageManager: blockManager,
+        blockTypesMap,
+    
+      })} else {
+      // eslint-disable-next-line no-lonely-if
+      if (!blockTypesMap[currentConfig.type]) {
+        blockTypesMap[currentConfig.type] = true
+      
+      }
+
+    }
+  }
+
+}
+
+module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions, getBlockVersions,buildBlockTypesMap }
