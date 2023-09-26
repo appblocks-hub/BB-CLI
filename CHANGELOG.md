@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.0-beta...v1.5.1-beta) (2023-09-26)
+
+
+### Bug Fixes
+
+* modified publish command ([c07476d](https://github.com/appblocks-hub/BB-CLI/commit/c07476d261f3754e9b22f7843a9c35540a74e070))
+
 ## [1.5.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.4.0-beta...v1.5.0-beta) (2023-09-21)
 
 
