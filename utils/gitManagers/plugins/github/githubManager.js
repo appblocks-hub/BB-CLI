@@ -173,7 +173,7 @@ class GithubManager extends GitManager {
     if (!keys?.length) return
     keys.forEach((key) => {
       const configKeyName = GITHUB_KEYS[key]
-      if (!configKeyName) console.log(chalk.warn(`${key} not found`))
+      if (!configKeyName) console.log(chalk.yellow(`${key} not found`))
       else configstore.delete(configKeyName)
     })
     this._buildConfig()
