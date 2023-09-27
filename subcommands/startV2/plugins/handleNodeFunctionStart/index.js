@@ -165,7 +165,7 @@ class HandleNodeFunctionStart {
           if (ie.err) throw new Error(ie.err)
         } else {
           console.log(
-            chalk.warn(`Path ${!existsSync(envPath) ? envPath : headlessConfig.prismaSchemaFolderPath} not found`)
+            chalk.yellow(`Path ${!existsSync(envPath) ? envPath : headlessConfig.prismaSchemaFolderPath} not found`)
           )
         }
       }
