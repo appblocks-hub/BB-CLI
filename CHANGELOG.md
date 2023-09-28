@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.1-beta...v1.5.2-beta) (2023-09-27)
+
+
+### Bug Fixes
+
+* chalk warn function error ([650a8ed](https://github.com/appblocks-hub/BB-CLI/commit/650a8ed45c003a7adf7cc59f1902131ac76c78a3))
+
 ## [1.5.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.0-beta...v1.5.1-beta) (2023-09-26)
 
 
