@@ -212,138 +212,138 @@ class Bootstrap {
 
 async function get(blockname) {
   const { logger } = new Logger('get')
-  // eslint-disable-next-line prefer-const
-  const s = blockname.split('/')
-  let rootBlockName = ''
-  let spacename = ''
-  let name = ''
-  if (s.length === 1) {
-    // rootname and blockname is same
-    name = s[0]
-    rootBlockName = s[0]
-  } else if (s.length >= 2) {
-    if (s[0][0] === '@') {
-      spacename = s[0]
-      rootBlockName = s[1]
-      name = s[s.length - 1]
-    } else {
+  try {
+    // eslint-disable-next-line prefer-const
+    const s = blockname.split('/')
+    let rootBlockName = ''
+    let spacename = ''
+    let name = ''
+    if (s.length === 1) {
+      // rootname and blockname is same
+      name = s[0]
       rootBlockName = s[0]
-      name = s[s.length - 1]
+    } else if (s.length >= 2) {
+      if (s[0][0] === '@') {
+        spacename = s[0]
+        rootBlockName = s[1]
+        name = s[s.length - 1]
+      } else {
+        rootBlockName = s[0]
+        name = s[s.length - 1]
+      }
     }
-  }
-  if (spacename) {
-    spacename = spacename.replace('@', '')
-  }
-  if (!spacename) {
-    console.log(`Must provide a space name`)
-    console.log(chalk.dim('bb get @<spacename>/blockname'))
-    return
-    // spacename = headLessConfigStore().get('currentSpaceName')
-  }
+    if (spacename) {
+      spacename = spacename.replace('@', '')
+    }
+    if (!spacename) {
+      console.log(`Must provide a space name`)
+      console.log(chalk.dim('bb get @<spacename>/blockname'))
+      return
+      // spacename = headLessConfigStore().get('currentSpaceName')
+    }
 
-  // console.log({ spacename })
-  // console.log({ rootBlockName })
-  // console.log({ name })
+    // console.log({ spacename })
+    // console.log({ rootBlockName })
+    // console.log({ name })
 
-  /**
-   * To store the inner root nodes of tree
-   */
-  const packages = []
-  logger.info(`User call with ${blockname}`)
-  logger.debug(`spacename:${spacename}`)
-  logger.debug(`name:${name}`)
+    /**
+     * To store the inner root nodes of tree
+     */
+    const packages = []
+    logger.info(`User call with ${blockname}`)
+    logger.debug(`spacename:${spacename}`)
+    logger.debug(`name:${name}`)
 
-  const { manager, error: managerError } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
+    const { manager, error: managerError } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
 
-  /**
-   * OUT_OF_CONTEXT can be ignored, as user can get blocks outside of block context
-   */
-  if (managerError && managerError.type !== 'OUT_OF_CONTEXT') {
-    console.log(managerError.message)
-    return
-  }
-  if (manager instanceof BlockConfigManager) {
-    console.log('Move out to a package block context')
-    return
-  }
+    /**
+     * OUT_OF_CONTEXT can be ignored, as user can get blocks outside of block context
+     */
+    if (managerError && managerError.type !== 'OUT_OF_CONTEXT') {
+      console.log(managerError.message)
+      return
+    }
+    if (manager instanceof BlockConfigManager) {
+      console.log('Move out to a package block context')
+      return
+    }
 
-  const {
-    data: { err, data },
-  } = await getBlockFromStoreFn(name, spacename, rootBlockName)
-  if (err) {
-    console.log(err)
-    console.log('Here')
-    console.log(err.message)
-    logger.error(err)
-    process.exit(1)
-  }
+    const {
+      data: { err, data },
+    } = await getBlockFromStoreFn(name, spacename, rootBlockName)
+    if (err) {
+      logger.error(err?.message || err)
+      process.exit(1)
+    }
 
-  const { err: error, msg, data: blockData } = data
+    const { err: error, msg, data: blockData } = data
 
-  if (error) {
-    console.log(msg)
-    logger.error(`Error from server: ${msg}`)
-    process.exit(1)
-  }
+    if (error) {
+      logger.error(`Error from server: ${msg}`)
+      process.exit(1)
+    }
 
-  const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
+    const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
 
-  let rootParentManager = null
-  if (manager) {
-    const { rootManager } = await manager.findMyParents()
-    rootParentManager = rootManager
-  }
-  if (!manager && block_type === 1) {
-    // we are not inside a package context
-  }
-  if (!manager && block_type !== 1) {
-    // todo
-  }
+    let rootParentManager = null
+    if (manager) {
+      const { rootManager } = await manager.findMyParents()
+      rootParentManager = rootManager
+    }
+    if (!manager && block_type === 1) {
+      // we are not inside a package context
+    }
+    if (!manager && block_type !== 1) {
+      // todo
+    }
 
-  const p = new Bootstrap(
-    block_name,
-    block_version_id,
-    path.resolve(block_name),
-    signed_urls[block_version_id],
-    child_blocks,
-    manager,
-    rootParentManager,
-    logger
-  )
+    const p = new Bootstrap(
+      block_name,
+      block_version_id,
+      path.resolve(block_name),
+      signed_urls[block_version_id],
+      child_blocks,
+      manager,
+      rootParentManager,
+      logger
+    )
 
-  if (block_type === 1) {
-    logger.info(`block type is package`)
-    packages.push(p)
-  }
+    if (block_type === 1) {
+      logger.info(`block type is package`)
+      packages.push(p)
+    }
 
-  if (block_type !== 1) {
-    logger.info(`block type is not pacakage`)
-    await p.bootstrap()
-  }
+    if (block_type !== 1) {
+      logger.info(`block type is not package`)
+      await p.bootstrap()
+    }
 
-  /**
-   * Loop till not more packages to get
-   */
-  for (; packages.length > 0; ) {
-    const b = packages.pop()
-    console.log(`Bootstrapping ${b.name}`)
-    const { err: _error, msg: _message } = await b.bootstrap(packages, signed_urls)
-    console.log(`${err ? `ERROR:${_message}` : _message}`)
-  }
+    /**
+     * Loop till not more packages to get
+     */
+    for (; packages.length > 0; ) {
+      const b = packages.pop()
+      console.log(`Bootstrapping ${b.name}`)
+      const { err: _error, msg: _message } = await b.bootstrap(packages, signed_urls)
+      console.log(`${err ? `ERROR:${_message}` : _message}`)
+    }
 
-  /**
-   * Update the block config
-   */
-  manager?.updateConfig({
-    dependencies: {
-      ...manager.config.dependencies,
-      [block_name]: {
-        directory: path.relative(path.resolve(), path.resolve(block_name)),
+    /**
+     * Update the block config
+     */
+    manager?.updateConfig({
+      dependencies: {
+        ...manager.config.dependencies,
+        [block_name]: {
+          directory: path.relative(path.resolve(), path.resolve(block_name)),
+        },
       },
-    },
-  })
+    })
 
-  feedback({ message: 'SUCCESS', type: 'success' })
+    feedback({ message: 'SUCCESS', type: 'success' })
+  } catch (error) {
+    logger.error(error.message || error)
+  }
 }
 
 module.exports = get
