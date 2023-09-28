@@ -172,8 +172,7 @@ async function getOrgId(gitManager) {
     manager = m
   }
 
-  const source = manager.getOrganizations({ source: true })
-
+  const source = await manager.getOrganizations({ source: true })
   const question = [
     {
       // type: 'customList',

@@ -8,7 +8,7 @@
 const { default: axios } = require('axios')
 const parseLinkHeader = require('parse-link-header')
 const { getGithubRestHeaders } = require('../auth/githubHeaders')
-const { githubOrigin } = require('../auth/githubAPI')
+const { githubRestOrigin } = require('../auth/githubAPI')
 
 const headers = getGithubRestHeaders()
 
@@ -20,7 +20,7 @@ class GithubPaginator {
    * @param {Object} opts Query options to be passed to REST API
    */
   constructor(endpoint, picker, opts) {
-    this.baseUrl = githubOrigin
+    this.baseUrl = githubRestOrigin
     this.endpoint = endpoint
     this.hasNext = false
     this.hasPrev = false
