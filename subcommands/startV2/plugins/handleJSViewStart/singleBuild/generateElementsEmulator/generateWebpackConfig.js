@@ -5,6 +5,7 @@ const generateWebpackConfig = (options) => {
     'babel-loader': /\.(js|jsx|ts|tsx)$/,
     'url-loader': /\.(jpg|png|gif|svg|eot|svg|ttf|woff|woff2)$/,
     'style-loader': /\.css$/i,
+    'sass-loader': /\.s[ac]ss$/i,
   }
 
   // eslint-disable-next-line no-template-curly-in-string
@@ -76,6 +77,21 @@ const config = {
         test: ${rulesRegex['style-loader']},
         use: ['style-loader', 'css-loader'],
       },
+      {
+        test: ${rulesRegex['sass-loader']},
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              import: true,
+              importLoaders: true
+            }
+          },
+          'postcss-loader',
+          'sass-loader'
+        ]
+      }
     ],
   },
   plugins: [
