@@ -16,7 +16,6 @@ const {
   generateErrLogPath,
 } = require('../../../../../utils/bbFolders')
 const { removeSync } = require('../../../../upload/onPrem/awsS3/util')
-const { configstore } = require('../../../../../configstore')
 const { convertToEnv } = require('../../../../../utils/env')
 
 const emulateElements = async (emEleFolder, port) => {
@@ -53,7 +52,6 @@ async function stopEmulatedElements(options) {
   }
 
   if (hard && existsSync(emPath)) {
-    console.log({ hard })
     await runBash(`rm -rf ${emPath}`)
   }
 }
@@ -135,8 +133,8 @@ const buildBlock = async (block, envData, env) => {
   const existingEnvDataFile = await readFileSync(envPath).toString()
   const updatedEnv = convertToEnv(envData, existingEnvDataFile)
 
-  const nodePackageManager = configstore.get('nodePackageManager')
-  global.usePnpm = nodePackageManager === 'pnpm'
+  const { installer } = getNodePackageInstaller()
+
 
   const blockDir = path.resolve(block.directory)
   const blockBuildEnvPath = path.join(blockDir, '.env')
@@ -148,7 +146,7 @@ const buildBlock = async (block, envData, env) => {
 
   await writeFileSync(blockBuildEnvPath, updatedEnv)
 
-  const i = await runBash(global.usePnpm ? 'pnpm install' : block.config.postPull, blockDir)
+  const i = await runBash(installer, blockDir)
   if (i.status === 'failed') return { error: i.msg }
 
   const bashRes = await runBash(`npm run build`, blockDir)

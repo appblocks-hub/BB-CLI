@@ -41,7 +41,7 @@ function runScript(scriptPath) {
 async function runBash(command, dir) {
   try {
     // eslint-disable-next-line no-unused-vars
-    const { stdout, stderr } = await execPromise(command, { cwd: dir })
+    const { stdout, stderr } = await execPromise(command, { cwd: dir || path.resolve() })
     // console.log('stdout:', stdout)
     // console.log('stderr:', stderr)
     return { status: 'success', msg: '' }
