@@ -153,16 +153,24 @@ class HandleNodeFunctionStart {
 
       if (headlessConfig.prismaSchemaFolderPath) {
         const envName = `.env.function${environment ? `.${environment}` : ''}`
-        const envPath = path.join(path.resolve(), envName)
+        let envPath = path.join(path.resolve(), envName)
+
+        if (!existsSync(envPath)) {
+          envPath = path.join(path.resolve(), '.env.function')
+        }
+
         if (existsSync(envPath) && existsSync(headlessConfig.prismaSchemaFolderPath)) {
           try {
             const dest = path.resolve(headlessConfig.prismaSchemaFolderPath, envName)
             symlinkSync(envPath, dest)
+
+            const destEnv = path.resolve(headlessConfig.prismaSchemaFolderPath, '.env')
+            symlinkSync(envPath, destEnv)
           } catch (error) {
             if (error.code !== 'EEXIST') throw error
           }
           const ie = await pexec('npx prisma generate', { cwd: headlessConfig.prismaSchemaFolderPath })
-          if (ie.err) throw new Error(ie.err)
+          if (ie.err) console.log(chalk.yellow(ie.err))
         } else {
           console.log(
             chalk.yellow(`Path ${!existsSync(envPath) ? envPath : headlessConfig.prismaSchemaFolderPath} not found`)
