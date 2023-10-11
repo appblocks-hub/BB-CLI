@@ -55,7 +55,7 @@ const createVersion = async (bkName, cmdOptions) => {
 
       // sync
       spinnies.add('cv_sync', { text: 'Checking sync status' })
-      await tempSync(null, { returnOnError: true })
+      await tempSync(blockName, { returnOnError: true })
       spinnies.succeed('cv_sync', { text: 'sync is up to date' })
       console.log()
 
