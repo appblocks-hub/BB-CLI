@@ -7,17 +7,31 @@ const PackageConfigManager = require('../../../utils/configManagers/packageConfi
 const StartCore = require('../startCore')
 
 class HandleBlockGrouping {
-  async getAllBlocksToStart(core, packageManager) {
+  async getAllBlocksToStart(core, packageManager, packageMiddleware = []) {
     const { blockType } = core.cmdArgs
+    packageMiddleware = packageMiddleware.concat(packageManager.config.middlewares || [])
+
     for await (const blockManager of packageManager.getDependencies()) {
       if (!blockManager?.config) continue
       const { name, type } = blockManager.config
       if (type === 'package') {
-        await this.getAllBlocksToStart(core, blockManager)
+        await this.getAllBlocksToStart(core, blockManager, packageMiddleware)
         core.subPackages[name] = blockManager
         continue
       }
       if (blockType && blockType !== type) continue
+
+      if (blockManager.config.type === 'function') {
+        let blockMiddlewares = blockManager.config.middlewares || []
+        packageMiddleware.forEach(({ executeOnBlocks, middlewaresList }) => {
+          if (!executeOnBlocks?.length || executeOnBlocks.includes(blockManager.config.name)) {
+            blockMiddlewares = blockMiddlewares.concat(middlewaresList)
+          }
+        })
+        core.middlewareBlockNames = [...new Set([...core.middlewareBlockNames, ...blockMiddlewares])]
+        blockManager.config.middlewares = [...new Set(blockMiddlewares)]
+      }
+
       core.blocksToStart[name] = blockManager
     }
   }
@@ -64,7 +78,7 @@ class HandleBlockGrouping {
           core.packageManager = blockManager
         }
 
-        await this.getAllBlocksToStart(core, core.packageManager)
+        await this.getAllBlocksToStart(core, core.packageManager, [])
 
         core.blocksToStart = {
           ...core.blocksToStart,
@@ -104,53 +118,14 @@ class HandleBlockGrouping {
           },
         }
 
-        // grouping middleware for blocks
-        this.middlewares = []
-        for (const { type, blocks } of core.blockStartGroups) {
-          if (type !== 'function') continue
-
-          const packageConfigMiddlewares = core.packageConfig.middlewares || []
-
-          const blockLevelPack = {}
-          for (const { middlewaresList, executeOnBlocks } of packageConfigMiddlewares) {
-            if (Array.isArray(middlewaresList)) {
-              this.middlewares = [...new Set(this.middlewares.concat(middlewaresList))]
-            }
-
-            for (const blockManager of blocks) {
-              const bName = blockManager.config.name
-              if (middlewaresList?.length <= 0) continue
-              if (!blockLevelPack[bName]) blockLevelPack[bName] = []
-              if (Array.isArray(executeOnBlocks) && executeOnBlocks.length > 0 && !executeOnBlocks.includes(bName)) {
-                continue
-              }
-              blockLevelPack[bName] = blockLevelPack[bName].concat(middlewaresList)
-            }
-          }
-
-          for (const blockManager of blocks) {
-            const blockMiddlewaresList = blockManager.config.middlewares
-            const bName = blockManager.config.name
-
-            let newMiddlewares = blockLevelPack[bName] || []
-            if (Array.isArray(blockMiddlewaresList) && blockMiddlewaresList.length) {
-              this.middlewares = [...new Set(this.middlewares.concat(blockMiddlewaresList))]
-              newMiddlewares = newMiddlewares.concat(blockMiddlewaresList)
-            }
-
-            blockManager.config.middlewares = newMiddlewares
-          }
-        }
-
-        // filter middleware  blocks
-        if (this.middlewares.length <= 0) return
+        if (!core.middlewareBlockNames?.length) return
 
         const filteredFnBlocks = []
         for (const { type, blocks } of core.blockStartGroups) {
           if (type !== 'function') continue
 
           for (const blockManager of blocks) {
-            if (this.middlewares.includes(blockManager.config.name)) {
+            if (core.middlewareBlockNames.includes(blockManager.config.name)) {
               core.middlewareBlockList.push(blockManager)
               continue
             }
