@@ -60,7 +60,7 @@ const appHandler = async (req, res, next) => {
 
     if (url.includes("health")) {
       req.params.health = "health";
-      url = url.replace("/health","")
+      url = url.replace("/health", "")
     }
 
     const { block, route } = getBlock(url);
@@ -73,7 +73,8 @@ const appHandler = async (req, res, next) => {
 
     console.log("\\nRequest to block ", block.name);
     // Execute middleware functions
-    await executeMiddleware(block.middlewares, { req, res, next });
+    const continueNext = await executeMiddleware(block.middlewares, { req, res, next });
+    if (!continueNext) return
 
     const isDev = process.env.NODE_ENV !== "production";
     const importPath = isDev ? route + "?update=" + Date.now() : route;
@@ -112,10 +113,13 @@ const executeMiddleware = async (middlewareList, event) => {
     }
 
     const importPath = isDev ? route + "?update=" + Date.now() : route;
-
     const middlewareHandler = await import(importPath);
-    await middlewareHandler.default(event);
+    
+    const continueNext = await middlewareHandler.default(event);
+    if (!continueNext) return false
   }
+
+  return true
 };
 
 export default executeMiddleware;

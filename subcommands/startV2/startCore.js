@@ -59,6 +59,7 @@ class StartCore {
     this.blockStartGroups = {}
 
     this.middlewareBlockList = []
+    this.middlewareBlockNames = []
 
     this.packageManager = {}
     this.packageConfig = {}
