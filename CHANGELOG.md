@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.2-beta...v1.5.3-beta) (2023-10-12)
+
+
+### Bug Fixes
+
+* middleware dependency not linked issue ([c276bf3](https://github.com/appblocks-hub/BB-CLI/commit/c276bf363917b2467a6173cde722eae9bb916cc8))
+* modified emulator code ([e8e3f40](https://github.com/appblocks-hub/BB-CLI/commit/e8e3f4054f997de39ef855eebfc1497917f89621))
+* pass block name to sync function in create version ([dd179ea](https://github.com/appblocks-hub/BB-CLI/commit/dd179eade6e074f4069090dc9209880e4946c39f))
+* subpackage level middleware issue ([4ddc427](https://github.com/appblocks-hub/BB-CLI/commit/4ddc42740b6985d8d21cb2705edc7e2bafbc980e))
+
 ## [1.5.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.1-beta...v1.5.2-beta) (2023-09-27)
 
 
