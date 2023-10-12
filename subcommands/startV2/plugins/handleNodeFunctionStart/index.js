@@ -110,7 +110,11 @@ class HandleNodeFunctionStart {
             directory: b.directory,
           }
         })
-        await updateEmulatorPackageSingleBuild(emPath, { ...this.blockEmulateData, ...sharedBlocks })
+        await updateEmulatorPackageSingleBuild(emPath, {
+          ...this.blockEmulateData,
+          ...sharedBlocks,
+          ...this.middlewareBlockListData,
+        })
       }
 
       spinnies.update('emBuild', { text: 'Installing dependencies for function emulator' })
@@ -122,7 +126,10 @@ class HandleNodeFunctionStart {
 
       if (core.cmdOpts.singleInstance) {
         spinnies.update('emBuild', { text: 'Configuring node modules' })
-        const a = await linkEmulatedNodeModulesToBlocks(emPath, this.blockEmulateData)
+        const a = await linkEmulatedNodeModulesToBlocks(emPath, {
+          ...this.blockEmulateData,
+          ...this.middlewareBlockListData,
+        })
         if (this.fnSharedBlocks?.length) {
           this.depsInstallReport = await linkEmulatedNodeModulesToBlocks(
             emPath,
@@ -273,7 +280,6 @@ class HandleNodeFunctionStart {
 
         spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
       } catch (err) {
-        console.log(err)
         spinnies.fail('emBuild', { text: `Failed to start emulator: ${err.message}` })
         return
       }
