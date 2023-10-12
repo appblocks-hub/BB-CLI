@@ -60,7 +60,7 @@ const appHandler = async (req, res, next) => {
 
     if (url.includes("health")) {
       req.params.health = "health";
-      url = url.split("/")[0]
+      url = url.replace("/health","")
     }
 
     const { block, route } = getBlock(url);
