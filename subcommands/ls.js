@@ -192,7 +192,10 @@ async function multiTableFn(manager, syncedBlockIds) {
       [
         {
           colSpan: head.length,
-          content: `${myColor ? chalk.hex(myColor).bold(root.config.name) : root.config.name} (${getSyncStatus(syncedBlockIds, root)})`,
+          content: `${myColor ? chalk.hex(myColor).bold(root.config.name) : root.config.name} (${getSyncStatus(
+            syncedBlockIds,
+            root
+          )})`,
         },
       ],
       head.map((v) => chalk.cyanBright(v))
@@ -232,7 +235,12 @@ async function multiTableFn(manager, syncedBlockIds) {
 const ls = async ({ multi }) => {
   const multiTable = multi
   const configPath = path.resolve(BB_CONFIG_NAME)
-  const { manager } = await ConfigFactory.create(configPath)
+  const { manager, error: mErr } = await ConfigFactory.create(configPath)
+  if (mErr) {
+    if (mErr.type !== 'OUT_OF_CONTEXT') console.log(chalk.red(mErr.message))
+    else console.log(chalk.red('Please run the command inside package context '))
+    return
+  }
   const { rootManager } = await manager.findMyParents()
 
   let syncedBlockIds = null
@@ -240,7 +248,7 @@ const ls = async ({ multi }) => {
     spinnies.add('syncStatus', { text: 'Checking blocks sync status' })
     // check blocks are synced
     const memberBlocks = await rootManager.getAllLevelAnyBlock()
-    const blockIds = [ ...memberBlocks].map((m) => m?.config.blockId)
+    const blockIds = [...memberBlocks].map((m) => m?.config.blockId)
     const checkRes = await axios.post(checkBlocksSyncedApi, { block_ids: blockIds })
     syncedBlockIds = checkRes.data?.data?.map((b) => b.id) || []
     spinnies.succeed('syncStatus', { text: 'Sync status retrieved successfully' })

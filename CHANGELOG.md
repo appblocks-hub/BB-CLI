@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.5.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.1-beta...v1.5.2-beta) (2023-09-27)
+
+
+### Bug Fixes
+
+* chalk warn function error ([650a8ed](https://github.com/appblocks-hub/BB-CLI/commit/650a8ed45c003a7adf7cc59f1902131ac76c78a3))
+
+## [1.5.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.0-beta...v1.5.1-beta) (2023-09-26)
+
+
+### Bug Fixes
+
+* modified publish command ([c07476d](https://github.com/appblocks-hub/BB-CLI/commit/c07476d261f3754e9b22f7843a9c35540a74e070))
+
+## [1.5.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.4.0-beta...v1.5.0-beta) (2023-09-21)
+
+
+### Features
+
+* added preview option for publish command ([41428a7](https://github.com/appblocks-hub/BB-CLI/commit/41428a7ba5815d32a156a94a02948c4a8cc8a95a))
+
+
+### Bug Fixes
+
+* modified emulator code ([13c17ac](https://github.com/appblocks-hub/BB-CLI/commit/13c17acb0ce9c7ad7ca8e75ca233d879182b13de))
+
 ## [1.4.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.3.0-beta...v1.4.0-beta) (2023-09-19)
 
 
