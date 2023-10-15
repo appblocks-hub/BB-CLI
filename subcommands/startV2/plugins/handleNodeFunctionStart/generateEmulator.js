@@ -44,12 +44,19 @@ const swaggerDefinition = {
     title: 'Open api documentation for appblocks',
     version: '1.0.0',
   },
+  
 };
 
 const options = {
   swaggerDefinition,
   // Paths to files containing OpenAPI definitions
   apis: getFunctionEntryPaths(),
+  components:{
+    securitySchemes:{bearerAuth:{type:"http",scheme:"bearer",
+  bearerFormat:"JWT"},basicAuth:{type:"http",scheme:"basic"},
+  apiKeyAuth:{type:"apiKey"}
+}
+  }
 };
 
 const swaggerSpec = swaggerJSDoc(options);
