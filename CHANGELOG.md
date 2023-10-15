@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.4-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.3-beta...v1.5.4-beta) (2023-10-15)
+
+
+### Bug Fixes
+
+* modified generate emulator code ([369eb75](https://github.com/appblocks-hub/BB-CLI/commit/369eb7549a53424ea310881c3348c6f0428b461e))
+
 ## [1.5.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.2-beta...v1.5.3-beta) (2023-10-12)
 
 
