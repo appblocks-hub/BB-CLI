@@ -19,7 +19,7 @@ const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
  * LICENSE file in the root directory of this source tree.
  */
 const createPackageVersion = async ({ packageManager, cmdOptions }) => {
-  const { latest, force } = cmdOptions || {}
+  const { latest, force, preview } = cmdOptions || {}
 
   const packageConfig = packageManager.config
   const { repoType, name: packageName, blockId: pkBlockId, orphanBranchFolder } = packageConfig
@@ -31,76 +31,17 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   //       return { ...a, [b]: ver }
   //     }, {}) || {}
   //   const givenBlockVersionNames = Object.keys(givenBlockVersion)
+  let memberBlockIds = []
+  let updatedDependencies = []
+
+  if (!preview) {
+    const checkRes = await checkMemberBlockVersions(packageManager, latest)
+    memberBlockIds = checkRes.memberBlockIds
+    updatedDependencies = checkRes.updatedDependencies
+  }
 
   const [readmePath] = ensureReadMeIsPresent(packageManager.directory, packageName, false)
   if (!readmePath) throw new Error('Make sure to add a README.md ')
-
-  const memberBlocks = []
-  const memberBlockIds = []
-  for await (const blockManager of packageManager.getDependencies()) {
-    memberBlocks.push(blockManager)
-    memberBlockIds.push(blockManager.config.blockId)
-  }
-
-  let updatedDependencies = {}
-
-  if (memberBlockIds.length > 0) {
-    spinnies.add('cv', { text: 'Getting all block versions' })
-    const { data, error } = await post(getAllBlocksVersions, {
-      latest_only: latest,
-      block_ids: memberBlockIds,
-      status: [2, 4, 7],
-    })
-    spinnies.remove('cv')
-
-    if (error) throw error
-
-    const bVersions = data.data || []
-    const selectedBlockVersions = {}
-
-    if (bVersions.length === 0) {
-      console.log(chalk.yellow(`\nNo release-ready/approved versions found for any member blocks`))
-      throw new Error(chalk.red(`Please create and publish version for all member blocks and try again.`))
-    }
-
-    if (bVersions.length !== memberBlocks.length) {
-      const bVersionBlocks = bVersions.map((bv) => bv.block_id)
-
-      const noVersionBlocks = memberBlocks
-        .map((bManger) => {
-          if (bVersionBlocks.includes(bManger.config.blockId)) return null
-          return bManger.config.name
-        })
-        .filter((n) => n !== null)
-        .join(', ')
-
-      console.log(
-        chalk.yellow(`\nNo release ready/approved versions found for ${chalk.gray(noVersionBlocks)} member blocks`)
-      )
-      throw new Error(`Please create and publish version for all member blocks and try again.`)
-    }
-
-    updatedDependencies = packageConfig.dependencies
-
-    for await (const bkVer of bVersions) {
-      const choices = bkVer.block_versions.map((b) => ({ name: b.version_number, value: b }))
-      if (!latest) {
-        const blockVersion = await readInput({
-          type: 'list',
-          name: 'blockVersion',
-          message: `Select the block version of ${bkVer.block_name}`,
-          choices,
-        })
-
-        selectedBlockVersions[bkVer.block_id] = { ...blockVersion, block_name: bkVer.block_name }
-      } else {
-        selectedBlockVersions[bkVer.block_id] = { ...choices[0]?.value, block_name: bkVer.block_name }
-      }
-
-      updatedDependencies[bkVer.block_name].versionId = selectedBlockVersions[bkVer.block_id].id
-      updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
-    }
-  }
 
   spinnies.add('bv', { text: `Checking package versions` })
   const pkBlockVersion = await getAllBlockVersions(pkBlockId)
@@ -227,6 +168,79 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   spinnies.succeed('cv', { text: 'Created package version successfully' })
 
   return versionId
+}
+
+async function checkMemberBlockVersions(packageManager, latest) {
+  const packageConfig = packageManager.config
+  const memberBlocks = []
+  const memberBlockIds = []
+
+  for await (const blockManager of packageManager.getDependencies()) {
+    memberBlocks.push(blockManager)
+    memberBlockIds.push(blockManager.config.blockId)
+  }
+
+  let updatedDependencies = {}
+
+  if (memberBlockIds.length > 0) {
+    spinnies.add('cv', { text: 'Getting all block versions' })
+    const { data, error } = await post(getAllBlocksVersions, {
+      latest_only: latest,
+      block_ids: memberBlockIds,
+      status: [2, 4, 7],
+    })
+    spinnies.remove('cv')
+
+    if (error) throw error
+
+    const bVersions = data.data || []
+    const selectedBlockVersions = {}
+
+    if (bVersions.length === 0) {
+      console.log(chalk.yellow(`\nNo release-ready/approved versions found for any member blocks`))
+      throw new Error(chalk.red(`Please create and publish version for all member blocks and try again.`))
+    }
+
+    if (bVersions.length !== memberBlocks.length) {
+      const bVersionBlocks = bVersions.map((bv) => bv.block_id)
+
+      const noVersionBlocks = memberBlocks
+        .map((bManger) => {
+          if (bVersionBlocks.includes(bManger.config.blockId)) return null
+          return bManger.config.name
+        })
+        .filter((n) => n !== null)
+        .join(', ')
+
+      console.log(
+        chalk.yellow(`\nNo release ready/approved versions found for ${chalk.gray(noVersionBlocks)} member blocks`)
+      )
+      throw new Error(`Please create and publish version for all member blocks and try again.`)
+    }
+
+    updatedDependencies = packageConfig.dependencies
+
+    for await (const bkVer of bVersions) {
+      const choices = bkVer.block_versions.map((b) => ({ name: b.version_number, value: b }))
+      if (!latest) {
+        const blockVersion = await readInput({
+          type: 'list',
+          name: 'blockVersion',
+          message: `Select the block version of ${bkVer.block_name}`,
+          choices,
+        })
+
+        selectedBlockVersions[bkVer.block_id] = { ...blockVersion, block_name: bkVer.block_name }
+      } else {
+        selectedBlockVersions[bkVer.block_id] = { ...choices[0]?.value, block_name: bkVer.block_name }
+      }
+
+      updatedDependencies[bkVer.block_name].versionId = selectedBlockVersions[bkVer.block_id].id
+      updatedDependencies[bkVer.block_name].version = selectedBlockVersions[bkVer.block_id].version_number
+    }
+  }
+
+  return { updatedDependencies, memberBlockIds }
 }
 
 module.exports = { createPackageVersion }
