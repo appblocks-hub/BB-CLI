@@ -142,7 +142,6 @@ const findBlockConfig = async (options) => {
 
   let packageConfig = workSpaceConfigManager.config
 
-
   if (!(workSpaceConfigManager instanceof PackageConfigManager)) {
     throw new Error('Error parsing package block')
   }
@@ -166,7 +165,6 @@ const findBlockConfig = async (options) => {
 
     currentMetaData.memberBlocks = []
 
-
     if (currentConfig.type === 'package') {
       await findBlockConfig({
         workSpaceConfigManager: blockManager,
@@ -178,7 +176,6 @@ const findBlockConfig = async (options) => {
         blockConfigDetails,
       })
     } else if (currentConfig.name === blockName) {
-
       if (!blockMetaDataMap[currentConfig.name]) {
         blockMetaDataMap[currentConfig.name] = currentMetaData
         blockNameArray.push(currentConfig.name)
@@ -379,7 +376,7 @@ const setVisibilityAndDefaultBranch = async (options) => {
   if (!defaultBranch) {
     const { manager, error } = await GitConfigFactory.init({ gitUrl: repoUrl })
     if (error) throw error
-    const repository = manager.getRepository()
+    const repository = await manager.getRepository()
     defaultBranch = repository?.defaultBranchName ?? ''
 
     // repoVisibility = existingRepoData?.visibility ?? ''
@@ -403,18 +400,17 @@ const setVisibilityAndDefaultBranch = async (options) => {
 
     // headLessConfigStore().set('repoVisibility', repoVisibility)
 
-    if (defaultBranch.length === 0) {
-      const inputRepoMainBranch = await readInput({
-        name: 'inputRepoMainBranch',
-        message: 'Enter the default branch name for the repository',
-        validate: (input) => {
-          if (!input?.length > 0) return `Please enter a non empty branch name`
-          return true
-        },
-      })
+    const inputRepoMainBranch = await readInput({
+      name: 'inputRepoMainBranch',
+      message: 'Enter the default branch name for the repository',
+      validate: (input) => {
+        if (!input?.length > 0) return `Please enter a non empty branch name`
+        return true
+      },
+      default: defaultBranch,
+    })
 
-      defaultBranch = inputRepoMainBranch
-    }
+    defaultBranch = inputRepoMainBranch
 
     headLessConfigStore.set('defaultBranch', defaultBranch)
   }

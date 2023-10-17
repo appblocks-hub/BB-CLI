@@ -36,8 +36,8 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
 
   if (!preview) {
     const checkRes = await checkMemberBlockVersions(packageManager, latest)
-    memberBlockIds = checkRes.memberBlockIds
-    updatedDependencies = checkRes.updatedDependencies
+    memberBlockIds = checkRes?.memberBlockIds || []
+    updatedDependencies = checkRes?.updatedDependencies || {}
   }
 
   const [readmePath] = ensureReadMeIsPresent(packageManager.directory, packageName, false)
