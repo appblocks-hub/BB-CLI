@@ -93,8 +93,9 @@ class StartCore {
       const prefixes = [...new Set(this.envWarning.prefixes)]
 
       const affectedKeys = chalk.dim(`Environment keys affected: ${keys}`)
+      const exampleKey = keys[0]?.startsWith('BB_') ? keys[0].replace('BB_', '') : keys[0]
       const egString = chalk.dim(
-        `Example: ${prefixes.map((pre) => `${pre}_${keys[0]} instead of ${keys[0]}`).join(' or ')}.`
+        `Example: ${prefixes.map((pre) => `${pre}_${exampleKey} instead of ${keys[0]}`).join(' or ')}.`
       )
       const warnMessage = chalk.yellow(
         `Beginning with the upcoming version,\nbb cli exclusively support environment keys that begin with "BB_<package>"`
