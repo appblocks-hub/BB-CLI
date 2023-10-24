@@ -3,6 +3,7 @@ const chalk = require('chalk')
 const { existsSync } = require('fs')
 const ConfigManager = require('./configManager')
 const { BB_CONFIG_NAME } = require('../constants')
+const BlockConfigManager = require('./blockConfigManager')
 
 class PackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
@@ -110,7 +111,7 @@ class PackageConfigManager extends ConfigManager {
   }
 
   async getAnyBlock(name, tLevel) {
-    const filter = ({ config }) => config.name === name
+    const filter = ({ config }) => config?.name === name
     const res = await this._traverseManager(tLevel, true)
     return res.filter(filter)[0]
   }
@@ -135,7 +136,9 @@ class PackageConfigManager extends ConfigManager {
         if (includeSubPack) res.push(manager)
         const children = await manager._traverseManager(nextTraverseLevel, includeSubPack)
         res = res.concat(children)
-      } else res.push(manager)
+      } else if (manager instanceof BlockConfigManager) {
+        res.push(manager)
+      }
     }
     return res
   }
@@ -150,7 +153,10 @@ class PackageConfigManager extends ConfigManager {
         const relativeDirectory = this.config.dependencies[block].directory
         const configPath = path.join(this.directory, relativeDirectory, BB_CONFIG_NAME)
         const { manager: c, error } = await _DYNAMIC_CONFIG_FACTORY.create(configPath)
-        if (error) console.warn(chalk.yellow(`Error getting block config for ${block}`))
+        if (error) {
+          console.warn(chalk.yellow(`Error reading block config of ${block}`))
+          continue
+        }
         if (c) c.pathRelativeToParent = relativeDirectory
         const f = filter || (() => true)
         const p = picker || ((b) => b)
@@ -158,7 +164,6 @@ class PackageConfigManager extends ConfigManager {
       }
     }
     return []
-  
   }
 }
 module.exports = PackageConfigManager
