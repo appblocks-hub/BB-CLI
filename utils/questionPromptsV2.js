@@ -29,11 +29,11 @@ function getBlockShortName(blockName) {
     .then((ans) => ans.blockShortName || blockName)
     .catch((err) => console.log(err))
 }
-function getBlockName() {
+function getBlockName(msg) {
   const question = {
     type: 'input',
     name: 'blockName',
-    message: 'Enter name of block',
+    message: msg || 'Enter name of block',
     validate: function test(ans) {
       if (isValidBlockName(ans)) {
         return true

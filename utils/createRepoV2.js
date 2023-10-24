@@ -82,7 +82,7 @@ async function getNewName(originalBlockName, lastTriedName) {
     }
     newNameToTry = renameFn(originalBlockName, lastTriedName)
   } else {
-    newNameToTry = await getBlockName()
+    newNameToTry = await getBlockName('Enter name of repository')
   }
 
   return newNameToTry
