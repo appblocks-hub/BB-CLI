@@ -14,6 +14,7 @@ const blockTypes = [
   ['data', 5, ''],
   ['shared-fn', 6, 'functions/shared-fns'],
   ['job', 7, 'jobs'],
+  ['raw-package',9,'']
 ]
 
 module.exports = { blockTypes }

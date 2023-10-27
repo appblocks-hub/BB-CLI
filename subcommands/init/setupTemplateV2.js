@@ -5,7 +5,8 @@ const { existsSync, readdir } = require('fs')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 
 async function setupTemplateV2(options) {
-  const { DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName } = options
+  const { DIR_PATH, blockVisibility, packageBlockId, packageParentBlockIDs, repoType, packageName } =
+    options
 
   const configPath = path.join(DIR_PATH, BB_CONFIG_NAME)
   const config = await readFile(configPath, { encoding: 'utf8' })

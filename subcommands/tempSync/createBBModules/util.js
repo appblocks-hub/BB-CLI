@@ -438,4 +438,5 @@ module.exports = {
   // checkAndPushChanges,
   findBlockConfig,
   buildSinglePackageBlockConfig,
+  buildApiPayload
 }

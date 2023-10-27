@@ -13,12 +13,14 @@ const setupTsTemplate = require('./init/setupTsTemplate')
 const ConfigFactory = require('../utils/configManagers/configFactory')
 const PackageConfigManager = require('../utils/configManagers/packageConfigManager')
 const BlockConfigManager = require('../utils/configManagers/blockConfigManager')
+const { blockLangs } = require('../utils/blockLangs')
 
 /**
  * Action for bb-temp-init
  * @param {string} packageName Package name provided by user in command line
  */
-const init = async (packageName, { typescript }) => {
+const init = async (packageName, { typescript, packageonly:packageOnly }) => {
+  let blockLanguage
   const { manager } = await ConfigFactory.create(path.resolve(BB_CONFIG_NAME))
   if (manager instanceof PackageConfigManager) {
     feedback({
@@ -72,6 +74,15 @@ const init = async (packageName, { typescript }) => {
     ],
   })
 
+  if (packageOnly) {
+    blockLanguage = await readInput({
+      type: 'list',
+      name: 'blockLanguage',
+      message: 'Select the language',
+      choices: Object.keys(blockLangs).map((item) => ({ name: item, value: blockLangs[item] })),
+    })
+  }
+
   /**
    * Create a new package directory, assume there is no name conflict for dir name
    */
@@ -85,32 +96,33 @@ const init = async (packageName, { typescript }) => {
    */
   const packageBlockId = nanoid()
   const packageParentBlockIDs = []
+  const packageConfig = {
+    name: packageName,
+    type: 'package',
+    blockId: packageBlockId,
+    source: {
+      https: null,
+      ssh: null,
+      branch: `block_${packageName}`,
+    },
+    parentBlockIDs: packageParentBlockIDs,
+    isPublic: blockVisibility,
+    supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
+    repoType,
+  }
 
-  await writeFile(
-    path.join(DIR_PATH, 'block.config.json'),
-    JSON.stringify(
-      {
-        name: packageName,
-        type: 'package',
-        blockId: packageBlockId,
-        source: {
-          https: null,
-          ssh: null,
-          branch: `block_${packageName}`,
-        },
-        parentBlockIDs: packageParentBlockIDs,
-        isPublic: blockVisibility,
-        supportedAppblockVersions: appblockVersions?.map(({ version }) => version),
-        repoType,
-      },
-      null,
-      2
-    )
-  )
+  if (packageOnly) {
+    packageConfig.language = blockLanguage
+    packageConfig.type='raw-package'
+  }
+
+  await writeFile(path.join(DIR_PATH, 'block.config.json'), JSON.stringify(packageConfig, null, 2))
 
   const readmeString = generateFunctionReadme(packageName)
   writeFile(`${DIR_PATH}/README.md`, readmeString)
 
+
+  if(!packageOnly){
   /**
    * If user wants template, setup sample template
    */
@@ -128,6 +140,7 @@ const init = async (packageName, { typescript }) => {
     if (typescript) await setupTsTemplate(templateOptions)
     else await setupTemplateV2(templateOptions)
   }
+}
 
   console.log('\nExcellent!! You are good to start.')
   console.log(`New Appblocks project ${packageName} is created.`)

@@ -65,6 +65,17 @@ export interface BlockConfig {
   supportedAppblockVersions: string[]
 }
 
+export interface RawPackageConfig {
+  name: string // name of block
+  type: Exclude<BlockTypes, 'package'>
+  source: ConfigSource
+  language: string
+  postPull: string
+  start: string
+  blockId: string
+  supportedAppblockVersions: string[]
+}
+
 export interface PackageConfig {
   name: string // name of block
   type: Extract<BlockTypes, 'package'>
