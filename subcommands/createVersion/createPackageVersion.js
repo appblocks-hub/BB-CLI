@@ -19,7 +19,8 @@ const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
  * LICENSE file in the root directory of this source tree.
  */
 const createPackageVersion = async ({ packageManager, cmdOptions }) => {
-  const { latest, force, preview } = cmdOptions || {}
+  const { latest, force, packageonly:preview } = cmdOptions || {}
+
 
   const packageConfig = packageManager.config
   const { repoType, name: packageName, blockId: pkBlockId, orphanBranchFolder } = packageConfig

@@ -21,6 +21,7 @@ const { spinnies } = require('../../loader')
 const syncBlocks = require('../../utils/syncBlocks')
 const { Logger } = require('../../utils/loggerV2')
 const { BB_FOLDERS, getBBFolderPath } = require('../../utils/bbFolders')
+const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
 // eslint-disable-next-line prefer-const
 let syncLogs = {}
 
@@ -28,6 +29,7 @@ const tempSync = async (blockName, options) => {
   const { logger } = new Logger('sync')
   logger.info('Sync started')
   const { returnOnError, clearCache } = options || {}
+  let preview
 
   try {
     const rootConfigPath = path.resolve('block.config.json')
@@ -44,13 +46,20 @@ const tempSync = async (blockName, options) => {
       throw new Error('Please run the command inside root package context ')
     }
 
+    if (configManager.config.type === 'raw-package') {
+      preview = true
+    }
+
     const repoUrl = configManager.config.source.https
 
     if (!repoUrl) throw new Error('No git source found. Please run bb connect-remote and bb push and try again.')
 
     const parent = await configManager.findMyParentPackage()
 
-    if (!(configManager instanceof PackageConfigManager) || parent.data.parentPackageFound !== false) {
+    if (
+      !(configManager instanceof PackageConfigManager || configManager instanceof RawPackageConfigManager) ||
+      parent.data.parentPackageFound !== false
+    ) {
       throw new Error('Please call sync from the root package block..')
     }
 
@@ -70,11 +79,13 @@ const tempSync = async (blockName, options) => {
       defaultBranch,
       returnOnError,
       blockName,
+      preview,
     })
 
     // Return if there are nothing to pull
     if (bbModulesData.noPullChanges && returnOnError) return
 
+    // eslint-disable-next-line no-unreachable
     await syncBlocks(
       bbModulesData.blockNameArray,
       bbModulesData.apiPayload,
@@ -95,8 +106,7 @@ const tempSync = async (blockName, options) => {
     }
 
     const nonAvailableBlockNames = syncLogs?.apiLogs?.non_available_block_names ?? {}
-    const errors = await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames })
-
+    const errors = await syncOrphanBranch({ ...bbModulesData, bbModulesPath, nonAvailableBlockNames, preview })
 
     if (errors.length > 0) {
       throw new Error(chalk.gray(`Malformed bb_modules found. Please run bb sync --clear-cache`))

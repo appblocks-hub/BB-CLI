@@ -18,6 +18,7 @@ const { multiBar } = require('./utils/multiBar')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
+const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
 
 class PushCore {
   constructor(blockName, cmdOptions, options) {
@@ -52,10 +53,10 @@ class PushCore {
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       this.isOutOfContext = true
-    } else if (configManager instanceof PackageConfigManager) {
+    } else if (configManager instanceof PackageConfigManager || configManager instanceof RawPackageConfigManager) {
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
-    } else throw new Error('Not inside a root package context')
+    }else throw new Error('Not inside a root package context')
 
     const { data } = await configManager.findMyParentPackage()
     if (data?.parentPackageFound !== false) throw new Error('Not inside a root package context')
