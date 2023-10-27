@@ -103,9 +103,11 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
         try {
           let viewEnvPath = path.join(path.resolve(), `.env.view`)
           if (env && existsSync(path.join(viewEnvPath, env))) viewEnvPath = path.join(viewEnvPath, env)
-          symlinkSync(viewEnvPath, path.join(emEleFolder, '.env'))
-          for (const block of containerBlocks) {
-            symlinkSync(viewEnvPath, path.join(emEleFolder, block.directory, '.env'))
+          if (existsSync(viewEnvPath)) {
+            symlinkSync(viewEnvPath, path.join(emEleFolder, '.env'))
+            for (const block of containerBlocks) {
+              symlinkSync(viewEnvPath, path.join(emEleFolder, block.directory, '.env'))
+            }
           }
         } catch (error) {
           if (error.code !== 'EEXIST') throw error

@@ -30,5 +30,6 @@ program
   .action(tempSync)
   .argument('[name]', 'Name of block to sync')
   .option('-cc, --clear-cache ', 'Clear sync bb_modules')
+  .option('-p, --packageonly', 'Package block with all its contents is synced')
 
 program.parse(process.argv)

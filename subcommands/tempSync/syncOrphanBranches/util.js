@@ -41,7 +41,7 @@ const retrieveCommitHash = (commitMessage) => {
 }
 
 const generateOrphanBranch = async (options) => {
-  const { bbModulesPath, block, repoUrl, blockMetaDataMap } = options
+  const { bbModulesPath, block, repoUrl, blockMetaDataMap,preview } = options
   let blockConfig = block.blockManager.config
 
   let orphanBranchName = blockConfig.source.branch
@@ -52,7 +52,8 @@ const generateOrphanBranch = async (options) => {
   let exclusions = ['.git', ...BB_EXCLUDE_FILES_FOLDERS]
   const orphanCommitMessage = ''
 
-  if (blockConfig.type === 'package') {
+  
+  if (blockConfig.type === 'package' && !preview) {
     const memberBlocks = block?.memberBlocks ?? {}
     Object.keys(memberBlocks)?.forEach((item) => {
       const memberBlockDirectory = blockMetaDataMap[item].blockManager.directory
