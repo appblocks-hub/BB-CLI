@@ -17,8 +17,8 @@ blockTypes.forEach((t) => {
   })
 })
 
-test('Should throw if a number outside 1-8 is given', () => {
-  expect(() => blockTypeInverter(9)).toThrow()
+test('Should throw if a number outside 1-9 is given', () => {
+  expect(() => blockTypeInverter(10)).toThrow()
 })
 
 test('Should throw if an unknown type string is given', () => {
