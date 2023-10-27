@@ -17,6 +17,7 @@ const {
   getAndSetSpace,
   findBlockConfig,
   buildSinglePackageBlockConfig,
+  buildApiPayload,
 } = require('./util')
 const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { headLessConfigStore, configstore } = require('../../../configstore')
@@ -28,7 +29,8 @@ const { checkBlocksSyncedApi } = require('../../../utils/api')
 
 const createBBModules = async (options) => {
   try {
-    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, returnOnError, blockName } = options
+    const { bbModulesPath, rootConfig, bbModulesExists, defaultBranch, returnOnError, blockName, preview } = options
+
 
     const apiPayload = {}
     const blockMetaDataMap = {}
@@ -108,7 +110,15 @@ const createBBModules = async (options) => {
 
     workSpaceConfigManager.newParentBlockIDs = []
 
-    if (blockName) {
+    if (preview) {
+      const currentConfig = workSpaceConfigManager.config
+
+      if (!blockMetaDataMap[currentConfig.name]) {
+        blockMetaDataMap[currentConfig.name] = { blockManager: workSpaceConfigManager }
+        blockNameArray.push(currentConfig.name)
+      }
+      buildApiPayload(currentConfig, apiPayload)
+    } else if (blockName) {
       const blockConfigDetails = {}
       await findBlockConfig({
         workSpaceConfigManager,
