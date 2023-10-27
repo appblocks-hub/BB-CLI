@@ -15,12 +15,16 @@ const PushCore = require('../pushCore')
 
 class HandleBeforePush {
   async getAllBlocksToPush(manger, blocks) {
-    for await (const blockManager of manger.getDependencies()) {
-      if (!blockManager?.config) continue
-      const { type } = blockManager.config
+    if (manger.config.type === 'raw-package') {
       blocks.push(manger)
-      if (type === 'package') {
-        await this.getAllBlocksToPush(blockManager, blocks)
+    } else {
+      for await (const blockManager of manger.getDependencies()) {
+        if (!blockManager?.config) continue
+        const { type } = blockManager.config
+        blocks.push(manger)
+        if (type === 'package') {
+          await this.getAllBlocksToPush(blockManager, blocks)
+        }
       }
     }
     return blocks

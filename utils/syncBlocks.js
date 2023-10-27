@@ -10,7 +10,7 @@ const { writeFileSync, existsSync, mkdirSync } = require('fs')
 const path = require('path')
 const { axios } = require('./axiosInstances')
 
-const { blocksSync,singleBlockSync } = require('./api')
+const { blocksSync, singleBlockSync } = require('./api')
 const { getShieldHeader } = require('./getHeaders')
 const { feedback } = require('./cli-feedback')
 const { getBBFolderPath, BB_FOLDERS } = require('./bbFolders')
@@ -52,9 +52,11 @@ async function syncBlocks(
     shieldHeader.space_id = currentSpaceID
 
     let res
-    if(block_name){  res = await axios.post(singleBlockSync, postData, {
-      headers: shieldHeader,
-    })}else{
+    if (block_name) {
+      res = await axios.post(singleBlockSync, postData, {
+        headers: shieldHeader,
+      })
+    } else {
       res = await axios.post(blocksSync, postData, {
         headers: shieldHeader,
       })
@@ -75,6 +77,8 @@ async function syncBlocks(
     }
     updateSyncLogs(syncLogDirectory, syncLogs, returnOnError)
   } catch (err) {
+    console.log('error is', err)
+
     // eslint-disable-next-line no-param-reassign
     syncLogs.apiLogs = {
       error: true,

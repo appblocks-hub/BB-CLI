@@ -10,8 +10,9 @@ const { spinnies } = require('../../../loader')
 const { generateOrphanBranch } = require('./util')
 
 const syncOrphanBranch = async (options) => {
-  const { blockMetaDataMap, bbModulesPath, repoUrl, nonAvailableBlockNames } = options
+  const { blockMetaDataMap, bbModulesPath, repoUrl, nonAvailableBlockNames,preview } = options
   const errors = []
+
 
   await Promise.all(
     Object.values(blockMetaDataMap).map(async (block) => {
@@ -23,7 +24,7 @@ const syncOrphanBranch = async (options) => {
           e.name = 'noName'
           throw e
         }
-        await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap })
+        await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap,preview })
         spinnies.succeed(`${blockName}`, { text: `${blockName} synced successfully` })
       } catch (error) {
         if (error.name !== 'noName') errors.push(error)

@@ -84,6 +84,7 @@ const connectRemote = async (cmdOptions) => {
     }
 
     manager.updateConfig({ source })
+    if(manager.config.type==="package")
     await updateAllMemberConfig(manager, source)
 
     spinnies.succeed('cr', { text: 'Successfully added source to blocks' })
