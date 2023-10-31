@@ -19,6 +19,7 @@ const { spinnies } = require('../../loader')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
+const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
 
 class PullCore {
   constructor(cmdArguments, cmdOptions, options) {
@@ -66,7 +67,10 @@ class PullCore {
     } else if (configManager instanceof PackageConfigManager) {
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
-    } else throw new Error('Not inside a package context')
+    } else if (configManager instanceof RawPackageConfigManager) {
+      this.packageManager = configManager
+      this.packageConfig = this.packageManager.config
+    }  else throw new Error('Not inside a package context')
   }
 
   async pullTheBlock() {

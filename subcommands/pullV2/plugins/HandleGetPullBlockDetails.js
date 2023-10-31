@@ -119,9 +119,16 @@ class HandleGetPullBlockDetails {
           metaData.parent_id = metaData.purchased_parent_block_id || metaData.block_id
 
           const blockType = blockTypeInverter(core.blockDetails.block_type)
-          if (core.isOutOfContext && blockType !== 'package') {
+
+          if (core.isOutOfContext && blockType !== 'package' && blockType !== 'raw-package') {
             throw new Error(
               `You are trying to pull a ${blockType} block outside package context.\n Please create a package or pull into an existing package context`
+            )
+          }
+
+          if (!core.isOutOfContext && blockType === 'raw-package') {
+            throw new Error(
+              `Block of type ${blockType} are not allowed to be part of normal package context.\n Please try pull outside of package context`
             )
           }
 

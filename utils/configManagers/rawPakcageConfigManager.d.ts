@@ -1,7 +1,8 @@
 // Type definitions for blockConfigManager.js
 // Project: @appblocks/bb-cli <https://github.com/appblocks-hub/BB-CLI>
 // Definitions by: Arjun S Kumar <https://github.com/Digambaran>
-import { RawPackageConfig, ConfigManager } from './configManager'
+import { PathLike } from 'fs'
+import { RawPackageConfig, ConfigManager, BlockLiveDetails } from './configManager'
 
 declare class RawPackageConfigManager extends ConfigManager<RawPackageConfig> {
   constructor(config: RawPackageConfig, cwd: PathLike)

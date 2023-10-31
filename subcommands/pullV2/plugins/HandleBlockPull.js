@@ -32,7 +32,8 @@ class HandleBlockPull {
          */
         core
       ) => {
-        if (core.blockDetails.block_type === 1) return
+        // check is package or raw package
+        if ([1, 9].includes(core.blockDetails.block_type)) return
 
         const cloneGitUrl = core.blockDetails.forked_git_url || core.blockDetails.git_url
         const clonePath = core.blockClonePath
@@ -60,7 +61,7 @@ class HandleBlockPull {
           gitUrl: cloneGitUrl,
         })
         if (gErr) throw gErr
-    
+
         // TODO: find a better approach to clone block sparse checkout
 
         // const tmpClonePath = path.join(tmpdir(), '_appblocks_', '')
