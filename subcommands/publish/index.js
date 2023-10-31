@@ -19,6 +19,7 @@ const { getBlockVersions, createZip } = require('./util')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
 const { getBBFolderPath, BB_FOLDERS } = require('../../utils/bbFolders')
 const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
+const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
 
 const publish = async (bkName, cmdOptions) => {
   const configPath = path.resolve(BB_CONFIG_NAME)
@@ -41,21 +42,18 @@ const publish = async (bkName, cmdOptions) => {
 
   try {
     if (manager.config.repoType === 'mono') {
-      const { err, rootManager: rm } = await manager.findMyParents()
-      if (err) throw err
-      rootManager = rm
-
+      if (manager.config.type === 'raw-package') {
+        rootManager = manager
+      } else {
+        const { err, rootManager: rm } = await manager.findMyParents()
+        if (err) throw err
+        rootManager = rm
+      }
       const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
-      const preview=cmdOptions?.preview??false
 
       orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
 
-      if(preview){
-        directory=path.join(bbModulesPath,'workspace')
-      }else{
-        directory=orphanBranchFolder
-      }
-
+      directory = orphanBranchFolder
 
       let bManger
       if (blockName === rootManager.config.name) {
@@ -67,7 +65,7 @@ const publish = async (bkName, cmdOptions) => {
 
       bManger.config.orphanBranchFolder = orphanBranchFolder
 
-      if (bManger instanceof PackageConfigManager) {
+      if (bManger instanceof PackageConfigManager || bManger instanceof RawPackageConfigManager) {
         packageManager = bManger
       } else blockManager = bManger
 
@@ -92,7 +90,6 @@ const publish = async (bkName, cmdOptions) => {
           rootDir: rootManager.directory,
           directory,
           version: versionData.version_number,
-          
         })
         if (isCheckOut) await Git.undoCheckout()
       } catch (e) {
@@ -142,6 +139,7 @@ const publish = async (bkName, cmdOptions) => {
     spinnies.stopAll()
     await open(`${publishRedirectApi}`)
   } catch (err) {
+    console.log("error is \n",err)
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: err.message })
     spinnies.stopAll()
