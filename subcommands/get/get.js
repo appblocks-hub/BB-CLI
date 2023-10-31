@@ -290,6 +290,12 @@ async function get(blockname) {
       const { rootManager } = await manager.findMyParents()
       rootParentManager = rootManager
     }
+
+    if (manager && block_type === 9) {
+      console.log('Move out to non package context')
+      return
+    }
+
     if (!manager && block_type === 1) {
       // we are not inside a package context
     }

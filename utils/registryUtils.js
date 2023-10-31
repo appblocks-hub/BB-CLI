@@ -53,6 +53,7 @@ const getBlockFromStoreFn = async (blockName, spaceName, rootPackageName) => {
       },
       { headers: getShieldHeader() }
     )
+
     return { status, data: { err: null, data } }
   } catch (err) {
     return { status: 204, data: { err, data: null } }
