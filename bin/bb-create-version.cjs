@@ -31,7 +31,6 @@ program
   .option('-vn, --version-note <version-note>', 'Version note for new version')
   .option('-f, --force', 'Discard all waring prompt and force the create version')
   .option('-l, --latest', 'Select the latest version of member blocks on package version create')
-  .option('-p, --packageonly', 'Create package version for preview')
   .action(createVersion)
 
 program.parse(process.argv)

@@ -82,8 +82,10 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
   const spaceId = headLessConfigStore(null, true).get('currentSpaceId')
 
   if (cmd === 'create-version') {
-    const { rootManager } = await manager.findMyParents()
-    packageManager = rootManager
+    if (manager.config.type !== 'raw-package') {
+      const { rootManager } = await manager.findMyParents()
+      packageManager = rootManager
+    }
 
     // check with synced workspace
     const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, packageManager.directory)

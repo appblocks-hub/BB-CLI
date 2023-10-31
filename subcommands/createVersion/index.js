@@ -25,6 +25,7 @@ const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders
 const createVersion = async (bkName, cmdOptions) => {
   try {
     const configPath = path.resolve(BB_CONFIG_NAME)
+
     const { manager: cm, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
@@ -41,11 +42,15 @@ const createVersion = async (bkName, cmdOptions) => {
     let packageManager
     let blockManager
 
-    if (manager.config.repoType === 'mono') {
-      const { err, rootManager: rm } = await manager.findMyParents()
-      if (err) throw err
-      rootManager = rm
 
+    if (manager.config.repoType === 'mono') {
+      if (manager.config.type === 'raw-package') {
+        rootManager = manager
+      } else {
+        const { err, rootManager: rm } = await manager.findMyParents()
+        if (err) throw err
+        rootManager = rm
+      }
       const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
       orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
       workSpaceFolder = path.join(bbModulesPath, BB_FILES.WORKSPACE)
@@ -59,10 +64,12 @@ const createVersion = async (bkName, cmdOptions) => {
       spinnies.succeed('cv_sync', { text: 'sync is up to date' })
       console.log()
 
-      if (!existsSync(orphanBranchFolder)) throw new Error(`Error reading bb modules block_${blockName}. Please run bb sync and try again`)
+      if (!existsSync(orphanBranchFolder))
+        throw new Error(`Error reading bb modules block_${blockName}. Please run bb sync and try again`)
       isCleanBlock(orphanBranchFolder)
 
-      if (!existsSync(workSpaceFolder)) throw new Error(`Error reading bb modules workspace. Please run bb sync and try again`)
+      if (!existsSync(workSpaceFolder))
+        throw new Error(`Error reading bb modules workspace. Please run bb sync and try again`)
       isCleanBlock(workSpaceFolder, isCleanBlockName && `block_${isCleanBlockName}`)
 
       const execOptions = { cwd: manager.directory }
@@ -115,6 +122,7 @@ const createVersion = async (bkName, cmdOptions) => {
         //  if passed blockName
         const cManager = await manager.getAnyBlock(blockName)
 
+        console.log('cManager is \n', cManager)
         //  check if blockName exist
         if (!cManager) throw new Error(`${blockName} block not found!`)
 
@@ -157,6 +165,7 @@ const createVersion = async (bkName, cmdOptions) => {
       await createPackageVersion({ packageManager, cmdOptions })
     } else throw new Error(`Error reading config manager`)
   } catch (err) {
+    console.log('error is', err)
     const errMsg = err.response?.data?.msg || err.message
     spinnies.add('cv', { text: 'Error' })
     spinnies.fail('cv', { text: `${errMsg} ${err.path ? `(${err.path})` : ''} ` })

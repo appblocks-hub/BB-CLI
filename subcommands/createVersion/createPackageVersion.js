@@ -19,7 +19,7 @@ const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
  * LICENSE file in the root directory of this source tree.
  */
 const createPackageVersion = async ({ packageManager, cmdOptions }) => {
-  const { latest, force, packageonly:preview } = cmdOptions || {}
+  const { latest, force, } = cmdOptions || {}
 
 
   const packageConfig = packageManager.config
@@ -35,7 +35,9 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   let memberBlockIds = []
   let updatedDependencies = []
 
-  if (!preview) {
+  console.log("package config is\n",packageConfig)
+
+  if (packageConfig.type!=="raw-package") {
     const checkRes = await checkMemberBlockVersions(packageManager, latest)
     memberBlockIds = checkRes?.memberBlockIds || []
     updatedDependencies = checkRes?.updatedDependencies || {}
