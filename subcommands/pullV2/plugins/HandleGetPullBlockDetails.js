@@ -62,7 +62,7 @@ class HandleGetPullBlockDetails {
             } = await getBlockDetailsV2(core.blockPullKeys)
 
             if (status === 204) {
-              throw new Error(`${core.pullBlockName} doesn't exists in block repository under given space`)
+              throw new Error(`${core.pullBlockName} doesn't exists in block registry under given space`)
             }
             if (err) throw new Error(err)
 
@@ -77,7 +77,7 @@ class HandleGetPullBlockDetails {
           if (c.data.err) throw new Error(c.data.msg)
 
           if (c.status === 204) {
-            throw new Error(`${core.pullBlockName} doesn't exists in block repository under given space`)
+            throw new Error(`${core.pullBlockName} doesn't exists in block registry under given space`)
           }
 
           core.spinnies.succeed('blockExistsCheck', { text: `${core.pullBlockName} is available` })

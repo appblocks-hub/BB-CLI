@@ -96,7 +96,7 @@ class HandleAfterPull {
             branch: `block_${blockConfig.name}`,
           }
           if (!core.isOutOfContext) {
-            blockConfig.source = core.packageConfig.source
+            blockConfig.source = { ...core.packageConfig.source }
             blockConfig.source.branch = `block_${blockConfig.name}`
             blockConfig.parentBlockIDs = [...core.packageConfig.parentBlockIDs, core.packageConfig.blockId]
           }
@@ -115,7 +115,8 @@ class HandleAfterPull {
         }
 
         if (!core.isOutOfContext) {
-          core.packageManager.addBlock(blockConfigPath)
+          const { err } = await core.packageManager.addBlock(blockConfigPath)
+          if (err) throw err
         }
 
         if (core.blockDetails.block_type === 1 && core.createCustomVariant) {
