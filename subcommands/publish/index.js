@@ -52,8 +52,13 @@ const publish = async (bkName, cmdOptions) => {
       const bbModulesPath = getBBFolderPath(BB_FOLDERS.BB_MODULES, rootManager.directory)
 
       orphanBranchFolder = path.join(bbModulesPath, `block_${blockName}`)
+      const preview = cmdOptions?.preview ?? false
 
-      directory = orphanBranchFolder
+      if (preview) {
+        directory = path.join(bbModulesPath, 'workspace')
+      } else {
+        directory = orphanBranchFolder
+      }
 
       let bManger
       if (blockName === rootManager.config.name) {
@@ -139,7 +144,7 @@ const publish = async (bkName, cmdOptions) => {
     spinnies.stopAll()
     await open(`${publishRedirectApi}`)
   } catch (err) {
-    console.log("error is \n",err)
+    console.log('error is \n', err)
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: err.message })
     spinnies.stopAll()
