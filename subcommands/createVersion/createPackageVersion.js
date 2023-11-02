@@ -32,7 +32,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   //     }, {}) || {}
   //   const givenBlockVersionNames = Object.keys(givenBlockVersion)
   let memberBlockIds = []
-  let updatedDependencies = []
+  let updatedDependencies = {}
 
   if (packageConfig.type !== 'raw-package' || preview) {
     const checkRes = await checkMemberBlockVersions(packageManager, latest)
@@ -152,6 +152,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       if (acc.split('\n').includes(ig)) return acc
       return `${acc}\n${ig}`
     }, gitignoreData)
+    // eslint-disable-next-line no-unreachable
     writeFileSync(gitignorePath, newGitIgnore)
 
     spinnies.update('cv', { text: `Tagging new version ${version}` })
