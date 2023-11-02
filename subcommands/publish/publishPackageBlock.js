@@ -46,7 +46,7 @@ const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => 
       .map((ex) => ex.replaceAll(/\/|(\.)\.(?=\/)|\*/g, '').replaceAll('..', '.'))
       .filter((e) => e !== '')
 
-    // eslint-disable-next-line no-param-reassign
+    // eslint-disable-next-line no-param-reassign, no-unreachable
     zipFile = await createZip({
       blockName,
       directory: '.',
@@ -57,7 +57,6 @@ const publishPackageBlock = async ({ packageManager, zipFile, versionData }) => 
   }
 
   const blockTypesMap ={}
-
 
   await (buildBlockTypesMap({packageManager,blockTypesMap}))
 
