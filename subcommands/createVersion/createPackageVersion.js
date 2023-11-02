@@ -34,7 +34,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   let memberBlockIds = []
   let updatedDependencies = {}
 
-  if (packageConfig.type !== 'raw-package' || preview) {
+  if (!(packageConfig.type === 'raw-package' || preview)) {
     const checkRes = await checkMemberBlockVersions(packageManager, latest)
     memberBlockIds = checkRes?.memberBlockIds || []
     updatedDependencies = checkRes?.updatedDependencies || {}
