@@ -19,8 +19,7 @@ const GitConfigFactory = require('../../utils/gitManagers/gitConfigFactory')
  * LICENSE file in the root directory of this source tree.
  */
 const createPackageVersion = async ({ packageManager, cmdOptions }) => {
-  const { latest, force, } = cmdOptions || {}
-
+  const { latest, force, preview } = cmdOptions || {}
 
   const packageConfig = packageManager.config
   const { repoType, name: packageName, blockId: pkBlockId, orphanBranchFolder } = packageConfig
@@ -33,11 +32,9 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
   //     }, {}) || {}
   //   const givenBlockVersionNames = Object.keys(givenBlockVersion)
   let memberBlockIds = []
-  let updatedDependencies = []
+  let updatedDependencies = {}
 
-  console.log("package config is\n",packageConfig)
-
-  if (packageConfig.type!=="raw-package") {
+  if (!(packageConfig.type === 'raw-package' || preview)) {
     const checkRes = await checkMemberBlockVersions(packageManager, latest)
     memberBlockIds = checkRes?.memberBlockIds || []
     updatedDependencies = checkRes?.updatedDependencies || {}
@@ -155,6 +152,7 @@ const createPackageVersion = async ({ packageManager, cmdOptions }) => {
       if (acc.split('\n').includes(ig)) return acc
       return `${acc}\n${ig}`
     }, gitignoreData)
+    // eslint-disable-next-line no-unreachable
     writeFileSync(gitignorePath, newGitIgnore)
 
     spinnies.update('cv', { text: `Tagging new version ${version}` })
