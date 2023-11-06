@@ -18,6 +18,7 @@ const HandleNoVariant = require('./plugins/HandleNoVariant')
 const HandleBeforePull = require('./plugins/HandleBeforePull')
 const HandleCheckPurchasedPull = require('./plugins/HandleCheckPurchasedPull')
 const HandleAfterPull = require('./plugins/HandleAfterPull')
+const HandleRawPackagePull = require('./plugins/HandleRawPackagePull')
 
 async function pull(pullBlock, pullBlockNewName, cmdOptions) {
   const { logger } = new Logger('pull')
@@ -31,6 +32,7 @@ async function pull(pullBlock, pullBlockNewName, cmdOptions) {
     new HandleCheckPurchasedPull().apply(Pull)
     new HandleBlockPull().apply(Pull)
     new HandlePackagePull().apply(Pull)
+    new HandleRawPackagePull().apply(Pull)
 
     new HandleAfterPull().apply(Pull)
 

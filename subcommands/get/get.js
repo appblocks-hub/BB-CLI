@@ -274,15 +274,17 @@ async function get(blockname) {
       data: { err, data },
     } = await getBlockFromStoreFn(name, spacename, rootBlockName)
     if (err) {
-      logger.error(err?.message || err)
-      process.exit(1)
+      const errMsg = err.response?.data?.msg || err.message || err
+      logger.error(errMsg)
+      throw errMsg
     }
 
     const { err: error, msg, data: blockData } = data
 
     if (error) {
-      logger.error(`Error from server: ${msg}`)
-      process.exit(1)
+      const errMsg = `Error from server: ${msg}`
+      logger.error(errMsg)
+      throw errMsg
     }
 
     const { block_version_id, block_name, block_type, child_blocks, signed_urls } = blockData
@@ -351,7 +353,7 @@ async function get(blockname) {
 
     feedback({ message: 'SUCCESS', type: 'success' })
   } catch (error) {
-    console.log("error is",error)
+    console.log(chalk.red(error.message || error))
     logger.error(error.message || error)
   }
 }

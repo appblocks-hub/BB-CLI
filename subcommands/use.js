@@ -63,7 +63,9 @@ const use = async (spaceName) => {
     process.exit(0)
   }
 
-  console.log(chalk.dim(`current space is ${currentSpaceName}`))
+  if(currentSpaceName) {
+    console.log(chalk.dim(`current space is ${currentSpaceName}`))
+  }
 
   try {
     const res = await listSpaces()

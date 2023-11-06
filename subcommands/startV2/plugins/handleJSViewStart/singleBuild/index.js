@@ -8,7 +8,7 @@
 
 const path = require('path')
 const chalk = require('chalk')
-const { writeFileSync, rmSync, existsSync, cpSync } = require('fs')
+const { rmSync, existsSync, cpSync, symlinkSync } = require('fs')
 const { runBash } = require('../../../../bash')
 const { startJsProgram } = require('../utils')
 const generateElementsEmulator = require('./generateElementsEmulator')
@@ -100,9 +100,17 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
 
       if (updatedEnv?.envString) {
-        writeFileSync(path.join(emEleFolder, '.env'), updatedEnv.envString)
-        for (const block of containerBlocks) {
-          writeFileSync(path.join(block.directory, '.env'), updatedEnv.envString)
+        try {
+          let viewEnvPath = path.join(path.resolve(), `.env.view`)
+          if (env && existsSync(path.join(viewEnvPath, env))) viewEnvPath = path.join(viewEnvPath, env)
+          if (existsSync(viewEnvPath)) {
+            symlinkSync(viewEnvPath, path.join(emEleFolder, '.env'))
+            for (const block of containerBlocks) {
+              symlinkSync(viewEnvPath, path.join(emEleFolder, block.directory, '.env'))
+            }
+          }
+        } catch (error) {
+          if (error.code !== 'EEXIST') throw error
         }
       }
 
