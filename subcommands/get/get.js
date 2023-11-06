@@ -86,6 +86,7 @@ class Bootstrap {
     }
     this.config = { ...configmanager.config }
 
+
     /**
      * Update the config with new details
      */
@@ -106,13 +107,14 @@ class Bootstrap {
     /**
      * Write the newly generated config to file
      */
+
     configmanager.updateConfig(this.config)
 
     /**
      * If not a package block return
      */
-    if (!this.childBlocks?.length)
-      return { err: false, msg: `${this.name} has been added to ${this.parentManager.config.name}`, name: this.name }
+    if (!this?.childBlocks?.length)
+      return { err: false, msg: `${this?.name} has been added to ${this?.parentManager?.config?.name}`, name: this.name }
 
     console.log(`setting up child blocks of ${this.name} `)
 
@@ -315,6 +317,7 @@ async function get(blockname) {
       rootParentManager,
       logger
     )
+
 
     if (block_type === 1) {
       logger.info(`block type is package`)
