@@ -11,7 +11,7 @@ const { readFileSync } = require('fs')
 const { spinnies } = require('../../loader')
 const { publishBlockApi, createSourceCodeSignedUrl } = require('../../utils/api')
 const { post } = require('../../utils/axios')
-const { getLanguageVersionData } = require('../languageVersion/util')
+const { getLanguageVersionData } = require('../../utils/languageVersion')
 const { createZip, buildBlockTypesMap } = require('./util')
 const {  BB_EXCLUDE_FILES_FOLDERS } = require('../../utils/bbFolders')
 

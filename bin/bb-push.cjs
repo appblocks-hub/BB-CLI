@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const push = require('../subcommands/pushV2')
+const push = require('../subcommands/push')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 

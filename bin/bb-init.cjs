@@ -8,14 +8,14 @@
  */
 
 const { Command } = require('commander')
-const init = require('../subcommands/temp-init')
+const init = require('../subcommands/init')
 
 const program = new Command()
 
 program
   .argument('<package-name>', 'Name of app')
   .option('--typescript', 'use typescript templates')
-  .option('-p, --packageonly', 'Create package version for preview')
+  .option('-p, --package-only', 'Create package version for preview')
   .description('create an appblock')
   .action(init)
 

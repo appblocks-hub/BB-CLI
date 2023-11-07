@@ -10,7 +10,7 @@
 const { Command, Option } = require('commander')
 const { blockTypeInverter } = require('../utils/blockTypeInverter')
 const { blockTypes } = require('../utils/blockTypes')
-const create = require('../subcommands/createV2')
+const create = require('../subcommands/create')
 
 const program = new Command()
 

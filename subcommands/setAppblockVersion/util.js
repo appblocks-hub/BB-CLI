@@ -7,7 +7,7 @@
 
 const { spinnies } = require('../../loader')
 const { confirmationPrompt } = require('../../utils/questionPrompts')
-const { getLanguageVersionData } = require('../languageVersion/util')
+const { getLanguageVersionData } = require('../../utils/languageVersion')
 const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
 
 const checkIsAllBlockSupportDependencies = async (blocks, supportedAppblockVersions) => {

@@ -6,15 +6,13 @@
  */
 
 const inquirer = require('inquirer')
-const { userRepos } = require('./Queries')
-const { NewLS } = require('./listandselectrepos')
 const customList = require('./customList')
 const { blockTypes } = require('./blockTypes')
 const { configstore } = require('../configstore')
-const GitPaginator = require('./paginateGitRest')
 const CustomListV2 = require('./customListV2')
 const customSelect = require('./multiSelect')
-const { isValidBlockName } = require('./blocknameValidator')
+const { isValidBlockName } = require('./blockNameValidator')
+const GitConfigFactory = require('./gitManagers/gitConfigFactory')
 
 inquirer.registerPrompt('customList', customList)
 inquirer.registerPrompt('CustomListV2', CustomListV2)
@@ -31,11 +29,11 @@ function getBlockShortName(blockName) {
     .then((ans) => ans.blockShortName || blockName)
     .catch((err) => console.log(err))
 }
-function getBlockName() {
+function getBlockName(msg) {
   const question = {
     type: 'input',
     name: 'blockName',
-    message: 'Enter name of block',
+    message: msg || 'Enter name of block',
     validate: function test(ans) {
       if (isValidBlockName(ans)) {
         return true
@@ -107,7 +105,7 @@ function getBlockType(filterList) {
   return inquirer
     .prompt(questions)
     .then((ans) => ans.blockType)
-    .catch((err) => console.log('somte', err))
+    .catch((err) => console.log('Error: ', err))
 }
 
 /**
@@ -129,7 +127,15 @@ function getPrefix(d) {
     .catch((err) => console.log(err, 'lll'))
 }
 
-function getTemplate() {
+async function getTemplate(gitManager) {
+  let manager = gitManager
+  if (!manager) {
+    const { manager: m, error } = await GitConfigFactory.init()
+    if (error) throw error
+    manager = m
+  }
+  const source = manager.getRepositories({ source: true })
+
   const questions = [
     {
       type: 'confirm',
@@ -141,7 +147,7 @@ function getTemplate() {
       name: 'selectTemplate',
       message: 'select a template repo',
       choices: [], // give empty list, custom list loads from api
-      source: new NewLS(userRepos.Q, userRepos.Tr_t).sourceAll,
+      source,
       pageSize: 22,
       loop: false,
       when: (ans) => ans.createFromTemplate,
@@ -158,7 +164,15 @@ function getTemplate() {
  * @returns {String|Null}
  */
 // eslint-disable-next-line no-unused-vars
-async function getOrgId() {
+async function getOrgId(gitManager) {
+  let manager = gitManager
+  if (!manager) {
+    const { manager: m, error } = await GitConfigFactory.init()
+    if (error) throw error
+    manager = m
+  }
+
+  const source = await manager.getOrganizations({ source: true })
   const question = [
     {
       // type: 'customList',
@@ -166,15 +180,7 @@ async function getOrgId() {
       name: 'selectOrg',
       message: 'select a organization',
       choices: [], // give empty list, loads initial set
-      // source: new NewLS(userOrgs.Q, userOrgs.Tr).sourceB,
-      source: new GitPaginator('user/orgs', (v) => ({
-        name: v.login,
-        // split("/") -- To get name of org so it can be used
-        // to get team list of organization in later prompt,
-        // TODO -- if possible change choice object of inquirer to accomodate this,
-        // and return ans with name and not just answer
-        value: `${v.login}/${v.node_id}`,
-      })),
+      source,
       pageSize: 22,
     },
   ]
@@ -186,19 +192,27 @@ async function getOrgId() {
     // and if there are no organizations, ask user whether to create in
     // user git itself.
 
-    // ans will have display name followed by Id seperated by "/"
+    // ans will have display name followed by Id separated by "/"
     return ans.selectOrg.split('/')
   })
 }
 
-function getRepoURL() {
+async function getRepoURL(gitManager) {
+  let manager = gitManager
+  if (!manager) {
+    const { manager: m, error } = await GitConfigFactory.init()
+    if (error) throw error
+    manager = m
+  }
+  const source = manager.getRepositories({ source: true })
+
   const question = [
     {
       type: 'customList',
       name: 'selectRepo',
       message: 'select a repo',
       choices: [], // give empty list, loads initial set
-      source: new NewLS(userRepos.Q, userRepos.Tr_URL).sourceAll,
+      source,
       pageSize: 22,
     },
   ]
@@ -242,7 +256,7 @@ function wantToCreateNewVersion(name) {
     .prompt({
       type: 'confirm',
       name: 'createNewBlockFrom',
-      message: `Do you wish to create a new block from ${name}?`,
+      message: `Do you wish to create a new variant from ${name}?`,
       default: false,
     })
     .then((ans) => ans.createNewBlockFrom)
@@ -393,7 +407,7 @@ function getGitConfigNameEmailFromConfigStore(defaultContinue, configStore) {
 function setWithTemplate() {
   return inquirer.prompt({
     type: 'confirm',
-    message: 'Do you want to start with a sample template',
+    message: 'Do you want to set a sample project',
     name: 'useTemplate',
   })
 }

@@ -10,7 +10,7 @@
 const { Command } = require('commander')
 
 const { chalk } = require('chalk')
-const pull = require('../subcommands/pullV2')
+const pull = require('../subcommands/pull')
 const { isGitInstalled } = require('../utils/gitCheckUtils')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')

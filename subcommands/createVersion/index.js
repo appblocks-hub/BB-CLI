@@ -15,7 +15,7 @@ const { createPackageVersion } = require('./createPackageVersion')
 const BlockConfigManager = require('../../utils/configManagers/blockConfigManager')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
-const tempSync = require('../tempSync')
+const sync = require('../sync')
 const { confirmationPrompt } = require('../../utils/questionPrompts')
 const { isCleanBlock } = require('../../utils/gitCheckUtils')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
@@ -60,7 +60,7 @@ const createVersion = async (bkName, cmdOptions) => {
 
       // sync
       spinnies.add('cv_sync', { text: 'Checking sync status' })
-      await tempSync(blockName, { returnOnError: true })
+      await sync(blockName, { returnOnError: true })
       spinnies.succeed('cv_sync', { text: 'sync is up to date' })
       console.log()
 
@@ -122,7 +122,6 @@ const createVersion = async (bkName, cmdOptions) => {
         //  if passed blockName
         const cManager = await manager.getAnyBlock(blockName)
 
-        console.log('cManager is \n', cManager)
         //  check if blockName exist
         if (!cManager) throw new Error(`${blockName} block not found!`)
 
@@ -165,7 +164,6 @@ const createVersion = async (bkName, cmdOptions) => {
       await createPackageVersion({ packageManager, cmdOptions })
     } else throw new Error(`Error reading config manager`)
   } catch (err) {
-    console.log('error is', err)
     const errMsg = err.response?.data?.msg || err.message
     spinnies.add('cv', { text: 'Error' })
     spinnies.fail('cv', { text: `${errMsg} ${err.path ? `(${err.path})` : ''} ` })

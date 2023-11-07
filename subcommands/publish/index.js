@@ -144,7 +144,6 @@ const publish = async (bkName, cmdOptions) => {
     spinnies.stopAll()
     await open(`${publishRedirectApi}`)
   } catch (err) {
-    console.log('error is \n', err)
     spinnies.add('p1', { text: 'Error' })
     spinnies.fail('p1', { text: err.message })
     spinnies.stopAll()

@@ -16,7 +16,7 @@ const { Subscriber } = require('rxjs')
 /* eslint-enable no-unused-vars */
 
 const { appBlockCheckBlockNameAvailability } = require('./api')
-const { isValidBlockName } = require('./blocknameValidator')
+const { isValidBlockName } = require('./blockNameValidator')
 const { feedback } = require('./cli-feedback')
 const { getShieldHeader } = require('./getHeaders')
 

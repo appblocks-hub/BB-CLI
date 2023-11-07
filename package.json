@@ -28,12 +28,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-application-auto-scaling": "^3.209.0",
-    "@aws-sdk/client-ec2": "^3.200.0",
-    "@aws-sdk/client-ecr": "^3.198.0",
-    "@aws-sdk/client-ecs": "^3.199.0",
-    "@aws-sdk/client-elastic-load-balancing-v2": "^3.202.0",
-    "@aws-sdk/client-s3": "^3.211.0",
     "@babel/parser": "^7.17.9",
     "@babel/traverse": "^7.20.13",
     "ansi-escapes": "4.3.2",
@@ -54,9 +48,7 @@
     "inquirer-autocomplete-prompt": "1.4.0",
     "inquirer-file-tree-selection-prompt": "1.0.12",
     "is-running": "^2.1.0",
-    "mime-types": "^2.1.35",
     "nanoid": "^3.3.6",
-    "node-cron": "^3.0.2",
     "open": "^8.4.0",
     "parse-link-header": "2.0.0",
     "portfinder": "1.0.28",
@@ -65,10 +57,8 @@
     "semver": "7.3.5",
     "spinnies": "0.5.1",
     "tapable": "^2.2.1",
-    "tcp-port-used": "1.0.2",
     "tree-kill": "^1.2.2",
-    "winston": "3.3.3",
-    "yup": "^0.32.11"
+    "winston": "3.3.3"
   },
   "devDependencies": {
     "@commitlint/cli": "15.0.0",

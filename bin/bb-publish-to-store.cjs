@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const publishToStore = require('../subcommands/publish-to-store')
+const publishToStore = require('../subcommands/publishToStore')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
