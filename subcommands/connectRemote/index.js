@@ -7,7 +7,7 @@
 const path = require('path')
 const { existsSync } = require('fs')
 const { writeFile } = require('fs/promises')
-const { createRepo } = require('../../utils/createRepoV2')
+const { createRepo } = require('../../utils/createRepo')
 // const { confirmationPrompt } = require('../../utils/questionPrompts')
 const convertGitUrl = require('../../utils/convertGitUrl')
 const { spinnies } = require('../../loader')

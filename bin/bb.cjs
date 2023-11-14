@@ -24,13 +24,11 @@ const cmd = program.command.bind(program)
 
 cmd('run-test', 'to run tests')
 
-cmd('add-categories', 'block assign categories to blocks')
+// cmd('add-categories', 'block assign categories to blocks')
 
-cmd('add-tags', 'block add tags')
+// cmd('add-tags', 'block add tags')
 
-cmd('app-publish', 'Publish the app')
-
-cmd('clear-logs', 'to clear logs')
+cmd('flush', 'to clear logs')
 
 cmd('config', 'to access cli configs')
 

@@ -8,7 +8,7 @@
  */
 
 const { Command } = require('commander')
-const tempSync = require('../subcommands/tempSync')
+const tempSync = require('../subcommands/sync')
 const checkAndSetGitConnectionPreference = require('../utils/checkAndSetGitConnectionStrategy')
 
 // const { ensureUserLogins } = require('../utils/ensureUserLogins')

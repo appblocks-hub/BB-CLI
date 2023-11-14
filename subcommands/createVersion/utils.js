@@ -8,7 +8,7 @@
 const { spinnies } = require('../../loader')
 const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
 const { updateReadme } = require('../../utils/registryUtils')
-const { getLanguageVersionData } = require('../languageVersion/util')
+const { getLanguageVersionData } = require('../../utils/languageVersion')
 const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
 const { uploadReadMe } = require('../../utils/fileAndFolderHelpers')
 
