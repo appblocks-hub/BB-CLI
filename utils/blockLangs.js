@@ -6,8 +6,8 @@
  */
 
 const blockLangs ={
-  "nodeJS":"nodejs",
-  "goLang":"golang",
+  "NodeJS":"nodejs",
+  "GoLang":"golang",
   "Python":"python",
   "Ruby":"ruby"
 }
