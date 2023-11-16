@@ -1,7 +1,7 @@
 const chalk = require('chalk')
 const { headLessConfigStore } = require('../../configstore')
 const { Logger } = require('../../utils/logger')
-const { readBBConfigFile } = require('../../utils/plugins')
+const { readBBConfigFile, handleCmdOptionPlugin } = require('../../utils/plugins')
 const InitCore = require('./initCore')
 const HandleBeforeInit = require('./plugins/handleBeforeInit')
 const HandleJSTemplate = require('./plugins/handleJsTemplate')
@@ -23,12 +23,17 @@ async function init(blocksName, options) {
     new HandleJSTemplate().apply(core)
     new HandleTSTemplate().apply(core)
 
+
     /**
      * Read and register plugins from bb config
      */
-    const bbConfig = await readBBConfigFile()
+    const bbConfig = await readBBConfigFile(options.configPath)
     if (bbConfig.plugins) {
       bbConfig.plugins.forEach((plugin) => plugin.apply(core))
+    }
+
+    if (options.plugin) {
+      await handleCmdOptionPlugin(options, core)
     }
 
     /**

@@ -14,9 +14,10 @@ const program = new Command()
 
 program
   .argument('<package-name>', 'Name of app')
-  .option('-lang, --language', 'Set the language for templates', false)
-  .option('-p, --plugin', 'Set the plugin for language', false)
-  .option('-po, --plugin-option', 'Add the plugin option for provided plugin', false)
+  .option('-lang, --language <language>', 'Set the language for templates')
+  .option('-p, --plugin <plugin>', 'Set the plugin for language')
+  .option('-po, --plugin-option <plugin-option>', 'Add the plugin option for provided plugin')
+  .option('-cp, --config-path', 'Set bb.config.js path')
   .option('-raw, --raw-package', 'Create raw package version for preview')
   .description('create an appblock')
   .action(init)

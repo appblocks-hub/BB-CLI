@@ -1,9 +1,15 @@
 const { existsSync } = require('fs')
 const path = require('path')
 
-async function readBBConfigFile(filePath = 'bb.config.js') {
+async function handleCmdOptionPlugin(cmdOpts, core) {
+  const { default: Plugin } = await import(path.resolve(cmdOpts.plugin))
+  new Plugin(cmdOpts.pluginOption).apply(core)
+}
+
+async function readBBConfigFile(configFilepath) {
   try {
-    const relativePath = path.resolve('.', filePath)
+    const filePath = configFilepath || 'bb.config.js'
+    const relativePath = path.resolve(filePath)
 
     if (!existsSync(relativePath)) return {}
 
@@ -21,4 +27,4 @@ async function readBBConfigFile(filePath = 'bb.config.js') {
   }
 }
 
-module.exports = { readBBConfigFile }
+module.exports = { readBBConfigFile, handleCmdOptionPlugin }
