@@ -17,18 +17,18 @@ async function get(component, options) {
     }
 
     /**
+     * Start registering plugins
+     */
+    new HandleBeforeGet().apply(core)
+    new HandleAfterGet().apply(core)
+
+    /**
      * Read and register plugins from bb config
      */
     const bbConfig = await readBBConfigFile(options.configPath)
     if (bbConfig.plugins) {
       bbConfig.plugins.forEach((plugin) => plugin.apply(core))
     }
-
-    /**
-     * Start registering plugins
-     */
-    new HandleBeforeGet().apply(core)
-    new HandleAfterGet().apply(core)
 
     /**
      * Start operations
