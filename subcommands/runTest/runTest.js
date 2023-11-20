@@ -2,6 +2,7 @@ const { headLessConfigStore } = require('../../configstore')
 const { Logger } = require('../../utils/logger')
 const RunTestCore = require('./runTestCore')
 const HandleBeforeRunTest = require('./plugins/handleBeforeRunTest')
+const { readBBConfigFile } = require('../../utils/plugins')
 
 async function runTest(options) {
   const { logger } = new Logger('bb-runTest')
@@ -15,6 +16,14 @@ async function runTest(options) {
    * Start registering plugins
    */
   new HandleBeforeRunTest().apply(core)
+
+  /**
+   * Read and register plugins from bb config
+   */
+  const bbConfig = await readBBConfigFile(options.configPath)
+  if (bbConfig.plugins) {
+    bbConfig.plugins.forEach((plugin) => plugin.apply(core))
+  }
 
   /**
    * Start operations
