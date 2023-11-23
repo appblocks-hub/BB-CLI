@@ -27,6 +27,7 @@ class LogCore {
 
     this.hooks = {
       beforeLog: new AsyncSeriesHook(['context', 'logger']),
+      afterLog: new AsyncSeriesHook(['context', 'logger']),
     }
   }
 
@@ -60,6 +61,7 @@ class LogCore {
       })
     })
 
+    await this.hooks.afterLog?.promise(this, this.logger)
     console.log(`\n... watching logs ...\n`)
   }
 }
