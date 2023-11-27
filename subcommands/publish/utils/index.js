@@ -1,15 +1,15 @@
 const { execSync } = require('child_process')
 const { mkdirSync, existsSync } = require('fs')
 const path = require('path')
-const { spinnies } = require('../../loader')
-const { listAppblockVersions } = require('../../utils/api')
-const { post } = require('../../utils/axios')
-const { isClean, getLatestVersion } = require('../../utils/gitCheckUtils')
-const { readInput } = require('../../utils/questionPrompts')
-const { getAllBlockVersions } = require('../../utils/registryUtils')
-const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
-const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
-const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
+const { spinnies } = require('../../../loader')
+const { listAppblockVersions } = require('../../../utils/api')
+const { post } = require('../../../utils/axios')
+const { isClean, getLatestVersion } = require('../../../utils/gitCheckUtils')
+const { readInput } = require('../../../utils/questionPrompts')
+const { getAllBlockVersions } = require('../../../utils/registryUtils')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../../utils/bbFolders')
+const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
+const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
 
 const getPublishedVersion = (name, directory) => {
   try {
@@ -27,12 +27,10 @@ const getPublishedVersion = (name, directory) => {
 
 const createZip = async ({ blockName, directory, version, excludePaths = [], rootDir }) => {
   try {
-  
     const dir = `${directory}`
     const rootDirectory = rootDir || path.resolve('.')
     const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP, rootDirectory)
     const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD, blockName || '')
-    
 
     const EXCLUDE_IN_ZIP = [
       'node_modules/*',
@@ -137,45 +135,42 @@ const getBlockVersions = async (blockId, version) => {
 const buildBlockTypesMap = async (options) => {
   const { packageManager, blockTypesMap } = options
 
-
-
   const packageConfig = packageManager.config
 
   if (!(packageManager instanceof PackageConfigManager || packageManager instanceof RawPackageConfigManager)) {
     throw new Error('Error parsing package block')
   }
 
-
   if (!blockTypesMap[packageConfig.type]) {
     blockTypesMap[packageConfig.type] = true
-  
   }
 
+  if (packageConfig.type !== 'raw-package')
+    for await (const blockManager of packageManager.getDependencies()) {
+      if (!blockManager?.config) continue
 
+      // copying package config parent block name for transferring to the next package block
+      const currentConfig = blockManager.config
 
- if(packageConfig.type!=="raw-package")
-  for await (const blockManager of packageManager.getDependencies()) {
-    if (!blockManager?.config) continue
-
-    // copying package config parent block name for transferring to the next package block
-    const currentConfig = blockManager.config
-
-
-    if (currentConfig.type === 'package') {
-      await buildBlockTypesMap({
-        packageManager: blockManager,
-        blockTypesMap,
-    
-      })} else {
-      // eslint-disable-next-line no-lonely-if
-      if (!blockTypesMap[currentConfig.type]) {
-        blockTypesMap[currentConfig.type] = true
-      
+      if (currentConfig.type === 'package') {
+        await buildBlockTypesMap({
+          packageManager: blockManager,
+          blockTypesMap,
+        })
+      } else {
+        // eslint-disable-next-line no-lonely-if
+        if (!blockTypesMap[currentConfig.type]) {
+          blockTypesMap[currentConfig.type] = true
+        }
       }
-
     }
-  }
-
 }
 
-module.exports = { getPublishedVersion, createZip, getAppblockVersionData, getAllAppblockVersions, getBlockVersions,buildBlockTypesMap }
+module.exports = {
+  getPublishedVersion,
+  createZip,
+  getAppblockVersionData,
+  getAllAppblockVersions,
+  getBlockVersions,
+  buildBlockTypesMap,
+}

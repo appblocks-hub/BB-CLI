@@ -52,14 +52,14 @@ class PushCore {
     const { manager: configManager, error } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
-      this.isOutOfContext = true
+      throw new Error('Please run the command inside package context')
     } else if (configManager instanceof PackageConfigManager || configManager instanceof RawPackageConfigManager) {
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
-    }else throw new Error('Not inside a root package context')
+    } else throw new Error('Please run the command inside package context')
 
     const { data } = await configManager.findMyParentPackage()
-    if (data?.parentPackageFound !== false) throw new Error('Not inside a root package context')
+    if (data?.parentPackageFound !== false) throw new Error('Please run the command inside package context')
   }
 
   async pushBlocks() {

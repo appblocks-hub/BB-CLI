@@ -17,7 +17,11 @@ const program = new Command().hook('preAction', async () => {
   await checkAndSetUserSpacePreference()
 })
 
-program.argument('[block-name]', 'Name of block to publish').option('-v, --version <version>', 'Version to publish').option('-p, --preview', 'Publish blocks for preview')
-.action(publish)
+program
+  .argument('[block-name]', 'Name of block to publish')
+  .option('-v, --version <version>', 'Version to publish')
+  .option('-p, --preview', 'Publish blocks for preview')
+  .option('-o, --open', 'Open published block in spaces')
+  .action(publish)
 
 program.parse(process.argv)

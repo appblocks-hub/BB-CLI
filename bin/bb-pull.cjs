@@ -30,7 +30,7 @@ const program = new Command().hook('preAction', async () => {
 })
 
 program
-  .argument('[component]', 'Name of component with version. (eg: @[spaceName]/[packageName]/[blockName]@[version])')
+  .argument('<component>', 'Name of component with version. (eg: @[spaceName]/[packageName]/[blockName]@[version])')
   .argument('[newVariantName]', 'Name for variant.')
   .option('-v, --variant', 'Create as variant variant')
   .option('-nv, --no-variant', 'No variant variant')

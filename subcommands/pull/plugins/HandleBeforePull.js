@@ -11,7 +11,7 @@ const chalk = require('chalk')
 const path = require('path')
 const { existsSync } = require('fs')
 const { confirmationPrompt, wantToCreateNewVersion, getBlockName } = require('../../../utils/questionPrompts')
-const { getAllAppblockVersions } = require('../../publish/util')
+const { getAllAppblockVersions } = require('../../publish/utils')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
 const { headLessConfigStore, configstore } = require('../../../configstore')
