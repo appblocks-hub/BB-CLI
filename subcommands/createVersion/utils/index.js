@@ -5,12 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { spinnies } = require('../../loader')
-const { readInput, confirmationPrompt } = require('../../utils/questionPrompts')
-const { updateReadme } = require('../../utils/registryUtils')
-const { getLanguageVersionData } = require('../../utils/languageVersion')
-const { getDependencies, getDependencyIds } = require('../publish/dependencyUtil')
-const { uploadReadMe } = require('../../utils/fileAndFolderHelpers')
+const { spinnies } = require('../../../loader')
+const { readInput, confirmationPrompt } = require('../../../utils/questionPrompts')
+const { updateReadme } = require('../../../utils/registryUtils')
+const { getLanguageVersionData } = require('../../../utils/languageVersion')
+const { getDependencies, getDependencyIds } = require('../../publish/dependencyUtil')
+const { uploadReadMe } = require('../../../utils/fileAndFolderHelpers')
 
 const uploadBlockReadme = async ({ readmePath, blockId, versionId }) => {
   spinnies.add('cv', { text: `Uploading readme` })
