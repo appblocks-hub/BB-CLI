@@ -14,7 +14,7 @@ class HandleAfterPublish {
    * @param {PublishCore} core
    */
   apply(publishCore) {
-    publishCore.hooks.beforePublish.tapPromise('HandleAfterPublish', async (core) => {
+    publishCore.hooks.afterPublish.tapPromise('HandleAfterPublish', async (core) => {
       const { publishRedirectApi, cmdOpts } = core
       const { open: openFlag } = cmdOpts
 
