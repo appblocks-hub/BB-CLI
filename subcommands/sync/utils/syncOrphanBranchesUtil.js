@@ -16,13 +16,6 @@ const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
 const buildCommitMessage = (commitHash, commitMessage) => `[commitHash:${commitHash}] ${commitMessage}`
 
-// const copyDirectory = (sourceDir, destinationDir, excludedDirs) => {
-//   const copyCommandWithExclusions = `rsync -av --exclude={${excludedDirs.join(',')}} ${sourceDir}/ ${destinationDir}/`
-
-//   console.log('copy command with exclusions is', copyCommandWithExclusions)
-//   // execSync(copyCommandWithExclusions)
-// }
-
 const getLatestCommits = async (branchName, n, Git) => {
   let latestWorkSpaceCommit = await Git.getCommits(branchName, n)
 
