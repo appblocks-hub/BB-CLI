@@ -22,14 +22,6 @@ const blockRename = async (blockName, newBlockName, cmdOptions) => {
   try {
     spinnies.add('rn', { text: 'Initialising config manager' })
 
-    if (blockName === newBlockName) {
-      console.log(`No change in names`)
-      return
-    }
-
-    if (!blockName && !blockPath) {
-      throw new Error(`Please provide current block name`)
-    }
 
     const configPath = path.resolve(BB_CONFIG_NAME)
     const { manager: cm, error } = await ConfigFactory.create(configPath)
@@ -136,5 +128,7 @@ const blockRename = async (blockName, newBlockName, cmdOptions) => {
     spinnies.fail('rn', { text: chalk.red(error.message) })
   }
 }
+
+// const blockRename = require('./blockRename')
 
 module.exports = blockRename
