@@ -25,9 +25,7 @@ async function handleAuth(options, config) {
     if (options?.force) {
       configstore.delete(GITHUB_KEYS.userId)
       configstore.delete(GITHUB_KEYS.userToken)
-    }
-
-    if (userId) {
+    } else if (userId) {
       const {
         user: { userName },
       } = await handleGetSignedInUser(options, config)

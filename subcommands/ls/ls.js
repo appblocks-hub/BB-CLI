@@ -33,7 +33,6 @@ async function ls(options) {
     await core.initializeConfigManager()
     await core.ls()
   } catch (error) {
-    console.log(error);
     logger.error(error)
     console.log(chalk.red(error.message))
   }
