@@ -1,5 +1,70 @@
 # Changelog
 
+## [1.6.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.0-beta...v1.6.0-beta) (2023-12-01)
+
+
+### Features
+
+* add preview flag on create version for package ([d206a7f](https://github.com/appblocks-hub/BB-CLI/commit/d206a7f7f71cb684683b55c5af5b279391d6f5c0))
+* block rename plugin ([0cbaacb](https://github.com/appblocks-hub/BB-CLI/commit/0cbaacbba37aaa847e4e7bf6c26bc2c1bdd3a3ea))
+* config command plugin ([2efb016](https://github.com/appblocks-hub/BB-CLI/commit/2efb016335b901cc3f5daecafa2bf25a938e0a9d))
+* connect disconnect plugin ([d78a0ad](https://github.com/appblocks-hub/BB-CLI/commit/d78a0ad67d16a82aba5171b86e82e428662e5ec3))
+* connect remote plugin ([f3977ba](https://github.com/appblocks-hub/BB-CLI/commit/f3977ba3a0d76e8b9c5404565a394ea38881200b))
+* create version plugin ([bc1139c](https://github.com/appblocks-hub/BB-CLI/commit/bc1139ce4b6e10964e9346ab814b436b49b53e94))
+* exec command plugin ([51a6b13](https://github.com/appblocks-hub/BB-CLI/commit/51a6b1362d71a355a1af367eac66697cf60db96a))
+* flush command plugin ([93a4b5f](https://github.com/appblocks-hub/BB-CLI/commit/93a4b5f39ce5fa2dc6202192de65c55ae2ba3dee))
+* get command plugin ([ce06eeb](https://github.com/appblocks-hub/BB-CLI/commit/ce06eeb161de7811455abcd55e05470ef1898d8f))
+* init plugin architecture ([2d92e66](https://github.com/appblocks-hub/BB-CLI/commit/2d92e6673631d024ad055d4b8d6758f44517cc0c))
+* log command plugin ([699b6b7](https://github.com/appblocks-hub/BB-CLI/commit/699b6b751664c7a787567960ab2e036f81634bb7))
+* login logout commands plugin ([ac14740](https://github.com/appblocks-hub/BB-CLI/commit/ac147402dc0191fdb82433d948b464db065bea39))
+* ls plugin ([0fdad9a](https://github.com/appblocks-hub/BB-CLI/commit/0fdad9aca8fffa33a752799386da9dc520db86e4))
+* modified connect,init,sync and push ([30e9d3e](https://github.com/appblocks-hub/BB-CLI/commit/30e9d3ec3983e50f2ef7bd035038765b036dd3fe))
+* modified connect,init,sync and push ([261d50d](https://github.com/appblocks-hub/BB-CLI/commit/261d50d17395caca1c419ce4fb3abef4e5399711))
+* onblocks key in middleware config ([e2a83c6](https://github.com/appblocks-hub/BB-CLI/commit/e2a83c6d45b2437efa61caa17c3714bd615017cd))
+* publish plugin ([332add6](https://github.com/appblocks-hub/BB-CLI/commit/332add664d3cab7e81ad1939c9447ef9a83d1ecf))
+* publish to store command plugin ([9a65464](https://github.com/appblocks-hub/BB-CLI/commit/9a65464c115bb27b15006fd1622c3cd677e7d0f4))
+* raw package pull ([2bbe970](https://github.com/appblocks-hub/BB-CLI/commit/2bbe9706ff39edf26008eef1c150f1bba13be18e))
+* runtest plugin ([d476786](https://github.com/appblocks-hub/BB-CLI/commit/d4767862527e528219aedfdb86d3edf189a312a1))
+* set preview environment command plugin ([d246e96](https://github.com/appblocks-hub/BB-CLI/commit/d246e96c070f04ceb0ba87163a75939d0f32e0be))
+* sync block plugin ([0d30d06](https://github.com/appblocks-hub/BB-CLI/commit/0d30d060766fb4749c0d0f2c26fb565d59a9ae9e))
+* use command plugin ([a943cf5](https://github.com/appblocks-hub/BB-CLI/commit/a943cf5b868dd3e422ce57361b851769b456204f))
+
+
+### Bug Fixes
+
+* add error checks ([f74690e](https://github.com/appblocks-hub/BB-CLI/commit/f74690e0874590c07007ec3024bf442731ead0f8))
+* added raw package support for get ([8cdb323](https://github.com/appblocks-hub/BB-CLI/commit/8cdb32380b89306e5f37447bafb75a7a2f030d2f))
+* after log plugin hook ([3f2cb55](https://github.com/appblocks-hub/BB-CLI/commit/3f2cb55cf7e119b2fb4b345a319d4a369053a8b0))
+* after publish plugin ([2eac92f](https://github.com/appblocks-hub/BB-CLI/commit/2eac92f709d26e64ab1e8c56078926497af71d3f))
+* bb get issue ([edd4673](https://github.com/appblocks-hub/BB-CLI/commit/edd46735b5d2f7342fcb544681b32fdebf28f5cd))
+* block config reading issue ([1eb60cd](https://github.com/appblocks-hub/BB-CLI/commit/1eb60cd5efecd0691ea5165c5e3c69383cf910ac))
+* block config reading issue ([da9ee3f](https://github.com/appblocks-hub/BB-CLI/commit/da9ee3ffe4cb7528520233dc86006d92312f3af3))
+* chalk warn function error ([650a8ed](https://github.com/appblocks-hub/BB-CLI/commit/650a8ed45c003a7adf7cc59f1902131ac76c78a3))
+* check path exist ([8432fb0](https://github.com/appblocks-hub/BB-CLI/commit/8432fb071d83817f3f8400593ed4bc394bdadba9))
+* check path exist ([047dfe6](https://github.com/appblocks-hub/BB-CLI/commit/047dfe683660876ad24e3b39c4fea1806039fb7b))
+* config path ([86f7fc3](https://github.com/appblocks-hub/BB-CLI/commit/86f7fc33f1916bef9068a7ede1df68f170477b52))
+* create-version and publish ([ec9b3d5](https://github.com/appblocks-hub/BB-CLI/commit/ec9b3d5ce4e927ef9b071e294517e8dfe80d4070))
+* fe build issue ([026d130](https://github.com/appblocks-hub/BB-CLI/commit/026d1301fcc4a2598f7132767b8b2aeeebe2e95e))
+* middleware dependency not linked issue ([c276bf3](https://github.com/appblocks-hub/BB-CLI/commit/c276bf363917b2467a6173cde722eae9bb916cc8))
+* modified create package version ([70a2ce0](https://github.com/appblocks-hub/BB-CLI/commit/70a2ce006bc43e3e9434679a5cdde0af6b8d4d0b))
+* modified create package version ([760e801](https://github.com/appblocks-hub/BB-CLI/commit/760e801e1aa30216d3d35e6d3a4292a292953526))
+* modified emulator code ([e8e3f40](https://github.com/appblocks-hub/BB-CLI/commit/e8e3f4054f997de39ef855eebfc1497917f89621))
+* modified generate emulator code ([369eb75](https://github.com/appblocks-hub/BB-CLI/commit/369eb7549a53424ea310881c3348c6f0428b461e))
+* modified get ([5b17c03](https://github.com/appblocks-hub/BB-CLI/commit/5b17c0358729ad5f9f65a5414b1644c22fba0b85))
+* modified multiple commands ([0785ab6](https://github.com/appblocks-hub/BB-CLI/commit/0785ab6571d96a308b8784a1574409052c01aefa))
+* modified publish command ([c07476d](https://github.com/appblocks-hub/BB-CLI/commit/c07476d261f3754e9b22f7843a9c35540a74e070))
+* modified publish package block ([7fde669](https://github.com/appblocks-hub/BB-CLI/commit/7fde66967266b5573cda67a98f38d0f0b5c7daae))
+* modified test ([803517f](https://github.com/appblocks-hub/BB-CLI/commit/803517f7ac926114eb8499b10830f2a79da24434))
+* modified test ([e8436f1](https://github.com/appblocks-hub/BB-CLI/commit/e8436f1bb7aebd146e67e139e45d66467e6d7c77))
+* pass block name to sync function in create version ([dd179ea](https://github.com/appblocks-hub/BB-CLI/commit/dd179eade6e074f4069090dc9209880e4946c39f))
+* plugin from config ([7c4af82](https://github.com/appblocks-hub/BB-CLI/commit/7c4af82c83b118ae769f12b2674dd622e5290808))
+* plugin from config ([7d91336](https://github.com/appblocks-hub/BB-CLI/commit/7d91336a35e65fba8704175ddcf6c1c4a99bb7d5))
+* plugin param ([27a677b](https://github.com/appblocks-hub/BB-CLI/commit/27a677bd26a0256a836c9c95c8e474497133b9e6))
+* pulled block syncing issue ([ce6c4fd](https://github.com/appblocks-hub/BB-CLI/commit/ce6c4fd4721275cb8cad9e4a49e38fd844a3211b))
+* reading github organization on connect remote ([b35c0e0](https://github.com/appblocks-hub/BB-CLI/commit/b35c0e00f4158245be96644641a2476477072c1e))
+* start build ([31b0ed2](https://github.com/appblocks-hub/BB-CLI/commit/31b0ed24e7ec163890a3d2b4ea38fbe16213fe7d))
+* subpackage level middleware issue ([4ddc427](https://github.com/appblocks-hub/BB-CLI/commit/4ddc42740b6985d8d21cb2705edc7e2bafbc980e))
+
 ## [1.5.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.4.0-beta...v1.5.0-beta) (2023-11-22)
 
 
