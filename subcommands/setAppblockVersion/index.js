@@ -8,7 +8,7 @@
 const path = require('path')
 const { readInput } = require('../../utils/questionPrompts')
 const { spinnies } = require('../../loader')
-const { getAllAppblockVersions } = require('../publish/util')
+const { getAllAppblockVersions } = require('../publish/utils')
 // const { getAllBlockVersions } = require('../../utils/registryUtils')
 // const { post } = require('../../utils/axios')
 // const { linkAbVersionBlockVersion } = require('../../utils/api')

@@ -8,9 +8,8 @@
 const chalk = require('chalk')
 const { readFileSync } = require('fs')
 const path = require('path')
-const { addDependenciesApi, checkDependenciesApi, submitForDependenciesReview } = require('../../utils/api')
-const { post } = require('../../utils/axios')
-// const { confirmationPrompt } = require('../../utils/questionPrompts')
+const { addDependenciesApi, checkDependenciesApi, submitForDependenciesReview } = require('../../../utils/api')
+const { post } = require('../../../utils/axios')
 
 /**
  *

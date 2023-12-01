@@ -9,7 +9,7 @@ const { spinnies } = require('../../../loader')
 const { readInput, confirmationPrompt } = require('../../../utils/questionPrompts')
 const { updateReadme } = require('../../../utils/registryUtils')
 const { getLanguageVersionData } = require('../../../utils/languageVersion')
-const { getDependencies, getDependencyIds } = require('../../publish/dependencyUtil')
+const { getDependencies, getDependencyIds } = require('../../publish/utils/dependencyUtil')
 const { uploadReadMe } = require('../../../utils/fileAndFolderHelpers')
 
 const uploadBlockReadme = async ({ readmePath, blockId, versionId }) => {
