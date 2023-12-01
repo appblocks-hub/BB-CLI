@@ -7,16 +7,25 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const chalk  = require('chalk')
 const { Command } = require('commander')
 const publishToStore = require('../subcommands/publishToStore')
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
 const program = new Command().hook('preAction', async () => {
-  await ensureUserLogins()
-  await checkAndSetUserSpacePreference()
+  try {
+    await ensureUserLogins()
+    await checkAndSetUserSpacePreference()
+  } catch (error) {
+    console.log(chalk.red(error.response?.data.message || error.message))
+    process.exit(1)
+  }
 })
 
-program.argument('[block-name]', 'Name of block to publish').option('-v, --version <version>', 'Version to publish').action(publishToStore)
+program
+  .argument('[block-name]', 'Name of block to publish')
+  .option('-v, --version <version>', 'Version to publish')
+  .action(publishToStore)
 
 program.parse(process.argv)

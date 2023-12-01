@@ -1,15 +1,11 @@
 
-const { spinnies } = require('../../loader')
-const {  appBlockSellFreeBlock } = require('../../utils/api')
-
-const { readInput } = require('../../utils/questionPrompts')
-const { getAllBlockVersions } = require('../../utils/registryUtils')
-const { getAllLicenses } = require('../../utils/paymentUtils')
-const { getShieldHeader } = require('../../utils/getHeaders')
-const { axios } = require('../../utils/axiosInstances')
-
-
-
+const { spinnies } = require('../../../loader')
+const {  appBlockSellFreeBlock } = require('../../../utils/api')
+const { readInput } = require('../../../utils/questionPrompts')
+const { getAllBlockVersions } = require('../../../utils/registryUtils')
+const { getAllLicenses } = require('../../../utils/paymentUtils')
+const { getShieldHeader } = require('../../../utils/getHeaders')
+const { axios } = require('../../../utils/axiosInstances')
 
 const getBlockVersions = async (blockId, version) => {
   spinnies.add('bv', { text: `Getting block versions` })

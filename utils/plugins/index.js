@@ -6,6 +6,20 @@ async function handleCmdOptionPlugin(cmdOpts, core) {
   new Plugin(cmdOpts.pluginOption).apply(core)
 }
 
+async function handleBBConfigPlugin(configFilepath, core) {
+  const bbConfig = await readBBConfigFile(configFilepath)
+  if (!bbConfig.plugins?.length) return
+  
+  bbConfig.plugins.forEach((plugin) => {
+    try {
+      plugin.apply(core)
+    } catch (error) {
+      const tapPromiseErr = `Cannot read properties of undefined (reading 'tapPromise')`
+      if (!error.message.includes(tapPromiseErr)) throw error
+    }
+  })
+}
+
 async function readBBConfigFile(configFilepath) {
   try {
     const filePath = configFilepath || 'bb.config.js'
@@ -27,4 +41,4 @@ async function readBBConfigFile(configFilepath) {
   }
 }
 
-module.exports = { readBBConfigFile, handleCmdOptionPlugin }
+module.exports = { readBBConfigFile, handleCmdOptionPlugin, handleBBConfigPlugin }
