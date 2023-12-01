@@ -13,7 +13,7 @@ const { execSync } = require('child_process')
 const { existsSync, rmSync, readdirSync, statSync } = require('fs')
 const { readInput } = require('../../../utils/questionPrompts')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const { getLatestCommits } = require('../syncOrphanBranches/util')
+const { getLatestCommits } = require('./syncOrphanBranchesUtil')
 const { listSpaces } = require('../../../utils/spacesUtils')
 const { feedback } = require('../../../utils/cli-feedback')
 const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
@@ -35,55 +35,6 @@ const buildApiPayload = (currentConfig, apiPayload) => {
     }
   }
 }
-
-// const areArraysEqual = (array1, array2) => {
-//   if (array1.length !== array2.length) {
-//     return false
-//   }
-
-//   for (let i = 0; i < array1.length; i += 1) {
-//     if (array1[i] !== array2[i]) {
-//       return false
-//     }
-//   }
-
-//   return true
-// }
-
-// const updatePackageConfig = (packageConfig, blockManager, repoVisibility) => {
-//   let packageConfigToUpdate = {}
-//   let updatePackage = false
-
-//   let isPublic
-//   let orphanBranchName = `block_${packageConfig.name}`
-
-//   if (repoVisibility === 'PUBLIC') isPublic = true
-//   else isPublic = false
-
-//   if (!packageConfig?.id) {
-//     packageConfigToUpdate.id = nanoid()
-//     updatePackage = true
-//   }
-
-//   if (!packageConfig?.source?.branch || packageConfig.source.branch !== orphanBranchName) {
-//     packageConfigToUpdate.source = { ...packageConfig.source, branch: orphanBranchName }
-//     updatePackage = true
-//   }
-
-//   if (!packageConfig?.isPublic || packageConfig.isPublic !== isPublic) {
-//     packageConfigToUpdate.isPublic = isPublic
-//     updatePackage = true
-//   }
-//   if (!packageConfig?.parentBlockIDs || !areArraysEqual(packageConfig.parentBlockIDs, blockManager.newParentBlockIDs)) {
-//     packageConfigToUpdate.parentBlockIDs = blockManager.newParentBlockIDs
-
-//     updatePackage = true
-//   }
-
-//   if (updatePackage) {
-//     blockManager.updateConfig(packageConfigToUpdate)
-//   }
-// }
 
 const buildSinglePackageBlockConfig = async (options) => {
   let { workSpaceConfigManager, blockMetaDataMap, blockNameArray, apiPayload } = options
@@ -264,40 +215,6 @@ const addBlockWorkSpaceCommits = async (blockMetaDataMap, Git) => {
   }
 }
 
-// const checkAndPushChanges = async (Git, upstreamBranch) => {
-//   let retryCount = 0
-//   const maxRetries = 5
-
-//   while (retryCount <= maxRetries) {
-//     try {
-//       const statusOutput = (await Git.statusWithOptions('--porcelain'))?.out
-//       if (statusOutput?.trim() !== '') {
-//         await Git.stageAll()
-
-//         await Git.commit('Config updation')
-
-//         await Git.push(upstreamBranch)
-
-//         console.log('Config updation Successful!')
-//         return // Exit the loop if push is successful
-//       }
-//       console.log('No config changes to push.')
-//       return // Exit the loop if no changes to push
-//     } catch (error) {
-//       console.error('Config updation failed:', error)
-
-//       if (retryCount === maxRetries) {
-//         console.error('Max retries reached. Exiting.')
-//         return // Exit the loop if max retries reached
-//       }
-
-//       retryCount += 1
-//       console.log('Retrying...')
-//       await Git.pull()
-//     }
-//   }
-// }
-
 const removeSync = async (paths) => {
   if (!paths?.length) return
   await Promise.all(
@@ -378,27 +295,6 @@ const setVisibilityAndDefaultBranch = async (options) => {
     if (error) throw error
     const repository = await manager.getRepository()
     defaultBranch = repository?.defaultBranchName ?? ''
-
-    // repoVisibility = existingRepoData?.visibility ?? ''
-
-    // if (repoVisibility.length === 0) {
-    //   console.log('Error getting Repository visibility and main branch from git\n')
-
-    //   const inputRepoVisibility = await readInput({
-    //     name: 'inputRepoVisibility',
-    //     type: 'checkbox',
-    //     message: 'Select the repo visibility',
-    //     choices: ['PUBLIC', 'PRIVATE'].map((visibility) => visibility),
-    //     validate: (input) => {
-    //       if (!input || input?.length < 1) return `Please enter either public or private`
-    //       return true
-    //     },
-    //   })
-
-    //   repoVisibility = inputRepoVisibility
-    // }
-
-    // headLessConfigStore().set('repoVisibility', repoVisibility)
 
     const inputRepoMainBranch = await readInput({
       name: 'inputRepoMainBranch',

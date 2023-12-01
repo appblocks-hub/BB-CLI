@@ -8,15 +8,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const { readFileSync, existsSync, mkdirSync } = require('fs')
+const { readFileSync, existsSync, mkdirSync, writeFileSync } = require('fs')
 const { execSync } = require('child_process')
 const path = require('path')
-const { axios } = require('../../utils/axiosInstances')
-const { appRegistryCreateDeployPresignedUrl } = require('../../utils/api')
-const { getShieldHeader } = require('../../utils/getHeaders')
-const { blockTypeInverter } = require('../../utils/blockTypeInverter')
-const { spinnies } = require('../../loader')
-const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../utils/bbFolders')
+const { axios } = require('../../../utils/axiosInstances')
+const { appRegistryCreateDeployPresignedUrl } = require('../../../utils/api')
+const { getShieldHeader } = require('../../../utils/getHeaders')
+const { blockTypeInverter } = require('../../../utils/blockTypeInverter')
+const { spinnies } = require('../../../loader')
+const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../../utils/bbFolders')
 
 const bbTempPath = getBBFolderPath(BB_FOLDERS.TEMP)
 const ZIP_TEMP_FOLDER = path.join(bbTempPath, BB_FILES.UPLOAD)
@@ -92,7 +92,21 @@ const createZip = async ({ directory, blockName, type }) => {
 }
 
 
+function updateSyncLogs(directoryPath, nonAvailableBlockNamesMap) {
+  // Create the directory if it doesn't exist
+  if (!existsSync(directoryPath)) {
+    mkdirSync(directoryPath, { recursive: true })
+    console.log('sync logs created:', path.relative(path.resolve(), directoryPath))
+  }
+
+  const filePath = path.join(directoryPath, BB_FOLDERS.OUT)
+
+  writeFileSync(filePath, JSON.stringify(nonAvailableBlockNamesMap, null, 2), 'utf8', { flag: 'w' })
+}
+
+
 module.exports = {
+  updateSyncLogs,
   checkIfDistExist,
   uploadToServer,
   createZip,
