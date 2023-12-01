@@ -5,10 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const path = require('path')
-const ConfigFactory = require('../../utils/configManagers/configFactory')
-const { BB_CONFIG_NAME } = require('../../utils/constants')
-
 async function updateAllMemberConfig(manger, source) {
   for await (const blockManager of manger.getDependencies()) {
     if (!blockManager?.config) continue
@@ -24,14 +20,4 @@ async function updateAllMemberConfig(manger, source) {
   }
 }
 
-async function initializeConfig() {
-  const configPath = path.resolve(BB_CONFIG_NAME)
-  const { manager: configManager, error } = await ConfigFactory.create(configPath)
-  if (error) {
-    if (error.type !== 'OUT_OF_CONTEXT') throw error
-    throw new Error('Please run the command inside package context ')
-  }
-  return configManager
-}
-
-module.exports = { initializeConfig, updateAllMemberConfig }
+module.exports = { updateAllMemberConfig }
