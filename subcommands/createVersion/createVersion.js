@@ -1,5 +1,5 @@
 const { Logger } = require('../../utils/logger')
-const { readBBConfigFile } = require('../../utils/plugins')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 const CreateVersionCore = require('./createVersionCore')
 const HandleBeforeCreateVersion = require('./plugins/handleBeforeCreateVersion')
 const HandleMemberBlock = require('./plugins/handleMemberBlock')
@@ -23,10 +23,8 @@ async function createVersion(component, options) {
     /**
      * Read and register plugins from bb config
      */
-    const bbConfig = await readBBConfigFile(options.configPath)
-    if (bbConfig.plugins) {
-      bbConfig.plugins.forEach((plugin) => plugin.apply(core))
-    }
+    await handleBBConfigPlugin(options.configPath, core)
+
 
     /**
      * Start operations

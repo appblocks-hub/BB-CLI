@@ -19,31 +19,37 @@ const HandleBeforePull = require('./plugins/HandleBeforePull')
 const HandleCheckPurchasedPull = require('./plugins/HandleCheckPurchasedPull')
 const HandleAfterPull = require('./plugins/HandleAfterPull')
 const HandleRawPackagePull = require('./plugins/HandleRawPackagePull')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 
 async function pull(pullBlock, pullBlockNewName, cmdOptions) {
   const { logger } = new Logger('pull')
-  const Pull = new PullCore({ pullBlock, pullBlockNewName }, cmdOptions, { logger, spinnies, feedback })
+  const core = new PullCore({ pullBlock, pullBlockNewName }, cmdOptions, { logger, spinnies, feedback })
   try {
-    new HandleGetPullBlockDetails().apply(Pull)
-    new HandleOutOfContext().apply(Pull)
-    new HandleBeforePull().apply(Pull)
-    new HandleAddVariant().apply(Pull)
-    new HandleNoVariant().apply(Pull)
-    new HandleCheckPurchasedPull().apply(Pull)
-    new HandleBlockPull().apply(Pull)
-    new HandlePackagePull().apply(Pull)
-    new HandleRawPackagePull().apply(Pull)
+    new HandleGetPullBlockDetails().apply(core)
+    new HandleOutOfContext().apply(core)
+    new HandleBeforePull().apply(core)
+    new HandleAddVariant().apply(core)
+    new HandleNoVariant().apply(core)
+    new HandleCheckPurchasedPull().apply(core)
+    new HandleBlockPull().apply(core)
+    new HandlePackagePull().apply(core)
+    new HandleRawPackagePull().apply(core)
 
-    new HandleAfterPull().apply(Pull)
+    new HandleAfterPull().apply(core)
 
-    await Pull.initializeConfig()
-    await Pull.pullTheBlock()
+    /**
+     * Read and register plugins from bb config
+     */
+    await handleBBConfigPlugin(cmdOptions.configPath, core)
+
+    await core.initializeConfig()
+    await core.pullTheBlock()
   } catch (error) {
     logger.error(error)
     spinnies.add('err', { text: error.message })
     spinnies.fail('err', { text: error.message })
-    spinnies.stopAll()
   }
+  spinnies.stopAll()
 }
 
 module.exports = pull

@@ -1,20 +1,20 @@
-/* eslint-disable */
+const chalk = require('chalk')
 const { Logger } = require('../../utils/logger')
 const StartCore = require('./startCore')
 const { spinnies } = require('../../loader')
 const { feedback } = require('../../utils/cli-feedback')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 
 const HandleNodeFunctionStart = require('./plugins/handleNodeFunctionStart')
 const HandleJSViewStart = require('./plugins/handleJSViewStart')
-const LockAndAssignPorts = require('./plugins/lockAndAssignPortsPlugin.js/index.js')
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
 const HandleBeforeStart = require('./plugins/handleBeforeStart')
 const HandleBlockGrouping = require('./plugins/handleBlockGrouping')
-const chalk = require('chalk')
+const LockAndAssignPorts = require('./plugins/lockAndAssignPortsPlugin.js')
 
 async function start(blockName, options) {
   const { logger } = new Logger('start')
-  const Start = new StartCore(blockName, {
+  const core = new StartCore(blockName, {
     singleInstance: !options.multiInstance,
     ...options,
     logger,
@@ -23,24 +23,28 @@ async function start(blockName, options) {
   })
 
   try {
-    new HandleOutOfContext().apply(Start)
-    new HandleBeforeStart().apply(Start)
-    new HandleBlockGrouping().apply(Start)
-    new LockAndAssignPorts().apply(Start)
+    new HandleOutOfContext().apply(core)
+    new HandleBeforeStart().apply(core)
+    new HandleBlockGrouping().apply(core)
+    new LockAndAssignPorts().apply(core)
 
-    new HandleNodeFunctionStart().apply(Start)
-    new HandleJSViewStart().apply(Start)
+    new HandleNodeFunctionStart().apply(core)
+    new HandleJSViewStart().apply(core)
 
-    await Start.initializeConfigManager()
-    await Start.start()
+    /**
+     * Read and register plugins from bb config
+     */
+    await handleBBConfigPlugin(options.configPath, core)
+
+    await core.initializeConfigManager()
+    await core.start()
     if (options.environment === 'preview') console.log(`\nStart process completed`)
-    await Start.cleanUp()
   } catch (error) {
-    await Start.cleanUp()
     logger.error(error)
     spinnies.add('start', { text: error.message })
     spinnies.fail('start', { text: chalk.red(error.message) })
   }
+  await core.cleanUp()
   spinnies.stopAll()
 }
 
