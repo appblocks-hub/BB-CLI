@@ -212,73 +212,78 @@ class HandleNodeFunctionStart {
 
         let child = { pid: 0 }
         let pm2InstanceName
-        if (core.cmdOpts.pm2) {
-          try {
-            execSync('pm2 -v', { stdio: 'ignore' })
-          } catch {
-            throw new Error('Please install pm2 and try again')
+
+        // Wrap the function call in an anonymous function
+        const nodeFunctionStartFunction = async () => {
+          if (core.cmdOpts.pm2) {
+            try {
+              execSync('pm2 -v', { stdio: 'ignore' })
+            } catch {
+              throw new Error('Please install pm2 and try again')
+            }
+
+            const command = 'pm2'
+            pm2InstanceName = process.env.BB_PM2_NAME || core.cmdArgs.blockName || core.packageConfig.name
+            let args = ['start', 'index.js', '-i', 'max', '--name', pm2InstanceName]
+
+            if (existsSync('pm2.json')) {
+              const { data, err } = await readJsonAsync('pm2.json')
+              if (err) throw err
+              pm2InstanceName = data.apps?.[0]?.name || pm2InstanceName
+              args = ['start', path.join(emPath, '..', 'pm2.json'), '-f']
+            }
+
+            execSync(`${command} ${args.join(' ')}`, {
+              cwd: emPath,
+              stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+              env: { ...process.env, parentPath: core.cwd },
+            })
+          } else {
+            // start node
+            child = spawn('node', ['index.js'], {
+              cwd: emPath,
+              detached: true,
+              stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
+              env: { ...process.env, parentPath: core.cwd },
+            })
+            child.unref()
+            this.pid = child.pid
+          }
+          await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
+
+          const updateConfig = {
+            isOn: true,
+            singleInstance: true,
+            pid: this.pid || null,
+            port: this.port || null,
+            pm2InstanceName,
+            log: { out: logOutPath, err: logErrPath },
           }
 
-          const command = 'pm2'
-          pm2InstanceName = process.env.BB_PM2_NAME || core.cmdArgs.blockName || core.packageConfig.name
-          let args = ['start', 'index.js', '-i', 'max', '--name', pm2InstanceName]
-
-          if (existsSync('pm2.json')) {
-            const { data, err } = await readJsonAsync('pm2.json')
-            if (err) throw err
-            pm2InstanceName = data.apps?.[0]?.name || pm2InstanceName
-            args = ['start', path.join(emPath, '..', 'pm2.json'), '-f']
-          }
-
-          execSync(`${command} ${args.join(' ')}`, {
-            cwd: emPath,
-            stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-            env: { ...process.env, parentPath: core.cwd },
-          })
-        } else {
-          // start node
-          child = spawn('node', ['index.js'], {
-            cwd: emPath,
-            detached: true,
-            stdio: ['ignore', openSync(logOutPath, 'w'), openSync(logErrPath, 'w')],
-            env: { ...process.env, parentPath: core.cwd },
-          })
-          child.unref()
-          this.pid = child.pid
-        }
-        await writeFile(path.join(emPath, '.emconfig.json'), `{"pid":${child.pid}}`)
-
-        const updateConfig = {
-          isOn: true,
-          singleInstance: true,
-          pid: this.pid || null,
-          port: this.port || null,
-          pm2InstanceName,
-          log: { out: logOutPath, err: logErrPath },
-        }
-
-        for (const blockManager of this.fnBlocks) {
-          const relativePath = path.relative(path.resolve(), blockManager.directory)
-          updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
-          blockManager.updateLiveConfig(updateConfig)
-        }
-
-        // update middleware block as live to avoid issues of some blocks are not start
-        for (const blockManager of core.middlewareBlockList) {
-          const relativePath = path.relative(path.resolve(), blockManager.directory)
-          updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
-          blockManager.updateLiveConfig(updateConfig)
-        }
-
-        // update middleware block as live to avoid issues of some blocks are not start
-        for (const { type, blocks } of core.blockStartGroups) {
-          if (type !== 'shared-fn') continue
-          for (const blockManager of blocks) {
+          for (const blockManager of this.fnBlocks) {
+            const relativePath = path.relative(path.resolve(), blockManager.directory)
+            updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
             blockManager.updateLiveConfig(updateConfig)
           }
-        }
 
-        spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
+          // update middleware block as live to avoid issues of some blocks are not start
+          for (const blockManager of core.middlewareBlockList) {
+            const relativePath = path.relative(path.resolve(), blockManager.directory)
+            updateConfig.liveUrl = `localhost:${this.port}/${relativePath || path.basename(blockManager.directory)}`
+            blockManager.updateLiveConfig(updateConfig)
+          }
+
+          // update middleware block as live to avoid issues of some blocks are not start
+          for (const { type, blocks } of core.blockStartGroups) {
+            if (type !== 'shared-fn') continue
+            for (const blockManager of blocks) {
+              blockManager.updateLiveConfig(updateConfig)
+            }
+          }
+
+          spinnies.succeed('emBuild', { text: `Function emulator started at http://localhost:${this.port}` })
+        }
+        core.functionsToStart.push(nodeFunctionStartFunction)
       } catch (err) {
         spinnies.fail('emBuild', { text: `Failed to start emulator: ${err.message}` })
         return

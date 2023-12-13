@@ -1,6 +1,5 @@
 const { prompt } = require('inquirer')
-const configstore = require('../../../configstore')
-const { headLessConfigStore } = require('../../../configstore')
+const { headLessConfigStore, configstore } = require('../../../configstore')
 const { feedback } = require('../../../utils/cli-feedback')
 
 /**

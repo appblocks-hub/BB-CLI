@@ -155,35 +155,46 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
 
       core.spinnies.update('singleBuild', { text: `Starting elements emulator` })
       await elementsBlocks[0]?.portKey?.abort()
-      emData = await emulateElements(emEleFolder, emElPort)
 
-      if (emData.exitCode === null) {
-        elementsBlocks.forEach((blockManager) => {
-          if (errorBlocks.includes(blockManager.config.name)) return
-          blockManager.updateLiveConfig({
-            isOn: true,
-            singleInstance: true,
-            pid: emData.pid || null,
-            port: emElPort || null,
-            log: emData.logPaths,
+      // Wrap the function call in an anonymous function
+      const emulateElementsFunction = async () => {
+        emData = await emulateElements(emEleFolder, emElPort)
+        if (emData.exitCode === null) {
+          elementsBlocks.forEach((blockManager) => {
+            if (errorBlocks.includes(blockManager.config.name)) return
+            blockManager.updateLiveConfig({
+              isOn: true,
+              singleInstance: true,
+              pid: emData.pid || null,
+              port: emElPort || null,
+              log: emData.logPaths,
+            })
           })
-        })
-      } else {
-        core.spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
-        throw new Error('Error in single build process. Please check logs')
+        } else {
+          core.spinnies.fail('singleBuild', { text: `Error in single build process. Please check logs` })
+          throw new Error('Error in single build process. Please check logs')
+        }
+
+        let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
+        if (errorBlocks?.length > 0) sMsg += ` with above errors`
+
+        core.spinnies.succeed('singleBuild', { text: sMsg })
       }
 
-      let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
-      if (errorBlocks?.length > 0) sMsg += ` with above errors`
-
-      core.spinnies.succeed('singleBuild', { text: sMsg })
+      // Push the function reference to the array
+      core.functionsToStart.push(emulateElementsFunction)
     }
 
     let containerProcessData = {}
-    for (const block of containerBlocks) {
-      await block.portKey?.abort()
-      containerProcessData = await startJsProgram(core, block, block.availablePort)
+    // Wrap the function call in an anonymous function
+    const startJsProgramFunction = async () => {
+      for (const block of containerBlocks) {
+        await block.portKey?.abort()
+        containerProcessData = await startJsProgram(core, block, block.availablePort)
+      }
     }
+    // Push the function reference to the array
+    core.functionsToStart.push(startJsProgramFunction)
 
     return { emData, containerProcessData, errorBlocks }
   } catch (error) {

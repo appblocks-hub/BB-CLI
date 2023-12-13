@@ -10,6 +10,7 @@ const LockAndAssignPorts = require('./plugins/lockAndAssignPortsPlugin.js/index.
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
 const HandleBeforeStart = require('./plugins/handleBeforeStart')
 const HandleBlockGrouping = require('./plugins/handleBlockGrouping')
+const HandleAfterStart = require('./plugins/handleAfterStart')
 const chalk = require('chalk')
 
 async function start(blockName, options) {
@@ -30,6 +31,8 @@ async function start(blockName, options) {
 
     new HandleNodeFunctionStart().apply(Start)
     new HandleJSViewStart().apply(Start)
+
+    new HandleAfterStart().apply(Start)
 
     await Start.initializeConfigManager()
     await Start.start()
