@@ -4,7 +4,7 @@ const { Logger } = require('../../utils/logger')
 const GetCore = require('./getCore')
 const HandleAfterGet = require('./plugins/handleAfterGet')
 const HandleBeforeGet = require('./plugins/handleBeforeGet')
-const { readBBConfigFile } = require('../../utils/plugins')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 const { spinnies } = require('../../loader')
 
 async function get(component, options) {
@@ -25,10 +25,8 @@ async function get(component, options) {
     /**
      * Read and register plugins from bb config
      */
-    const bbConfig = await readBBConfigFile(options.configPath)
-    if (bbConfig.plugins) {
-      bbConfig.plugins.forEach((plugin) => plugin.apply(core))
-    }
+    await handleBBConfigPlugin(options.configPath, core)
+
 
     /**
      * Start operations
