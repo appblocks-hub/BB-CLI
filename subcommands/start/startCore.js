@@ -91,23 +91,7 @@ class StartCore {
     for (const func of this.functionsToStart) {
       await func() // Call the function
     }
-
-    // // common core functionality if any
-    // if (this.envWarning.keys?.length > 0) {
-    //   const keys = [...new Set(this.envWarning.keys)]
-    //   const prefixes = [...new Set(this.envWarning.prefixes)]
-
-    //   const affectedKeys = chalk.dim(`Environment keys affected: ${keys}`)
-    //   const exampleKey = keys[0]?.startsWith('BB_') ? keys[0].replace('BB_', '') : keys[0]
-    //   const egString = chalk.dim(
-    //     `Example: ${prefixes.map((pre) => `${pre}_${exampleKey} instead of ${keys[0]}`).join(' or ')}.`
-    //   )
-    //   const warnMessage = chalk.yellow(
-    //     `Beginning with the upcoming version,\nbb cli exclusively support environment keys that begin with "BB_<package>"`
-    //   )
-
-    //   console.log(`\n${warnMessage}\n\n${egString}\n\n${affectedKeys}`)
-    // }
+    
     // afterCreate hook
     await this.hooks.afterStart?.promise(this, this.packageManager)
   }
