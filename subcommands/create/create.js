@@ -1,40 +1,46 @@
-/* eslint-disable */
 const { spinnies } = require('../../loader')
 const { Logger } = require('../../utils/logger')
 const CreateCore = require('./createCore')
-const handleBeforeCreate = require('./plugins/handleBeforeCreate')
-const handleFunctions = require('./plugins/handleFunction')
-const handleMultiRepo = require('./plugins/handleMultiRepo')
+const HandleBeforeCreate = require('./plugins/handleBeforeCreate')
+const HandleFunctions = require('./plugins/handleFunction')
+const HandleMultiRepo = require('./plugins/handleMultiRepo')
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
-const handlePackageBlock = require('./plugins/handlePackageBlock')
-const handleSharedFunction = require('./plugins/handleSharedFunction')
-const handleUIContainer = require('./plugins/handleUIContainer')
-const handleUIDependency = require('./plugins/handleUIDependency')
-const handleUIElement = require('./plugins/handleUIElement')
+const HandlePackageBlock = require('./plugins/handlePackageBlock')
+const HandleSharedFunction = require('./plugins/handleSharedFunction')
+const HandleUIContainer = require('./plugins/handleUIContainer')
+const HandleUIDependency = require('./plugins/handleUIDependency')
+const HandleUIElement = require('./plugins/handleUIElement')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 
 async function create(blockName, cmdOptions) {
   const { logger } = new Logger('create')
-  const Create = new CreateCore(blockName, cmdOptions, { logger, spinnies })
+  const core = new CreateCore(blockName, cmdOptions, { logger, spinnies })
 
   try {
-    new HandleOutOfContext().apply(Create)
-    new handleBeforeCreate().apply(Create)
-    new handlePackageBlock().apply(Create)
-    new handleFunctions().apply(Create)
-    new handleSharedFunction().apply(Create)
-    new handleUIElement().apply(Create)
-    new handleUIContainer().apply(Create)
-    new handleUIDependency().apply(Create)
-    new handleMultiRepo().apply(Create)
+    new HandleOutOfContext().apply(core)
+    new HandleBeforeCreate().apply(core)
+    new HandlePackageBlock().apply(core)
+    new HandleFunctions().apply(core)
+    new HandleSharedFunction().apply(core)
+    new HandleUIElement().apply(core)
+    new HandleUIContainer().apply(core)
+    new HandleUIDependency().apply(core)
+    new HandleMultiRepo().apply(core)
 
-    await Create.initializePackageConfigManager()
-    await Create.createBlock()
+    /**
+     * Read and register plugins from bb config
+     */
+    await handleBBConfigPlugin(cmdOptions.configPath, core)
+
+
+    await core.initializePackageConfigManager()
+    await core.createBlock()
   } catch (error) {
     logger.error(error)
     spinnies.add('create', { text: error.message })
     spinnies.fail('create', { text: error.message })
-    spinnies.stopAll()
   }
+  spinnies.stopAll()
 }
 
 module.exports = create

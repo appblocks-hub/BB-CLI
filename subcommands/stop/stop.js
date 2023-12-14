@@ -6,6 +6,7 @@ const HandleBeforeStop = require('./plugins/handleBeforeStop')
 const StopCore = require('./stopCore')
 const HandleOutOfContext = require('./plugins/handleOutOfContext')
 const KillTsWatcher = require('./plugins/killTsWatcher')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 
 async function stop(blockName, options) {
   const { logger } = new Logger('start')
@@ -14,6 +15,12 @@ async function stop(blockName, options) {
     new HandleOutOfContext().apply(core)
     new HandleBeforeStop().apply(core)
     new KillTsWatcher().apply(core)
+
+    
+    /**
+     * Read and register plugins from bb config
+     */
+    await handleBBConfigPlugin(options.configPath, core)
 
     await core.initializeConfigManager()
     await core.stop()

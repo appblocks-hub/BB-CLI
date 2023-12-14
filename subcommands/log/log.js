@@ -1,7 +1,7 @@
 const chalk = require('chalk')
 const { Logger } = require('../../utils/logger')
 const { spinnies } = require('../../loader')
-const { readBBConfigFile } = require('../../utils/plugins')
+const { handleBBConfigPlugin } = require('../../utils/plugins')
 const LogCore = require('./logCore')
 const HandleBeforeLog = require('./plugins/handleBeforeLog')
 
@@ -18,10 +18,8 @@ async function log(blockName, options) {
     /**
      * Read and register plugins from bb config
      */
-    const bbConfig = await readBBConfigFile(options.configPath)
-    if (bbConfig.plugins) {
-      bbConfig.plugins.forEach((plugin) => plugin.apply(core))
-    }
+    await handleBBConfigPlugin(options.configPath, core)
+
 
     /**
      * Start operations
