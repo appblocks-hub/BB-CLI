@@ -3,7 +3,6 @@
  */
 
 const path = require('path')
-const chalk = require('chalk')
 const { AsyncSeriesHook } = require('tapable')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
@@ -63,6 +62,7 @@ class StartCore {
 
     this.packageManager = {}
     this.packageConfig = {}
+    this.functionsToStart = []
 
     this.hooks = {
       beforeStart: new AsyncSeriesHook(['core']),
@@ -87,23 +87,12 @@ class StartCore {
     // beforeCreate hook
     await this.hooks.beforeStart?.promise(this, this.packageManager)
 
-    // common core functionality if any
-    if (this.envWarning.keys?.length > 0) {
-      const keys = [...new Set(this.envWarning.keys)]
-      const prefixes = [...new Set(this.envWarning.prefixes)]
-
-      const affectedKeys = chalk.dim(`Environment keys affected: ${keys}`)
-      const exampleKey = keys[0]?.startsWith('BB_') ? keys[0].replace('BB_', '') : keys[0]
-      const egString = chalk.dim(
-        `Example: ${prefixes.map((pre) => `${pre}_${exampleKey} instead of ${keys[0]}`).join(' or ')}.`
-      )
-      const warnMessage = chalk.yellow(
-        `Beginning with the upcoming version,\nbb cli exclusively support environment keys that begin with "BB_<package>"`
-      )
-
-      console.log(`\n${warnMessage}\n\n${egString}\n\n${affectedKeys}`)
+    // Execute each function in the array
+    for (const func of this.functionsToStart) {
+      await func() // Call the function
     }
-    // beforeCreate hook
+    
+    // afterCreate hook
     await this.hooks.afterStart?.promise(this, this.packageManager)
   }
 
