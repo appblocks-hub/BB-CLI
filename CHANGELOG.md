@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.0-beta...v1.6.1-beta) (2023-12-15)
+
+
+### Bug Fixes
+
+* plugin hook check ([a4df5f1](https://github.com/appblocks-hub/BB-CLI/commit/a4df5f19dfec1c217984899dfeabd2a5dcc3c6f3))
+
 ## [1.6.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.5.0-beta...v1.6.0-beta) (2023-12-01)
 
 
