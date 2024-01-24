@@ -46,7 +46,7 @@ async function createRepo(originalRepoName) {
         name: repoName.toString(),
         description: inputs.description,
         visibility: inputs.visibility,
-        owner: inputs.ownerId,
+        ownerId: inputs.ownerId,
       })
       spinnies.remove('cr')
       newName = false
