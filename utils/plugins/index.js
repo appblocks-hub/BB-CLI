@@ -34,10 +34,10 @@ async function readBBConfigFile(configFilepath) {
       return configFileContent
     }
 
-    console.error('\nError: The bb config file should export an object.')
+    console.error('\nError: bb config file should export an object.')
     return {}
   } catch (error) {
-    throw new Error(`\nError reading the The bb config file: ${error.message}`)
+    throw new Error(`\nError reading bb config file: ${error.message}`)
   }
 }
 

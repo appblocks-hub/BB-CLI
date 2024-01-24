@@ -27,9 +27,9 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
 
     if (!blocks) {
       const viewBlocks = [...(await core.packageManager.uiBlocks())]
-      elementsBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-elements')
-      depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')
-      containerBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-container')
+      elementsBlocks = viewBlocks.filter(({ config }) => config.type === 'ui-elements')
+      depLibBlocks = viewBlocks.filter(({ config }) => config.type === 'ui-dep-lib')
+      containerBlocks = viewBlocks.filter(({ config }) => config.type === 'ui-container')
     }
 
     if (!core.cmdOpts?.subContainer) {

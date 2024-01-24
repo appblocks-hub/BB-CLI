@@ -53,11 +53,11 @@ class handleBeforeCreate {
         }
 
         if (type === 8) {
-          const viewBlocks = [...packageManager.uiBlocks]
-          const depLibBlocks = viewBlocks.filter(({ meta }) => meta.type === 'ui-dep-lib')[0]
+          const viewBlocks = [...(await packageManager.uiBlocks())]
+          const depLibBlocks = viewBlocks.filter(({ config }) => config.type === 'ui-dep-lib')[0]
           if (depLibBlocks) {
             console.log(
-              `${chalk.bgRed('ERROR')}: One dependency library block already exist with name ${depLibBlocks.meta.name}`
+              `${chalk.bgRed('ERROR')}: One dependency library block already exist with name ${depLibBlocks.config.name}`
             )
             throw new Error('Cannot create multiple ui-dependency library')
           }

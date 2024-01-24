@@ -58,7 +58,7 @@ class HandleBeforeLog {
           core.filesToWatch.push(logOutPath, logErrPath)
         }
       } else {
-        const containerData = [...(await manager.uiBlocks())].find(({ meta }) => meta.type === 'ui-container')
+        const containerData = [...(await manager.uiBlocks())].find(({ config }) => config.type === 'ui-container')
         const containerLiveData = containerData?.liveDetails || {}
 
         if (err) {

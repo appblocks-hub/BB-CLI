@@ -7,10 +7,10 @@ const HandleBeforeInit = require('./plugins/handleBeforeInit')
 const HandleJSTemplate = require('./plugins/handleJsTemplate')
 const HandleTSTemplate = require('./plugins/handleTsTemplate')
 
-async function init(blocksName, options) {
+async function init(packageName, options) {
   const { logger } = new Logger('bb-init')
   try {
-    const core = new InitCore(blocksName, options, logger)
+    const core = new InitCore(packageName, options, logger)
 
     if (process.env.BB_CLI_RUN_HEADLESS) {
       global.HEADLESS_CONFIGS = headLessConfigStore().store
