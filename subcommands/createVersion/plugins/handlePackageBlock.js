@@ -16,6 +16,7 @@ const { readInput, confirmationPrompt } = require('../../../utils/questionPrompt
 const { getAllBlockVersions } = require('../../../utils/registryUtils')
 const { ensureReadMeIsPresent } = require('../../../utils/fileAndFolderHelpers')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
+const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
 
 class HandlePackageBlock {
   async checkMemberBlockVersions(packageManager, latest) {
@@ -98,7 +99,7 @@ class HandlePackageBlock {
   apply(createVersionCore) {
     createVersionCore.hooks.beforeCreateVersion.tapPromise('HandlePackageBlock', async (core) => {
       const { manager, cmdOpts } = core
-      if (!(manager instanceof PackageConfigManager)) return
+      if (!(manager instanceof PackageConfigManager) && !(manager instanceof RawPackageConfigManager)) return
 
       const { latest, force, preview, version: passedVersion, versionNote: passedVersionNote } = cmdOpts || {}
 
@@ -175,7 +176,7 @@ class HandlePackageBlock {
 
       core.versionData = { version, versionNote }
       manager.config.dependencies = updatedDependencies
-      
+
       const packageConfigData = { ...packageConfig, dependencies: updatedDependencies }
       delete packageConfigData.orphanBranchFolder
       delete packageConfigData.workSpaceFolder
