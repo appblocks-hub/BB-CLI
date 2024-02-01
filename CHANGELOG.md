@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.1-beta...v1.6.2-beta) (2024-01-24)
+
+
+### Bug Fixes
+
+* config reading meta issue ([6d9c36b](https://github.com/appblocks-hub/BB-CLI/commit/6d9c36b780e7b18b21e73d45af48ae2e18f37674))
+* github org repo issue ([03bebdd](https://github.com/appblocks-hub/BB-CLI/commit/03bebddc6236feba8d4b8c1803800af8c0490fb1))
+
 ## [1.6.1-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.0-beta...v1.6.1-beta) (2023-12-15)
 
 
