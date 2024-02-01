@@ -125,7 +125,7 @@ function isCleanBlock(dir, blockName) {
 
   const bName = path.basename(dir)
   const inPath = path.relative(path.resolve(), dir)
-  throw new Error(`Error: ${bName} has non-staged changes ${inPath ? `in ${inPath}` : ''}. Please run bb push`)
+  throw new Error(`Error: ${bName} has non-staged changes${inPath ? ` in ${inPath}` : ''}. Please run bb push`)
 }
 
 function addTag(dir, tag, msg = ' ') {
