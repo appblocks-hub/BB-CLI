@@ -5,12 +5,14 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+const chalk = require('chalk')
 const { existsSync, rmSync } = require('fs')
 const { configstore, headLessConfigStore } = require('../../../configstore')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
 const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
 const { setVisibilityAndDefaultBranch } = require('../utils/createBBModuleUtil')
 const { getBBFolderPath, BB_FOLDERS } = require('../../../utils/bbFolders')
+const { isCleanBlock } = require('../../../utils/gitCheckUtils')
 
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
@@ -34,6 +36,13 @@ class HandleBeforeSync {
       }
 
       if (manager.config.type === 'raw-package') core.preview = true
+
+      try {
+        isCleanBlock(manager.directory, blockName)
+      } catch (error) {
+        console.log(chalk.yellow(error.message?.replace('Error: ', '')))
+        console.log(chalk.dim('Sync will be proceeded with last updated main branch '))
+      }
 
       const repoUrl = manager.config.source.https
 

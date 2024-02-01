@@ -14,7 +14,7 @@ const ConfigFactory = require('../../utils/configManagers/configFactory')
 const { readInput } = require('../../utils/questionPrompts')
 const { spinnies } = require('../../loader')
 const { updateRepoName } = require('./util')
-const { updateAllMemberConfig } = require('../connectRemote/util')
+const { updateAllMemberConfig } = require('../connectRemote/utils')
 
 const blockRename = async (blockName, newBlockName, cmdOptions) => {
   const { blockPath } = cmdOptions || {}

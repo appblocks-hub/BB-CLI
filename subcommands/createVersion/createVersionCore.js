@@ -54,7 +54,7 @@ class CreateVersionCore {
     const [readmePath] = ensureReadMeIsPresent(this.manager.directory, this.manager.config.name, false)
     if (!readmePath) throw new Error('Make sure to add a README.md ')
 
-    this.spinnies.add('cv', { text: 'Creating package versions' })
+    this.spinnies.add('cv', { text: 'Creating version' })
     const { data: addRes, error: addErr } = await post(appBlockAddVersion, this.createVersionData)
 
     if (addErr) throw addErr
@@ -63,7 +63,7 @@ class CreateVersionCore {
     await uploadBlockReadme({ readmePath, blockId: this.createVersionData.blockId, versionId })
 
     await this.hooks.afterCreateVersion?.promise(this, this.logger)
-    this.spinnies.succeed('cv', { text: 'Created package version successfully' })
+    this.spinnies.succeed('cv', { text: 'Version created successfully' })
   }
 }
 
