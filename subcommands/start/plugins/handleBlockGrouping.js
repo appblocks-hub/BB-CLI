@@ -57,6 +57,8 @@ class HandleBlockGrouping {
         blockManager.config.middlewares = [...new Set(blockMiddlewares)]
       }
 
+      // NOTE: same name of subPackage level will replace the blocksToStack
+      // TODO: Fix by grouping block on subPackage level
       core.blocksToStart[name] = blockManager
     }
   }
