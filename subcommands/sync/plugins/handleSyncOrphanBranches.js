@@ -17,7 +17,7 @@ class HandleSyncOrphanBranches {
    */
   apply(syncCore) {
     syncCore.hooks.afterSync.tapPromise('HandleSyncOrphanBranches', async (core) => {
-      const { syncLogs, preview,  bbModulesPath, bbModulesData } = core
+      const { syncLogs, preview, bbModulesPath, bbModulesData } = core
       const { blockMetaDataMap, repoUrl } = bbModulesData
       const nonAvailableBlockNames = syncLogs?.apiLogs?.non_available_block_names ?? {}
       const errors = []
@@ -35,7 +35,11 @@ class HandleSyncOrphanBranches {
             await generateOrphanBranch({ bbModulesPath, block, repoUrl, blockMetaDataMap, preview })
             core.spinnies.succeed(`${blockName}`, { text: `${blockName} synced successfully` })
           } catch (error) {
+            if (!core.syncLogs.malformed_bb_modules) core.syncLogs.malformed_bb_modules = []
+            core.syncLogs.malformed_bb_modules.push(error)
+
             if (error.name !== 'noName') errors.push(error)
+
             const errMessage = error.name === 'noName' ? error.message : `Malformed bb_modules/${blockName}`
             core.spinnies.fail(`${blockName}`, { text: chalk.red(errMessage) })
           }

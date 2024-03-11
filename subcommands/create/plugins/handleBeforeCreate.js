@@ -48,7 +48,7 @@ class handleBeforeCreate {
         }
 
         if (!type) {
-          type = await getBlockType(['data', 'job', 'ui-dep-lib'])
+          type = await getBlockType(['data', 'job', 'ui-dep-lib', 'raw-package'])
           logger.info(`Prompted user for a type and got back ${type}`)
         }
 
@@ -57,7 +57,9 @@ class handleBeforeCreate {
           const depLibBlocks = viewBlocks.filter(({ config }) => config.type === 'ui-dep-lib')[0]
           if (depLibBlocks) {
             console.log(
-              `${chalk.bgRed('ERROR')}: One dependency library block already exist with name ${depLibBlocks.config.name}`
+              `${chalk.bgRed('ERROR')}: One dependency library block already exist with name ${
+                depLibBlocks.config.name
+              }`
             )
             throw new Error('Cannot create multiple ui-dependency library')
           }
