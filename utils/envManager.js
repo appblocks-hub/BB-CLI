@@ -9,6 +9,7 @@ const path = require('path')
 const { readFile } = require('fs/promises')
 const chalk = require('chalk')
 const { existsSync, writeFileSync } = require('fs')
+const whitelisted_env_keys = ['BB_SHIELD_AUTH_URL', 'SHIELD_AUTH_URL']
 
 const readEnvAsObject = async (envPath) => {
   try {
@@ -35,7 +36,7 @@ const updateEnvWith = (envData, customData, packPrefixes, customEnv) => {
   const isEnvHasPrefix = (key) => prefixes?.some((pre) => key.startsWith(pre))
 
   Object.entries(updatedData).forEach(([key]) => {
-    if (key === 'NODE_ENV' || isEnvHasPrefix(key)) return
+    if (key === 'NODE_ENV' || isEnvHasPrefix(key) || whitelisted_env_keys.includes(key)) return
     warnKeys.push(key.trim())
   })
 
