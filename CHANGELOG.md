@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.2-beta...v1.6.3-beta) (2024-03-13)
+
+
+### Bug Fixes
+
+* bug fixes ([019090b](https://github.com/appblocks-hub/BB-CLI/commit/019090beabbf818ccbbff784fb7e2c5a333780b6))
+
 ## [1.6.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.1-beta...v1.6.2-beta) (2024-01-24)
 
 
