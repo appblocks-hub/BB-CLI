@@ -1,5 +1,5 @@
 #!usr/bin/env node
-
+const fs = require('fs')
 const { exec } = require('child_process')
 const chokidar = require('chokidar')
 const path = require('path')
@@ -13,9 +13,27 @@ function Watch() {
   watcher.on('all', (_a, b) => {
     if (b.includes('node_modules')) return
     if (b.slice(-3) !== '.ts') return
-    if (b.slice(-3) === '.ts') {
-      exec('npx tsc index.ts --module nodenext --target esnext', { cwd: path.dirname(b) })
-    }
+
+    const directory = path.dirname(b)
+    fs.readdir(directory, (err, files) => {
+      if (err) {
+        throw err
+      }
+
+      const tsFiles = files.filter((file) => path.extname(file) === '.ts')
+      tsFiles.forEach((tsFile) => {
+        const tsFilePath = path.join(directory, tsFile)
+        exec(
+          `npx babel ${tsFilePath} --out-file  ${path.join(directory, tsFile.replace('.ts', '.js'))}`,
+          { cwd: directory },
+          (error) => {
+            if (error) {
+              throw error
+            }
+          }
+        )
+      })
+    })
   })
 }
 
