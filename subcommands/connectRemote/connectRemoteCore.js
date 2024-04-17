@@ -46,17 +46,17 @@ class ConnectRemoteCore {
 
     await this.hooks.beforeConnectRemote?.promise(this)
 
-    let { sourceUrl } = this.cmdOpts || {}
+    let { sshUrl } = this.cmdOpts || {}
 
-    if (!sourceUrl) {
+    if (!sshUrl) {
       const createRes = await createRepo(this.manager.config.name)
-      sourceUrl = createRes.sshUrl
+      sshUrl = createRes.sshUrl
     }
 
     this.source = {
       ...this.manager.config.source,
-      ssh: convertGitUrl(sourceUrl, 'ssh'),
-      https: convertGitUrl(sourceUrl),
+      ssh: convertGitUrl(sshUrl, 'ssh'),
+      https: convertGitUrl(sshUrl),
     }
 
     await this.hooks.afterConnectRemote?.promise(this)
