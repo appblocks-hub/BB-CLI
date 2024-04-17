@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.2-beta...v1.6.3-beta) (2024-04-17)
+
+
+### Bug Fixes
+
+* added babel for typescript compile ([1141a73](https://github.com/appblocks-hub/BB-CLI/commit/1141a7313e602e844ae92f0245e41d4ca7c218c6))
+* bug fixes ([019090b](https://github.com/appblocks-hub/BB-CLI/commit/019090beabbf818ccbbff784fb7e2c5a333780b6))
+
 ## [1.6.2-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.1-beta...v1.6.2-beta) (2024-01-24)
 
 
