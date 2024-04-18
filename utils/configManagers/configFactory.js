@@ -29,7 +29,7 @@ class ConfigFactory {
     let manager = null
     if (config.type === 'package') {
       manager = new PackageConfigManager(config, configPath)
-    } else if (config.type === 'raw-package') {
+    } else if (config.type === 'containerized') {
       manager = new RawPackageConfigManager(config, configPath)
     } else {
       manager = new BlockConfigManager(config, configPath)

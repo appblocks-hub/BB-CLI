@@ -83,7 +83,7 @@ class HandleBeforeInit {
         })
 
         core.packageConfig.language = blockLanguage
-        core.packageConfig.type = 'raw-package'
+        core.packageConfig.type = 'containerized'
       } else {
         const { useTemplate } = await setWithTemplate()
         core.useTemplate = useTemplate

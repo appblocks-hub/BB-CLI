@@ -35,7 +35,7 @@ class HandleBeforeSync {
         rmSync(core.bbModulesPath, { recursive: true })
       }
 
-      if (manager.config.type === 'raw-package') core.preview = true
+      if (manager.config.type === 'containerized') core.preview = true
 
       try {
         isCleanBlock(manager.directory, blockName)

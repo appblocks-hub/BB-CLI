@@ -145,7 +145,7 @@ const buildBlockTypesMap = async (options) => {
     blockTypesMap[packageConfig.type] = true
   }
 
-  if (packageConfig.type !== 'raw-package')
+  if (packageConfig.type !== 'containerized')
     for await (const blockManager of packageManager.getDependencies()) {
       if (!blockManager?.config) continue
 

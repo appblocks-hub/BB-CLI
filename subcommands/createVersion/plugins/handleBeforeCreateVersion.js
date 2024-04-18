@@ -44,7 +44,7 @@ class HandleBeforeCreateVersion {
       let blockManager
 
       if (manager.config.repoType === 'mono') {
-        if (manager.config.type === 'raw-package') {
+        if (manager.config.type === 'containerized') {
           rootManager = manager
         } else {
           const { err, rootManager: rm } = await manager.findMyParents()

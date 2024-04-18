@@ -118,7 +118,7 @@ class HandlePackageBlock {
       let memberBlockIds = []
       let updatedDependencies = {}
 
-      if (!(packageConfig.type === 'raw-package' || preview)) {
+      if (!(packageConfig.type === 'containerized' || preview)) {
         const checkRes = await this.checkMemberBlockVersions(packageManager, latest)
         memberBlockIds = checkRes?.memberBlockIds || []
         updatedDependencies = checkRes?.updatedDependencies || {}

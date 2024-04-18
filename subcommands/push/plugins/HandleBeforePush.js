@@ -15,7 +15,7 @@ const PushCore = require('../pushCore')
 
 class HandleBeforePush {
   async getAllBlocksToPush(manger, blocks) {
-    if (manger.config.type === 'raw-package') {
+    if (manger.config.type === 'containerized') {
       blocks.push(manger)
     } else {
       for await (const blockManager of manger.getDependencies()) {

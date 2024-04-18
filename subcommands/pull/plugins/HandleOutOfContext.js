@@ -29,7 +29,7 @@ class HandleOutOfContext {
         if (!core.isOutOfContext) return
 
         const blockType = blockTypeInverter(core.blockDetails.block_type)
-        if (blockType !== 'package' && blockType !== 'raw-package') {
+        if (blockType !== 'package' && blockType !== 'containerized') {
           throw new Error(
             `You are trying to pull a ${blockType} block outside package context.\nPlease create a package or pull into an existing package context`
           )

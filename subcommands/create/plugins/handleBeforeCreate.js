@@ -48,7 +48,7 @@ class handleBeforeCreate {
         }
 
         if (!type) {
-          type = await getBlockType(['data', 'job', 'ui-dep-lib', 'raw-package'])
+          type = await getBlockType(['data', 'job', 'ui-dep-lib', 'containerized'])
           logger.info(`Prompted user for a type and got back ${type}`)
         }
 
