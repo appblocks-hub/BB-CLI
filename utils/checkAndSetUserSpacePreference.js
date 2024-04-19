@@ -82,7 +82,7 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
   const spaceId = headLessConfigStore(null, true).get('currentSpaceId')
 
   if (cmd === 'create-version') {
-    if (manager.config.type !== 'raw-package') {
+    if (manager.config.type !== 'containerized') {
       const { rootManager } = await manager.findMyParents()
       packageManager = rootManager
     }

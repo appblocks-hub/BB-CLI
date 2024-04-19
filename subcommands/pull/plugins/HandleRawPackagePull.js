@@ -13,14 +13,14 @@ const { cloneBlock } = require('../utils')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
 
-class HandleRawPackagePull {
+class HandleContainerizedPackagePull {
   /**
    *
    * @param {PullCore} pullCore
    */
   apply(pullCore) {
     pullCore.hooks.beforePull.tapPromise(
-      'HandleRawPackagePull',
+      'HandleContainerizedPackagePull',
       async (
         /**
          * @type {PullCore}
@@ -56,4 +56,4 @@ class HandleRawPackagePull {
   }
 }
 
-module.exports = HandleRawPackagePull
+module.exports = HandleContainerizedPackagePull

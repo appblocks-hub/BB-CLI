@@ -5,7 +5,7 @@ const { readdirSync } = require('fs')
 const path = require('path')
 const { BB_FOLDERS } = require('../../../utils/bbFolders')
 const { extensionOf, doesPathIncludeFolder } = require('../utils')
-const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../../utils/configManagers/containerizedPackageConfigManager')
 
 class HandleBeforeFlush {
   getLogFiles(dir = '.') {
@@ -28,7 +28,7 @@ class HandleBeforeFlush {
       const { manager } = core
 
       let dir = '.'
-      if (!(manager instanceof RawPackageConfigManager)) {
+      if (!(manager instanceof ContainerizedPackageConfigManager)) {
         const { rootManager } = await manager.findMyParents()
         dir = rootManager?.directory || dir
       }

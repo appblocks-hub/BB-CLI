@@ -1,7 +1,7 @@
 const { readJsonAsync } = require('..')
 const BlockConfigManager = require('./blockConfigManager')
 const PackageConfigManager = require('./packageConfigManager')
-const RawPackageConfigManager = require('./rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('./containerizedPackageConfigManager')
 
 class ConfigFactory {
   static cache = {}
@@ -29,8 +29,8 @@ class ConfigFactory {
     let manager = null
     if (config.type === 'package') {
       manager = new PackageConfigManager(config, configPath)
-    } else if (config.type === 'raw-package') {
-      manager = new RawPackageConfigManager(config, configPath)
+    } else if (config.type === 'containerized') {
+      manager = new ContainerizedPackageConfigManager(config, configPath)
     } else {
       manager = new BlockConfigManager(config, configPath)
     }

@@ -65,7 +65,7 @@ export interface BlockConfig {
   supportedAppblockVersions: string[]
 }
 
-export interface RawPackageConfig {
+export interface  ContainerizedPackageConfig {
   name: string // name of block
   type: Exclude<BlockTypes, 'package'>
   source: ConfigSource

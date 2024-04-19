@@ -1,9 +1,9 @@
 const ConfigManager = require('./configManager')
 
-class RawPackageConfigManager extends ConfigManager {
+class ContainerizedPackageConfigManager extends ConfigManager {
   constructor(config, cwd) {
     super(config, cwd)
-    this.isRawPackageConfigManager = true
+    this.isContainerizedPackageConfigManager = true
   }
 
   get isLive() {
@@ -22,4 +22,4 @@ class RawPackageConfigManager extends ConfigManager {
   }
 }
 
-module.exports = RawPackageConfigManager
+module.exports = ContainerizedPackageConfigManager

@@ -2,12 +2,12 @@
 // Project: @appblocks/bb-cli <https://github.com/appblocks-hub/BB-CLI>
 // Definitions by: Arjun S Kumar <https://github.com/Digambaran>
 import { PathLike } from 'fs'
-import { RawPackageConfig, ConfigManager, BlockLiveDetails } from './configManager'
+import { ContainerizedPackageConfig, ConfigManager, BlockLiveDetails } from './configManager'
 
-declare class RawPackageConfigManager extends ConfigManager<RawPackageConfig> {
-  constructor(config: RawPackageConfig, cwd: PathLike)
+declare class ContainerizedPackageConfigManager extends ConfigManager<ContainerizedPackageConfig> {
+  constructor(config: ContainerizedPackageConfig, cwd: PathLike)
   
-  readonly isRawPackageConfigManager: true
+  readonly isContainerizedPackageConfigManager: true
 
   /**
    * check is live
@@ -20,4 +20,4 @@ declare class RawPackageConfigManager extends ConfigManager<RawPackageConfig> {
    */
   public updateLiveConfig(newConfig: Partial<BlockLiveDetails>): BlockLiveDetails
 }
-export = RawPackageConfigManager
+export = ContainerizedPackageConfigManager

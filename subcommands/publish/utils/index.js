@@ -9,7 +9,7 @@ const { readInput } = require('../../../utils/questionPrompts')
 const { getAllBlockVersions } = require('../../../utils/registryUtils')
 const { getBBFolderPath, BB_FOLDERS, BB_FILES } = require('../../../utils/bbFolders')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../../utils/configManagers/containerizedPackageConfigManager')
 
 const getPublishedVersion = (name, directory) => {
   try {
@@ -137,7 +137,7 @@ const buildBlockTypesMap = async (options) => {
 
   const packageConfig = packageManager.config
 
-  if (!(packageManager instanceof PackageConfigManager || packageManager instanceof RawPackageConfigManager)) {
+  if (!(packageManager instanceof PackageConfigManager || packageManager instanceof ContainerizedPackageConfigManager)) {
     throw new Error('Error parsing package block')
   }
 
@@ -145,7 +145,7 @@ const buildBlockTypesMap = async (options) => {
     blockTypesMap[packageConfig.type] = true
   }
 
-  if (packageConfig.type !== 'raw-package')
+  if (packageConfig.type !== 'containerized')
     for await (const blockManager of packageManager.getDependencies()) {
       if (!blockManager?.config) continue
 

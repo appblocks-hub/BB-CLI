@@ -18,7 +18,7 @@ program
   .option('-p, --plugin <plugin>', 'Set the plugin for language')
   .option('-po, --plugin-option <plugin-option>', 'Add the plugin option for provided plugin')
   .option('-cp, --config-path <config-path>', 'Set bb.config.js path')
-  .option('-raw, --raw-package', 'Create raw package version for preview')
+  .option('-c, --containerized', 'Create containerized package version for preview')
   .description('create an appblock')
   .action(init)
 

@@ -9,7 +9,7 @@ const path = require('path')
 const { execSync } = require('child_process')
 const { getBBFolderPath, BB_FOLDERS } = require('../../../utils/bbFolders')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../../utils/configManagers/containerizedPackageConfigManager')
 const { getBlockVersions, createZip } = require('../utils')
 const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 const BlockConfigManager = require('../../../utils/configManagers/blockConfigManager')
@@ -36,7 +36,7 @@ class HandleBeforePublish {
       let directory
 
       if (manager.config.repoType === 'mono') {
-        if (manager.config.type === 'raw-package') {
+        if (manager.config.type === 'containerized') {
           rootManager = manager
         } else {
           const { err, rootManager: rm } = await manager.findMyParents()
@@ -63,7 +63,7 @@ class HandleBeforePublish {
 
         bManger.config.orphanBranchFolder = orphanBranchFolder
 
-        if (bManger instanceof PackageConfigManager || bManger instanceof RawPackageConfigManager) {
+        if (bManger instanceof PackageConfigManager || bManger instanceof ContainerizedPackageConfigManager) {
           packageManager = bManger
         } else blockManager = bManger
 
