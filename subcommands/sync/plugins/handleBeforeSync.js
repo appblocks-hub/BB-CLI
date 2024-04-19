@@ -9,7 +9,7 @@ const chalk = require('chalk')
 const { existsSync, rmSync } = require('fs')
 const { configstore, headLessConfigStore } = require('../../../configstore')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../../utils/configManagers/containerizedPackageConfigManager')
 const { setVisibilityAndDefaultBranch } = require('../utils/createBBModuleUtil')
 const { getBBFolderPath, BB_FOLDERS } = require('../../../utils/bbFolders')
 const { isCleanBlock } = require('../../../utils/gitCheckUtils')
@@ -51,7 +51,7 @@ class HandleBeforeSync {
       const parent = await manager.findMyParentPackage()
 
       if (
-        !(manager instanceof PackageConfigManager || manager instanceof RawPackageConfigManager) ||
+        !(manager instanceof PackageConfigManager || manager instanceof ContainerizedPackageConfigManager) ||
         parent.data.parentPackageFound !== false
       ) {
         throw new Error('Please call sync from the root package block..')

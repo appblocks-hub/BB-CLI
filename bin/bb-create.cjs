@@ -19,7 +19,9 @@ program
   .allowExcessArguments(false)
   .addOption(
     new Option('-t, --type <component-type>', 'type  of comp')
-      .choices(blockTypes.map((t) => t[0]))
+      .choices(blockTypes
+        .filter((t) => t[0] !== 'containerized')
+        .map((t) => t[0]))
       .argParser((s) => blockTypeInverter(s))
   )
   .option('--no-autoRepo')

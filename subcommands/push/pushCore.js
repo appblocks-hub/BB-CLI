@@ -18,7 +18,7 @@ const { multiBar } = require('./utils/multiBar')
 const ConfigFactory = require('../../utils/configManagers/configFactory')
 const PackageConfigManager = require('../../utils/configManagers/packageConfigManager')
 const { BB_CONFIG_NAME } = require('../../utils/constants')
-const RawPackageConfigManager = require('../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../utils/configManagers/containerizedPackageConfigManager')
 
 class PushCore {
   constructor(blockName, cmdOptions, options) {
@@ -53,7 +53,7 @@ class PushCore {
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
       throw new Error('Please run the command inside package context')
-    } else if (configManager instanceof PackageConfigManager || configManager instanceof RawPackageConfigManager) {
+    } else if (configManager instanceof PackageConfigManager || configManager instanceof ContainerizedPackageConfigManager) {
       this.packageManager = configManager
       this.packageConfig = this.packageManager.config
     } else throw new Error('Please run the command inside package context')

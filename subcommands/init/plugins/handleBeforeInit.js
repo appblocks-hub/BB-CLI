@@ -74,7 +74,7 @@ class HandleBeforeInit {
         repoType,
       }
 
-      if (core.cmdOpts.rawPackage) {
+      if (core.cmdOpts.containerized) {
         const blockLanguage = await readInput({
           type: 'list',
           name: 'blockLanguage',

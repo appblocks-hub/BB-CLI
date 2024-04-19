@@ -13,7 +13,7 @@ const { getLanguageVersionData } = require('../../../utils/languageVersion')
 const { createZip, buildBlockTypesMap } = require('../utils')
 const { BB_EXCLUDE_FILES_FOLDERS } = require('../../../utils/bbFolders')
 const PackageConfigManager = require('../../../utils/configManagers/packageConfigManager')
-const RawPackageConfigManager = require('../../../utils/configManagers/rawPackageConfigManager')
+const ContainerizedPackageConfigManager = require('../../../utils/configManagers/containerizedPackageConfigManager')
 
 class HandlePublishPackageBlock {
   /**
@@ -23,7 +23,7 @@ class HandlePublishPackageBlock {
   apply(publishCore) {
     publishCore.hooks.beforePublish.tapPromise('HandlePublishPackageBlock', async (core) => {
       const { manager, versionData } = core
-      if (!(manager instanceof PackageConfigManager) && !(manager instanceof RawPackageConfigManager)) return
+      if (!(manager instanceof PackageConfigManager) && !(manager instanceof ContainerizedPackageConfigManager)) return
 
       const packageManager = manager
 
