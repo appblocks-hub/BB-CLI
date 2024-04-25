@@ -35,7 +35,6 @@ async function get(component, options) {
     await core.get()
   } catch (error) {
     logger.error(error)
-    console.log(error)
     console.log(chalk.red(error.message || error))
   }
   spinnies.stopAll()

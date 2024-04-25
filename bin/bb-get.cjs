@@ -11,9 +11,10 @@ const { Command } = require('commander')
 
 const checkAndSetUserSpacePreference = require('../utils/checkAndSetUserSpacePreference')
 const get = require('../subcommands/get')
+const { ensureUserLogins } = require('../utils/ensureUserLogins')
 
 const program = new Command().hook('preAction', async () => {
-  await checkAndSetUserSpacePreference('get')
+  await ensureUserLogins()
 })
 
 program.argument('[component]', 'Name of component').action(get)

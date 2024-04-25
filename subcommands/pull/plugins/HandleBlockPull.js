@@ -32,7 +32,7 @@ class HandleBlockPull {
          */
         core
       ) => {
-        // check is package or raw package
+        // check is package or containerized package
         if ([1, 9].includes(core.blockDetails.block_type)) return
 
         const cloneGitUrl = core.blockDetails.forked_git_url || core.blockDetails.git_url
