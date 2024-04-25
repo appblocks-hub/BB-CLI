@@ -48,6 +48,7 @@ async function ensureUserLogins(noRepo) {
         color: 'yellow',
       })
       configstore.delete('currentSpaceName', '')
+      configstore.delete('currentSpaceId', '') 
       const { data } = await loginWithAppBlock(true)
       configstore.set('appBlockUserToken', data.access_token)
       const user = await getShieldSignedInUser(data.access_token)

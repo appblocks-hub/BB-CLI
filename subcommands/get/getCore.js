@@ -41,11 +41,11 @@ class GetCore {
     const { error, manager } = await ConfigFactory.create(configPath)
     if (error) {
       if (error.type !== 'OUT_OF_CONTEXT') throw error
-      throw new Error('command can be used only inside package context')
+      // throw new Error('command can be used only inside package context')
     }
 
     if (manager instanceof BlockConfigManager) {
-      throw new Error('command can be used only inside package context')
+      throw new Error('command cannot be used inside block context')
     }
 
     this.manager = manager

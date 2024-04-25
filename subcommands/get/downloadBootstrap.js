@@ -75,11 +75,16 @@ class DownloadBootstrap {
     /**
      * If not a package block return
      */
+
     if (!this?.childBlocks?.length) {
-      this.spinnies.succeed(this.name, { text: `${this?.name} has been added to ${this?.parentManager?.config?.name}` })
+      let message = `${this?.name} has been added to ${this?.parentManager?.config?.name}`
+      if (!this.parentManager) {
+        message = `${this?.name} has been downloaded`
+      }
+      this.spinnies.succeed(this.name, { text: message })
       return {
         err: false,
-        msg: `${this?.name} has been added to ${this?.parentManager?.config?.name}`,
+        msg: message,
         name: this.name,
       }
     }
@@ -156,7 +161,12 @@ class DownloadBootstrap {
       // this.parentManager.removeBlock(originalName)
     }
 
-    this.spinnies.succeed(this.name, { text: `${this?.name} has been added to ${this?.parentManager?.config?.name}` })
+    if (this.parentManager.id) {
+      this.spinnies.succeed(this.name, { text: `${this?.name} has been added to ${this?.parentManager?.config?.name}` })
+    } else {
+      this.spinnies.succeed(this.name, { text: `${this?.name} has been downloaded` })
+    }
+
     return { err: false, msg: '', name: this.name }
   }
 }
