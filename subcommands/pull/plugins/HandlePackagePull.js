@@ -45,6 +45,8 @@ class HandlePackagePull {
           rootPath: core.cwd,
           isRoot: core.blockPullKeys.rootPackageName === core.blockPullKeys.blockName,
           tmpPath: core.tempAppblocksFolder,
+          createCustomVariant: core.createCustomVariant,
+          isOutOfContext: core.isOutOfContext,                                                                                       
         })
 
         core.blockClonePath = packageFolderPath

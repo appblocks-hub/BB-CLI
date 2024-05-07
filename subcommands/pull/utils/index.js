@@ -14,7 +14,15 @@ const ConfigFactory = require('../../../utils/configManagers/configFactory')
 const { readJsonAsync } = require('../../../utils')
 const GitConfigFactory = require('../../../utils/gitManagers/gitConfigFactory')
 
-const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName, blockVersion }) => {
+const checkOutAllBlocks = async ({
+  git,
+  tmpClonePath,
+  blockClonePath,
+  blockName,
+  blockVersion,
+  createCustomVariant,
+  isOutOfContext,
+}) => {
   const releaseBranch = `block_${blockName}@${blockVersion}`
   await git.fetch([`origin ${releaseBranch}`])
   await git.checkoutBranch(releaseBranch)
@@ -24,10 +32,14 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName,
   const { data, err } = await readJsonAsync(configPath)
   if (err) throw err
 
-  cpSync(tmpClonePath, blockClonePath, {
-    recursive: true,
-    filter: (s) => path.basename(s) !== '.git',
-  })
+  const cpOpts = { recursive: true }
+
+  if (createCustomVariant || !isOutOfContext) {
+    // filter for variant creations only
+    cpOpts.filter = (s) => path.basename(s) !== '.git'
+  }
+
+  cpSync(tmpClonePath, blockClonePath, cpOpts)
   await git.undoCheckout()
 
   const dependencies = Object.entries(data.dependencies ?? {})
@@ -46,6 +58,8 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName,
           blockClonePath: path.join(blockClonePath, directory),
           blockName: name,
           blockVersion: version,
+          createCustomVariant,
+          isOutOfContext,
         })
         return true
       })
@@ -53,7 +67,18 @@ const checkOutAllBlocks = async ({ git, tmpClonePath, blockClonePath, blockName,
   }
 }
 
-const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, rootPath, isRoot, tmpPath }) => {
+const cloneBlock = async (cloneParams) => {
+  const {
+    blockName,
+    blockClonePath,
+    blockVersion,
+    gitUrl,
+    rootPath,
+    isRoot,
+    tmpPath,
+    createCustomVariant,
+    isOutOfContext,
+  } = cloneParams
   spinnies.add(blockName, { text: `Pulling ${blockName}` })
 
   const { manager: git, error: gErr } = await GitConfigFactory.init({
@@ -68,7 +93,15 @@ const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, roo
 
     if (blockVersion) {
       git.cd(tmpClonePath)
-      await checkOutAllBlocks({ git, tmpClonePath, blockName, blockClonePath, blockVersion })
+      await checkOutAllBlocks({
+        git,
+        tmpClonePath,
+        blockName,
+        blockClonePath,
+        blockVersion,
+        createCustomVariant,
+        isOutOfContext,
+      })
       rmSync(tmpClonePath, { recursive: true })
     }
 
@@ -92,7 +125,7 @@ const cloneBlock = async ({ blockName, blockClonePath, blockVersion, gitUrl, roo
 
   if (blockVersion) {
     // if mono repo
-    await checkOutAllBlocks({ git, tmpClonePath, blockName, blockClonePath, blockVersion })
+    await checkOutAllBlocks({ git, tmpClonePath, blockName, blockClonePath, blockVersion, createCustomVariant })
 
     // TODO handle multi
     // await git.fetch('--all --tags')
