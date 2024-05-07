@@ -15,6 +15,7 @@ const { getAllAppblockVersions } = require('../../publish/utils')
 // eslint-disable-next-line no-unused-vars
 const PullCore = require('../pullCore')
 const { headLessConfigStore, configstore } = require('../../../configstore')
+const { feedback } = require('../../../utils/cli-feedback')
 
 class HandleBeforePull {
   /**
@@ -109,8 +110,16 @@ class HandleBeforePull {
             if (!goAhead) throw new Error(blockExistMsg)
           }
 
-          core.blockDetails.new_variant_block_name = await getBlockName()
-          core.blockClonePath = path.join(core.cwd, core.blockDetails.new_variant_block_name)
+          let newName = ''
+          while (!newName || existsSync(path.join(core.cwd, newName))) {
+            if (newName && existsSync(path.join(core.cwd, newName))) {
+              feedback({ type: 'warn', message: `Folder ${newName} already exist` })
+            }
+            newName = await getBlockName()
+          }
+
+          core.blockDetails.new_variant_block_name = newName
+          core.blockClonePath = path.join(core.cwd, newName)
         } else {
           console.log(chalk.dim(`Create as custom variant to pull with different name`))
           throw new Error(blockExistMsg)

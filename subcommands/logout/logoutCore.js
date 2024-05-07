@@ -33,12 +33,11 @@ class LogoutCore {
     await this.hooks.beforeLogout?.promise(this)
 
     this.spinnies.add('logout', { text: 'Connecting to shield..' })
-    const {
-      data: { success, message },
-    } = await post(appBlockLogout, {})
-    
-    if (!success) {
-      throw new Error(message || 'Error logging out of shield')
+    try {
+      const { data } = await post(appBlockLogout, {})
+      if (!data.success) throw new Error(data.message || 'Error logging out of shield')
+    } catch (error) {
+      throw new Error('Error logging out of shield')
     }
 
     this.spinnies.succeed('logout', { text: 'Logged out of shield' })
