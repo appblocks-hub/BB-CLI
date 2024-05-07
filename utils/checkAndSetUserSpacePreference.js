@@ -47,13 +47,12 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
   if (cmd === 'pull') {
     const spaceId = configstore.get('currentSpaceId')
     const headlessSpaceId = headLessConfigStore(null, true).get('currentSpaceId')
+    let currentSpaceName = configstore.get('currentSpaceName')
 
-    if (!spaceId && !headlessSpaceId) {
+    if ((!spaceId && !headlessSpaceId) || !currentSpaceName) {
       await chooseSpace()
       return true
     }
-
-    let currentSpaceName = configstore.get('currentSpaceName')
 
     if (!spaceId) {
       currentSpaceName = headLessConfigStore(null, true).get('currentSpaceName')
@@ -63,7 +62,6 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
       headLessConfigStore(null, true).set('currentSpaceName', currentSpaceName)
       headLessConfigStore(null, true).set('currentSpaceId', spaceId)
     }
-
     feedback({ type: 'success', message: `Current Space: ${currentSpaceName}` })
 
     return true
@@ -132,7 +130,6 @@ async function checkSpaceLinkedToPackageBlock(cmd) {
 
     configstore.set('currentSpaceName', space_name)
     configstore.set('currentSpaceId', space_id)
-
     feedback({ type: 'success', message: `Current Space: ${headLessConfigStore(null, true).get('currentSpaceName')}` })
   }
 

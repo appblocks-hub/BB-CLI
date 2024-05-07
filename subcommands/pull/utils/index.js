@@ -182,8 +182,11 @@ const getBlockPullKeys = (pullBlock) => {
     blockPullKeys.blockVersion = bV
   }
 
+  const currentSpace = headLessConfigStore().get('currentSpaceName')
   if (!blockPullKeys.spaceName) {
-    blockPullKeys.spaceName = headLessConfigStore().get('currentSpaceName')
+    blockPullKeys.spaceName = currentSpace
+  } else if (currentSpace !== blockPullKeys.spaceName) {
+    throw new Error(`Please switch to ${blockPullKeys.spaceName} to pull the block`)
   }
 
   return blockPullKeys
