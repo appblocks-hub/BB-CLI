@@ -1,5 +1,6 @@
 const generateWebpackConfig = (options) => {
-  const { env, emPort, depLib } = options || {}
+  const { env, emPort, depLib,remoteFileName } = options || {}
+
 
   const rulesRegex = {
     'babel-loader': /\.(js|jsx|ts|tsx)$/,
@@ -100,7 +101,7 @@ const config = {
     }),
     new ModuleFederationPlugin({
       name: 'remotes',
-      filename: "remoteEntry.js",
+      filename: "${remoteFileName}",
       exposes: exposedJson,${
         depLib
           ? `

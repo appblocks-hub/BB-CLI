@@ -17,7 +17,7 @@ const { emulateElements, stopEmulatedElements, packageInstall, buildBlock } = re
 const { upsertEnv } = require('../../../../../utils/envManager')
 const { BB_FOLDERS, getBBFolderPath } = require('../../../../../utils/bbFolders')
 
-const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
+const singleBuild = async ({ core, ports, blocks, buildOnly = false, env, remoteFileName = 'remoteEntry.js' }) => {
   const relativePath = path.resolve()
 
   try {
@@ -59,16 +59,16 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       const emElPort = ports?.emElements[0]
 
       const envUpdateData = {
-        [`BB_${packageEnvPrefix}_ELEMENTS_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
-        // [`BB_${packageEnvPrefix}_DEP_LIB_URL`]: `http://localhost:${emElPort}/remoteEntry.js`,
+        [`BB_${packageEnvPrefix}_ELEMENTS_URL`]: `http://localhost:${emElPort}/${remoteFileName}`,
+        // [`BB_${packageEnvPrefix}_DEP_LIB_URL`]: `http://localhost:${emElPort}/${remoteFileName}`,
       }
 
       for (const { packageManager } of core.subPackages) {
         const pkEnvPrefix = packageManager.config.name.toUpperCase()
         envPrefixes.push(pkEnvPrefix)
         // const relPath = path.relative(path.resolve(), pack.directory)
-        envUpdateData[`BB_${pkEnvPrefix}_ELEMENTS_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
-        // envUpdateData[`BB_${pkEnvPrefix}_DEP_LIB_URL`] = `http://localhost:${emElPort}/remoteEntry.js`
+        envUpdateData[`BB_${pkEnvPrefix}_ELEMENTS_URL`] = `http://localhost:${emElPort}/${remoteFileName}`
+        // envUpdateData[`BB_${pkEnvPrefix}_DEP_LIB_URL`] = `http://localhost:${emElPort}/${remoteFileName}`
       }
 
       for (const block of containerBlocks) {
@@ -97,7 +97,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
       }
 
       core.spinnies.update('singleBuild', { text: `Generating elements emulator` })
-      await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib })
+      await generateElementsEmulator(emEleFolder, { emPort: emElPort, depLib ,remoteFileName })
 
       if (updatedEnv?.envString) {
         try {
@@ -175,7 +175,7 @@ const singleBuild = async ({ core, ports, blocks, buildOnly = false, env }) => {
           throw new Error('Error in single build process. Please check logs')
         }
 
-        let sMsg = `Elements emulated at http://localhost:${emElPort}/remoteEntry.js`
+        let sMsg = `Elements emulated at http://localhost:${emElPort}/${remoteFileName}`
         if (errorBlocks?.length > 0) sMsg += ` with above errors`
 
         core.spinnies.succeed('singleBuild', { text: sMsg })
