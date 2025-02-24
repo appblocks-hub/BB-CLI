@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.7.0-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.3-beta...v1.7.0-beta) (2025-02-24)
+
+
+### Features
+
+* added new argument to receive custom remote entry file names on bb start cmd ([ed62897](https://github.com/appblocks-hub/BB-CLI/commit/ed628974a2eaaeb694380dc02f4b0e46484181d5))
+
+
+### Bug Fixes
+
+* all raw package functions renamed and fixes ([2c9d795](https://github.com/appblocks-hub/BB-CLI/commit/2c9d795626dfde45dc7ea3e7b662c0fa68ffe169))
+* containerized block get command issue fixes ([426481d](https://github.com/appblocks-hub/BB-CLI/commit/426481d307c860c0b66213704043330591f8754f))
+* fixes ([4a2fecc](https://github.com/appblocks-hub/BB-CLI/commit/4a2feccc8d333161baaf04684bb1b1dc2278c79c))
+* raw package block name change added ([6705e8c](https://github.com/appblocks-hub/BB-CLI/commit/6705e8c64bab2d7bd0f0c359ba53f16dc58778a3))
+* version bumped ([030c15d](https://github.com/appblocks-hub/BB-CLI/commit/030c15d36759b7993b88b3283bf4fdeaef6cc1df))
+
 ## [1.6.3-beta](https://github.com/appblocks-hub/BB-CLI/compare/v1.6.2-beta...v1.6.3-beta) (2024-04-17)
 
 
