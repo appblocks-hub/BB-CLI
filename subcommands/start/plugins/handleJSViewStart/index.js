@@ -62,6 +62,7 @@ class HandleJSViewStart {
           },
           env: core.cmdOpts.environment,
           buildOnly: core.cmdOpts.buildOnly,
+          remoteFileName: core.cmdOpts.remoteFileName
         })
 
         if (error) console.log(chalk.yellow(error))
